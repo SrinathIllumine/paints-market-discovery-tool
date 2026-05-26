@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
-import { BubbleTile } from "@/components/app/BubbleTile";
+import { BubbleCircle, BubbleScroller } from "@/components/app/BubbleCircle";
 import { BottomNav } from "@/components/app/BottomNav";
 import { useAppStore } from "@/store/appStore";
 import { META_CLUSTERS } from "@/data/clusters";
@@ -86,19 +86,21 @@ function Stage2Index() {
             <ListChecks className="h-4 w-4" /> View Final Shortlist
           </span>
         </Button>
-        <div className="space-y-2.5 pt-2">
-          {metas.map((m) => {
-            const count = Object.values(clusterMaps).filter((cm) => cm.metaId === m.id).length;
-            return (
-              <BubbleTile
-                key={m.id}
-                title={m.name}
-                subtitle={`${count} cluster${count > 1 ? "s" : ""} mapped`}
-                recommended={m.recommended}
-                onClick={() => navigate({ to: "/stage-2/$metaId", params: { metaId: m.id } })}
-              />
-            );
-          })}
+        <div className="pt-2">
+          <BubbleScroller>
+            {metas.map((m) => {
+              const count = Object.values(clusterMaps).filter((cm) => cm.metaId === m.id).length;
+              return (
+                <BubbleCircle
+                  key={m.id}
+                  title={m.name}
+                  subtitle={`${count} cluster${count > 1 ? "s" : ""} mapped`}
+                  recommended={m.recommended}
+                  onClick={() => navigate({ to: "/stage-2/$metaId", params: { metaId: m.id } })}
+                />
+              );
+            })}
+          </BubbleScroller>
         </div>
       </div>
     </AppShell>

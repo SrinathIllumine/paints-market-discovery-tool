@@ -65,7 +65,7 @@ function ScoringScreen() {
       <div className="space-y-5 px-5 py-5">
         {/* Potential */}
         <Card title="Potential" badge={`${breakdown.potential}/40`}>
-          <Field label="Cluster size">
+          <Field label="What's the size of the cluster?">
             <Segmented
               value={s.potential.size}
               onChange={(v) => setScore(clusterId, { potential: { ...s.potential, size: v } })}
@@ -76,7 +76,7 @@ function ScoringScreen() {
               ]}
             />
           </Field>
-          <Field label="Demand frequency">
+          <Field label="Demand frequency in the cluster">
             <Segmented
               value={s.potential.demand}
               onChange={(v) => setScore(clusterId, { potential: { ...s.potential, demand: v } })}
@@ -87,7 +87,7 @@ function ScoringScreen() {
               ]}
             />
           </Field>
-          <Field label="Average order value">
+          <Field label="Average Order Value">
             <Segmented
               value={s.potential.aov}
               onChange={(v) => setScore(clusterId, { potential: { ...s.potential, aov: v } })}
@@ -102,7 +102,7 @@ function ScoringScreen() {
 
         {/* Access */}
         <Card title="Access" badge={`${breakdown.access}/30`}>
-          <Field label="Direct connections">
+          <Field label="How many direct connections do you have with the cluster?">
             <Stepper
               value={s.access.directConnections}
               onChange={(n) =>
@@ -111,7 +111,7 @@ function ScoringScreen() {
               max={50}
             />
           </Field>
-          <Field label="Referral potential">
+          <Field label="How many referrals are possible from your contacts to connect with the direct prospects?">
             <Stepper
               value={s.access.referralPotential}
               onChange={(n) =>
@@ -124,7 +124,7 @@ function ScoringScreen() {
 
         {/* Service capacity */}
         <Card title="Service Delivery Capacity" badge={`${breakdown.service}/30`}>
-          <Field label="Retailers / painters available">
+          <Field label="Do you have sufficient retailers / painters who can serve this cluster?">
             <Segmented<"Y" | "N">
               value={
                 s.service.retailersAvailable === null
@@ -142,7 +142,7 @@ function ScoringScreen() {
               ]}
             />
           </Field>
-          <Field label="Product availability">
+          <Field label="Is there availability of your products to serve the cluster?">
             <Segmented<"Y" | "N">
               value={
                 s.service.productAvailable === null
@@ -193,7 +193,7 @@ function Card({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="text-sm font-medium leading-snug text-muted-foreground">{label}</p>
       {children}
     </div>
   );
