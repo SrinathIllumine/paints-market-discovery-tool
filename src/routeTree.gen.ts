@@ -49,14 +49,14 @@ const Stage1MetaIdIndexRoute = Stage1MetaIdIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const Stage2MetaIdClusterIdRoute = Stage2MetaIdClusterIdRouteImport.update({
-  id: '/$clusterId',
-  path: '/$clusterId',
-  getParentRoute: () => Stage2MetaIdRoute,
+  id: '/stage-2/$metaId/$clusterId',
+  path: '/stage-2/$metaId/$clusterId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const Stage1MetaIdClusterIdRoute = Stage1MetaIdClusterIdRouteImport.update({
-  id: '/$clusterId',
-  path: '/$clusterId',
-  getParentRoute: () => Stage1MetaIdRoute,
+  id: '/stage-1/$metaId/$clusterId',
+  path: '/stage-1/$metaId/$clusterId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -128,6 +128,8 @@ export interface RootRouteChildren {
   Stage2ShortlistRoute: typeof Stage2ShortlistRoute
   Stage1IndexRoute: typeof Stage1IndexRoute
   Stage2IndexRoute: typeof Stage2IndexRoute
+  Stage1MetaIdClusterIdRoute: typeof Stage1MetaIdClusterIdRoute
+  Stage2MetaIdClusterIdRoute: typeof Stage2MetaIdClusterIdRoute
   Stage1MetaIdIndexRoute: typeof Stage1MetaIdIndexRoute
   Stage2MetaIdIndexRoute: typeof Stage2MetaIdIndexRoute
 }
@@ -178,17 +180,17 @@ declare module '@tanstack/react-router' {
     }
     '/stage-2/$metaId/$clusterId': {
       id: '/stage-2/$metaId/$clusterId'
-      path: '/$clusterId'
+      path: '/stage-2/$metaId/$clusterId'
       fullPath: '/stage-2/$metaId/$clusterId'
       preLoaderRoute: typeof Stage2MetaIdClusterIdRouteImport
-      parentRoute: typeof Stage2MetaIdRoute
+      parentRoute: typeof rootRouteImport
     }
     '/stage-1/$metaId/$clusterId': {
       id: '/stage-1/$metaId/$clusterId'
-      path: '/$clusterId'
+      path: '/stage-1/$metaId/$clusterId'
       fullPath: '/stage-1/$metaId/$clusterId'
       preLoaderRoute: typeof Stage1MetaIdClusterIdRouteImport
-      parentRoute: typeof Stage1MetaIdRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -198,19 +200,11 @@ const rootRouteChildren: RootRouteChildren = {
   Stage2ShortlistRoute: Stage2ShortlistRoute,
   Stage1IndexRoute: Stage1IndexRoute,
   Stage2IndexRoute: Stage2IndexRoute,
+  Stage1MetaIdClusterIdRoute: Stage1MetaIdClusterIdRoute,
+  Stage2MetaIdClusterIdRoute: Stage2MetaIdClusterIdRoute,
   Stage1MetaIdIndexRoute: Stage1MetaIdIndexRoute,
   Stage2MetaIdIndexRoute: Stage2MetaIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
