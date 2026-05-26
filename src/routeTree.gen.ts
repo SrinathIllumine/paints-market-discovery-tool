@@ -10,33 +10,126 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as Stage2IndexRouteImport } from './routes/stage-2/index'
+import { Route as Stage1IndexRouteImport } from './routes/stage-1/index'
+import { Route as Stage2ShortlistRouteImport } from './routes/stage-2/shortlist'
+import { Route as Stage2MetaIdRouteImport } from './routes/stage-2/$metaId'
+import { Route as Stage1MetaIdRouteImport } from './routes/stage-1/$metaId'
+import { Route as Stage2MetaIdClusterIdRouteImport } from './routes/stage-2/$metaId.$clusterId'
+import { Route as Stage1MetaIdClusterIdRouteImport } from './routes/stage-1/$metaId.$clusterId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Stage2IndexRoute = Stage2IndexRouteImport.update({
+  id: '/stage-2/',
+  path: '/stage-2/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Stage1IndexRoute = Stage1IndexRouteImport.update({
+  id: '/stage-1/',
+  path: '/stage-1/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Stage2ShortlistRoute = Stage2ShortlistRouteImport.update({
+  id: '/stage-2/shortlist',
+  path: '/stage-2/shortlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Stage2MetaIdRoute = Stage2MetaIdRouteImport.update({
+  id: '/stage-2/$metaId',
+  path: '/stage-2/$metaId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Stage1MetaIdRoute = Stage1MetaIdRouteImport.update({
+  id: '/stage-1/$metaId',
+  path: '/stage-1/$metaId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Stage2MetaIdClusterIdRoute = Stage2MetaIdClusterIdRouteImport.update({
+  id: '/$clusterId',
+  path: '/$clusterId',
+  getParentRoute: () => Stage2MetaIdRoute,
+} as any)
+const Stage1MetaIdClusterIdRoute = Stage1MetaIdClusterIdRouteImport.update({
+  id: '/$clusterId',
+  path: '/$clusterId',
+  getParentRoute: () => Stage1MetaIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/stage-1/$metaId': typeof Stage1MetaIdRouteWithChildren
+  '/stage-2/$metaId': typeof Stage2MetaIdRouteWithChildren
+  '/stage-2/shortlist': typeof Stage2ShortlistRoute
+  '/stage-1/': typeof Stage1IndexRoute
+  '/stage-2/': typeof Stage2IndexRoute
+  '/stage-1/$metaId/$clusterId': typeof Stage1MetaIdClusterIdRoute
+  '/stage-2/$metaId/$clusterId': typeof Stage2MetaIdClusterIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/stage-1/$metaId': typeof Stage1MetaIdRouteWithChildren
+  '/stage-2/$metaId': typeof Stage2MetaIdRouteWithChildren
+  '/stage-2/shortlist': typeof Stage2ShortlistRoute
+  '/stage-1': typeof Stage1IndexRoute
+  '/stage-2': typeof Stage2IndexRoute
+  '/stage-1/$metaId/$clusterId': typeof Stage1MetaIdClusterIdRoute
+  '/stage-2/$metaId/$clusterId': typeof Stage2MetaIdClusterIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/stage-1/$metaId': typeof Stage1MetaIdRouteWithChildren
+  '/stage-2/$metaId': typeof Stage2MetaIdRouteWithChildren
+  '/stage-2/shortlist': typeof Stage2ShortlistRoute
+  '/stage-1/': typeof Stage1IndexRoute
+  '/stage-2/': typeof Stage2IndexRoute
+  '/stage-1/$metaId/$clusterId': typeof Stage1MetaIdClusterIdRoute
+  '/stage-2/$metaId/$clusterId': typeof Stage2MetaIdClusterIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/stage-1/$metaId'
+    | '/stage-2/$metaId'
+    | '/stage-2/shortlist'
+    | '/stage-1/'
+    | '/stage-2/'
+    | '/stage-1/$metaId/$clusterId'
+    | '/stage-2/$metaId/$clusterId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/stage-1/$metaId'
+    | '/stage-2/$metaId'
+    | '/stage-2/shortlist'
+    | '/stage-1'
+    | '/stage-2'
+    | '/stage-1/$metaId/$clusterId'
+    | '/stage-2/$metaId/$clusterId'
+  id:
+    | '__root__'
+    | '/'
+    | '/stage-1/$metaId'
+    | '/stage-2/$metaId'
+    | '/stage-2/shortlist'
+    | '/stage-1/'
+    | '/stage-2/'
+    | '/stage-1/$metaId/$clusterId'
+    | '/stage-2/$metaId/$clusterId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  Stage1MetaIdRoute: typeof Stage1MetaIdRouteWithChildren
+  Stage2MetaIdRoute: typeof Stage2MetaIdRouteWithChildren
+  Stage2ShortlistRoute: typeof Stage2ShortlistRoute
+  Stage1IndexRoute: typeof Stage1IndexRoute
+  Stage2IndexRoute: typeof Stage2IndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,12 +141,100 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stage-2/': {
+      id: '/stage-2/'
+      path: '/stage-2'
+      fullPath: '/stage-2/'
+      preLoaderRoute: typeof Stage2IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stage-1/': {
+      id: '/stage-1/'
+      path: '/stage-1'
+      fullPath: '/stage-1/'
+      preLoaderRoute: typeof Stage1IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stage-2/shortlist': {
+      id: '/stage-2/shortlist'
+      path: '/stage-2/shortlist'
+      fullPath: '/stage-2/shortlist'
+      preLoaderRoute: typeof Stage2ShortlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stage-2/$metaId': {
+      id: '/stage-2/$metaId'
+      path: '/stage-2/$metaId'
+      fullPath: '/stage-2/$metaId'
+      preLoaderRoute: typeof Stage2MetaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stage-1/$metaId': {
+      id: '/stage-1/$metaId'
+      path: '/stage-1/$metaId'
+      fullPath: '/stage-1/$metaId'
+      preLoaderRoute: typeof Stage1MetaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stage-2/$metaId/$clusterId': {
+      id: '/stage-2/$metaId/$clusterId'
+      path: '/$clusterId'
+      fullPath: '/stage-2/$metaId/$clusterId'
+      preLoaderRoute: typeof Stage2MetaIdClusterIdRouteImport
+      parentRoute: typeof Stage2MetaIdRoute
+    }
+    '/stage-1/$metaId/$clusterId': {
+      id: '/stage-1/$metaId/$clusterId'
+      path: '/$clusterId'
+      fullPath: '/stage-1/$metaId/$clusterId'
+      preLoaderRoute: typeof Stage1MetaIdClusterIdRouteImport
+      parentRoute: typeof Stage1MetaIdRoute
+    }
   }
 }
 
+interface Stage1MetaIdRouteChildren {
+  Stage1MetaIdClusterIdRoute: typeof Stage1MetaIdClusterIdRoute
+}
+
+const Stage1MetaIdRouteChildren: Stage1MetaIdRouteChildren = {
+  Stage1MetaIdClusterIdRoute: Stage1MetaIdClusterIdRoute,
+}
+
+const Stage1MetaIdRouteWithChildren = Stage1MetaIdRoute._addFileChildren(
+  Stage1MetaIdRouteChildren,
+)
+
+interface Stage2MetaIdRouteChildren {
+  Stage2MetaIdClusterIdRoute: typeof Stage2MetaIdClusterIdRoute
+}
+
+const Stage2MetaIdRouteChildren: Stage2MetaIdRouteChildren = {
+  Stage2MetaIdClusterIdRoute: Stage2MetaIdClusterIdRoute,
+}
+
+const Stage2MetaIdRouteWithChildren = Stage2MetaIdRoute._addFileChildren(
+  Stage2MetaIdRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  Stage1MetaIdRoute: Stage1MetaIdRouteWithChildren,
+  Stage2MetaIdRoute: Stage2MetaIdRouteWithChildren,
+  Stage2ShortlistRoute: Stage2ShortlistRoute,
+  Stage1IndexRoute: Stage1IndexRoute,
+  Stage2IndexRoute: Stage2IndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
