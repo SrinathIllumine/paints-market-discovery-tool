@@ -9,7 +9,7 @@ import { useAppStore } from "@/store/appStore";
 import { META_CLUSTERS } from "@/data/clusters";
 import { computeScore } from "@/lib/scoring";
 
-export const Route = createFileRoute("/stage-2/$metaId")({
+export const Route = createFileRoute("/stage-2/$metaId/")({
   component: Stage2MetaScreen,
 });
 

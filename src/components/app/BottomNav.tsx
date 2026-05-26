@@ -21,7 +21,7 @@ export function BottomNav() {
         )}
       >
         <Map className="h-5 w-5" />
-        Stage 1 · Map
+        Identify Clusters
       </Link>
       {unlocked ? (
         <Link
@@ -32,12 +32,12 @@ export function BottomNav() {
           )}
         >
           <ListChecks className="h-5 w-5" />
-          Stage 2 · Shortlist
+          Shortlist Clusters
         </Link>
       ) : (
         <div className="flex flex-col items-center gap-1 py-3 text-[11px] font-medium text-muted-foreground/60">
           <Lock className="h-5 w-5" />
-          Stage 2 · Locked
+          Shortlist Clusters
         </div>
       )}
     </nav>
