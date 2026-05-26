@@ -2,13 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
-import { BubbleTile } from "@/components/app/BubbleTile";
+import { BubbleCircle, BubbleScroller } from "@/components/app/BubbleCircle";
 import { FAB } from "@/components/app/FAB";
 import { NameSheet } from "@/components/app/NameSheet";
 import { BottomNav } from "@/components/app/BottomNav";
 import { META_CLUSTERS } from "@/data/clusters";
 import { useAppStore } from "@/store/appStore";
-import { CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/stage-1/$metaId/")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -67,22 +66,16 @@ function ClusterListScreen() {
       }
     >
       <div className="space-y-3 px-5 py-5">
-        <div className="space-y-2.5">
+        <BubbleScroller>
           {list.map((c) => {
             const saved = !!clusterMaps[c.id];
             return (
-              <BubbleTile
+              <BubbleCircle
                 key={c.id}
                 title={c.name}
                 recommended={c.recommended}
                 adjacent={c.adjacent}
-                trailing={
-                  saved ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-critical/10 px-2 py-1 text-[10px] font-semibold uppercase text-critical">
-                      <CheckCircle2 className="h-3 w-3" /> Mapped
-                    </span>
-                  ) : undefined
-                }
+                mapped={saved}
                 onClick={() =>
                   navigate({
                     to: "/stage-1/$metaId/$clusterId",
@@ -92,12 +85,12 @@ function ClusterListScreen() {
               />
             );
           })}
-          {list.length === 0 && (
-            <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-              No clusters yet. Tap "Add Cluster" to create one.
-            </p>
-          )}
-        </div>
+        </BubbleScroller>
+        {list.length === 0 && (
+          <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+            No clusters yet. Tap "Add Cluster" to create one.
+          </p>
+        )}
       </div>
 
       <FAB onClick={() => setSheetOpen(true)} label="Add cluster">
