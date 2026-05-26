@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
-import { BubbleTile } from "@/components/app/BubbleTile";
+import { BubbleCircle, BubbleScroller } from "@/components/app/BubbleCircle";
 import { BottomNav } from "@/components/app/BottomNav";
 import { ScoreChip } from "@/components/app/ScoreChip";
 import { useAppStore } from "@/store/appStore";
@@ -52,33 +52,35 @@ function Stage2MetaScreen() {
         />
       }
     >
-      <div className="space-y-2.5 px-5 py-5">
-        {mappedClusters.map((cm) => {
-          const s = scores[cm.clusterId];
-          const total = s ? computeScore(s).total : null;
-          return (
-            <BubbleTile
-              key={cm.clusterId}
-              title={cm.clusterName}
-              subtitle={`${cm.prospects.length} prospects · ${cm.selectedProspectIds.length} on map`}
-              trailing={
-                total !== null ? (
-                  <ScoreChip total={total} />
-                ) : (
-                  <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold uppercase text-muted-foreground">
-                    Score
-                  </span>
-                )
-              }
-              onClick={() =>
-                navigate({
-                  to: "/stage-2/$metaId/$clusterId",
-                  params: { metaId: meta.id, clusterId: cm.clusterId },
-                })
-              }
-            />
-          );
-        })}
+      <div className="px-5 py-5">
+        <BubbleScroller>
+          {mappedClusters.map((cm) => {
+            const s = scores[cm.clusterId];
+            const total = s ? computeScore(s).total : null;
+            return (
+              <BubbleCircle
+                key={cm.clusterId}
+                title={cm.clusterName}
+                subtitle={`${cm.prospects.length} prospects · ${cm.selectedProspectIds.length} on map`}
+                trailing={
+                  total !== null ? (
+                    <ScoreChip total={total} />
+                  ) : (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                      Score
+                    </span>
+                  )
+                }
+                onClick={() =>
+                  navigate({
+                    to: "/stage-2/$metaId/$clusterId",
+                    params: { metaId: meta.id, clusterId: cm.clusterId },
+                  })
+                }
+              />
+            );
+          })}
+        </BubbleScroller>
       </div>
     </AppShell>
   );
