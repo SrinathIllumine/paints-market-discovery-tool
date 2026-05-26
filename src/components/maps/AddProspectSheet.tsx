@@ -124,5 +124,3 @@ export function AddProspectSheet({
   );
 }
 
-// silence unused warning
-void Mode;
