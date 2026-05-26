@@ -55,18 +55,19 @@ function MetaClustersScreen() {
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Meta-clusters relevant to your area
         </p>
-        <div className="space-y-2.5">
+        <BubbleScroller>
           {list.map((m) => (
-            <BubbleTile
+            <BubbleCircle
               key={m.id}
               title={m.name}
-              subtitle={`${m.clusters.length} clusters inside`}
+              subtitle={`${m.clusters.length} clusters`}
               recommended={m.recommended}
               adjacent={m.adjacent}
               onClick={() => navigate({ to: "/stage-1/$metaId", params: { metaId: m.id } })}
             />
           ))}
-        </div>
+        </BubbleScroller>
+
 
         <div className="space-y-2 pt-4">
           {TRIGGERS_META.map((t) => (
