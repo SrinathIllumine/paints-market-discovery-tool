@@ -10,7 +10,7 @@ import { META_CLUSTERS } from "@/data/clusters";
 import { useAppStore } from "@/store/appStore";
 import { CheckCircle2 } from "lucide-react";
 
-export const Route = createFileRoute("/stage-1/$metaId")({
+export const Route = createFileRoute("/stage-1/$metaId/")({
   validateSearch: (s: Record<string, unknown>) => ({
     addCluster: s.addCluster === 1 || s.addCluster === "1" ? 1 : undefined,
   }),
