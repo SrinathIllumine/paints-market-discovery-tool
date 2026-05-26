@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
-import { BubbleTile } from "@/components/app/BubbleTile";
+import { BubbleCircle, BubbleScroller } from "@/components/app/BubbleCircle";
 import { TriggerCard } from "@/components/app/TriggerCard";
 import { FAB } from "@/components/app/FAB";
 import { NameSheet } from "@/components/app/NameSheet";
