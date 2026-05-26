@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Cluster, MetaCluster } from "@/data/clusters";
 
 export type Prospect = {
   id: string;
@@ -12,121 +11,133 @@ export type Prospect = {
   source: "places" | "manual";
 };
 
-export type ClusterMap = {
-  metaId: string;
-  metaName: string;
-  clusterId: string;
-  clusterName: string;
-  prospects: Prospect[];
-  selectedProspectIds: string[];
-  createdAt: number;
-  updatedAt: number;
+export type Stakeholder = {
+  id: string;
+  name: string;
+  prospect: string;
+  phone: string;
 };
 
-export type Score = {
-  potential: {
-    size: "S" | "M" | "L" | null;
-    demand: "L" | "M" | "H" | null;
-    aov: "L" | "M" | "H" | null;
-  };
-  access: {
-    directConnections: number;
-    referralPotential: number;
-  };
-  service: {
-    retailersAvailable: boolean | null;
-    productAvailable: boolean | null;
-  };
-  shortlisted: boolean;
+export type EventType = "Workshop" | "Audit" | "Awareness" | "Contractor Meet";
+export type PlanEvent = {
+  id: string;
+  clusterId: string;
+  type: EventType;
+  date?: string;
+  note?: string;
+};
+
+export type ReadinessAnswer = "Y" | "N" | "P" | null;
+export type Readiness = {
+  retailers: ReadinessAnswer;
+  stock: ReadinessAnswer;
+  painters: ReadinessAnswer;
+  trained: ReadinessAnswer;
+};
+
+export type ClusterState = {
+  jkShare: "H" | "M" | "L" | null;
+  prospects: Prospect[];
+  selectedProspectIds: string[];
+  visited: boolean;
 };
 
 type State = {
-  customMeta: MetaCluster[];
-  customClusters: Record<string, Cluster[]>; // metaId -> clusters
-  clusterMaps: Record<string, ClusterMap>; // clusterId -> map
-  scores: Record<string, Score>; // clusterId -> score
+  clusters: Record<string, ClusterState>;
+  stakeholders: Record<string, Stakeholder[]>;
+  plan: {
+    targetClusterIds: string[];
+    events: PlanEvent[];
+    readiness: Record<string, Readiness>;
+  };
 };
 
 type Actions = {
-  addMeta: (name: string) => string;
-  addCluster: (metaId: string, name: string) => string;
-  upsertClusterMap: (map: ClusterMap) => void;
+  ensureCluster: (clusterId: string) => void;
+  markVisited: (clusterId: string) => void;
+  setJkShare: (clusterId: string, share: "H" | "M" | "L") => void;
   setProspects: (clusterId: string, prospects: Prospect[]) => void;
-  addProspect: (clusterId: string, prospect: Prospect) => void;
+  addProspect: (clusterId: string, p: Prospect) => void;
   toggleProspectSelected: (clusterId: string, prospectId: string) => void;
-  setScore: (clusterId: string, partial: Partial<Score>) => void;
-  toggleShortlist: (clusterId: string) => void;
+
+  addStakeholder: (clusterId: string, s: Omit<Stakeholder, "id">) => void;
+  removeStakeholder: (clusterId: string, id: string) => void;
+
+  toggleTargetCluster: (clusterId: string) => void;
+  addEvent: (e: Omit<PlanEvent, "id">) => void;
+  removeEvent: (id: string) => void;
+  setReadiness: (clusterId: string, partial: Partial<Readiness>) => void;
 };
 
-const emptyScore = (): Score => ({
-  potential: { size: null, demand: null, aov: null },
-  access: { directConnections: 0, referralPotential: 0 },
-  service: { retailersAvailable: null, productAvailable: null },
-  shortlisted: false,
+const emptyCluster = (): ClusterState => ({
+  jkShare: null,
+  prospects: [],
+  selectedProspectIds: [],
+  visited: false,
+});
+
+const emptyReadiness = (): Readiness => ({
+  retailers: null,
+  stock: null,
+  painters: null,
+  trained: null,
 });
 
 export const useAppStore = create<State & Actions>()(
   persist(
-    (set, get) => ({
-      customMeta: [],
-      customClusters: {},
-      clusterMaps: {},
-      scores: {},
+    (set) => ({
+      clusters: {},
+      stakeholders: {},
+      plan: { targetClusterIds: [], events: [], readiness: {} },
 
-      addMeta: (name) => {
-        const id = `custom-meta-${Date.now()}`;
-        set((s) => ({
-          customMeta: [
-            ...s.customMeta,
-            { id, name, short: name, clusters: [], recommended: false },
-          ],
-        }));
-        return id;
-      },
+      ensureCluster: (clusterId) =>
+        set((s) =>
+          s.clusters[clusterId]
+            ? s
+            : { clusters: { ...s.clusters, [clusterId]: emptyCluster() } },
+        ),
 
-      addCluster: (metaId, name) => {
-        const id = `custom-cluster-${Date.now()}`;
+      markVisited: (clusterId) =>
         set((s) => ({
-          customClusters: {
-            ...s.customClusters,
-            [metaId]: [...(s.customClusters[metaId] ?? []), { id, name }],
+          clusters: {
+            ...s.clusters,
+            [clusterId]: { ...(s.clusters[clusterId] ?? emptyCluster()), visited: true },
           },
-        }));
-        return id;
-      },
+        })),
 
-      upsertClusterMap: (map) =>
-        set((s) => ({ clusterMaps: { ...s.clusterMaps, [map.clusterId]: map } })),
+      setJkShare: (clusterId, share) =>
+        set((s) => ({
+          clusters: {
+            ...s.clusters,
+            [clusterId]: { ...(s.clusters[clusterId] ?? emptyCluster()), jkShare: share },
+          },
+        })),
 
       setProspects: (clusterId, prospects) =>
         set((s) => {
-          const existing = s.clusterMaps[clusterId];
-          if (!existing) return s;
+          const prev = s.clusters[clusterId] ?? emptyCluster();
           return {
-            clusterMaps: {
-              ...s.clusterMaps,
+            clusters: {
+              ...s.clusters,
               [clusterId]: {
-                ...existing,
+                ...prev,
                 prospects,
                 selectedProspectIds: prospects.map((p) => p.id),
-                updatedAt: Date.now(),
               },
             },
           };
         }),
 
-      addProspect: (clusterId, prospect) =>
+      addProspect: (clusterId, p) =>
         set((s) => {
-          const existing = s.clusterMaps[clusterId];
-          if (!existing) return s;
+          const prev = s.clusters[clusterId] ?? emptyCluster();
           return {
-            clusterMaps: {
-              ...s.clusterMaps,
+            clusters: {
+              ...s.clusters,
               [clusterId]: {
-                ...existing,
-                prospects: [...existing.prospects, prospect],
-                selectedProspectIds: [...existing.selectedProspectIds, prospect.id],
-                updatedAt: Date.now(),
+                ...prev,
+                prospects: [...prev.prospects, p],
+                selectedProspectIds: [...prev.selectedProspectIds, p.id],
               },
             },
           };
@@ -134,51 +145,84 @@ export const useAppStore = create<State & Actions>()(
 
       toggleProspectSelected: (clusterId, prospectId) =>
         set((s) => {
-          const existing = s.clusterMaps[clusterId];
-          if (!existing) return s;
-          const has = existing.selectedProspectIds.includes(prospectId);
+          const prev = s.clusters[clusterId] ?? emptyCluster();
+          const has = prev.selectedProspectIds.includes(prospectId);
           return {
-            clusterMaps: {
-              ...s.clusterMaps,
-              [clusterId]: {
-                ...existing,
-                selectedProspectIds: has
-                  ? existing.selectedProspectIds.filter((x) => x !== prospectId)
-                  : [...existing.selectedProspectIds, prospectId],
-                updatedAt: Date.now(),
-              },
-            },
-          };
-        }),
-
-      setScore: (clusterId, partial) =>
-        set((s) => {
-          const prev = s.scores[clusterId] ?? emptyScore();
-          return {
-            scores: {
-              ...s.scores,
+            clusters: {
+              ...s.clusters,
               [clusterId]: {
                 ...prev,
-                ...partial,
-                potential: { ...prev.potential, ...(partial.potential ?? {}) },
-                access: { ...prev.access, ...(partial.access ?? {}) },
-                service: { ...prev.service, ...(partial.service ?? {}) },
+                selectedProspectIds: has
+                  ? prev.selectedProspectIds.filter((x) => x !== prospectId)
+                  : [...prev.selectedProspectIds, prospectId],
               },
             },
           };
         }),
 
-      toggleShortlist: (clusterId) =>
-        set((s) => {
-          const prev = s.scores[clusterId] ?? emptyScore();
+      addStakeholder: (clusterId, s) =>
+        set((state) => ({
+          stakeholders: {
+            ...state.stakeholders,
+            [clusterId]: [
+              ...(state.stakeholders[clusterId] ?? []),
+              { ...s, id: `stk-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` },
+            ],
+          },
+        })),
+
+      removeStakeholder: (clusterId, id) =>
+        set((state) => ({
+          stakeholders: {
+            ...state.stakeholders,
+            [clusterId]: (state.stakeholders[clusterId] ?? []).filter((x) => x.id !== id),
+          },
+        })),
+
+      toggleTargetCluster: (clusterId) =>
+        set((state) => {
+          const has = state.plan.targetClusterIds.includes(clusterId);
           return {
-            scores: {
-              ...s.scores,
-              [clusterId]: { ...prev, shortlisted: !prev.shortlisted },
+            plan: {
+              ...state.plan,
+              targetClusterIds: has
+                ? state.plan.targetClusterIds.filter((x) => x !== clusterId)
+                : [...state.plan.targetClusterIds, clusterId],
             },
           };
         }),
+
+      addEvent: (e) =>
+        set((state) => ({
+          plan: {
+            ...state.plan,
+            events: [
+              ...state.plan.events,
+              { ...e, id: `ev-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` },
+            ],
+          },
+        })),
+
+      removeEvent: (id) =>
+        set((state) => ({
+          plan: { ...state.plan, events: state.plan.events.filter((e) => e.id !== id) },
+        })),
+
+      setReadiness: (clusterId, partial) =>
+        set((state) => ({
+          plan: {
+            ...state.plan,
+            readiness: {
+              ...state.plan.readiness,
+              [clusterId]: { ...emptyReadiness(), ...(state.plan.readiness[clusterId] ?? {}), ...partial },
+            },
+          },
+        })),
     }),
-    { name: "sed.v1" },
+    { name: "sed.v2" },
   ),
 );
+
+export function getReadiness(state: State, clusterId: string): Readiness {
+  return state.plan.readiness[clusterId] ?? emptyReadiness();
+}
