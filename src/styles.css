@@ -31,101 +31,85 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --color-bubble: var(--bubble);
-  --color-bubble-foreground: var(--bubble-foreground);
-  --color-bubble-recommended: var(--bubble-recommended);
-  --color-recommended-ring: var(--recommended-ring);
-  --color-map-bg: var(--map-bg);
-  --color-map-road: var(--map-road);
-  --color-map-land: var(--map-land);
-  --color-map-water: var(--map-water);
+  --color-navy: var(--navy);
+  --color-navy-foreground: var(--navy-foreground);
+  --color-critical: var(--critical);
+  --color-critical-foreground: var(--critical-foreground);
 }
 
 :root {
   --radius: 1rem;
 
-  /* Warm, soft palette */
-  --background: oklch(0.985 0.012 80);
-  --foreground: oklch(0.22 0.03 250);
+  /* Off-white app background */
+  --background: oklch(0.99 0.004 90);
+  --foreground: oklch(0.18 0.02 250);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.03 250);
+  --card-foreground: oklch(0.18 0.02 250);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.03 250);
+  --popover-foreground: oklch(0.18 0.02 250);
 
-  /* Deep indigo-teal primary — JK Cement-adjacent serious tone */
-  --primary: oklch(0.42 0.13 235);
-  --primary-foreground: oklch(0.99 0.005 80);
+  /* Navy primary used in headers and key surfaces */
+  --primary: oklch(0.22 0.05 255);
+  --primary-foreground: oklch(0.99 0.005 90);
 
-  --secondary: oklch(0.95 0.02 80);
-  --secondary-foreground: oklch(0.25 0.04 250);
+  --secondary: oklch(0.96 0.008 240);
+  --secondary-foreground: oklch(0.2 0.03 250);
 
-  --muted: oklch(0.96 0.012 80);
-  --muted-foreground: oklch(0.5 0.03 250);
+  --muted: oklch(0.96 0.005 240);
+  --muted-foreground: oklch(0.5 0.02 250);
 
-  --accent: oklch(0.92 0.07 70); /* warm peach */
-  --accent-foreground: oklch(0.25 0.06 40);
+  --accent: oklch(0.95 0.012 240);
+  --accent-foreground: oklch(0.22 0.05 255);
 
-  --destructive: oklch(0.6 0.22 25);
-  --destructive-foreground: oklch(0.99 0.005 80);
+  /* Red critical for FABs and key actions */
+  --destructive: oklch(0.58 0.21 27);
+  --destructive-foreground: oklch(0.99 0.005 90);
+  --critical: oklch(0.58 0.21 27);
+  --critical-foreground: oklch(0.99 0.005 90);
 
-  --border: oklch(0.9 0.015 80);
-  --input: oklch(0.9 0.015 80);
-  --ring: oklch(0.55 0.13 235);
+  --navy: oklch(0.22 0.05 255);
+  --navy-foreground: oklch(0.99 0.005 90);
 
-  /* Bubbles */
-  --bubble: oklch(0.97 0.02 220);
-  --bubble-foreground: oklch(0.25 0.05 250);
-  --bubble-recommended: oklch(0.95 0.06 70); /* warm highlight */
-  --recommended-ring: oklch(0.7 0.15 55);
-
-  /* Map */
-  --map-bg: oklch(0.97 0.02 100);
-  --map-land: oklch(0.95 0.025 110);
-  --map-water: oklch(0.9 0.04 220);
-  --map-road: oklch(0.78 0.02 80);
+  --border: oklch(0.92 0.006 240);
+  --input: oklch(0.92 0.006 240);
+  --ring: oklch(0.58 0.21 27);
 }
 
 .dark {
-  --background: oklch(0.18 0.02 250);
-  --foreground: oklch(0.97 0.01 80);
-  --card: oklch(0.22 0.025 250);
-  --card-foreground: oklch(0.97 0.01 80);
-  --popover: oklch(0.22 0.025 250);
-  --popover-foreground: oklch(0.97 0.01 80);
-  --primary: oklch(0.75 0.13 220);
+  --background: oklch(0.16 0.015 250);
+  --foreground: oklch(0.97 0.005 90);
+  --card: oklch(0.2 0.02 250);
+  --card-foreground: oklch(0.97 0.005 90);
+  --popover: oklch(0.2 0.02 250);
+  --popover-foreground: oklch(0.97 0.005 90);
+  --primary: oklch(0.85 0.02 250);
   --primary-foreground: oklch(0.18 0.02 250);
-  --secondary: oklch(0.28 0.03 250);
-  --secondary-foreground: oklch(0.97 0.01 80);
-  --muted: oklch(0.28 0.03 250);
-  --muted-foreground: oklch(0.7 0.02 80);
-  --accent: oklch(0.32 0.06 60);
-  --accent-foreground: oklch(0.97 0.01 80);
-  --destructive: oklch(0.6 0.22 25);
-  --destructive-foreground: oklch(0.97 0.01 80);
+  --secondary: oklch(0.25 0.02 250);
+  --secondary-foreground: oklch(0.97 0.005 90);
+  --muted: oklch(0.25 0.02 250);
+  --muted-foreground: oklch(0.7 0.015 250);
+  --accent: oklch(0.28 0.025 250);
+  --accent-foreground: oklch(0.97 0.005 90);
+  --destructive: oklch(0.6 0.22 27);
+  --destructive-foreground: oklch(0.97 0.005 90);
+  --critical: oklch(0.6 0.22 27);
+  --critical-foreground: oklch(0.97 0.005 90);
+  --navy: oklch(0.22 0.05 255);
+  --navy-foreground: oklch(0.97 0.005 90);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.7 0.1 220);
-  --bubble: oklch(0.28 0.04 240);
-  --bubble-foreground: oklch(0.97 0.01 80);
-  --bubble-recommended: oklch(0.35 0.08 60);
-  --recommended-ring: oklch(0.75 0.14 60);
-  --map-bg: oklch(0.22 0.025 250);
-  --map-land: oklch(0.26 0.025 250);
-  --map-water: oklch(0.3 0.05 230);
-  --map-road: oklch(0.45 0.03 80);
+  --ring: oklch(0.7 0.18 27);
 }
 
 @layer base {
   * { border-color: var(--color-border); }
+  html, body { height: 100%; }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    background-image:
-      radial-gradient(circle at 15% 10%, oklch(0.95 0.05 70 / 0.4), transparent 50%),
-      radial-gradient(circle at 85% 90%, oklch(0.9 0.06 220 / 0.35), transparent 55%);
-    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
   }
-  h1, h2, .font-display { font-family: var(--font-display); letter-spacing: -0.01em; }
+  h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.01em; }
 }
