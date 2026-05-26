@@ -1,12 +1,11 @@
+/// <reference types="google.maps" />
 // Async loader for the Google Maps JavaScript API.
-// Single load per page, guarded against StrictMode double-effects.
 
 let loaderPromise: Promise<typeof google> | null = null;
 
 declare global {
   interface Window {
     initMap?: () => void;
-    google: typeof google;
   }
 }
 
@@ -14,7 +13,9 @@ export function loadGoogleMaps(): Promise<typeof google> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Google Maps requires the browser"));
   }
-  if (window.google?.maps) return Promise.resolve(window.google);
+  if ((window as Window & { google?: typeof google }).google?.maps) {
+    return Promise.resolve((window as Window & { google: typeof google }).google);
+  }
   if (loaderPromise) return loaderPromise;
 
   const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
@@ -24,7 +25,8 @@ export function loadGoogleMaps(): Promise<typeof google> {
   }
 
   loaderPromise = new Promise((resolve, reject) => {
-    window.initMap = () => resolve(window.google);
+    window.initMap = () =>
+      resolve((window as Window & { google: typeof google }).google);
     const script = document.createElement("script");
     const params = new URLSearchParams({
       key,
