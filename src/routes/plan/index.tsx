@@ -3,11 +3,17 @@ import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
-import { CLUSTERS, getCluster } from "@/data/clusters";
+import { CLUSTERS, getCluster, POTENTIAL_LABEL } from "@/data/clusters";
 import { useAppStore, type EventType, type ReadinessAnswer } from "@/store/appStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   Dialog,
   DialogContent,
