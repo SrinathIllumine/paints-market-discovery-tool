@@ -22,6 +22,15 @@ import {
 
 export const Route = createFileRoute("/map/$clusterId")({
   component: ClusterDetailScreen,
+  errorComponent: ({ error, reset }) => (
+    <AppShell bottom={<BottomNav />}>
+      <div className="space-y-3 p-6 text-center">
+        <p className="font-display text-xl">Something went wrong loading this cluster.</p>
+        <p className="text-sm text-muted-foreground">{error.message}</p>
+        <Button onClick={reset} className="bg-navy text-navy-foreground hover:bg-navy/90">Retry</Button>
+      </div>
+    </AppShell>
+  ),
 });
 
 function ClusterDetailScreen() {

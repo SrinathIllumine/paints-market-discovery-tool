@@ -1,122 +1,53 @@
-# Restructure: Systematic Engagement & Discovery Tool v2
+## Goals
 
-Major pivot from the 2-stage meta-cluster/scoring flow to a **3-stage guided intelligence tool**: Market Map → Stakeholder Connects → Outreach Plan. Cluster hierarchy is flattened; scoring is replaced by qualitative cluster intelligence; stakeholders become first-class data shared across all stages.
+Address five issues across Map, Cluster Detail, and Plan screens.
 
----
+## 1. Map page — bubbles instead of list
 
-## 1. Intro / Entry Screen
+Replace the vertical `ClusterCard` list in `src/routes/map/index.tsx` with a circular bubble grid (the older "bubble" style). Each bubble shows the cluster name (and a tiny H/M/L pill), sized consistently, in a 2-column grid that scrolls vertically. Tap navigates to `/map/$clusterId`. A small "N contacts" badge appears on bubbles that already have stakeholders.
 
-New landing card at app entry (`/`) before stages:
-- Title: "Systematic Engagement & Discovery Tool"
-- 3 value-prop tiles with icons (Map, Network, Insights):
-  - Create a cluster map for your market
-  - Build a structured outreach plan
-  - Harvest local market intelligence
-- Primary CTA: "Start" → `/map`
+Recreate a lightweight `src/components/app/BubbleCircle.tsx` (deleted earlier) for this. `ClusterCard.tsx` stays only if reused elsewhere; otherwise remove.
 
-## 2. Navigation
+## 2. Cluster detail page — fix crash and restore card
 
-Replace 2-tab bottom nav with **3-stage tracker**:
-- Map (`/map`)
-- Connects (`/connects`)
-- Plan (`/plan`)
+Current `src/routes/map/$clusterId.tsx` mounts `GoogleMap` immediately and auto-calls the Places server function. The likely crash cause is the Places server fn throwing (Maps not loaded yet / network) and the unhandled rejection propagating, plus the map rendering before the script is ready. Fix:
 
-Top progress indicator (1/2/3) inside `StageHeader`. Stage 2/3 unlock once at least one cluster has been visited (lightweight, not gated by scoring).
+- Wrap the auto Places fetch in defensive try/catch and don't block render on it (it already does, but also guard the case where `cluster.placesQuery` is missing).
+- Defer `GoogleMap` mount until the map section actually scrolls into view OR simply render a placeholder if `loadGoogleMaps` rejects.
+- Add an `errorComponent` to the route so any thrown error renders a readable fallback inside `AppShell` instead of crashing the app.
+- Keep the existing card structure (Nature, Market Potential, JK Share, Demand Classification, Geo View, Stakeholders, CTA) — that matches the previous spec.
 
-## 3. Stage 1 — Market Map (single layer)
+## 3. Vertical scroll on every screen
 
-**Remove** meta-cluster drill-down entirely. Replace `/stage-1`, `/stage-1/$metaId`, `/stage-1/$metaId/$clusterId` with:
+`AppShell`'s `<main>` already has `overflow-y-auto`. Audit and fix screens that break it:
+- `src/routes/connects/$clusterId.tsx` uses `sticky top-[124px]` for the tab bar — replace with a normal (non-sticky) tab bar so scrolling works cleanly on all viewports.
+- Ensure every route returns its content inside `AppShell` with `pb-24` so the bottom nav doesn't cover content (already the case in shell; just verify per-route padding).
+- Index, Map, Cluster Detail, Connects list, Connects detail, Plan — all confirmed to use `AppShell`; just sanity-check no fixed-height container blocks scroll.
 
-- `/map` — vertical card list of Panvel-relevant clusters (Residential Construction, Industrial/MIDC, Warehousing & Logistics, Retail & Malls, Offices/Commercial Interiors, Schools & Colleges, Hospitals, Local Bazaar). Each card: name + 1-line description.
-- `/map/$clusterId` — Cluster Detail page with sections:
-  - **Nature & Description** (static seed data)
-  - **Market Potential**: H/M/L badge + prospect count (seed)
-  - **JK Share**: user-input H/M/L segmented control (persisted)
-  - **Demand Classification**: system tags (New Construction / Repainting / Repair / Commercial Interiors)
-  - **Geo View**: existing `GoogleMap` component, satellite/roadmap toggle, prospect pins (reuse Places nearby search per cluster)
-  - **Stakeholder Connects**: link/button showing count → opens sheet listing stakeholders for this cluster (from Stage 2 data) with Name / Prospect / Phone
+## 4. Outreach Plan — collapsible cards, collapsed by default
 
-## 4. Stage 2 — Stakeholder Connects
+Refactor `src/routes/plan/index.tsx` to wrap each of the 4 sections (Target clusters, How to connect, Contribution events, Service delivery readiness) in shadcn `Accordion` (type="multiple", `defaultValue={[]}`), so all collapse by default and the user expands what they need. Section header shows title + a small count/summary (e.g. "3 selected", "2 events", "1 gap").
 
-- `/connects` — cluster picker (same card list, shows stakeholder count per cluster)
-- `/connects/$clusterId` — three tabs/sections:
-  - **Whom to Connect** — list + "Add Stakeholder" sheet (Name, Prospect, Phone). Cluster-specific trigger prompts above the list.
-  - **How to Connect** — seed playbook bullets per cluster type
-  - **What to Talk** — pitch template with 3 blocks (Introduction, Context, Intent), partially personalized from cluster data
+## 5. Remove scores everywhere
 
-## 5. Stage 3 — Outreach Plan
+- `Plan` ranked list: remove the literal "Score {n}" line; keep `{stkCount} contacts` and the recommended-star on top. Ranking logic stays internal (used only to sort).
+- Search the codebase for any other "Score" / numeric-score UI and replace with H/M/L labels via `POTENTIAL_LABEL`. Confirmed sites: `Plan` page only; `POTENTIAL_LABEL` is already used elsewhere.
+- No score column appears on Map bubbles either (only the H/M/L pill).
 
-- `/plan` — single scrollable screen:
-  - **Target Clusters this Period**: multi-select chips of clusters; auto-recommended order by composite of market potential + stakeholder count + JK share
-  - **How to Connect**: summarized strategies for selected clusters (reused from Stage 2)
-  - **Contribution Events**: add event cards (type: Workshop / Audit / Awareness / Contractor Meet, attached to cluster, optional date)
-  - **Service Delivery Readiness**: 4-question checklist per selected cluster (Yes/No/Partial), gaps highlighted in red
+## Files
 
-## 6. Data Model (Zustand, persisted)
+Edit:
+- `src/routes/map/index.tsx` — bubble grid layout
+- `src/routes/map/$clusterId.tsx` — defensive Places fetch + route `errorComponent`
+- `src/routes/connects/$clusterId.tsx` — remove `sticky`
+- `src/routes/plan/index.tsx` — Accordion sections, drop "Score" text
 
-Extend `src/store/appStore.ts`:
+Create:
+- `src/components/app/BubbleCircle.tsx`
 
-```ts
-clusters: Record<clusterId, {
-  jkShare: 'H'|'M'|'L'|null,
-  prospects: Prospect[],          // from places + manual
-  visited: boolean,
-}>
-stakeholders: Record<clusterId, Stakeholder[]>  // {id,name,prospect,phone}
-plan: {
-  targetClusterIds: string[],
-  events: Event[],                // {id,clusterId,type,date?,note?}
-  readiness: Record<clusterId, {
-    retailers: 'Y'|'N'|'P'|null,
-    stock: 'Y'|'N'|'P'|null,
-    painters: 'Y'|'N'|'P'|null,
-    trained: 'Y'|'N'|'P'|null,
-  }>
-}
-```
+Delete (only if unused after edits):
+- `src/components/app/ClusterCard.tsx`
 
-Keep existing `clusterMaps` migration path (read old prospects into new shape on first load).
+## Out of scope
 
-## 7. Cluster Taxonomy
-
-Replace `src/data/clusters.ts` `META_CLUSTERS` with a flat `CLUSTERS` array. Each entry:
-
-```ts
-{ id, name, description, potential: 'H'|'M'|'L', prospectCountEstimate,
-  demandTags: string[], placesQueries: string[],
-  triggers: string[], howToConnect: string[], pitch: {intro, context, intent} }
-```
-
-Seed all 8 Panvel clusters listed in the spec.
-
-## 8. Files
-
-**New**
-- `src/routes/index.tsx` (replace redirect with intro screen)
-- `src/routes/map/index.tsx`, `src/routes/map/$clusterId.tsx`
-- `src/routes/connects/index.tsx`, `src/routes/connects/$clusterId.tsx`
-- `src/routes/plan/index.tsx`
-- `src/components/app/ClusterCard.tsx` (vertical list card)
-- `src/components/app/ValuePropCard.tsx`
-- `src/components/connects/StakeholderSheet.tsx`
-- `src/components/plan/EventCard.tsx`, `ReadinessChecklist.tsx`
-
-**Modified**
-- `src/store/appStore.ts` — new schema + migration
-- `src/data/clusters.ts` — flat taxonomy with all intelligence fields
-- `src/data/clusterPlaces.ts` — keyed by flat clusterId
-- `src/components/app/BottomNav.tsx` — 3 tabs
-- `src/components/app/StageHeader.tsx` — 3-step progress
-
-**Deleted**
-- `src/routes/stage-1/**`, `src/routes/stage-2/**`
-- `src/lib/scoring.ts`, `src/components/app/ScoreChip.tsx`, `Segmented.tsx` (if unused after), `Stepper.tsx`
-- `src/components/app/BubbleCircle.tsx`, `BubbleTile.tsx`
-
-## 9. Out of Scope
-
-- No backend writes (all client-persisted via localStorage)
-- No auth / multi-user
-- No export/share of plan (can be a follow-up)
-
-Confirm and I'll switch to build mode.
+No data model changes, no new backend, no auth changes.
