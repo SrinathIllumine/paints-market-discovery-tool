@@ -28,7 +28,7 @@ type Tab = "whom" | "how" | "what";
 function ConnectsClusterScreen() {
   const { clusterId } = Route.useParams();
   const cluster = useMemo(() => getCluster(clusterId), [clusterId]);
-  const stakeholders = useAppStore((s) => s.stakeholders[clusterId] ?? []);
+  const stakeholders = useAppStore((s) => s.stakeholders[clusterId]) ?? [];
   const addStakeholder = useAppStore((s) => s.addStakeholder);
   const removeStakeholder = useAppStore((s) => s.removeStakeholder);
 
