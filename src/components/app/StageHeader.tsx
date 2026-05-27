@@ -1,5 +1,5 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Home } from "lucide-react";
 import { ReactNode } from "react";
 
 export function StageHeader({
@@ -8,12 +8,14 @@ export function StageHeader({
   subtitle,
   backTo,
   right,
+  showHome = true,
 }: {
   eyebrow?: string;
   title: string;
   subtitle?: string;
   backTo?: string;
   right?: ReactNode;
+  showHome?: boolean;
 }) {
   const router = useRouter();
   return (
@@ -42,7 +44,18 @@ export function StageHeader({
             )}
           </div>
         </div>
-        {right}
+        <div className="flex shrink-0 items-center gap-2">
+          {right}
+          {showHome && (
+            <Link
+              to="/"
+              aria-label="Home"
+              className="rounded-full p-1.5 text-navy-foreground/80 hover:bg-white/10"
+            >
+              <Home className="h-5 w-5" />
+            </Link>
+          )}
+        </div>
       </div>
     </header>
   );
