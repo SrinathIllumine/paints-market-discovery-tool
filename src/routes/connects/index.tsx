@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
-import { ClusterCard } from "@/components/app/ClusterCard";
+import { BubbleCircle } from "@/components/app/BubbleCircle";
 import { CLUSTERS } from "@/data/clusters";
 import { useAppStore } from "@/store/appStore";
 
@@ -27,23 +27,19 @@ function ConnectsHome() {
         <StageHeader
           eyebrow="Stage 2 of 3 · Stakeholder Connects"
           title="Who will you connect with?"
-          subtitle="Open any cluster to capture contacts and a personalised pitch."
+          subtitle="Tap a cluster bubble to capture contacts and a personalised pitch."
         />
       }
     >
-      <div className="space-y-3 px-5 py-5">
+      <div className="grid grid-cols-2 gap-5 px-5 py-6 sm:grid-cols-3">
         {CLUSTERS.map((c) => {
           const count = stakeholders[c.id]?.length ?? 0;
           return (
-            <ClusterCard
+            <BubbleCircle
               key={c.id}
               cluster={c}
               onClick={() => navigate({ to: "/connects/$clusterId", params: { clusterId: c.id } })}
-              rightSlot={
-                <span className="text-[11px] font-medium text-navy">
-                  {count} contact{count === 1 ? "" : "s"}
-                </span>
-              }
+              badge={count > 0 ? `${count} contact${count === 1 ? "" : "s"}` : undefined}
             />
           );
         })}
