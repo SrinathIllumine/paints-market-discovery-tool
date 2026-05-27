@@ -2,11 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { loadGoogleMaps } from "@/lib/googleMaps";
 import { PANVEL_CENTER } from "@/data/clusters";
 import type { Prospect } from "@/store/appStore";
+import type { Region } from "@/lib/regions";
+import { convexHull } from "@/lib/regions";
 import { Layers } from "lucide-react";
-
-export type GoogleMapHandle = {
-  map: google.maps.Map | null;
-};
 
 type Props = {
   prospects: Prospect[];
@@ -15,6 +13,8 @@ type Props = {
   pickingPin: boolean;
   onPinDropped?: (latLng: { lat: number; lng: number }) => void;
   readOnly?: boolean;
+  regions?: Region[];
+  boundary?: { lat: number; lng: number }[];
 };
 
 export function GoogleMap({
@@ -24,16 +24,19 @@ export function GoogleMap({
   pickingPin,
   onPinDropped,
   readOnly,
+  regions,
+  boundary,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
+  const polygonsRef = useRef<google.maps.Polygon[]>([]);
+  const boundaryRef = useRef<google.maps.Polygon | null>(null);
   const infoRef = useRef<google.maps.InfoWindow | null>(null);
   const clickListenerRef = useRef<google.maps.MapsEventListener | null>(null);
   const [ready, setReady] = useState(false);
   const [mapType, setMapType] = useState<"roadmap" | "hybrid">("roadmap");
 
-  // Init map
   useEffect(() => {
     let cancelled = false;
     loadGoogleMaps()
@@ -41,7 +44,7 @@ export function GoogleMap({
         if (cancelled || !containerRef.current) return;
         mapRef.current = new g.maps.Map(containerRef.current, {
           center: PANVEL_CENTER,
-          zoom: 12,
+          zoom: 11,
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: false,
@@ -61,7 +64,6 @@ export function GoogleMap({
     if (mapRef.current) mapRef.current.setMapTypeId(mapType);
   }, [mapType]);
 
-  // Pin-drop mode
   useEffect(() => {
     if (!ready || !mapRef.current) return;
     if (clickListenerRef.current) {
@@ -87,28 +89,34 @@ export function GoogleMap({
     };
   }, [ready, pickingPin, onPinDropped]);
 
-  // Sync markers
+  // Color lookup per prospect
+  const colorById = new Map<string, string>();
+  if (regions) {
+    for (const r of regions) for (const p of r.prospects) colorById.set(p.id, r.color);
+  }
+
+  // Markers
   useEffect(() => {
     if (!ready || !mapRef.current || !window.google) return;
     const g = window.google;
     const map = mapRef.current;
     const existing = markersRef.current;
     const nextIds = new Set(prospects.map((p) => p.id));
-    // Remove gone
     for (const [id, marker] of existing) {
       if (!nextIds.has(id)) {
         marker.setMap(null);
         existing.delete(id);
       }
     }
-    // Add/update
     for (const p of prospects) {
       const isSelected = selectedIds.includes(p.id);
+      const regionColor = colorById.get(p.id);
+      const baseColor = regionColor ?? (isSelected ? "#dc2626" : "#94a3b8");
       let marker = existing.get(p.id);
       const icon = {
         path: g.maps.SymbolPath.CIRCLE,
-        scale: isSelected ? 9 : 7,
-        fillColor: isSelected ? "#dc2626" : "#94a3b8",
+        scale: isSelected ? 8 : 6,
+        fillColor: baseColor,
         fillOpacity: 1,
         strokeColor: "#ffffff",
         strokeWeight: 2,
@@ -147,7 +155,65 @@ export function GoogleMap({
         marker.setIcon(icon);
       }
     }
-  }, [ready, prospects, selectedIds, onToggle, readOnly]);
+  }, [ready, prospects, selectedIds, onToggle, readOnly, regions]);
+
+  // Region polygons (dotted, convex-hull)
+  useEffect(() => {
+    if (!ready || !mapRef.current || !window.google) return;
+    const g = window.google;
+    for (const poly of polygonsRef.current) poly.setMap(null);
+    polygonsRef.current = [];
+    if (!regions) return;
+
+    const dashSymbol = {
+      path: "M 0,-1 0,1",
+      strokeOpacity: 1,
+      scale: 3,
+    };
+
+    for (const r of regions) {
+      if (r.prospects.length < 3) continue;
+      const hull = convexHull(r.prospects.map((p) => ({ lat: p.lat, lng: p.lng })));
+      const poly = new g.maps.Polygon({
+        paths: hull,
+        strokeOpacity: 0,
+        strokeColor: r.color,
+        fillColor: r.color,
+        fillOpacity: 0.08,
+        icons: [{ icon: dashSymbol, offset: "0", repeat: "12px" }],
+        map: mapRef.current,
+        clickable: false,
+      });
+      polygonsRef.current.push(poly);
+    }
+  }, [ready, regions]);
+
+  // Panvel boundary
+  useEffect(() => {
+    if (!ready || !mapRef.current || !window.google) return;
+    const g = window.google;
+    if (boundaryRef.current) {
+      boundaryRef.current.setMap(null);
+      boundaryRef.current = null;
+    }
+    if (!boundary || boundary.length < 3) return;
+    boundaryRef.current = new g.maps.Polygon({
+      paths: boundary,
+      strokeOpacity: 0,
+      strokeColor: "#0f172a",
+      fillColor: "#0f172a",
+      fillOpacity: 0.03,
+      icons: [
+        {
+          icon: { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 4, strokeColor: "#0f172a" },
+          offset: "0",
+          repeat: "16px",
+        },
+      ],
+      map: mapRef.current,
+      clickable: false,
+    });
+  }, [ready, boundary]);
 
   return (
     <div className="relative h-full w-full">

@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
-import { Segmented } from "@/components/app/Segmented";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -14,9 +13,11 @@ import {
 import { GoogleMap } from "@/components/maps/GoogleMap";
 import { AddProspectSheet } from "@/components/maps/AddProspectSheet";
 import { CLUSTERS, getCluster, POTENTIAL_LABEL } from "@/data/clusters";
+import { PANVEL_CENTER } from "@/data/clusters";
+import { PANVEL_BOUNDARY } from "@/data/panvelBoundary";
+import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
-import { PANVEL_CENTER } from "@/data/clusters";
 import { useServerFn } from "@tanstack/react-start";
 import { Phone, Plus, Users, Loader2, MapPin, Check } from "lucide-react";
 import {
@@ -26,7 +27,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-
 
 export const Route = createFileRoute("/map/$clusterId")({
   component: ClusterDetailScreen,
@@ -50,7 +50,6 @@ function ClusterDetailScreen() {
   const stakeholders = useAppStore((s) => s.stakeholders[clusterId]) ?? [];
   const ensureCluster = useAppStore((s) => s.ensureCluster);
   const markVisited = useAppStore((s) => s.markVisited);
-  const setJkShare = useAppStore((s) => s.setJkShare);
   const setProspects = useAppStore((s) => s.setProspects);
   const addProspect = useAppStore((s) => s.addProspect);
   const toggleProspectSelected = useAppStore((s) => s.toggleProspectSelected);
@@ -67,7 +66,6 @@ function ClusterDetailScreen() {
     markVisited(clusterId);
   }, [clusterId, ensureCluster, markVisited]);
 
-  // Auto-load prospects on first visit
   useEffect(() => {
     if (!cluster) return;
     if (!state || state.prospects.length > 0) return;
@@ -77,6 +75,7 @@ function ClusterDetailScreen() {
         textQuery: cluster.placesQuery,
         lat: PANVEL_CENTER.lat,
         lng: PANVEL_CENTER.lng,
+        radiusMeters: 25000,
       },
     })
       .then((res) => {
@@ -96,6 +95,14 @@ function ClusterDetailScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cluster?.id]);
 
+  const cs = state ?? { jkShare: null, prospects: [], selectedProspectIds: [], visited: true };
+
+  const regions = useMemo(() => {
+    if (cs.prospects.length === 0) return [];
+    const k = Math.max(3, Math.min(5, Math.ceil(cs.prospects.length / 8)));
+    return groupIntoRegions(cs.prospects, k);
+  }, [cs.prospects]);
+
   if (!cluster) {
     return (
       <AppShell bottom={<BottomNav />}>
@@ -104,8 +111,6 @@ function ClusterDetailScreen() {
     );
   }
 
-  const cs = state ?? { jkShare: null, prospects: [], selectedProspectIds: [], visited: true };
-
   return (
     <AppShell
       bottom={<BottomNav />}
@@ -113,20 +118,15 @@ function ClusterDetailScreen() {
         <StageHeader
           eyebrow="Cluster Card"
           title={cluster.name}
-          subtitle={`${POTENTIAL_LABEL[cluster.potential]} potential${loading ? "" : ` · ${cs.prospects.length} prospects`}`}
+          subtitle={cluster.nature}
           backTo="/map"
         />
       }
     >
       <div className="space-y-5 px-5 py-5">
-        {/* Nature */}
-        <Section title="Nature & Description">
-          <p className="text-sm leading-relaxed text-foreground">{cluster.description}</p>
-        </Section>
-
         {/* Market potential */}
         <Section title="Market Potential">
-          <div className="flex items-center gap-3">
+          <div className="mb-3 flex items-center gap-3">
             <span className="rounded-full bg-critical/10 px-3 py-1 text-xs font-semibold text-critical">
               {POTENTIAL_LABEL[cluster.potential]}
             </span>
@@ -134,34 +134,14 @@ function ClusterDetailScreen() {
               {loading ? "Loading prospects…" : `${cs.prospects.length} prospects identified`}
             </span>
           </div>
-        </Section>
-
-
-        {/* JK share */}
-        <Section title="Your JK Share here">
-          <Segmented<"H" | "M" | "L">
-            value={cs.jkShare}
-            onChange={(v) => setJkShare(clusterId, v)}
-            options={[
-              { value: "L", label: "Low" },
-              { value: "M", label: "Medium" },
-              { value: "H", label: "High" },
-            ]}
-          />
-        </Section>
-
-        {/* Demand classification */}
-        <Section title="Demand Classification">
-          <div className="flex flex-wrap gap-2">
-            {cluster.demandTags.map((t) => (
-              <span
-                key={t}
-                className="rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground"
-              >
-                {t}
-              </span>
+          <ul className="space-y-1.5 text-sm">
+            {cluster.potentialReasons.map((r) => (
+              <li key={r} className="flex gap-2">
+                <span className="text-critical">•</span>
+                <span>{r}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </Section>
 
         {/* Map */}
@@ -189,6 +169,8 @@ function ClusterDetailScreen() {
                 setPickingPin(false);
                 setSheetOpen(true);
               }}
+              regions={regions}
+              boundary={PANVEL_BOUNDARY}
             />
             {loading && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/60">
@@ -201,71 +183,102 @@ function ClusterDetailScreen() {
               </div>
             )}
           </div>
+          {regions.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {regions.map((r) => (
+                <div
+                  key={r.id}
+                  className="flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[11px]"
+                >
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: r.color }}
+                  />
+                  <span className="font-medium">{r.label}</span>
+                  <span className="text-muted-foreground">({r.prospects.length})</span>
+                </div>
+              ))}
+              <div className="flex items-center gap-1.5 rounded-full border border-dashed border-foreground/40 px-2.5 py-1 text-[11px] text-muted-foreground">
+                Panvel area outline
+              </div>
+            </div>
+          )}
           <p className="mt-2 text-xs text-muted-foreground">
             <MapPin className="mr-1 inline h-3 w-3" />
             {cs.prospects.length} prospects on map · {cs.selectedProspectIds.length} selected
           </p>
         </Section>
 
-        {/* All prospects (collapsible) */}
-        <section className="rounded-2xl border border-border bg-card shadow-sm">
-          <Accordion type="single" collapsible defaultValue="">
-            <AccordionItem value="all-prospects" className="border-none">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <span className="font-display text-xl">
-                  All prospects{" "}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    ({cs.prospects.length})
-                  </span>
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4">
-                {cs.prospects.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    {loading ? "Loading prospects…" : "No prospects identified yet."}
-                  </p>
-                ) : (
-                  <ul className="divide-y divide-border">
-                    {cs.prospects.map((p) => {
-                      const isSel = cs.selectedProspectIds.includes(p.id);
-                      return (
-                        <li key={p.id}>
-                          <button
-                            type="button"
-                            onClick={() => toggleProspectSelected(clusterId, p.id)}
-                            className="flex w-full items-start justify-between gap-3 py-2.5 text-left"
-                          >
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-medium">{p.name}</p>
-                              {p.locality && (
-                                <p className="truncate text-xs text-muted-foreground">
-                                  {p.locality}
-                                </p>
-                              )}
-                            </div>
-                            <span
-                              className={cn(
-                                "mt-0.5 flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[10px] font-semibold",
-                                isSel
-                                  ? "bg-critical text-critical-foreground"
-                                  : "border border-border bg-muted/40 text-muted-foreground",
-                              )}
+        {/* Prospects by region (collapsible cards) */}
+        <section className="space-y-3">
+          <h2 className="font-display text-xl">Prospects by region</h2>
+          {cs.prospects.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
+              {loading ? "Loading prospects…" : "No prospects identified yet."}
+            </div>
+          ) : (
+            <Accordion type="multiple" defaultValue={[]} className="space-y-2">
+              {regions.map((r) => (
+                <AccordionItem
+                  key={r.id}
+                  value={r.id}
+                  className="overflow-hidden rounded-2xl border border-border bg-card"
+                >
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                    <div className="flex w-full items-center justify-between gap-3 pr-2">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="h-3 w-3 shrink-0 rounded-full"
+                          style={{ backgroundColor: r.color }}
+                        />
+                        <span className="font-display text-base leading-tight">{r.label}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {r.prospects.length} prospect{r.prospects.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-3">
+                    <ul className="divide-y divide-border">
+                      {r.prospects.map((p) => {
+                        const isSel = cs.selectedProspectIds.includes(p.id);
+                        return (
+                          <li key={p.id}>
+                            <button
+                              type="button"
+                              onClick={() => toggleProspectSelected(clusterId, p.id)}
+                              className="flex w-full items-start justify-between gap-3 py-2.5 text-left"
                             >
-                              {isSel && <Check className="h-3 w-3" />}
-                              {isSel ? "Selected" : "Select"}
-                            </span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium">{p.name}</p>
+                                {p.locality && (
+                                  <p className="truncate text-xs text-muted-foreground">
+                                    {p.locality}
+                                  </p>
+                                )}
+                              </div>
+                              <span
+                                className={cn(
+                                  "mt-0.5 flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[10px] font-semibold",
+                                  isSel
+                                    ? "bg-critical text-critical-foreground"
+                                    : "border border-border bg-muted/40 text-muted-foreground",
+                                )}
+                              >
+                                {isSel && <Check className="h-3 w-3" />}
+                                {isSel ? "Selected" : "Select"}
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          )}
         </section>
-
-
 
         {/* Stakeholder connects link */}
         <button
@@ -382,5 +395,4 @@ function Section({
   );
 }
 
-// Silence unused warning if CLUSTERS not used elsewhere here
 void CLUSTERS;
