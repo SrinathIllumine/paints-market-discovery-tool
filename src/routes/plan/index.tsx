@@ -83,182 +83,261 @@ function PlanScreen() {
         />
       }
     >
-      <div className="space-y-6 px-5 py-5">
-        {/* 1 — Targets */}
-        <Section
-          title="Target clusters for this period"
-          subtitle="Top of the list is recommended based on potential, connects and JK share."
-        >
-          <div className="space-y-2">
-            {ranked.map(({ cluster, score, stkCount }, i) => {
-              const active = targetIds.includes(cluster.id);
-              return (
-                <button
-                  key={cluster.id}
-                  onClick={() => toggleTarget(cluster.id)}
-                  className={cn(
-                    "flex w-full items-start justify-between gap-3 rounded-2xl border p-3 text-left transition-colors",
-                    active
-                      ? "border-critical bg-critical/5"
-                      : "border-border bg-card hover:bg-muted/40",
-                  )}
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      {i === 0 && <Star className="h-3.5 w-3.5 fill-critical text-critical" />}
-                      <p className="truncate font-medium">{cluster.name}</p>
-                    </div>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      Score {score} · {stkCount} contacts
+      <div className="px-5 py-5">
+        {(() => {
+          const gapsCount = targetIds.reduce((acc, id) => {
+            const r = readinessMap[id];
+            if (!r) return acc + 4;
+            return (
+              acc +
+              (["retailers", "stock", "painters", "trained"] as const).filter(
+                (k) => r[k] === "N" || r[k] === "P" || r[k] === null,
+              ).length
+            );
+          }, 0);
+          return (
+            <Accordion type="multiple" defaultValue={[]} className="space-y-3">
+              <AccordionItem
+                value="targets"
+                className="overflow-hidden rounded-2xl border border-border bg-card"
+              >
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex w-full items-center justify-between pr-2">
+                    <span className="font-display text-lg leading-tight">Target clusters</span>
+                    <span className="text-xs text-muted-foreground">
+                      {targetIds.length} selected
+                    </span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    Top of the list is recommended based on potential, connects and JK share.
+                  </p>
+                  <div className="space-y-2">
+                    {ranked.map(({ cluster, stkCount }, i) => {
+                      const active = targetIds.includes(cluster.id);
+                      return (
+                        <button
+                          key={cluster.id}
+                          onClick={() => toggleTarget(cluster.id)}
+                          className={cn(
+                            "flex w-full items-start justify-between gap-3 rounded-2xl border p-3 text-left transition-colors",
+                            active
+                              ? "border-critical bg-critical/5"
+                              : "border-border bg-card hover:bg-muted/40",
+                          )}
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              {i === 0 && (
+                                <Star className="h-3.5 w-3.5 fill-critical text-critical" />
+                              )}
+                              <p className="truncate font-medium">{cluster.name}</p>
+                            </div>
+                            <p className="mt-0.5 text-[11px] text-muted-foreground">
+                              {POTENTIAL_LABEL[cluster.potential]} potential · {stkCount} contact
+                              {stkCount === 1 ? "" : "s"}
+                            </p>
+                          </div>
+                          <div
+                            className={cn(
+                              "mt-1 h-5 w-5 shrink-0 rounded-md border-2",
+                              active ? "border-critical bg-critical" : "border-border",
+                            )}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem
+                value="how"
+                className="overflow-hidden rounded-2xl border border-border bg-card"
+              >
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex w-full items-center justify-between pr-2">
+                    <span className="font-display text-lg leading-tight">How to connect</span>
+                    <span className="text-xs text-muted-foreground">
+                      {targetIds.length === 0
+                        ? "Pick targets first"
+                        : `${targetIds.length} cluster${targetIds.length === 1 ? "" : "s"}`}
+                    </span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  {targetIds.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Select clusters above to see strategies.
                     </p>
-                  </div>
-                  <div
-                    className={cn(
-                      "mt-1 h-5 w-5 shrink-0 rounded-md border-2",
-                      active ? "border-critical bg-critical" : "border-border",
-                    )}
-                  />
-                </button>
-              );
-            })}
-          </div>
-        </Section>
-
-        {/* 2 — How to connect summary */}
-        <Section
-          title="How to connect"
-          subtitle="Summarised strategies for the clusters you've picked."
-        >
-          {targetIds.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Select clusters above to see strategies.</p>
-          ) : (
-            <div className="space-y-3">
-              {targetIds.map((id) => {
-                const c = getCluster(id);
-                if (!c) return null;
-                return (
-                  <div key={id} className="rounded-2xl border border-border bg-card p-4">
-                    <p className="font-display text-lg leading-tight">{c.name}</p>
-                    <ul className="mt-2 space-y-1.5 text-sm">
-                      {c.howToConnect.slice(0, 2).map((h) => (
-                        <li key={h} className="flex gap-2">
-                          <span className="text-critical">•</span>
-                          <span>{h}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Section>
-
-        {/* 3 — Events */}
-        <Section
-          title="Contribution events"
-          right={
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setEventDraft({
-                  clusterId: targetIds[0] ?? CLUSTERS[0].id,
-                  type: "Workshop",
-                  date: "",
-                  note: "",
-                });
-                setEventOpen(true);
-              }}
-              className="h-8 gap-1 text-xs"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add
-            </Button>
-          }
-        >
-          {events.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No events planned yet. Add workshops, audits, awareness sessions or contractor meets.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {events.map((e) => {
-                const c = getCluster(e.clusterId);
-                return (
-                  <div
-                    key={e.id}
-                    className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-card p-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium">{e.type}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {c?.name ?? e.clusterId}
-                        {e.date ? ` · ${e.date}` : ""}
-                      </p>
-                      {e.note && <p className="mt-1 text-xs">{e.note}</p>}
+                  ) : (
+                    <div className="space-y-3">
+                      {targetIds.map((id) => {
+                        const c = getCluster(id);
+                        if (!c) return null;
+                        return (
+                          <div key={id} className="rounded-2xl border border-border bg-card p-4">
+                            <p className="font-display text-lg leading-tight">{c.name}</p>
+                            <ul className="mt-2 space-y-1.5 text-sm">
+                              {c.howToConnect.slice(0, 2).map((h) => (
+                                <li key={h} className="flex gap-2">
+                                  <span className="text-critical">•</span>
+                                  <span>{h}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <button
-                      onClick={() => removeEvent(e.id)}
-                      className="rounded-full p-1.5 text-muted-foreground hover:bg-muted"
-                      aria-label="Remove event"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Section>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
 
-        {/* 4 — Readiness */}
-        <Section
-          title="Service delivery readiness"
-          subtitle="Quick check across your selected clusters. Gaps in red."
-        >
-          {targetIds.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Select clusters above to run the checklist.</p>
-          ) : (
-            <div className="space-y-3">
-              {targetIds.map((id) => {
-                const c = getCluster(id);
-                if (!c) return null;
-                const r = readinessMap[id] ?? {
-                  retailers: null,
-                  stock: null,
-                  painters: null,
-                  trained: null,
-                };
-                return (
-                  <div key={id} className="rounded-2xl border border-border bg-card p-4">
-                    <p className="mb-3 font-medium">{c.name}</p>
-                    <ReadinessRow
-                      label="Enough retailers in this cluster?"
-                      value={r.retailers}
-                      onChange={(v) => setReadiness(id, { retailers: v })}
-                    />
-                    <ReadinessRow
-                      label="Stock availability checked?"
-                      value={r.stock}
-                      onChange={(v) => setReadiness(id, { stock: v })}
-                    />
-                    <ReadinessRow
-                      label="Enough painters / contractors?"
-                      value={r.painters}
-                      onChange={(v) => setReadiness(id, { painters: v })}
-                    />
-                    <ReadinessRow
-                      label="Are they trained for this cluster's needs?"
-                      value={r.trained}
-                      onChange={(v) => setReadiness(id, { trained: v })}
-                    />
+              <AccordionItem
+                value="events"
+                className="overflow-hidden rounded-2xl border border-border bg-card"
+              >
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex w-full items-center justify-between pr-2">
+                    <span className="font-display text-lg leading-tight">Contribution events</span>
+                    <span className="text-xs text-muted-foreground">
+                      {events.length} planned
+                    </span>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </Section>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <div className="mb-3 flex justify-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setEventDraft({
+                          clusterId: targetIds[0] ?? CLUSTERS[0].id,
+                          type: "Workshop",
+                          date: "",
+                          note: "",
+                        });
+                        setEventOpen(true);
+                      }}
+                      className="h-8 gap-1 text-xs"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Add event
+                    </Button>
+                  </div>
+                  {events.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No events planned yet. Add workshops, audits, awareness sessions or contractor meets.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {events.map((e) => {
+                        const c = getCluster(e.clusterId);
+                        return (
+                          <div
+                            key={e.id}
+                            className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-card p-3"
+                          >
+                            <div className="min-w-0">
+                              <p className="font-medium">{e.type}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {c?.name ?? e.clusterId}
+                                {e.date ? ` · ${e.date}` : ""}
+                              </p>
+                              {e.note && <p className="mt-1 text-xs">{e.note}</p>}
+                            </div>
+                            <button
+                              onClick={() => removeEvent(e.id)}
+                              className="rounded-full p-1.5 text-muted-foreground hover:bg-muted"
+                              aria-label="Remove event"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem
+                value="readiness"
+                className="overflow-hidden rounded-2xl border border-border bg-card"
+              >
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex w-full items-center justify-between pr-2">
+                    <span className="font-display text-lg leading-tight">
+                      Service delivery readiness
+                    </span>
+                    <span
+                      className={cn(
+                        "text-xs",
+                        targetIds.length > 0 && gapsCount > 0
+                          ? "text-critical"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {targetIds.length === 0
+                        ? "Pick targets first"
+                        : gapsCount === 0
+                          ? "All set"
+                          : `${gapsCount} gap${gapsCount === 1 ? "" : "s"}`}
+                    </span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  {targetIds.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Select clusters above to run the checklist.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {targetIds.map((id) => {
+                        const c = getCluster(id);
+                        if (!c) return null;
+                        const r = readinessMap[id] ?? {
+                          retailers: null,
+                          stock: null,
+                          painters: null,
+                          trained: null,
+                        };
+                        return (
+                          <div key={id} className="rounded-2xl border border-border bg-card p-4">
+                            <p className="mb-3 font-medium">{c.name}</p>
+                            <ReadinessRow
+                              label="Enough retailers in this cluster?"
+                              value={r.retailers}
+                              onChange={(v) => setReadiness(id, { retailers: v })}
+                            />
+                            <ReadinessRow
+                              label="Stock availability checked?"
+                              value={r.stock}
+                              onChange={(v) => setReadiness(id, { stock: v })}
+                            />
+                            <ReadinessRow
+                              label="Enough painters / contractors?"
+                              value={r.painters}
+                              onChange={(v) => setReadiness(id, { painters: v })}
+                            />
+                            <ReadinessRow
+                              label="Are they trained for this cluster's needs?"
+                              value={r.trained}
+                              onChange={(v) => setReadiness(id, { trained: v })}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          );
+        })()}
       </div>
+
 
       <Dialog open={eventOpen} onOpenChange={setEventOpen}>
         <DialogContent className="max-w-md">
