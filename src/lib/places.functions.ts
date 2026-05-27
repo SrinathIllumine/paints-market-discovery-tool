@@ -47,7 +47,7 @@ export const searchPlacesForCluster = createServerFn({ method: "POST" })
     const all: PlaceResult[] = [];
     const seen = new Set<string>();
     let pageToken: string | undefined = undefined;
-    const MAX_PAGES = 3;
+    const MAX_PAGES = 10;
 
     for (let page = 0; page < MAX_PAGES; page++) {
       const body: Record<string, unknown> = {
