@@ -5,6 +5,12 @@ import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { Segmented } from "@/components/app/Segmented";
 import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { GoogleMap } from "@/components/maps/GoogleMap";
 import { AddProspectSheet } from "@/components/maps/AddProspectSheet";
 import { CLUSTERS, getCluster, POTENTIAL_LABEL } from "@/data/clusters";
@@ -12,13 +18,15 @@ import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { PANVEL_CENTER } from "@/data/clusters";
 import { useServerFn } from "@tanstack/react-start";
-import { Phone, Plus, Users, Loader2, MapPin } from "lucide-react";
+import { Phone, Plus, Users, Loader2, MapPin, Check } from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/map/$clusterId")({
   component: ClusterDetailScreen,
@@ -105,7 +113,7 @@ function ClusterDetailScreen() {
         <StageHeader
           eyebrow="Cluster Card"
           title={cluster.name}
-          subtitle={`${POTENTIAL_LABEL[cluster.potential]} potential · ~${cluster.prospectCountEstimate} prospects`}
+          subtitle={`${POTENTIAL_LABEL[cluster.potential]} potential${loading ? "" : ` · ${cs.prospects.length} prospects`}`}
           backTo="/map"
         />
       }
@@ -123,10 +131,11 @@ function ClusterDetailScreen() {
               {POTENTIAL_LABEL[cluster.potential]}
             </span>
             <span className="text-sm text-muted-foreground">
-              ~{cluster.prospectCountEstimate} prospects estimated
+              {loading ? "Loading prospects…" : `${cs.prospects.length} prospects identified`}
             </span>
           </div>
         </Section>
+
 
         {/* JK share */}
         <Section title="Your JK Share here">
@@ -197,6 +206,66 @@ function ClusterDetailScreen() {
             {cs.prospects.length} prospects on map · {cs.selectedProspectIds.length} selected
           </p>
         </Section>
+
+        {/* All prospects (collapsible) */}
+        <section className="rounded-2xl border border-border bg-card shadow-sm">
+          <Accordion type="single" collapsible defaultValue="">
+            <AccordionItem value="all-prospects" className="border-none">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <span className="font-display text-xl">
+                  All prospects{" "}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    ({cs.prospects.length})
+                  </span>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                {cs.prospects.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    {loading ? "Loading prospects…" : "No prospects identified yet."}
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-border">
+                    {cs.prospects.map((p) => {
+                      const isSel = cs.selectedProspectIds.includes(p.id);
+                      return (
+                        <li key={p.id}>
+                          <button
+                            type="button"
+                            onClick={() => toggleProspectSelected(clusterId, p.id)}
+                            className="flex w-full items-start justify-between gap-3 py-2.5 text-left"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium">{p.name}</p>
+                              {p.locality && (
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {p.locality}
+                                </p>
+                              )}
+                            </div>
+                            <span
+                              className={cn(
+                                "mt-0.5 flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[10px] font-semibold",
+                                isSel
+                                  ? "bg-critical text-critical-foreground"
+                                  : "border border-border bg-muted/40 text-muted-foreground",
+                              )}
+                            >
+                              {isSel && <Check className="h-3 w-3" />}
+                              {isSel ? "Selected" : "Select"}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </section>
+
+
 
         {/* Stakeholder connects link */}
         <button
