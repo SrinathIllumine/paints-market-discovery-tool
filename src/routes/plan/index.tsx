@@ -103,7 +103,7 @@ function PlanScreen() {
               >
                 <AccordionTrigger className="px-4 py-3 hover:no-underline">
                   <div className="flex w-full items-center justify-between pr-2">
-                    <span className="font-display text-lg leading-tight">Target clusters</span>
+                    <span className="font-display text-lg leading-tight">Select Target clusters</span>
                     <span className="text-xs text-muted-foreground">
                       {targetIds.length} selected
                     </span>
