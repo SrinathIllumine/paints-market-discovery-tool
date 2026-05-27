@@ -235,13 +235,13 @@ function PlanScreen() {
                         className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-card p-3"
                       >
                         <div className="min-w-0">
-                          <p className="font-medium">{e.type}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="font-medium leading-tight">{e.topic || e.type}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
                             {c?.name ?? e.clusterId}
                             {e.date ? ` · ${e.date}` : ""}
+                            {e.topic ? ` · ${e.type}` : ""}
                           </p>
-                          {e.topic && <p className="mt-1 text-xs font-medium">{e.topic}</p>}
-                          {e.note && <p className="mt-0.5 text-xs text-muted-foreground">{e.note}</p>}
+                          {e.note && <p className="mt-1 text-xs text-muted-foreground">{e.note}</p>}
                         </div>
                         <button
                           onClick={() => removeEvent(e.id)}

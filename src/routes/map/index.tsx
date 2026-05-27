@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { BubbleCircle } from "@/components/app/BubbleCircle";
+import { Button } from "@/components/ui/button";
 import { CLUSTERS } from "@/data/clusters";
 import { useAppStore } from "@/store/appStore";
 
@@ -16,9 +18,14 @@ export const Route = createFileRoute("/map/")({
   component: MarketMapScreen,
 });
 
+const INITIAL = 6;
+
 function MarketMapScreen() {
   const navigate = useNavigate();
   const stakeholders = useAppStore((s) => s.stakeholders);
+  const [visible, setVisible] = useState(INITIAL);
+  const shown = CLUSTERS.slice(0, visible);
+  const hasMore = visible < CLUSTERS.length;
 
   return (
     <AppShell
@@ -31,18 +38,30 @@ function MarketMapScreen() {
         />
       }
     >
-      <div className="grid grid-cols-2 gap-5 px-5 py-6 sm:grid-cols-3">
-        {CLUSTERS.map((c) => {
-          const stkCount = stakeholders[c.id]?.length ?? 0;
-          return (
-            <BubbleCircle
-              key={c.id}
-              cluster={c}
-              onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
-              badge={stkCount > 0 ? `${stkCount} contact${stkCount === 1 ? "" : "s"}` : undefined}
-            />
-          );
-        })}
+      <div className="max-h-[calc(100vh-260px)] overflow-y-auto px-5 py-6">
+        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
+          {shown.map((c) => {
+            const stkCount = stakeholders[c.id]?.length ?? 0;
+            return (
+              <BubbleCircle
+                key={c.id}
+                cluster={c}
+                onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
+                badge={stkCount > 0 ? `${stkCount} contact${stkCount === 1 ? "" : "s"}` : undefined}
+              />
+            );
+          })}
+        </div>
+        {hasMore && (
+          <div className="mt-6 flex justify-center">
+            <Button
+              variant="outline"
+              onClick={() => setVisible((v) => Math.min(v + INITIAL, CLUSTERS.length))}
+            >
+              Load more ({CLUSTERS.length - visible})
+            </Button>
+          </div>
+        )}
       </div>
     </AppShell>
   );

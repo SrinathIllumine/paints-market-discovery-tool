@@ -97,11 +97,7 @@ function ClusterDetailScreen() {
 
   const cs = state ?? { jkShare: null, prospects: [], selectedProspectIds: [], visited: true };
 
-  const regions = useMemo(() => {
-    if (cs.prospects.length === 0) return [];
-    const k = Math.max(3, Math.min(5, Math.ceil(cs.prospects.length / 8)));
-    return groupIntoRegions(cs.prospects, k);
-  }, [cs.prospects]);
+  const regions = useMemo(() => groupIntoRegions(cs.prospects), [cs.prospects]);
 
   if (!cluster) {
     return (
@@ -118,7 +114,7 @@ function ClusterDetailScreen() {
         <StageHeader
           eyebrow="Cluster Card"
           title={cluster.name}
-          subtitle={cluster.nature}
+          subtitle={`${cluster.nature} — ${cluster.description}`}
           backTo="/map"
         />
       }
@@ -280,27 +276,27 @@ function ClusterDetailScreen() {
           )}
         </section>
 
-        {/* Stakeholder connects link */}
-        <button
-          type="button"
-          onClick={() => setStkOpen(true)}
-          className="flex w-full items-center justify-between rounded-2xl border border-border bg-card p-4 text-left shadow-sm"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy/10 text-navy">
-              <Users className="h-5 w-5" />
+        {/* Stakeholder connects link — only when contacts exist */}
+        {stakeholders.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setStkOpen(true)}
+            className="flex w-full items-center justify-between rounded-2xl border border-border bg-card p-4 text-left shadow-sm"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy/10 text-navy">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-display text-lg leading-tight">Stakeholder Connects</p>
+                <p className="text-xs text-muted-foreground">
+                  {stakeholders.length} contact{stakeholders.length === 1 ? "" : "s"} added
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="font-display text-lg leading-tight">Stakeholder Connects</p>
-              <p className="text-xs text-muted-foreground">
-                {stakeholders.length === 0
-                  ? "No contacts yet — add them in Stage 2"
-                  : `${stakeholders.length} contact${stakeholders.length === 1 ? "" : "s"} added`}
-              </p>
-            </div>
-          </div>
-          <span className="text-xs font-semibold text-critical">View</span>
-        </button>
+            <span className="text-xs font-semibold text-critical">View</span>
+          </button>
+        )}
 
         <Button
           onClick={() => navigate({ to: "/connects/$clusterId", params: { clusterId } })}

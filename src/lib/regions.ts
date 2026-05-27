@@ -8,96 +8,46 @@ export type Region = {
   prospects: Prospect[];
 };
 
-const PALETTE = ["#dc2626", "#2563eb", "#16a34a", "#d97706", "#7c3aed"];
+// Fixed Panvel sub-areas — each prospect is assigned to the nearest center.
+// This guarantees unique, recognisable region names instead of repeated tokens.
+type SubArea = { id: string; label: string; color: string; lat: number; lng: number };
 
-function deriveLabel(prospects: Prospect[], fallback: string): string {
-  // pick most-frequent locality token (last meaningful word before pincode)
-  const counts = new Map<string, number>();
-  for (const p of prospects) {
-    const addr = p.locality ?? "";
-    // strip pincode + state
-    const parts = addr.split(",").map((s) => s.trim()).filter(Boolean);
-    // pick second-to-last (often suburb/town)
-    const token = parts[parts.length - 3] ?? parts[parts.length - 2] ?? parts[0];
-    if (!token) continue;
-    const clean = token.replace(/\d{4,}/g, "").replace(/Maharashtra|India/gi, "").trim();
-    if (!clean || clean.length < 3) continue;
-    counts.set(clean, (counts.get(clean) ?? 0) + 1);
-  }
-  let best: string | null = null;
-  let bestN = 0;
-  for (const [k, n] of counts) {
-    if (n > bestN) {
-      bestN = n;
-      best = k;
-    }
-  }
-  return best ?? fallback;
-}
+const PANVEL_SUB_AREAS: SubArea[] = [
+  { id: "old-panvel", label: "Old Panvel", color: "#dc2626", lat: 18.9894, lng: 73.1175 },
+  { id: "new-panvel", label: "New Panvel", color: "#2563eb", lat: 19.0050, lng: 73.1180 },
+  { id: "kharghar", label: "Kharghar", color: "#16a34a", lat: 19.0470, lng: 73.0690 },
+  { id: "kamothe", label: "Kamothe", color: "#d97706", lat: 19.0220, lng: 73.0850 },
+  { id: "kalamboli", label: "Kalamboli", color: "#7c3aed", lat: 19.0330, lng: 73.0990 },
+  { id: "taloja", label: "Taloja MIDC", color: "#0891b2", lat: 19.0780, lng: 73.1050 },
+];
 
-// Deterministic k-means on lat/lng.
-export function groupIntoRegions(prospects: Prospect[], k = 4): Region[] {
+export function groupIntoRegions(prospects: Prospect[]): Region[] {
   if (prospects.length === 0) return [];
-  const targetK = Math.min(k, Math.max(1, prospects.length));
 
-  // Seed centroids from quantiles of lat+lng combined ordering for determinism.
-  const sorted = [...prospects].sort((a, b) => a.lat + a.lng - (b.lat + b.lng));
-  const centroids = Array.from({ length: targetK }, (_, i) => {
-    const idx = Math.floor(((i + 0.5) / targetK) * sorted.length);
-    const p = sorted[Math.min(idx, sorted.length - 1)];
-    return { lat: p.lat, lng: p.lng };
-  });
-
-  let assignments = new Array<number>(prospects.length).fill(0);
-  for (let iter = 0; iter < 30; iter++) {
-    // assign
-    const next = prospects.map((p) => {
-      let bestI = 0;
-      let bestD = Infinity;
-      for (let i = 0; i < centroids.length; i++) {
-        const dx = p.lat - centroids[i].lat;
-        const dy = p.lng - centroids[i].lng;
-        const d = dx * dx + dy * dy;
-        if (d < bestD) {
-          bestD = d;
-          bestI = i;
-        }
-      }
-      return bestI;
-    });
-    const changed = next.some((v, i) => v !== assignments[i]);
-    assignments = next;
-    if (!changed && iter > 0) break;
-
-    // update
-    const sums = centroids.map(() => ({ lat: 0, lng: 0, n: 0 }));
-    prospects.forEach((p, i) => {
-      const c = sums[assignments[i]];
-      c.lat += p.lat;
-      c.lng += p.lng;
-      c.n += 1;
-    });
-    for (let i = 0; i < centroids.length; i++) {
-      if (sums[i].n > 0) {
-        centroids[i] = { lat: sums[i].lat / sums[i].n, lng: sums[i].lng / sums[i].n };
+  const buckets = new Map<string, Prospect[]>();
+  for (const p of prospects) {
+    let bestId = PANVEL_SUB_AREAS[0].id;
+    let bestD = Infinity;
+    for (const a of PANVEL_SUB_AREAS) {
+      const dx = p.lat - a.lat;
+      const dy = p.lng - a.lng;
+      const d = dx * dx + dy * dy;
+      if (d < bestD) {
+        bestD = d;
+        bestId = a.id;
       }
     }
+    if (!buckets.has(bestId)) buckets.set(bestId, []);
+    buckets.get(bestId)!.push(p);
   }
 
-  const groups: Prospect[][] = centroids.map(() => []);
-  prospects.forEach((p, i) => groups[assignments[i]].push(p));
-
-  // Drop empty groups
-  return groups
-    .map((list, i) => ({ list, color: PALETTE[i % PALETTE.length], centroid: centroids[i], idx: i }))
-    .filter((g) => g.list.length > 0)
-    .map((g, i) => ({
-      id: `region-${i}`,
-      label: deriveLabel(g.list, `Region ${String.fromCharCode(65 + i)}`),
-      color: g.color,
-      centroid: g.centroid,
-      prospects: g.list,
-    }));
+  return PANVEL_SUB_AREAS.filter((a) => buckets.has(a.id)).map((a) => ({
+    id: a.id,
+    label: a.label,
+    color: a.color,
+    centroid: { lat: a.lat, lng: a.lng },
+    prospects: buckets.get(a.id)!,
+  }));
 }
 
 // Convex hull (Andrew's monotone chain) for polygon outline.

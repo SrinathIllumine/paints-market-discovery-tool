@@ -5,6 +5,7 @@ export type Cluster = {
   name: string;
   description: string;
   nature: string;
+  color: string;
   potential: Potential;
   potentialReasons: string[];
   prospectCountEstimate: number;
@@ -24,6 +25,7 @@ export const PANVEL_CENTER = { lat: 18.9894, lng: 73.1175 };
 export const CLUSTERS: Cluster[] = [
   {
     id: "residential",
+    color: "#dc2626",
     name: "Residential Construction",
     nature: "Residential Construction",
     description: "New townships, mid-size apartments and affordable housing pockets driving fresh paint demand.",
@@ -54,6 +56,7 @@ export const CLUSTERS: Cluster[] = [
   },
   {
     id: "industrial",
+    color: "#2563eb",
     name: "Industrial Zones / MIDC",
     nature: "Industrial / Manufacturing",
     description: "Taloja MIDC and adjacent industrial pockets — durable coatings and large-format demand.",
@@ -84,6 +87,7 @@ export const CLUSTERS: Cluster[] = [
   },
   {
     id: "warehousing",
+    color: "#d97706",
     name: "Warehousing & Logistics",
     nature: "Warehousing & Logistics",
     description: "JNPT-driven warehousing parks — large surface areas, repeat institutional buyers.",
@@ -114,6 +118,7 @@ export const CLUSTERS: Cluster[] = [
   },
   {
     id: "retail-malls",
+    color: "#db2777",
     name: "Retail & Malls",
     nature: "Retail & Shopping Centres",
     description: "Shopping centres and high-street retail with frequent refresh cycles.",
@@ -144,6 +149,7 @@ export const CLUSTERS: Cluster[] = [
   },
   {
     id: "offices",
+    color: "#4f46e5",
     name: "Offices / Commercial Interiors",
     nature: "Commercial Office Spaces",
     description: "Office complexes in Kharghar–Panvel corridor — interior repaint and fit-out work.",
@@ -174,6 +180,7 @@ export const CLUSTERS: Cluster[] = [
   },
   {
     id: "schools",
+    color: "#16a34a",
     name: "Schools & Colleges",
     nature: "Education Institutions",
     description: "Educational institutions with annual vacation-cycle repainting needs.",
@@ -204,6 +211,7 @@ export const CLUSTERS: Cluster[] = [
   },
   {
     id: "hospitals",
+    color: "#e11d48",
     name: "Hospitals",
     nature: "Healthcare Facilities",
     description: "Healthcare facilities needing hygienic, antimicrobial finishes.",
@@ -234,6 +242,7 @@ export const CLUSTERS: Cluster[] = [
   },
   {
     id: "bazaar",
+    color: "#0891b2",
     name: "Local Bazaar / Informal Markets",
     nature: "Dealer & Painter Network",
     description: "Old Panvel market belt — small shops, dealers and contractor walk-ins.",
