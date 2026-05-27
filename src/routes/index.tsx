@@ -18,10 +18,10 @@ export const Route = createFileRoute("/")({
 });
 
 const props = [
-  { icon: MapIcon, title: "Create a cluster map", desc: "Visualise your market with clusters, prospects and intelligence." },
-  { icon: Users, title: "Build a structured outreach plan", desc: "Plan stakeholder connects and execution events month by month." },
-  { icon: Lightbulb, title: "Track local market intelligence", desc: "Capture insights at every step and reuse them across stages." },
-];
+  { icon: MapIcon, title: "Create a cluster map", desc: "Visualise your market with clusters, prospects and intelligence.", to: "/map" },
+  { icon: Users, title: "Build a structured outreach plan", desc: "Plan stakeholder connects and execution events month by month.", to: "/plan" },
+  { icon: Lightbulb, title: "Track local market intelligence", desc: "Capture insights at every step and reuse them across stages.", to: "/insights" },
+] as const;
 
 function IntroScreen() {
   return (
@@ -42,19 +42,21 @@ function IntroScreen() {
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           What you can achieve with this app
         </p>
-        {props.map(({ icon: Icon, title, desc }) => (
-          <div
+        {props.map(({ icon: Icon, title, desc, to }) => (
+          <Link
             key={title}
-            className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm"
+            to={to}
+            className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-colors hover:bg-muted/40"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-critical/10 text-critical">
               <Icon className="h-5 w-5" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <h3 className="font-display text-lg leading-tight">{title}</h3>
               <p className="mt-0.5 text-sm text-muted-foreground">{desc}</p>
             </div>
-          </div>
+            <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+          </Link>
         ))}
 
         <Link
