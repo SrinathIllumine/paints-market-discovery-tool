@@ -5,6 +5,12 @@ import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { Segmented } from "@/components/app/Segmented";
 import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { GoogleMap } from "@/components/maps/GoogleMap";
 import { AddProspectSheet } from "@/components/maps/AddProspectSheet";
 import { CLUSTERS, getCluster, POTENTIAL_LABEL } from "@/data/clusters";
@@ -12,13 +18,15 @@ import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { PANVEL_CENTER } from "@/data/clusters";
 import { useServerFn } from "@tanstack/react-start";
-import { Phone, Plus, Users, Loader2, MapPin } from "lucide-react";
+import { Phone, Plus, Users, Loader2, MapPin, Check } from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/map/$clusterId")({
   component: ClusterDetailScreen,
