@@ -39,7 +39,7 @@ function ClusterDetailScreen() {
   const cluster = useMemo(() => getCluster(clusterId), [clusterId]);
 
   const state = useAppStore((s) => s.clusters[clusterId]);
-  const stakeholders = useAppStore((s) => s.stakeholders[clusterId] ?? []);
+  const stakeholders = useAppStore((s) => s.stakeholders[clusterId]) ?? [];
   const ensureCluster = useAppStore((s) => s.ensureCluster);
   const markVisited = useAppStore((s) => s.markVisited);
   const setJkShare = useAppStore((s) => s.setJkShare);
