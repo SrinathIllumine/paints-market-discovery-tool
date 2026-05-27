@@ -6,7 +6,7 @@ import type { PlanEvent, Readiness, Stakeholder } from "@/store/appStore";
 type Args = {
   targetClusterIds: string[];
   events: PlanEvent[];
-  readiness: Record<string, Readiness>;
+  readiness: Readiness;
   stakeholders: Record<string, Stakeholder[]>;
 };
 
@@ -156,28 +156,20 @@ export function generatePlanReportPdf({
 
   // Readiness
   heading("Service delivery readiness");
-  if (targetClusterIds.length === 0) {
-    doc.setTextColor(120);
-    doc.text("Select clusters to run the checklist.", margin, y);
-    doc.setTextColor(15, 23, 42);
-    y += 20;
-  } else {
-    const rows = targetClusterIds.map((id) => {
-      const c = getCluster(id);
-      const r = readiness[id];
-      const fmt = (v: string | null | undefined) => (v ? READINESS_LABEL[v] ?? "—" : "—");
-      return [c?.name ?? id, fmt(r?.retailers), fmt(r?.stock), fmt(r?.painters)];
-    });
-    autoTable(doc, {
-      startY: y,
-      head: [["Cluster", "Retailers", "Stock", "Painters / Contractors"]],
-      body: rows,
-      headStyles: { fillColor: [15, 23, 42] },
-      margin: { left: margin, right: margin },
-      styles: { fontSize: 10 },
-    });
-    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20;
-  }
+  const fmt = (v: string | null | undefined) => (v ? READINESS_LABEL[v] ?? "—" : "—");
+  autoTable(doc, {
+    startY: y,
+    head: [["Question", "Answer"]],
+    body: [
+      ["Are there enough retailers in this cluster?", fmt(readiness.retailers)],
+      ["Do the retailers have enough stock available?", fmt(readiness.stock)],
+      ["Are there enough painters / contractors in the area?", fmt(readiness.painters)],
+    ],
+    headStyles: { fillColor: [15, 23, 42] },
+    margin: { left: margin, right: margin },
+    styles: { fontSize: 10 },
+  });
+  y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20;
 
   // Footer
   const pageCount = doc.getNumberOfPages();
