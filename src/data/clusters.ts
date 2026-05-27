@@ -5,6 +5,7 @@ export type Cluster = {
   name: string;
   description: string;
   nature: string;
+  color: string;
   potential: Potential;
   potentialReasons: string[];
   prospectCountEstimate: number;

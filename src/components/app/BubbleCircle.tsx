@@ -15,8 +15,13 @@ export function BubbleCircle({
       onClick={onClick}
       className="group flex flex-col items-center gap-2"
     >
-      <div className="relative flex aspect-square w-full items-center justify-center rounded-full bg-gradient-to-br from-muted to-muted/40 p-3 text-center ring-1 ring-border transition-transform group-hover:scale-[1.03] group-active:scale-95">
-        <span className="line-clamp-3 px-1 font-display text-sm leading-tight text-foreground">
+      <div
+        className="relative flex aspect-square w-full items-center justify-center rounded-full p-3 text-center text-white ring-2 ring-white/30 shadow-lg transition-transform group-hover:scale-[1.03] group-active:scale-95"
+        style={{
+          background: `radial-gradient(circle at 30% 30%, ${cluster.color}, ${cluster.color}cc 60%, ${cluster.color}99)`,
+        }}
+      >
+        <span className="line-clamp-3 px-1 font-display text-sm leading-tight drop-shadow-sm">
           {cluster.name}
         </span>
         {badge && (

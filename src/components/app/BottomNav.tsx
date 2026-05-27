@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 const items = [
   { to: "/map", icon: MapIcon, label: "Market Map" },
   { to: "/connects", icon: Users, label: "Connects" },
-  { to: "/insights", icon: Lightbulb, label: "Insights" },
   { to: "/plan", icon: ClipboardList, label: "Outreach" },
+  { to: "/insights", icon: Lightbulb, label: "Insights" },
 ] as const;
 
 export function BottomNav() {
