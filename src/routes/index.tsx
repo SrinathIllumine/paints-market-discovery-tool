@@ -6,7 +6,7 @@ import { BottomNav } from "@/components/app/BottomNav";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Systematic Engagement & Discovery Tool" },
+      { title: "Market Discovery Tool" },
       {
         name: "description",
         content:
@@ -31,10 +31,10 @@ function IntroScreen() {
           JK Cement · Demand Generator
         </p>
         <h1 className="mt-2 font-display text-3xl leading-tight">
-          Systematic Engagement &amp; Discovery Tool
+          Market Discovery Tool
         </h1>
         <p className="mt-2 text-sm text-white/75">
-          Welcome Sunil Kumar — let's build your Panvel market map.
+          Welcome Sunil Kumar - let's build your Panvel market map.
         </p>
       </div>
 
