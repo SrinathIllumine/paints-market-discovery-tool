@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Map, Users, Lightbulb, ArrowRight } from "lucide-react";
+import { Map as MapIcon, Users, Lightbulb, ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { BottomNav } from "@/components/app/BottomNav";
 
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
 });
 
 const props = [
-  { icon: Map, title: "Create a cluster map", desc: "Visualise your market with clusters, prospects and intelligence." },
+  { icon: MapIcon, title: "Create a cluster map", desc: "Visualise your market with clusters, prospects and intelligence." },
   { icon: Users, title: "Build a structured outreach plan", desc: "Plan stakeholder connects and execution events month by month." },
   { icon: Lightbulb, title: "Harvest local market intelligence", desc: "Capture insights at every step and reuse them across stages." },
 ];

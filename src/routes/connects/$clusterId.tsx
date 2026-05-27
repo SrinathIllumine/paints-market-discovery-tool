@@ -56,7 +56,7 @@ function ConnectsClusterScreen() {
         />
       }
     >
-      <div className="sticky top-[124px] z-20 flex gap-1.5 bg-background/95 px-5 pb-2 pt-3 backdrop-blur">
+      <div className="flex gap-1.5 bg-background px-5 pb-2 pt-3">
         {(
           [
             { id: "whom", label: "Whom" },

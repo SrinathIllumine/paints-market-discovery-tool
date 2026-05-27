@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
-import { ClusterCard } from "@/components/app/ClusterCard";
+import { BubbleCircle } from "@/components/app/BubbleCircle";
 import { CLUSTERS } from "@/data/clusters";
 import { useAppStore } from "@/store/appStore";
 
@@ -27,25 +27,19 @@ function MarketMapScreen() {
         <StageHeader
           eyebrow="Stage 1 of 3 · Market Map"
           title="Clusters in Panvel"
-          subtitle="Tap a cluster to see intelligence, prospects and contacts."
+          subtitle="Tap a bubble to open the cluster card."
         />
       }
     >
-      <div className="space-y-3 px-5 py-5">
+      <div className="grid grid-cols-2 gap-5 px-5 py-6 sm:grid-cols-3">
         {CLUSTERS.map((c) => {
           const stkCount = stakeholders[c.id]?.length ?? 0;
           return (
-            <ClusterCard
+            <BubbleCircle
               key={c.id}
               cluster={c}
               onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
-              rightSlot={
-                stkCount > 0 ? (
-                  <span className="text-[11px] font-medium text-navy">
-                    {stkCount} stakeholder{stkCount === 1 ? "" : "s"} added
-                  </span>
-                ) : null
-              }
+              badge={stkCount > 0 ? `${stkCount} contact${stkCount === 1 ? "" : "s"}` : undefined}
             />
           );
         })}
