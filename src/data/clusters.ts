@@ -4,7 +4,9 @@ export type Cluster = {
   id: string;
   name: string;
   description: string;
+  nature: string;
   potential: Potential;
+  potentialReasons: string[];
   prospectCountEstimate: number;
   demandTags: string[];
   placesQuery: string;
@@ -23,8 +25,15 @@ export const CLUSTERS: Cluster[] = [
   {
     id: "residential",
     name: "Residential Construction",
+    nature: "Residential Construction",
     description: "New townships, mid-size apartments and affordable housing pockets driving fresh paint demand.",
     potential: "H",
+    potentialReasons: [
+      "Area heavily concentrated with mid-sized apartments",
+      "Row-sized houses are found in multiple areas",
+      "More than 100 societies suggests a large, organized customer base",
+      "Several well-developed colonies further strengthen the residential density",
+    ],
     prospectCountEstimate: 42,
     demandTags: ["New Construction", "Repainting"],
     placesQuery: "residential apartment projects in Panvel",
@@ -46,8 +55,15 @@ export const CLUSTERS: Cluster[] = [
   {
     id: "industrial",
     name: "Industrial Zones / MIDC",
+    nature: "Industrial / Manufacturing",
     description: "Taloja MIDC and adjacent industrial pockets — durable coatings and large-format demand.",
     potential: "H",
+    potentialReasons: [
+      "Taloja MIDC hosts hundreds of active manufacturing units",
+      "Industrial buildings require periodic durable repainting cycles",
+      "Several large factory sheds with high surface areas",
+      "Steady inflow of new plant commissioning each year",
+    ],
     prospectCountEstimate: 28,
     demandTags: ["New Construction", "Repair-driven"],
     placesQuery: "Taloja MIDC industrial unit Panvel",
@@ -69,8 +85,15 @@ export const CLUSTERS: Cluster[] = [
   {
     id: "warehousing",
     name: "Warehousing & Logistics",
+    nature: "Warehousing & Logistics",
     description: "JNPT-driven warehousing parks — large surface areas, repeat institutional buyers.",
     potential: "M",
+    potentialReasons: [
+      "JNPT corridor drives steady warehouse capacity expansion",
+      "Large flat surfaces translate into bulk paint volumes",
+      "Repeat institutional buyers with predictable maintenance cycles",
+      "Several PEB sheds under active construction nearby",
+    ],
     prospectCountEstimate: 18,
     demandTags: ["New Construction", "Repair-driven"],
     placesQuery: "warehouse logistics park Panvel JNPT",
@@ -92,8 +115,15 @@ export const CLUSTERS: Cluster[] = [
   {
     id: "retail-malls",
     name: "Retail & Malls",
+    nature: "Retail & Shopping Centres",
     description: "Shopping centres and high-street retail with frequent refresh cycles.",
     potential: "M",
+    potentialReasons: [
+      "Multiple anchor malls with regular fit-out activity",
+      "High-street retail refreshes interiors every 2-3 years",
+      "Footfall-sensitive tenants prefer quick-drying low-VOC products",
+      "Common-area repainting is a recurring facility need",
+    ],
     prospectCountEstimate: 14,
     demandTags: ["Repainting", "Commercial Interiors"],
     placesQuery: "shopping mall retail centre Panvel",
@@ -115,8 +145,15 @@ export const CLUSTERS: Cluster[] = [
   {
     id: "offices",
     name: "Offices / Commercial Interiors",
+    nature: "Commercial Office Spaces",
     description: "Office complexes in Kharghar–Panvel corridor — interior repaint and fit-out work.",
     potential: "M",
+    potentialReasons: [
+      "Growing Kharghar-Panvel office corridor with active fit-outs",
+      "AMC-driven repaint cycles every 3 years across most buildings",
+      "Designers favour low-VOC and textured premium finishes here",
+      "New occupancy pipeline keeps interior demand consistent",
+    ],
     prospectCountEstimate: 22,
     demandTags: ["Commercial Interiors", "Repainting"],
     placesQuery: "office complex Panvel Kharghar",
@@ -138,8 +175,15 @@ export const CLUSTERS: Cluster[] = [
   {
     id: "schools",
     name: "Schools & Colleges",
+    nature: "Education Institutions",
     description: "Educational institutions with annual vacation-cycle repainting needs.",
     potential: "M",
+    potentialReasons: [
+      "Predictable vacation-cycle repainting demand each year",
+      "Several large campuses with extensive wall surface areas",
+      "Trustees prefer durable, child-safe finishes — premium fit",
+      "Easier institutional sale via principal / trustee referrals",
+    ],
     prospectCountEstimate: 16,
     demandTags: ["Repainting", "Repair-driven"],
     placesQuery: "schools colleges Panvel",
@@ -161,8 +205,15 @@ export const CLUSTERS: Cluster[] = [
   {
     id: "hospitals",
     name: "Hospitals",
+    nature: "Healthcare Facilities",
     description: "Healthcare facilities needing hygienic, antimicrobial finishes.",
     potential: "M",
+    potentialReasons: [
+      "Several mid-to-large hospitals in the Kharghar-Panvel belt",
+      "Strong demand for antimicrobial and washable finishes",
+      "Wing-wise phased repainting opens steady recurring orders",
+      "Premium positioning aligns with facility brand standards",
+    ],
     prospectCountEstimate: 9,
     demandTags: ["Repainting", "Commercial Interiors"],
     placesQuery: "hospitals Panvel Kharghar",
@@ -184,8 +235,15 @@ export const CLUSTERS: Cluster[] = [
   {
     id: "bazaar",
     name: "Local Bazaar / Informal Markets",
+    nature: "Dealer & Painter Network",
     description: "Old Panvel market belt — small shops, dealers and contractor walk-ins.",
     potential: "L",
+    potentialReasons: [
+      "Dense dealer network in Old Panvel hardware lanes",
+      "High painter / mistri walk-in footfall every morning",
+      "Volume is fragmented across many small shops",
+      "Influencer-led sales model — depth over individual ticket size",
+    ],
     prospectCountEstimate: 35,
     demandTags: ["Repainting", "Repair-driven"],
     placesQuery: "hardware paint dealer Panvel market",
