@@ -16,6 +16,8 @@ export type Stakeholder = {
   name: string;
   prospect: string;
   phone: string;
+  preferredBrand?: string;
+  stakeholderTypeId?: string;
 };
 
 export type EventType = "Workshop" | "Audit" | "Awareness" | "Contractor Meet";
