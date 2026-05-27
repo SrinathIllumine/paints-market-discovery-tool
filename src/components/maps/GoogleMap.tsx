@@ -31,7 +31,9 @@ export function GoogleMap({
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
   const polygonsRef = useRef<google.maps.Polygon[]>([]);
+  const regionLinesRef = useRef<google.maps.Polyline[]>([]);
   const boundaryRef = useRef<google.maps.Polygon | null>(null);
+  const boundaryLineRef = useRef<google.maps.Polyline | null>(null);
   const infoRef = useRef<google.maps.InfoWindow | null>(null);
   const clickListenerRef = useRef<google.maps.MapsEventListener | null>(null);
   const [ready, setReady] = useState(false);
@@ -157,12 +159,14 @@ export function GoogleMap({
     }
   }, [ready, prospects, selectedIds, onToggle, readOnly, regions]);
 
-  // Region polygons (dotted, convex-hull)
+  // Region polygons (dotted outline via Polyline, soft fill via Polygon)
   useEffect(() => {
     if (!ready || !mapRef.current || !window.google) return;
     const g = window.google;
     for (const poly of polygonsRef.current) poly.setMap(null);
     polygonsRef.current = [];
+    for (const line of regionLinesRef.current) line.setMap(null);
+    regionLinesRef.current = [];
     if (!regions) return;
 
     const dashSymbol = {
@@ -174,21 +178,28 @@ export function GoogleMap({
     for (const r of regions) {
       if (r.prospects.length < 3) continue;
       const hull = convexHull(r.prospects.map((p) => ({ lat: p.lat, lng: p.lng })));
-      const poly = new g.maps.Polygon({
+      const fill = new g.maps.Polygon({
         paths: hull,
         strokeOpacity: 0,
-        strokeColor: r.color,
         fillColor: r.color,
         fillOpacity: 0.08,
-        icons: [{ icon: dashSymbol, offset: "0", repeat: "12px" }],
         map: mapRef.current,
         clickable: false,
       });
-      polygonsRef.current.push(poly);
+      polygonsRef.current.push(fill);
+      const closed = [...hull, hull[0]];
+      const line = new g.maps.Polyline({
+        path: closed,
+        strokeOpacity: 0,
+        icons: [{ icon: { ...dashSymbol, strokeColor: r.color }, offset: "0", repeat: "12px" }],
+        map: mapRef.current,
+        clickable: false,
+      });
+      regionLinesRef.current.push(line);
     }
   }, [ready, regions]);
 
-  // Panvel boundary
+  // Panvel boundary (dotted outline)
   useEffect(() => {
     if (!ready || !mapRef.current || !window.google) return;
     const g = window.google;
@@ -196,13 +207,22 @@ export function GoogleMap({
       boundaryRef.current.setMap(null);
       boundaryRef.current = null;
     }
+    if (boundaryLineRef.current) {
+      boundaryLineRef.current.setMap(null);
+      boundaryLineRef.current = null;
+    }
     if (!boundary || boundary.length < 3) return;
     boundaryRef.current = new g.maps.Polygon({
       paths: boundary,
       strokeOpacity: 0,
-      strokeColor: "#0f172a",
       fillColor: "#0f172a",
       fillOpacity: 0.03,
+      map: mapRef.current,
+      clickable: false,
+    });
+    boundaryLineRef.current = new g.maps.Polyline({
+      path: [...boundary, boundary[0]],
+      strokeOpacity: 0,
       icons: [
         {
           icon: { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 4, strokeColor: "#0f172a" },
