@@ -34,7 +34,7 @@ function IntroScreen() {
           Market Discovery Tool
         </h1>
         <p className="mt-2 text-sm text-white/75">
-          Welcome Sunil Kumar - let's build your Panvel market map.
+          Welcome Sunil Kumar
         </p>
       </div>
 
