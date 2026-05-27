@@ -20,7 +20,7 @@ export const Route = createFileRoute("/")({
 const props = [
   { icon: MapIcon, title: "Create a cluster map", desc: "Visualise your market with clusters, prospects and intelligence." },
   { icon: Users, title: "Build a structured outreach plan", desc: "Plan stakeholder connects and execution events month by month." },
-  { icon: Lightbulb, title: "Harvest local market intelligence", desc: "Capture insights at every step and reuse them across stages." },
+  { icon: Lightbulb, title: "Track local market intelligence", desc: "Capture insights at every step and reuse them across stages." },
 ];
 
 function IntroScreen() {
