@@ -307,22 +307,22 @@ function PlanScreen() {
                           <div key={id} className="rounded-2xl border border-border bg-card p-4">
                             <p className="mb-3 font-medium">{c.name}</p>
                             <ReadinessRow
-                              label="Enough retailers in this cluster?"
+                              label="Are there enough retailers in this cluster?"
                               value={r.retailers}
                               onChange={(v) => setReadiness(id, { retailers: v })}
                             />
                             <ReadinessRow
-                              label="Stock availability checked?"
+                              label="Do the retailers have enough stock available?"
                               value={r.stock}
                               onChange={(v) => setReadiness(id, { stock: v })}
                             />
                             <ReadinessRow
-                              label="Enough painters / contractors?"
+                              label="Are there enough painters / contractors in the area?"
                               value={r.painters}
                               onChange={(v) => setReadiness(id, { painters: v })}
                             />
                             <ReadinessRow
-                              label="Are they trained for this cluster's needs?"
+                              label="Are the painters / contractors trained for this cluster's needs?"
                               value={r.trained}
                               onChange={(v) => setReadiness(id, { trained: v })}
                             />
