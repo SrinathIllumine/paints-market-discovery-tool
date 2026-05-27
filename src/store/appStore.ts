@@ -57,7 +57,7 @@ type State = {
   plan: {
     targetClusterIds: string[];
     events: PlanEvent[];
-    readiness: Record<string, Readiness>;
+    readiness: Readiness;
   };
 };
 
@@ -78,7 +78,7 @@ type Actions = {
   toggleTargetCluster: (clusterId: string) => void;
   addEvent: (e: Omit<PlanEvent, "id">) => void;
   removeEvent: (id: string) => void;
-  setReadiness: (clusterId: string, partial: Partial<Readiness>) => void;
+  setReadiness: (partial: Partial<Readiness>) => void;
 };
 
 const emptyCluster = (): ClusterState => ({
@@ -100,7 +100,7 @@ export const useAppStore = create<State & Actions>()(
       clusters: {},
       stakeholders: {},
       insights: [],
-      plan: { targetClusterIds: [], events: [], readiness: {} },
+      plan: { targetClusterIds: [], events: [], readiness: emptyReadiness() },
 
       ensureCluster: (clusterId) =>
         set((s) =>
@@ -235,14 +235,11 @@ export const useAppStore = create<State & Actions>()(
           plan: { ...state.plan, events: state.plan.events.filter((e) => e.id !== id) },
         })),
 
-      setReadiness: (clusterId, partial) =>
+      setReadiness: (partial) =>
         set((state) => ({
           plan: {
             ...state.plan,
-            readiness: {
-              ...state.plan.readiness,
-              [clusterId]: { ...emptyReadiness(), ...(state.plan.readiness[clusterId] ?? {}), ...partial },
-            },
+            readiness: { ...state.plan.readiness, ...partial },
           },
         })),
     }),
@@ -250,6 +247,6 @@ export const useAppStore = create<State & Actions>()(
   ),
 );
 
-export function getReadiness(state: State, clusterId: string): Readiness {
-  return state.plan.readiness[clusterId] ?? emptyReadiness();
+export function getReadiness(state: State): Readiness {
+  return state.plan.readiness;
 }

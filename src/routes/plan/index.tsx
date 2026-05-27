@@ -268,43 +268,23 @@ function PlanScreen() {
               </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              {targetIds.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Select clusters above to run the checklist.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {targetIds.map((id) => {
-                    const c = getCluster(id);
-                    if (!c) return null;
-                    const r = readinessMap[id] ?? {
-                      retailers: null,
-                      stock: null,
-                      painters: null,
-                    };
-                    return (
-                      <div key={id} className="rounded-2xl border border-border bg-card p-4">
-                        <p className="mb-3 font-medium">{c.name}</p>
-                        <ReadinessRow
-                          label="Are there enough retailers in this cluster?"
-                          value={r.retailers}
-                          onChange={(v) => setReadiness(id, { retailers: v })}
-                        />
-                        <ReadinessRow
-                          label="Do the retailers have enough stock available?"
-                          value={r.stock}
-                          onChange={(v) => setReadiness(id, { stock: v })}
-                        />
-                        <ReadinessRow
-                          label="Are there enough painters / contractors in the area?"
-                          value={r.painters}
-                          onChange={(v) => setReadiness(id, { painters: v })}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              <div className="space-y-3">
+                <ReadinessRow
+                  label="Are there enough retailers in this cluster?"
+                  value={readinessMap.retailers}
+                  onChange={(v) => setReadiness({ retailers: v })}
+                />
+                <ReadinessRow
+                  label="Do the retailers have enough stock available?"
+                  value={readinessMap.stock}
+                  onChange={(v) => setReadiness({ stock: v })}
+                />
+                <ReadinessRow
+                  label="Are there enough painters / contractors in the area?"
+                  value={readinessMap.painters}
+                  onChange={(v) => setReadiness({ painters: v })}
+                />
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
