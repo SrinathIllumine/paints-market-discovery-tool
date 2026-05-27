@@ -23,6 +23,7 @@ export type PlanEvent = {
   id: string;
   clusterId: string;
   type: EventType;
+  topic?: string;
   date?: string;
   note?: string;
 };
@@ -32,7 +33,12 @@ export type Readiness = {
   retailers: ReadinessAnswer;
   stock: ReadinessAnswer;
   painters: ReadinessAnswer;
-  trained: ReadinessAnswer;
+};
+
+export type Insight = {
+  id: string;
+  text: string;
+  createdAt: number;
 };
 
 export type ClusterState = {
@@ -45,6 +51,7 @@ export type ClusterState = {
 type State = {
   clusters: Record<string, ClusterState>;
   stakeholders: Record<string, Stakeholder[]>;
+  insights: Insight[];
   plan: {
     targetClusterIds: string[];
     events: PlanEvent[];
@@ -63,6 +70,9 @@ type Actions = {
   addStakeholder: (clusterId: string, s: Omit<Stakeholder, "id">) => void;
   removeStakeholder: (clusterId: string, id: string) => void;
 
+  addInsight: (text: string) => void;
+  removeInsight: (id: string) => void;
+
   toggleTargetCluster: (clusterId: string) => void;
   addEvent: (e: Omit<PlanEvent, "id">) => void;
   removeEvent: (id: string) => void;
@@ -80,7 +90,6 @@ const emptyReadiness = (): Readiness => ({
   retailers: null,
   stock: null,
   painters: null,
-  trained: null,
 });
 
 export const useAppStore = create<State & Actions>()(
@@ -88,6 +97,7 @@ export const useAppStore = create<State & Actions>()(
     (set) => ({
       clusters: {},
       stakeholders: {},
+      insights: [],
       plan: { targetClusterIds: [], events: [], readiness: {} },
 
       ensureCluster: (clusterId) =>
@@ -179,6 +189,21 @@ export const useAppStore = create<State & Actions>()(
           },
         })),
 
+      addInsight: (text) =>
+        set((state) => ({
+          insights: [
+            ...state.insights,
+            {
+              id: `ins-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+              text,
+              createdAt: Date.now(),
+            },
+          ],
+        })),
+
+      removeInsight: (id) =>
+        set((state) => ({ insights: state.insights.filter((i) => i.id !== id) })),
+
       toggleTargetCluster: (clusterId) =>
         set((state) => {
           const has = state.plan.targetClusterIds.includes(clusterId);
@@ -219,7 +244,7 @@ export const useAppStore = create<State & Actions>()(
           },
         })),
     }),
-    { name: "sed.v2" },
+    { name: "sed.v3" },
   ),
 );
 

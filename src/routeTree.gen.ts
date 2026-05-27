@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlanIndexRouteImport } from './routes/plan/index'
 import { Route as MapIndexRouteImport } from './routes/map/index'
@@ -16,6 +17,11 @@ import { Route as ConnectsIndexRouteImport } from './routes/connects/index'
 import { Route as MapClusterIdRouteImport } from './routes/map/$clusterId'
 import { Route as ConnectsClusterIdRouteImport } from './routes/connects/$clusterId'
 
+const InsightsRoute = InsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -49,6 +55,7 @@ const ConnectsClusterIdRoute = ConnectsClusterIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/insights': typeof InsightsRoute
   '/connects/$clusterId': typeof ConnectsClusterIdRoute
   '/map/$clusterId': typeof MapClusterIdRoute
   '/connects/': typeof ConnectsIndexRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/insights': typeof InsightsRoute
   '/connects/$clusterId': typeof ConnectsClusterIdRoute
   '/map/$clusterId': typeof MapClusterIdRoute
   '/connects': typeof ConnectsIndexRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/insights': typeof InsightsRoute
   '/connects/$clusterId': typeof ConnectsClusterIdRoute
   '/map/$clusterId': typeof MapClusterIdRoute
   '/connects/': typeof ConnectsIndexRoute
@@ -76,6 +85,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/insights'
     | '/connects/$clusterId'
     | '/map/$clusterId'
     | '/connects/'
@@ -84,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/insights'
     | '/connects/$clusterId'
     | '/map/$clusterId'
     | '/connects'
@@ -92,6 +103,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/insights'
     | '/connects/$clusterId'
     | '/map/$clusterId'
     | '/connects/'
@@ -101,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  InsightsRoute: typeof InsightsRoute
   ConnectsClusterIdRoute: typeof ConnectsClusterIdRoute
   MapClusterIdRoute: typeof MapClusterIdRoute
   ConnectsIndexRoute: typeof ConnectsIndexRoute
@@ -110,6 +123,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/insights': {
+      id: '/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof InsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -157,6 +177,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  InsightsRoute: InsightsRoute,
   ConnectsClusterIdRoute: ConnectsClusterIdRoute,
   MapClusterIdRoute: MapClusterIdRoute,
   ConnectsIndexRoute: ConnectsIndexRoute,
@@ -166,13 +187,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
