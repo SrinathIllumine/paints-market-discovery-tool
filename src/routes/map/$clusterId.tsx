@@ -103,7 +103,7 @@ function ClusterDetailScreen() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="Cluster Detail"
+          eyebrow="Cluster Card"
           title={cluster.name}
           subtitle={`${POTENTIAL_LABEL[cluster.potential]} potential · ~${cluster.prospectCountEstimate} prospects`}
           backTo="/map"
