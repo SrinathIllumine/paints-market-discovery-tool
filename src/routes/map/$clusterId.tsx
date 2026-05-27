@@ -207,6 +207,66 @@ function ClusterDetailScreen() {
           </p>
         </Section>
 
+        {/* All prospects (collapsible) */}
+        <section className="rounded-2xl border border-border bg-card shadow-sm">
+          <Accordion type="single" collapsible defaultValue="">
+            <AccordionItem value="all-prospects" className="border-none">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <span className="font-display text-xl">
+                  All prospects{" "}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    ({cs.prospects.length})
+                  </span>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                {cs.prospects.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    {loading ? "Loading prospects…" : "No prospects identified yet."}
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-border">
+                    {cs.prospects.map((p) => {
+                      const isSel = cs.selectedProspectIds.includes(p.id);
+                      return (
+                        <li key={p.id}>
+                          <button
+                            type="button"
+                            onClick={() => toggleProspectSelected(clusterId, p.id)}
+                            className="flex w-full items-start justify-between gap-3 py-2.5 text-left"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium">{p.name}</p>
+                              {p.locality && (
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {p.locality}
+                                </p>
+                              )}
+                            </div>
+                            <span
+                              className={cn(
+                                "mt-0.5 flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[10px] font-semibold",
+                                isSel
+                                  ? "bg-critical text-critical-foreground"
+                                  : "border border-border bg-muted/40 text-muted-foreground",
+                              )}
+                            >
+                              {isSel && <Check className="h-3 w-3" />}
+                              {isSel ? "Selected" : "Select"}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </section>
+
+
+
         {/* Stakeholder connects link */}
         <button
           type="button"
