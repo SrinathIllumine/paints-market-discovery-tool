@@ -113,7 +113,7 @@ function ClusterDetailScreen() {
         <StageHeader
           eyebrow="Cluster Card"
           title={cluster.name}
-          subtitle={`${POTENTIAL_LABEL[cluster.potential]} potential · ~${cluster.prospectCountEstimate} prospects`}
+          subtitle={`${POTENTIAL_LABEL[cluster.potential]} potential${loading ? "" : ` · ${cs.prospects.length} prospects`}`}
           backTo="/map"
         />
       }
@@ -131,10 +131,11 @@ function ClusterDetailScreen() {
               {POTENTIAL_LABEL[cluster.potential]}
             </span>
             <span className="text-sm text-muted-foreground">
-              ~{cluster.prospectCountEstimate} prospects estimated
+              {loading ? "Loading prospects…" : `${cs.prospects.length} prospects identified`}
             </span>
           </div>
         </Section>
+
 
         {/* JK share */}
         <Section title="Your JK Share here">
