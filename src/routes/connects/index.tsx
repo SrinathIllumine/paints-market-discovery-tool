@@ -1,10 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { BubbleCircle } from "@/components/app/BubbleCircle";
-import { Button } from "@/components/ui/button";
 import { CLUSTERS } from "@/data/clusters";
 import { useAppStore } from "@/store/appStore";
 
@@ -18,14 +16,9 @@ export const Route = createFileRoute("/connects/")({
   component: ConnectsHome,
 });
 
-const INITIAL = 6;
-
 function ConnectsHome() {
   const navigate = useNavigate();
   const stakeholders = useAppStore((s) => s.stakeholders);
-  const [visible, setVisible] = useState(INITIAL);
-  const shown = CLUSTERS.slice(0, visible);
-  const hasMore = visible < CLUSTERS.length;
 
   return (
     <AppShell
@@ -40,7 +33,7 @@ function ConnectsHome() {
     >
       <div className="max-h-[calc(100vh-260px)] overflow-y-auto px-5 py-6">
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
-          {shown.map((c) => {
+          {CLUSTERS.map((c) => {
             const count = stakeholders[c.id]?.length ?? 0;
             return (
               <BubbleCircle
@@ -52,16 +45,6 @@ function ConnectsHome() {
             );
           })}
         </div>
-        {hasMore && (
-          <div className="mt-6 flex justify-center">
-            <Button
-              variant="outline"
-              onClick={() => setVisible((v) => Math.min(v + INITIAL, CLUSTERS.length))}
-            >
-              Load more ({CLUSTERS.length - visible})
-            </Button>
-          </div>
-        )}
       </div>
     </AppShell>
   );
