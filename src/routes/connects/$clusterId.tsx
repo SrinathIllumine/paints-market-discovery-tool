@@ -173,7 +173,7 @@ function StakeholderTypeCard({
             <p className="font-serif text-lg font-bold leading-snug tracking-tight text-foreground sm:text-base">
               {type.question}
             </p>
-            <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground font-bold">
+            <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground font-serif text-left font-normal">
               {type.name}
             </p>
           </div>
