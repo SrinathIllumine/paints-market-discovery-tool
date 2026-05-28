@@ -62,10 +62,11 @@ export function generatePlanReportPdf({
       y = margin;
     }
     if (sectionIndex > 0) {
+      y += 16;
       doc.setDrawColor(180);
       doc.setLineWidth(0.75);
       doc.line(margin, y - 6, pageWidth - margin, y - 6);
-      y += 10;
+      y += 20;
     }
     sectionIndex++;
     doc.setFont("helvetica", "bold");
