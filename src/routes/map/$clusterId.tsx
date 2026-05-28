@@ -302,7 +302,7 @@ function ClusterDetailScreen() {
           onClick={() => navigate({ to: "/connects/$clusterId", params: { clusterId } })}
           className="h-12 w-full bg-navy text-base font-semibold text-navy-foreground hover:bg-navy/90"
         >
-          Plan connects for this cluster
+          Build your connects list for the cluster
         </Button>
       </div>
 
