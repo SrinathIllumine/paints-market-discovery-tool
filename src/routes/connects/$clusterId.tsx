@@ -170,10 +170,10 @@ function StakeholderTypeCard({
       <AccordionTrigger className="px-4 py-3 hover:no-underline">
         <div className="flex w-full items-start justify-between gap-3 pr-2 text-left">
           <div className="min-w-0">
-            <p className="font-serif text-lg font-bold leading-snug tracking-tight text-foreground sm:text-xl">
+            <p className="font-serif text-lg font-bold leading-snug tracking-tight text-foreground sm:text-base">
               {type.question}
             </p>
-            <p className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground font-bold">
               {type.name}
             </p>
           </div>
