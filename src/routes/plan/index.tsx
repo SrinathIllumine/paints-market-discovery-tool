@@ -106,7 +106,7 @@ function PlanScreen() {
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
               <p className="mb-2 text-xs text-muted-foreground">
-                Top of the list is recommended based on potential, connects and JK share.
+                Top of the list is recommended based on potential and connects.
               </p>
               <div className="space-y-2">
                 {ranked.map(({ cluster, stkCount }, i) => {
