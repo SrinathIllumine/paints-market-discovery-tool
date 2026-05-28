@@ -46,7 +46,7 @@ function ConnectsClusterScreen() {
       }
     >
       <div className="space-y-3 px-5 py-5">
-        <h2 className="font-display text-lg">Build your connects</h2>
+        <h2 className="font-display text-lg">Plan Connects - Build your connects list for the cluster</h2>
         <Accordion type="multiple" defaultValue={[]} className="space-y-3">
           {types.map((t) => (
             <StakeholderTypeCard key={t.id} clusterId={clusterId} type={t} />
