@@ -84,7 +84,7 @@ function PlanScreen() {
       header={
         <StageHeader
           eyebrow="Stage 3 of 3 · Outreach Plan"
-          title="Create an Outreach Plan"
+          title="Create an Outreach Plan  for June'26"
           subtitle=""
 
         />
@@ -153,7 +153,7 @@ function PlanScreen() {
           >
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <div className="flex w-full items-center justify-between pr-2">
-                <span className="font-display text-lg leading-tight">2. How to connect</span>
+                <span className="font-display text-lg leading-tight">2. Connect approaches</span>
                 <span className="text-xs text-muted-foreground">
                   {targetIds.length === 0
                     ? "Pick targets first"
@@ -196,7 +196,7 @@ function PlanScreen() {
           >
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <div className="flex w-full items-center justify-between pr-2">
-                <span className="font-display text-lg leading-tight">3. Contribution events</span>
+                <span className="font-display text-lg leading-tight">3. Contribution events planned</span>
                 <span className="text-xs text-muted-foreground">
                   {events.length} planned
                 </span>
@@ -278,7 +278,7 @@ function PlanScreen() {
           >
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="font-display text-lg leading-tight">
-                4. Service delivery readiness
+                4. Service delivery readiness status
               </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
