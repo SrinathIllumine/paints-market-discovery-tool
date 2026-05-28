@@ -76,7 +76,7 @@ function IntroScreen() {
 
       <div className="space-y-3 px-5 py-5">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          What you can achieve with this app
+          {"\n"}
         </p>
         {props.map(({ icon: Icon, title, desc, to, progress }) => (
           <Link
