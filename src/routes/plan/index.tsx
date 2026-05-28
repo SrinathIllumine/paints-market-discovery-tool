@@ -227,34 +227,47 @@ function PlanScreen() {
                   No events planned yet. Add workshops, audits, awareness sessions or contractor meets.
                 </p>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {events.map((e) => {
                     const c = getCluster(e.clusterId);
                     return (
                       <div
                         key={e.id}
-                        className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-card p-3"
+                        className="rounded-2xl border border-border bg-card p-3"
                       >
-                        <div className="min-w-0">
-                          <p className="font-medium leading-tight">{e.topic || e.type}</p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {c?.name ?? e.clusterId}
-                            {e.date ? ` · ${e.date}` : ""}
-                            {e.topic ? ` · ${e.type}` : ""}
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="font-display text-base leading-snug">
+                            {e.topic || e.type}
                           </p>
-                          {e.note && <p className="mt-1 text-xs text-muted-foreground">{e.note}</p>}
+                          <button
+                            onClick={() => removeEvent(e.id)}
+                            className="rounded-full p-1.5 text-muted-foreground hover:bg-muted"
+                            aria-label="Remove event"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
-                        <button
-                          onClick={() => removeEvent(e.id)}
-                          className="rounded-full p-1.5 text-muted-foreground hover:bg-muted"
-                          aria-label="Remove event"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          <span className="rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground">
+                            {c?.name ?? e.clusterId}
+                          </span>
+                          <span className="rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground">
+                            {e.type}
+                          </span>
+                          {e.date && (
+                            <span className="rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground">
+                              {e.date}
+                            </span>
+                          )}
+                        </div>
+                        {e.note && (
+                          <p className="mt-2 text-xs text-muted-foreground">{e.note}</p>
+                        )}
                       </div>
                     );
                   })}
                 </div>
+
               )}
             </AccordionContent>
           </AccordionItem>

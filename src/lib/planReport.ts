@@ -132,27 +132,37 @@ export function generatePlanReportPdf({
     doc.setTextColor(15, 23, 42);
     y += 20;
   } else {
-    const rows = events.map((e) => [
-      getCluster(e.clusterId)?.name ?? e.clusterId,
-      e.type,
-      e.topic ?? "—",
-      e.date ?? "—",
-      e.note ?? "—",
-    ]);
-    autoTable(doc, {
-      startY: y,
-      head: [["Cluster", "Type", "Topic", "Date", "Note"]],
-      body: rows,
-      headStyles: { fillColor: [15, 23, 42] },
-      margin: { left: margin, right: margin },
-      styles: { fontSize: 9, cellWidth: "wrap" },
-      columnStyles: {
-        2: { cellWidth: 150 },
-        4: { cellWidth: 110 },
-      },
-    });
-    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20;
+    for (const e of events) {
+      const clusterName = getCluster(e.clusterId)?.name ?? e.clusterId;
+      const topic = e.topic || e.type;
+      const topicLines = doc.splitTextToSize(topic, pageWidth - margin * 2);
+      const noteLines = e.note ? doc.splitTextToSize(`Note: ${e.note}`, pageWidth - margin * 2 - 10) : [];
+      const blockHeight = topicLines.length * 14 + 14 + (noteLines.length ? noteLines.length * 12 + 4 : 0) + 10;
+      if (y + blockHeight > 780) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text(topicLines, margin, y);
+      y += topicLines.length * 14;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(90);
+      const sub = `${clusterName}  ·  ${e.type}${e.date ? `  ·  ${e.date}` : ""}`;
+      doc.text(sub, margin, y);
+      y += 12;
+      doc.setTextColor(15, 23, 42);
+      if (noteLines.length) {
+        doc.setFontSize(9);
+        doc.text(noteLines, margin + 8, y);
+        y += noteLines.length * 12;
+      }
+      y += 8;
+    }
+    y += 6;
   }
+
 
   // Readiness
   heading("Service delivery readiness status");
