@@ -43,15 +43,15 @@ function IntroScreen() {
   const props = [
     {
       icon: MapIcon,
-      title: "Create a cluster map",
-      desc: "Visualise your market with clusters, prospects and intelligence.",
+      title: "Build Your Market Potential",
+      desc: "Visualise your market with clusters, shortlist them to create a market potential map",
       to: "/map" as const,
       progress: connectsProgress,
     },
     {
       icon: Users,
-      title: "Build a structured outreach plan",
-      desc: "Plan stakeholder connects and execution events month by month.",
+      title: "Create Monthly Market Engagement Plan",
+      desc: "Define the value proposition of clusters, plan stakeholder connects and contribution events month by month.",
       to: "/plan" as const,
       progress: planProgress,
     },
