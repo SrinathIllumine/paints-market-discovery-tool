@@ -1,6 +1,6 @@
 // Stakeholder framework — for each cluster, an ordered list of stakeholder
-// types with a leading "do you know…" question, how to connect, and what to
-// talk about. Powers the collapsible cards on the connects/$clusterId page.
+// types with a leading question ("Do you know…" / "Can you connect…"),
+// how to connect, and what to talk about.
 
 export type StakeholderType = {
   id: string;
@@ -10,49 +10,48 @@ export type StakeholderType = {
   whatToTalk: string[];
 };
 
-// Common types reused across most clusters.
 const CONTRACTORS: StakeholderType = {
   id: "contractors",
   name: "Contractors",
-  question: "Do you know any contractors in the area who deal with residential societies?",
+  question: "Do you know any contractors in the area who deal with this segment?",
   howToConnect: [
-    "Reference-based approach: use existing contacts such as electricians, plumbers, society committee members, or dealers to get introductions.",
+    "Reference-based approach: use existing contacts (electricians, plumbers, society committees, dealers) for introductions.",
     "Site visits: visit ongoing or recently completed projects and meet contractors on-site.",
     "Dealer / retailer network: collect leads from local building material shops, hardware stores, and distributors.",
   ],
   whatToTalk: [
-    "Introduction & credibility: briefly introduce yourself, your company, and your experience with similar projects.",
-    "Understand their needs: ask about current projects, size, challenges, and material requirements.",
-    "Product / solution pitch: explain how JK products benefit them (quality, durability, cost savings, ease of use).",
-    "Differentiation: highlight why JK is better than competitors (product quality, pricing, performance, support).",
+    "Introduction & credibility: briefly introduce yourself, your company, and similar projects.",
+    "Understand their needs: current projects, size, challenges, material requirements.",
+    "Product / solution pitch: explain how JK products benefit them (quality, durability, cost savings).",
+    "Differentiation: highlight why JK is better than competitors.",
   ],
 };
 
 const SITE_SUPERVISORS: StakeholderType = {
   id: "site-supervisors",
   name: "Site Supervisors",
-  question: "Are you connected with the site supervisors who can refer you?",
+  question: "Can you connect me with site supervisors who can refer JK products?",
   howToConnect: [
     "Visit active construction sites during morning hours when supervisors review work.",
     "Ask contractors and engineers for trusted supervisor introductions.",
     "Offer a small on-site product demo to build credibility.",
   ],
   whatToTalk: [
-    "Introduction & credibility: position yourself as a JK partner supporting their daily execution.",
-    "Understand their needs: which surfaces give trouble, what finishes are specified, current product preferences.",
+    "Introduction & credibility: position yourself as a JK partner supporting daily execution.",
+    "Understand their needs: surfaces that give trouble, finishes specified, current product preferences.",
     "Product / solution pitch: workability, drying time, coverage and finish quality.",
-    "Differentiation: on-site technical support and sample availability vs competitors.",
+    "Differentiation: on-site technical support and sample availability.",
   ],
 };
 
 const ARCHITECTS: StakeholderType = {
   id: "architects",
   name: "Architects",
-  question: "Do you know architects who can suggest JK products?",
+  question: "Do you know architects who can specify JK products?",
   howToConnect: [
     "Connect through builder / developer referrals and design fraternity contacts.",
     "Attend local architect chapter meets and product showcases.",
-    "Offer specification support packs and shade libraries for their projects.",
+    "Offer specification support packs and shade libraries.",
   ],
   whatToTalk: [
     "Introduction & credibility: highlight JK's portfolio on premium and signature projects.",
@@ -65,14 +64,14 @@ const ARCHITECTS: StakeholderType = {
 const INTERIOR_DESIGNERS: StakeholderType = {
   id: "interior-designers",
   name: "Interior Designers",
-  question: "Do you work with interior designers handling local fit-outs?",
+  question: "Do you know interior designers handling local fit-outs?",
   howToConnect: [
     "Get referrals from architects, showrooms and high-end retailers.",
     "Visit ongoing fit-outs and meet designers during finishing stages.",
     "Share curated mood-board samples featuring trending JK finishes.",
   ],
   whatToTalk: [
-    "Introduction & credibility: emphasise designer-focused JK finishes and quick sampling.",
+    "Introduction & credibility: designer-focused JK finishes and quick sampling.",
     "Understand their needs: client style preferences, timelines, common pain points.",
     "Product / solution pitch: textures, metallics, washable premium finishes.",
     "Differentiation: faster sampling turnaround and dedicated designer support.",
@@ -82,25 +81,24 @@ const INTERIOR_DESIGNERS: StakeholderType = {
 const DEALERS: StakeholderType = {
   id: "dealers",
   name: "Dealers & Retailers",
-  question: "Which paint and hardware dealers in the area move the most volume?",
+  question: "Do you know paint and hardware dealers in the area who move the most volume?",
   howToConnect: [
     "Visit hardware lanes in the morning to meet shop owners.",
     "Identify high-volume dealers via painter / contractor references.",
-    "Run small in-shop demos with samples and tea.",
+    "Run small in-shop demos with samples.",
   ],
   whatToTalk: [
     "Introduction & credibility: JK's distribution support and margin proposition.",
     "Understand their needs: top-selling SKUs, stocking pain-points, painter feedback.",
-    "Product / solution pitch: fast-moving SKUs, in-shop marketing collateral, training.",
-    "Differentiation: scheme transparency, on-time delivery, painter incentive programs.",
+    "Product / solution pitch: fast-moving SKUs, in-shop collateral, training.",
+    "Differentiation: scheme transparency, on-time delivery, painter incentives.",
   ],
 };
 
-// Cluster-specific only.
 const SOCIETY_SECRETARIES: StakeholderType = {
   id: "society-secretaries",
   name: "Society Secretaries",
-  question: "Are you in touch with secretaries of residential societies due for repainting?",
+  question: "Do you know secretaries of residential societies that are due for repainting?",
   howToConnect: [
     "Approach via committee members or society AGM notices.",
     "Offer a free paint audit and cycle plan for the society.",
@@ -114,78 +112,10 @@ const SOCIETY_SECRETARIES: StakeholderType = {
   ],
 };
 
-const SECURITY_GUARDS: StakeholderType = {
-  id: "security-guards",
-  name: "Security Guards",
-  question: "Have you built rapport with security guards who control site access?",
-  howToConnect: [
-    "Greet guards on every site visit and remember names.",
-    "Offer small courtesies (tea, festival sweets) to build rapport.",
-    "Ask politely about resident committee members and current contractors.",
-  ],
-  whatToTalk: [
-    "Introduction: brief, warm, no hard sell.",
-    "Ask about ongoing maintenance and any painting activity.",
-    "Request guidance on whom to meet inside the society.",
-    "Leave a small JK calendar / token as a memorable touch.",
-  ],
-};
-
-const TEACHERS: StakeholderType = {
-  id: "teachers",
-  name: "Teachers",
-  question: "Do you know teachers who can introduce you to school management?",
-  howToConnect: [
-    "Approach via parent / alumni networks.",
-    "Offer to sponsor a small classroom paint refresh.",
-    "Attend PTA or annual day events.",
-  ],
-  whatToTalk: [
-    "Introduction: respect their primary role; keep the ask brief.",
-    "Understand the school's maintenance pain-points.",
-    "Position child-safe, low-VOC finishes.",
-    "Request an introduction to the principal or trustee.",
-  ],
-};
-
-const PRINCIPAL: StakeholderType = {
-  id: "principal",
-  name: "Principal / Trustee",
-  question: "Have you met the principal or trustee responsible for campus upkeep?",
-  howToConnect: [
-    "Request an appointment via the school office.",
-    "Send a one-page proposal with a free audit offer.",
-    "Use existing teacher / parent references for warm intros.",
-  ],
-  whatToTalk: [
-    "Introduction & credibility: JK's experience with educational institutions.",
-    "Understand their needs: vacation windows, budget cycles, approval chain.",
-    "Product / solution pitch: durable, washable, child-safe finishes.",
-    "Differentiation: structured maintenance plan and warranty.",
-  ],
-};
-
-const DEPT_ADMIN: StakeholderType = {
-  id: "dept-admin",
-  name: "Department Admin",
-  question: "Are you connected with the administrative officer handling campus contracts?",
-  howToConnect: [
-    "Schedule a meeting via the school office.",
-    "Provide a clear quotation template and execution plan.",
-    "Coordinate timelines that fit academic calendar.",
-  ],
-  whatToTalk: [
-    "Introduction & credibility: track record with similar institutions.",
-    "Discuss tender / quotation process and required documentation.",
-    "Product / solution pitch: bundled supply + applicator support.",
-    "Differentiation: transparent pricing, on-time delivery, post-job warranty.",
-  ],
-};
-
 const FACILITY_HEAD: StakeholderType = {
   id: "facility-head",
   name: "Facility / Maintenance Head",
-  question: "Have you met the facility or maintenance head responsible for repainting cycles?",
+  question: "Do you know any facility or maintenance head responsible for repainting cycles?",
   howToConnect: [
     "Schedule a plant / building walk with the facility head.",
     "Offer a free condition audit of high-wear surfaces.",
@@ -199,58 +129,87 @@ const FACILITY_HEAD: StakeholderType = {
   ],
 };
 
-const MALL_FACILITY: StakeholderType = {
-  id: "mall-facility",
-  name: "Mall Facility Head",
-  question: "Are you in touch with the mall facility head handling common-area refresh?",
+const PRINCIPAL: StakeholderType = {
+  id: "principal",
+  name: "Principal / Trustee",
+  question: "Can you connect me with the principal or trustee responsible for campus upkeep?",
   howToConnect: [
-    "Meet via facility management agency contacts.",
-    "Offer a sample panel for high-footfall corridors.",
-    "Coordinate with tenant fit-out contractors.",
+    "Request an appointment via the school / college office.",
+    "Send a one-page proposal with a free audit offer.",
+    "Use existing teacher / parent references for warm intros.",
   ],
   whatToTalk: [
-    "Introduction & credibility: retail-friendly low-odour finishes.",
-    "Understand their needs: refresh cycle, footfall constraints, brand standards.",
-    "Product / solution pitch: quick-drying, low-VOC, vivid colours.",
-    "Differentiation: on-time delivery, applicator support, warranty.",
+    "Introduction & credibility: JK's experience with educational institutions.",
+    "Understand their needs: vacation windows, budget cycles, approval chain.",
+    "Product / solution pitch: durable, washable, child-safe finishes.",
+    "Differentiation: structured maintenance plan and warranty.",
   ],
 };
 
 const PAINTERS: StakeholderType = {
   id: "painters",
   name: "Painters & Mistris",
-  question: "Which painters and mistris dominate the local market?",
+  question: "Do you know painters and mistris who dominate the local market?",
   howToConnect: [
-    "Visit dealer counters in the early morning when painters collect material.",
+    "Visit dealer counters early morning when painters collect material.",
     "Run a small painter meet at a friendly dealer's shop.",
     "Enroll them in the JK painter rewards program.",
   ],
   whatToTalk: [
-    "Introduction: respect their craft; share product application tips.",
+    "Introduction: respect their craft; share application tips.",
     "Understand their needs: ease of mixing, coverage, customer complaints.",
     "Product / solution pitch: better workability, fewer call-backs.",
     "Differentiation: rewards, training, on-site technical support.",
   ],
 };
 
-export const STAKEHOLDER_FRAMEWORK: Record<string, StakeholderType[]> = {
-  residential: [
-    CONTRACTORS,
-    SITE_SUPERVISORS,
-    ARCHITECTS,
-    INTERIOR_DESIGNERS,
-    SOCIETY_SECRETARIES,
-    SECURITY_GUARDS,
+const OWNER_MANAGER: StakeholderType = {
+  id: "owner-manager",
+  name: "Owner / Manager",
+  question: "Do you know the owner or manager who decides on repainting here?",
+  howToConnect: [
+    "Walk in during lean hours and ask for the owner / manager.",
+    "Use vendor / supplier references for a warm intro.",
+    "Offer a free site assessment of current finishes.",
   ],
-  industrial: [FACILITY_HEAD, CONTRACTORS, SITE_SUPERVISORS, DEALERS],
+  whatToTalk: [
+    "Introduction & credibility: relevant projects in the same segment.",
+    "Understand their needs: brand standards, refresh frequency, budget.",
+    "Product / solution pitch: durable, low-odour, premium finishes.",
+    "Differentiation: warranty, applicator support, on-time delivery.",
+  ],
+};
+
+const DEFAULT_SET: StakeholderType[] = [
+  OWNER_MANAGER,
+  CONTRACTORS,
+  PAINTERS,
+  DEALERS,
+];
+
+export const STAKEHOLDER_FRAMEWORK: Record<string, StakeholderType[]> = {
+  "mid-apartments": [SOCIETY_SECRETARIES, CONTRACTORS, SITE_SUPERVISORS, ARCHITECTS, PAINTERS],
+  redevelopment: [SOCIETY_SECRETARIES, CONTRACTORS, ARCHITECTS, SITE_SUPERVISORS],
+  "gated-community": [CONTRACTORS, ARCHITECTS, INTERIOR_DESIGNERS, SITE_SUPERVISORS],
+  schools: [PRINCIPAL, FACILITY_HEAD, CONTRACTORS, PAINTERS],
+  colleges: [PRINCIPAL, FACILITY_HEAD, CONTRACTORS, PAINTERS],
+  hospitals: [FACILITY_HEAD, CONTRACTORS, ARCHITECTS, DEALERS],
+  restaurants: [OWNER_MANAGER, INTERIOR_DESIGNERS, CONTRACTORS, PAINTERS],
+  hotels: [FACILITY_HEAD, INTERIOR_DESIGNERS, CONTRACTORS, ARCHITECTS],
+  midc: [FACILITY_HEAD, CONTRACTORS, SITE_SUPERVISORS, DEALERS],
   warehousing: [FACILITY_HEAD, CONTRACTORS, SITE_SUPERVISORS, DEALERS],
-  "retail-malls": [MALL_FACILITY, CONTRACTORS, INTERIOR_DESIGNERS, ARCHITECTS],
-  offices: [FACILITY_HEAD, INTERIOR_DESIGNERS, ARCHITECTS, CONTRACTORS],
-  schools: [TEACHERS, PRINCIPAL, DEPT_ADMIN, CONTRACTORS],
-  hospitals: [FACILITY_HEAD, CONTRACTORS, ARCHITECTS, DEPT_ADMIN],
-  bazaar: [DEALERS, PAINTERS, CONTRACTORS],
+  "marriage-halls": [OWNER_MANAGER, CONTRACTORS, PAINTERS],
+  "paying-guest": [OWNER_MANAGER, PAINTERS, DEALERS],
+  religious: [OWNER_MANAGER, CONTRACTORS, PAINTERS],
+  "auto-showrooms": [OWNER_MANAGER, FACILITY_HEAD, INTERIOR_DESIGNERS],
+  "petrol-pumps": [OWNER_MANAGER, CONTRACTORS, PAINTERS],
+  "bus-stand-market": [OWNER_MANAGER, DEALERS, PAINTERS],
+  "highway-dhabas": [OWNER_MANAGER, CONTRACTORS, PAINTERS],
+  "clinics-nursing": [OWNER_MANAGER, FACILITY_HEAD, CONTRACTORS],
+  jewellery: [OWNER_MANAGER, INTERIOR_DESIGNERS, CONTRACTORS],
+  "textile-garment": [OWNER_MANAGER, INTERIOR_DESIGNERS, PAINTERS],
 };
 
 export function getStakeholderTypes(clusterId: string): StakeholderType[] {
-  return STAKEHOLDER_FRAMEWORK[clusterId] ?? [CONTRACTORS, ARCHITECTS, INTERIOR_DESIGNERS];
+  return STAKEHOLDER_FRAMEWORK[clusterId] ?? DEFAULT_SET;
 }
