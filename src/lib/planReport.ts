@@ -66,7 +66,7 @@ export function generatePlanReportPdf({
   };
 
   // Target clusters
-  heading("Target clusters");
+  heading(`Target clusters selected as on ${new Date().toLocaleDateString()}`);
   if (targetClusterIds.length === 0) {
     doc.setTextColor(120);
     doc.text("No target clusters selected.", margin, y);
@@ -93,7 +93,7 @@ export function generatePlanReportPdf({
   }
 
   // How to connect
-  heading("How to connect");
+  heading("How to connect with the selected clusters");
   if (targetClusterIds.length === 0) {
     doc.setTextColor(120);
     doc.text("Select clusters to see strategies.", margin, y);
@@ -125,7 +125,7 @@ export function generatePlanReportPdf({
   }
 
   // Events
-  heading("Contribution events");
+  heading("Contribution events planned");
   if (events.length === 0) {
     doc.setTextColor(120);
     doc.text("No events planned.", margin, y);
@@ -155,7 +155,7 @@ export function generatePlanReportPdf({
   }
 
   // Readiness
-  heading("Service delivery readiness");
+  heading("Service delivery readiness status");
   const fmt = (v: string | null | undefined) => (v ? READINESS_LABEL[v] ?? "—" : "—");
   autoTable(doc, {
     startY: y,
