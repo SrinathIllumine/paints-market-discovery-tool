@@ -98,7 +98,7 @@ function PlanScreen() {
           >
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <div className="flex w-full items-center justify-between pr-2">
-                <span className="font-display text-lg leading-tight">Select Target clusters</span>
+                <span className="font-display text-lg leading-tight">1. Select Target clusters</span>
                 <span className="text-xs text-muted-foreground">
                   {targetIds.length} selected
                 </span>
@@ -153,7 +153,7 @@ function PlanScreen() {
           >
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <div className="flex w-full items-center justify-between pr-2">
-                <span className="font-display text-lg leading-tight">How to connect</span>
+                <span className="font-display text-lg leading-tight">2. How to connect</span>
                 <span className="text-xs text-muted-foreground">
                   {targetIds.length === 0
                     ? "Pick targets first"
@@ -196,7 +196,7 @@ function PlanScreen() {
           >
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <div className="flex w-full items-center justify-between pr-2">
-                <span className="font-display text-lg leading-tight">Contribution events</span>
+                <span className="font-display text-lg leading-tight">3. Contribution events</span>
                 <span className="text-xs text-muted-foreground">
                   {events.length} planned
                 </span>
@@ -265,7 +265,7 @@ function PlanScreen() {
           >
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="font-display text-lg leading-tight">
-                Service delivery readiness
+                4. Service delivery readiness
               </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
