@@ -243,7 +243,7 @@ export const useAppStore = create<State & Actions>()(
           },
         })),
     }),
-    { name: "sed.v3" },
+    { name: "sed.v4" },
   ),
 );
 

@@ -344,7 +344,7 @@ function ClusterDetailScreen() {
                 >
                   <div className="min-w-0">
                     <p className="truncate font-medium">{s.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{s.prospect}</p>
+                    <p className="truncate text-xs text-muted-foreground">{s.marketArea ?? ""}</p>
                   </div>
                   <a
                     href={`tel:${s.phone}`}
