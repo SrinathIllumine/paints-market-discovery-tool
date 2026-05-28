@@ -248,7 +248,7 @@ function StakeholderTypeCard({
         {/* 2. How to connect */}
         <section className="rounded-xl border border-border p-3">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-navy">
-            2. Connect approaches with the {type.name.toLowerCase()}?
+            2. Connect approaches with the {type.name.toLowerCase()}
           </p>
           <ul className="space-y-1.5 text-sm leading-relaxed">
             {type.howToConnect.map((h) => (
