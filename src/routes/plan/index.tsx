@@ -84,8 +84,9 @@ function PlanScreen() {
       header={
         <StageHeader
           eyebrow="Stage 3 of 3 · Outreach Plan"
-          title="Plan this period"
-          subtitle="Pick targets, plan events, check delivery readiness."
+          title="Create an Outreach Plan"
+          subtitle=""
+
         />
       }
     >
