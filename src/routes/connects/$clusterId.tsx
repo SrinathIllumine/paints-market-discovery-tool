@@ -263,7 +263,7 @@ function StakeholderTypeCard({
         {/* 3. What to talk */}
         <section className="rounded-xl border border-border p-3">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-navy">
-            3. What to talk?
+            3. WHAT TO PITCH?
           </p>
           <ul className="space-y-1.5 text-sm leading-relaxed">
             {type.whatToTalk.map((w) => (
