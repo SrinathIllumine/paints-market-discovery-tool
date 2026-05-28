@@ -32,8 +32,8 @@ export function generatePlanReportPdf({
   doc.rect(0, 0, pageWidth, 70, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.text("JK Cement · Outreach Plan", margin, 35);
+  doc.setFontSize(16);
+  doc.text("Outreach Plan for the Month of June", margin, 35);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
@@ -45,15 +45,29 @@ export function generatePlanReportPdf({
     margin,
     54,
   );
+  // Top-right DG name and Area
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text("DG: Sunil Kumar", pageWidth - margin, 30, { align: "right" });
+  doc.setFont("helvetica", "normal");
+  doc.text("Area: Panvel", pageWidth - margin, 46, { align: "right" });
   doc.setTextColor(15, 23, 42);
   y = 100;
 
-  // Section helper
+  // Section helper — draws a divider line above each section heading
+  let sectionIndex = 0;
   const heading = (text: string) => {
     if (y > 760) {
       doc.addPage();
       y = margin;
     }
+    if (sectionIndex > 0) {
+      doc.setDrawColor(180);
+      doc.setLineWidth(0.75);
+      doc.line(margin, y - 6, pageWidth - margin, y - 6);
+      y += 10;
+    }
+    sectionIndex++;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.text(text, margin, y);
