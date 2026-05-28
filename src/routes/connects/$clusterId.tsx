@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
@@ -11,19 +11,63 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Save } from "lucide-react";
 import { getCluster } from "@/data/clusters";
 import { getStakeholderTypes, type StakeholderType } from "@/data/stakeholderFramework";
-import { useAppStore } from "@/store/appStore";
+import { useAppStore, type Stakeholder } from "@/store/appStore";
 
 export const Route = createFileRoute("/connects/$clusterId")({
   component: ConnectsClusterScreen,
 });
 
+type Row = {
+  id: string;
+  name: string;
+  phone: string;
+  marketArea: string;
+  comments: string;
+  existingId?: string;
+};
+
+const blankRow = (): Row => ({
+  id: `row-${Math.random().toString(36).slice(2, 9)}`,
+  name: "",
+  phone: "",
+  marketArea: "",
+  comments: "",
+});
+
+function buildInitialRows(existing: Stakeholder[]): Row[] {
+  const fromExisting: Row[] = existing.map((s) => ({
+    id: `row-${s.id}`,
+    name: s.name,
+    phone: s.phone,
+    marketArea: s.marketArea ?? "",
+    comments: s.comments ?? "",
+    existingId: s.id,
+  }));
+  const fill = Math.max(0, 5 - fromExisting.length);
+  return [...fromExisting, ...Array.from({ length: fill }, blankRow)];
+}
+
 function ConnectsClusterScreen() {
   const { clusterId } = Route.useParams();
+  const navigate = useNavigate();
   const cluster = useMemo(() => getCluster(clusterId), [clusterId]);
   const types = useMemo(() => getStakeholderTypes(clusterId), [clusterId]);
+
+  const existingAll = useAppStore((s) => s.stakeholders[clusterId]) ?? [];
+  const addStakeholder = useAppStore((s) => s.addStakeholder);
+  const removeStakeholder = useAppStore((s) => s.removeStakeholder);
+
+  // Per stakeholder-type local row state (seed once)
+  const [rowsByType, setRowsByType] = useState<Record<string, Row[]>>(() => {
+    const init: Record<string, Row[]> = {};
+    for (const t of types) {
+      init[t.id] = buildInitialRows(existingAll.filter((s) => s.stakeholderTypeId === t.id));
+    }
+    return init;
+  });
 
   if (!cluster) {
     return (
@@ -32,6 +76,39 @@ function ConnectsClusterScreen() {
       </AppShell>
     );
   }
+
+  const updateRow = (typeId: string, rowId: string, patch: Partial<Row>) => {
+    setRowsByType((prev) => ({
+      ...prev,
+      [typeId]: prev[typeId].map((r) => (r.id === rowId ? { ...r, ...patch } : r)),
+    }));
+  };
+
+  const addRow = (typeId: string) => {
+    setRowsByType((prev) => ({ ...prev, [typeId]: [...prev[typeId], blankRow()] }));
+  };
+
+  const handleSave = () => {
+    // Replace stored stakeholders for each type with what's in the rows.
+    for (const t of types) {
+      const rows = rowsByType[t.id] ?? [];
+      const prevForType = existingAll.filter((s) => s.stakeholderTypeId === t.id);
+      // Remove all previously saved for this type
+      for (const s of prevForType) removeStakeholder(clusterId, s.id);
+      // Re-add non-empty rows
+      for (const r of rows) {
+        if (r.name.trim().length === 0) continue;
+        addStakeholder(clusterId, {
+          name: r.name.trim(),
+          phone: r.phone.trim(),
+          marketArea: r.marketArea.trim() || undefined,
+          comments: r.comments.trim() || undefined,
+          stakeholderTypeId: t.id,
+        });
+      }
+    }
+    navigate({ to: "/map" });
+  };
 
   return (
     <AppShell
@@ -46,33 +123,44 @@ function ConnectsClusterScreen() {
       }
     >
       <div className="space-y-3 px-5 py-5">
-        <h2 className="font-display text-lg">Plan Connects - Build your connects list for the cluster</h2>
+        <h2 className="font-display text-lg">
+          Plan Connects - Build your connects list for the cluster
+        </h2>
         <Accordion type="multiple" defaultValue={[]} className="space-y-3">
           {types.map((t) => (
-            <StakeholderTypeCard key={t.id} clusterId={clusterId} type={t} />
+            <StakeholderTypeCard
+              key={t.id}
+              type={t}
+              rows={rowsByType[t.id] ?? []}
+              onChangeRow={(rowId, patch) => updateRow(t.id, rowId, patch)}
+              onAddRow={() => addRow(t.id)}
+            />
           ))}
         </Accordion>
+
+        <Button
+          onClick={handleSave}
+          className="mt-2 h-12 w-full gap-2 bg-navy text-base font-semibold text-navy-foreground hover:bg-navy/90"
+        >
+          <Save className="h-4 w-4" /> Save connects
+        </Button>
       </div>
     </AppShell>
   );
 }
 
 function StakeholderTypeCard({
-  clusterId,
   type,
+  rows,
+  onChangeRow,
+  onAddRow,
 }: {
-  clusterId: string;
   type: StakeholderType;
+  rows: Row[];
+  onChangeRow: (rowId: string, patch: Partial<Row>) => void;
+  onAddRow: () => void;
 }) {
-  const all = useAppStore((s) => s.stakeholders[clusterId]) ?? [];
-  const addStakeholder = useAppStore((s) => s.addStakeholder);
-  const removeStakeholder = useAppStore((s) => s.removeStakeholder);
-
-  const items = all.filter((s) => s.stakeholderTypeId === type.id);
-
-  const [draft, setDraft] = useState({ name: "", phone: "", prospect: "", preferredBrand: "" });
-
-  const canAdd = draft.name.trim().length > 0;
+  const filled = rows.filter((r) => r.name.trim().length > 0).length;
 
   return (
     <AccordionItem
@@ -82,11 +170,15 @@ function StakeholderTypeCard({
       <AccordionTrigger className="px-4 py-3 hover:no-underline">
         <div className="flex w-full items-start justify-between gap-3 pr-2 text-left">
           <div className="min-w-0">
-            <p className="font-display text-base leading-tight">{type.name}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">{type.question}</p>
+            <p className="font-serif text-lg font-bold leading-snug tracking-tight text-foreground sm:text-xl">
+              {type.question}
+            </p>
+            <p className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {type.name}
+            </p>
           </div>
-          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-            {items.length}
+          <span className="mt-1 shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+            {filled}
           </span>
         </div>
       </AccordionTrigger>
@@ -96,76 +188,57 @@ function StakeholderTypeCard({
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-navy">
             1. Make your list
           </p>
-          {items.length > 0 && (
-            <div className="mb-3 overflow-hidden rounded-lg border border-border">
-              <table className="w-full text-xs">
-                <thead className="bg-muted/50 text-left">
-                  <tr>
-                    <th className="px-2 py-1.5 font-semibold">Name</th>
-                    <th className="px-2 py-1.5 font-semibold">Phone</th>
-                    <th className="px-2 py-1.5 font-semibold">Prospect</th>
-                    <th className="px-2 py-1.5 font-semibold">Preferred Brand</th>
-                    <th />
+          <div className="-mx-3 overflow-x-auto">
+            <table className="w-full min-w-[640px] text-xs">
+              <thead className="bg-muted/50 text-left">
+                <tr>
+                  <th className="px-2 py-1.5 font-semibold">Name</th>
+                  <th className="px-2 py-1.5 font-semibold">Phone Number</th>
+                  <th className="px-2 py-1.5 font-semibold">Market Area</th>
+                  <th className="px-2 py-1.5 font-semibold">Comment(s)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} className="border-t border-border align-top">
+                    <td className="whitespace-nowrap px-2 py-1">
+                      <Input
+                        value={r.name}
+                        onChange={(e) => onChangeRow(r.id, { name: e.target.value })}
+                        className="h-8 text-xs"
+                      />
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-1">
+                      <Input
+                        value={r.phone}
+                        inputMode="tel"
+                        onChange={(e) => onChangeRow(r.id, { phone: e.target.value })}
+                        className="h-8 text-xs"
+                      />
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-1">
+                      <Input
+                        value={r.marketArea}
+                        onChange={(e) => onChangeRow(r.id, { marketArea: e.target.value })}
+                        className="h-8 text-xs"
+                      />
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-1">
+                      <Input
+                        value={r.comments}
+                        onChange={(e) => onChangeRow(r.id, { comments: e.target.value })}
+                        className="h-8 text-xs"
+                      />
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {items.map((s) => (
-                    <tr key={s.id} className="border-t border-border">
-                      <td className="px-2 py-1.5">{s.name}</td>
-                      <td className="px-2 py-1.5">{s.phone || "—"}</td>
-                      <td className="px-2 py-1.5">{s.prospect || "—"}</td>
-                      <td className="px-2 py-1.5">{s.preferredBrand || "—"}</td>
-                      <td className="px-2 py-1">
-                        <button
-                          onClick={() => removeStakeholder(clusterId, s.id)}
-                          className="rounded-full p-1 text-muted-foreground hover:bg-muted"
-                          aria-label="Remove"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Input
-              placeholder="Name"
-              value={draft.name}
-              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-            />
-            <Input
-              placeholder="Phone"
-              inputMode="tel"
-              value={draft.phone}
-              onChange={(e) => setDraft({ ...draft, phone: e.target.value })}
-            />
-            <Input
-              placeholder="Prospect"
-              value={draft.prospect}
-              onChange={(e) => setDraft({ ...draft, prospect: e.target.value })}
-            />
-            <Input
-              placeholder="Preferred Brand"
-              value={draft.preferredBrand}
-              onChange={(e) => setDraft({ ...draft, preferredBrand: e.target.value })}
-            />
+                ))}
+              </tbody>
+            </table>
           </div>
           <Button
             size="sm"
-            disabled={!canAdd}
-            onClick={() => {
-              addStakeholder(clusterId, {
-                name: draft.name.trim(),
-                phone: draft.phone.trim(),
-                prospect: draft.prospect.trim(),
-                preferredBrand: draft.preferredBrand.trim() || undefined,
-                stakeholderTypeId: type.id,
-              });
-              setDraft({ name: "", phone: "", prospect: "", preferredBrand: "" });
-            }}
+            variant="outline"
+            onClick={onAddRow}
             className="mt-3 h-8 gap-1 text-xs"
           >
             <Plus className="h-3.5 w-3.5" /> Add More
@@ -177,7 +250,6 @@ function StakeholderTypeCard({
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-navy">
             2. How to connect with the {type.name.toLowerCase()}?
           </p>
-          <p className="mb-2 text-xs font-semibold">Connect Model:</p>
           <ul className="space-y-1.5 text-sm leading-relaxed">
             {type.howToConnect.map((h) => (
               <li key={h} className="flex gap-2">
