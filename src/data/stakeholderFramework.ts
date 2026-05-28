@@ -13,7 +13,7 @@ export type StakeholderType = {
 const CONTRACTORS: StakeholderType = {
   id: "contractors",
   name: "Contractors",
-  question: "Do you know any contractors in the area who deal with this segment?",
+  question: "Do you know any contractors in the area who can help you connect with this cluster?",
   howToConnect: [
     "Reference-based approach: use existing contacts (electricians, plumbers, society committees, dealers) for introductions.",
     "Site visits: visit ongoing or recently completed projects and meet contractors on-site.",
@@ -30,7 +30,7 @@ const CONTRACTORS: StakeholderType = {
 const SITE_SUPERVISORS: StakeholderType = {
   id: "site-supervisors",
   name: "Site Supervisors",
-  question: "Can you connect me with site supervisors who can refer JK products?",
+  question: "Do you know any site supervisors who can help you connect with this cluster?",
   howToConnect: [
     "Visit active construction sites during morning hours when supervisors review work.",
     "Ask contractors and engineers for trusted supervisor introductions.",
@@ -47,7 +47,7 @@ const SITE_SUPERVISORS: StakeholderType = {
 const ARCHITECTS: StakeholderType = {
   id: "architects",
   name: "Architects",
-  question: "Do you know architects who can specify JK products?",
+  question: "Do you know architects who can connect with residential societies?",
   howToConnect: [
     "Connect through builder / developer referrals and design fraternity contacts.",
     "Attend local architect chapter meets and product showcases.",
@@ -98,7 +98,7 @@ const DEALERS: StakeholderType = {
 const SOCIETY_SECRETARIES: StakeholderType = {
   id: "society-secretaries",
   name: "Society Secretaries",
-  question: "Do you know secretaries of residential societies that are due for repainting?",
+  question: "Do you know secretaries of residential societies who require repainting services?",
   howToConnect: [
     "Approach via committee members or society AGM notices.",
     "Offer a free paint audit and cycle plan for the society.",
@@ -149,7 +149,7 @@ const PRINCIPAL: StakeholderType = {
 const PAINTERS: StakeholderType = {
   id: "painters",
   name: "Painters & Mistris",
-  question: "Do you know painters and mistris who dominate the local market?",
+  question: "Do you know painters and mistris who specialize in this segment? ",
   howToConnect: [
     "Visit dealer counters early morning when painters collect material.",
     "Run a small painter meet at a friendly dealer's shop.",
