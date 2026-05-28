@@ -271,7 +271,7 @@ function PlanScreen() {
             <AccordionContent className="px-4 pb-4">
               <div className="space-y-3">
                 <ReadinessRow
-                  label="Are there enough retailers in this cluster?"
+                  label="Are there enough retailers in the selected clusters?"
                   value={readinessMap.retailers}
                   onChange={(v) => setReadiness({ retailers: v })}
                 />
