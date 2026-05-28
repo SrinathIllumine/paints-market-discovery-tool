@@ -37,10 +37,8 @@ function IntroScreen() {
       ? `Outreach plan created for ${targetClusterIds.length} cluster${targetClusterIds.length === 1 ? "" : "s"}`
       : null;
 
-  const insightsProgress =
-    insights.length > 0
-      ? `${insights.length} market insight${insights.length === 1 ? "" : "s"} received from MEs and Retailers`
-      : null;
+  const totalInsights = 3 + insights.length;
+  const insightsProgress = `${totalInsights} market insights received from MEs and Retailers`;
 
   const props = [
     {
