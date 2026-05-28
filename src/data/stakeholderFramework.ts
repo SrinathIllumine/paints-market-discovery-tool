@@ -132,7 +132,7 @@ const FACILITY_HEAD: StakeholderType = {
 const PRINCIPAL: StakeholderType = {
   id: "principal",
   name: "Principal / Trustee",
-  question: "Can you connect me with the principal or trustee responsible for campus upkeep?",
+  question: "Do you know any principal or trustee responsible for campus upkeep?",
   howToConnect: [
     "Request an appointment via the school / college office.",
     "Send a one-page proposal with a free audit offer.",
