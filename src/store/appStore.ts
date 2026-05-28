@@ -14,9 +14,9 @@ export type Prospect = {
 export type Stakeholder = {
   id: string;
   name: string;
-  prospect: string;
   phone: string;
-  preferredBrand?: string;
+  marketArea?: string;
+  comments?: string;
   stakeholderTypeId?: string;
 };
 
