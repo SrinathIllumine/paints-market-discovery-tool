@@ -123,7 +123,7 @@ function ConnectsClusterScreen() {
       }
     >
       <div className="space-y-3 px-5 py-5">
-        <h2 className="font-display text-lg">
+        <h2 className="font-display text-lg font-semibold">
           Plan Connects - Build your connects list for the cluster
         </h2>
         <Accordion type="multiple" defaultValue={[]} className="space-y-3">
@@ -170,10 +170,10 @@ function StakeholderTypeCard({
       <AccordionTrigger className="px-4 py-3 hover:no-underline">
         <div className="flex w-full items-start justify-between gap-3 pr-2 text-left">
           <div className="min-w-0">
-            <p className="font-serif text-lg font-bold leading-snug tracking-tight text-foreground sm:text-base">
+            <p className="text-base font-semibold leading-snug tracking-tight text-foreground">
               {type.question}
             </p>
-            <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground font-serif text-left font-normal">
+            <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">
               {type.name}
             </p>
           </div>

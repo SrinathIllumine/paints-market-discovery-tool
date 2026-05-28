@@ -33,7 +33,7 @@ export function generatePlanReportPdf({
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("Outreach Plan for the Month of June", margin, 35);
+  doc.text("Outreach plan for June 2026", margin, 35);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
@@ -62,10 +62,11 @@ export function generatePlanReportPdf({
       y = margin;
     }
     if (sectionIndex > 0) {
+      y += 16;
       doc.setDrawColor(180);
       doc.setLineWidth(0.75);
       doc.line(margin, y - 6, pageWidth - margin, y - 6);
-      y += 10;
+      y += 20;
     }
     sectionIndex++;
     doc.setFont("helvetica", "bold");
@@ -80,7 +81,7 @@ export function generatePlanReportPdf({
   };
 
   // Target clusters
-  heading(`Target clusters selected as on ${new Date().toLocaleDateString()}`);
+  heading("Target clusters selected");
   if (targetClusterIds.length === 0) {
     doc.setTextColor(120);
     doc.text("No target clusters selected.", margin, y);
@@ -107,7 +108,7 @@ export function generatePlanReportPdf({
   }
 
   // How to connect
-  heading("How to connect with the selected clusters");
+  heading("Connect Approaches Finalized");
   if (targetClusterIds.length === 0) {
     doc.setTextColor(120);
     doc.text("Select clusters to see strategies.", margin, y);
