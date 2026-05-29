@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MarketPotentialRouteImport } from './routes/market-potential'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlanIndexRouteImport } from './routes/plan/index'
@@ -17,6 +18,11 @@ import { Route as ConnectsIndexRouteImport } from './routes/connects/index'
 import { Route as MapClusterIdRouteImport } from './routes/map/$clusterId'
 import { Route as ConnectsClusterIdRouteImport } from './routes/connects/$clusterId'
 
+const MarketPotentialRoute = MarketPotentialRouteImport.update({
+  id: '/market-potential',
+  path: '/market-potential',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InsightsRoute = InsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
@@ -56,6 +62,7 @@ const ConnectsClusterIdRoute = ConnectsClusterIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/insights': typeof InsightsRoute
+  '/market-potential': typeof MarketPotentialRoute
   '/connects/$clusterId': typeof ConnectsClusterIdRoute
   '/map/$clusterId': typeof MapClusterIdRoute
   '/connects/': typeof ConnectsIndexRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/insights': typeof InsightsRoute
+  '/market-potential': typeof MarketPotentialRoute
   '/connects/$clusterId': typeof ConnectsClusterIdRoute
   '/map/$clusterId': typeof MapClusterIdRoute
   '/connects': typeof ConnectsIndexRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/insights': typeof InsightsRoute
+  '/market-potential': typeof MarketPotentialRoute
   '/connects/$clusterId': typeof ConnectsClusterIdRoute
   '/map/$clusterId': typeof MapClusterIdRoute
   '/connects/': typeof ConnectsIndexRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/insights'
+    | '/market-potential'
     | '/connects/$clusterId'
     | '/map/$clusterId'
     | '/connects/'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/insights'
+    | '/market-potential'
     | '/connects/$clusterId'
     | '/map/$clusterId'
     | '/connects'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/insights'
+    | '/market-potential'
     | '/connects/$clusterId'
     | '/map/$clusterId'
     | '/connects/'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   InsightsRoute: typeof InsightsRoute
+  MarketPotentialRoute: typeof MarketPotentialRoute
   ConnectsClusterIdRoute: typeof ConnectsClusterIdRoute
   MapClusterIdRoute: typeof MapClusterIdRoute
   ConnectsIndexRoute: typeof ConnectsIndexRoute
@@ -123,6 +136,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/market-potential': {
+      id: '/market-potential'
+      path: '/market-potential'
+      fullPath: '/market-potential'
+      preLoaderRoute: typeof MarketPotentialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/insights': {
       id: '/insights'
       path: '/insights'
@@ -178,6 +198,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   InsightsRoute: InsightsRoute,
+  MarketPotentialRoute: MarketPotentialRoute,
   ConnectsClusterIdRoute: ConnectsClusterIdRoute,
   MapClusterIdRoute: MapClusterIdRoute,
   ConnectsIndexRoute: ConnectsIndexRoute,

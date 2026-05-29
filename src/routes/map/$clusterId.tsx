@@ -19,14 +19,10 @@ import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Phone, Plus, Users, Loader2, MapPin, Check } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Plus, Loader2, MapPin, Check, BookmarkPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/map/$clusterId")({
   component: ClusterDetailScreen,
@@ -47,19 +43,19 @@ function ClusterDetailScreen() {
   const cluster = useMemo(() => getCluster(clusterId), [clusterId]);
 
   const state = useAppStore((s) => s.clusters[clusterId]);
-  const stakeholders = useAppStore((s) => s.stakeholders[clusterId]) ?? [];
   const ensureCluster = useAppStore((s) => s.ensureCluster);
   const markVisited = useAppStore((s) => s.markVisited);
   const setProspects = useAppStore((s) => s.setProspects);
   const addProspect = useAppStore((s) => s.addProspect);
   const toggleProspectSelected = useAppStore((s) => s.toggleProspectSelected);
+  const shortlistCluster = useAppStore((s) => s.shortlistCluster);
 
   const callPlaces = useServerFn(searchPlacesForCluster);
   const [loading, setLoading] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [pickingPin, setPickingPin] = useState(false);
   const [pendingLatLng, setPendingLatLng] = useState<{ lat: number; lng: number } | null>(null);
-  const [stkOpen, setStkOpen] = useState(false);
+
 
   useEffect(() => {
     ensureCluster(clusterId);
@@ -276,33 +272,35 @@ function ClusterDetailScreen() {
           )}
         </section>
 
-        {/* Stakeholder connects link — only when contacts exist */}
-        {stakeholders.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setStkOpen(true)}
-            className="flex w-full items-center justify-between rounded-2xl border border-border bg-card p-4 text-left shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy/10 text-navy">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="font-display text-lg leading-tight">Stakeholder Connects</p>
-                <p className="text-xs text-muted-foreground">
-                  {stakeholders.length} contact{stakeholders.length === 1 ? "" : "s"} added
-                </p>
-              </div>
-            </div>
-            <span className="text-xs font-semibold text-critical">View</span>
-          </button>
-        )}
+        {/* Trigger questions */}
+        <Section title="Things to think about">
+          <ul className="space-y-2.5 text-sm">
+            {[
+              "Is there enough potential for JK from this cluster?",
+              "Is the cluster easy to access?",
+              "Does JK have enough retailers with stocks to service this cluster?",
+            ].map((q) => (
+              <li key={q} className="flex gap-2">
+                <span className="text-critical">•</span>
+                <span>{q}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
 
         <Button
-          onClick={() => navigate({ to: "/connects/$clusterId", params: { clusterId } })}
-          className="h-12 w-full bg-navy text-base font-semibold text-navy-foreground hover:bg-navy/90"
+          onClick={() => {
+            const already = useAppStore.getState().plan.targetClusterIds.includes(clusterId);
+            shortlistCluster(clusterId);
+            toast.success(
+              already ? "Cluster already in your market map" : "Cluster added to your market map",
+              { duration: 1800 },
+            );
+            setTimeout(() => navigate({ to: "/map" }), 700);
+          }}
+          className="h-12 w-full gap-2 bg-navy text-base font-semibold text-navy-foreground hover:bg-navy/90"
         >
-          Build your connects list for the cluster
+          <BookmarkPlus className="h-4 w-4" /> Shortlist this cluster to my market map
         </Button>
       </div>
 
@@ -323,53 +321,10 @@ function ClusterDetailScreen() {
           });
         }}
       />
-
-      <Sheet open={stkOpen} onOpenChange={setStkOpen}>
-        <SheetContent side="bottom" className="rounded-t-3xl">
-          <SheetHeader>
-            <SheetTitle className="font-display text-2xl">
-              Stakeholders · {cluster.name}
-            </SheetTitle>
-          </SheetHeader>
-          <div className="mt-4 space-y-2">
-            {stakeholders.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                No stakeholders yet. Add them in Stage 2 → Connects.
-              </div>
-            ) : (
-              stakeholders.map((s) => (
-                <div
-                  key={s.id}
-                  className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{s.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{s.marketArea ?? ""}</p>
-                  </div>
-                  <a
-                    href={`tel:${s.phone}`}
-                    className="flex items-center gap-1 rounded-full bg-critical/10 px-3 py-1.5 text-xs font-semibold text-critical"
-                  >
-                    <Phone className="h-3 w-3" /> {s.phone}
-                  </a>
-                </div>
-              ))
-            )}
-            <Button
-              onClick={() => {
-                setStkOpen(false);
-                navigate({ to: "/connects/$clusterId", params: { clusterId } });
-              }}
-              className="mt-3 h-11 w-full bg-navy text-navy-foreground hover:bg-navy/90"
-            >
-              Manage stakeholders
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
     </AppShell>
   );
 }
+
 
 function Section({
   title,

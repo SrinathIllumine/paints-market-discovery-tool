@@ -50,6 +50,8 @@ export type ClusterState = {
   visited: boolean;
 };
 
+export type Pathways = { L1: boolean; L2: boolean; L3: boolean; L4: boolean };
+
 type State = {
   clusters: Record<string, ClusterState>;
   stakeholders: Record<string, Stakeholder[]>;
@@ -58,6 +60,9 @@ type State = {
     targetClusterIds: string[];
     events: PlanEvent[];
     readiness: Readiness;
+    monthlyFocusIds: string[];
+    valueProps: Record<string, string>;
+    pathways: Record<string, Pathways>;
   };
 };
 
@@ -76,10 +81,15 @@ type Actions = {
   removeInsight: (id: string) => void;
 
   toggleTargetCluster: (clusterId: string) => void;
+  shortlistCluster: (clusterId: string) => void;
   addEvent: (e: Omit<PlanEvent, "id">) => void;
   removeEvent: (id: string) => void;
   setReadiness: (partial: Partial<Readiness>) => void;
+  toggleMonthlyFocus: (clusterId: string) => void;
+  setValueProp: (clusterId: string, text: string) => void;
+  setPathway: (clusterId: string, key: keyof Pathways, value: boolean) => void;
 };
+
 
 const emptyCluster = (): ClusterState => ({
   jkShare: null,
@@ -100,7 +110,15 @@ export const useAppStore = create<State & Actions>()(
       clusters: {},
       stakeholders: {},
       insights: [],
-      plan: { targetClusterIds: [], events: [], readiness: emptyReadiness() },
+      plan: {
+        targetClusterIds: [],
+        events: [],
+        readiness: emptyReadiness(),
+        monthlyFocusIds: [],
+        valueProps: {},
+        pathways: {},
+      },
+
 
       ensureCluster: (clusterId) =>
         set((s) =>
@@ -219,6 +237,58 @@ export const useAppStore = create<State & Actions>()(
           };
         }),
 
+      shortlistCluster: (clusterId) =>
+        set((state) => {
+          if (state.plan.targetClusterIds.includes(clusterId)) return state;
+          return {
+            plan: {
+              ...state.plan,
+              targetClusterIds: [...state.plan.targetClusterIds, clusterId],
+            },
+          };
+        }),
+
+      toggleMonthlyFocus: (clusterId) =>
+        set((state) => {
+          const has = state.plan.monthlyFocusIds.includes(clusterId);
+          return {
+            plan: {
+              ...state.plan,
+              monthlyFocusIds: has
+                ? state.plan.monthlyFocusIds.filter((x) => x !== clusterId)
+                : [...state.plan.monthlyFocusIds, clusterId],
+            },
+          };
+        }),
+
+      setValueProp: (clusterId, text) =>
+        set((state) => ({
+          plan: {
+            ...state.plan,
+            valueProps: { ...state.plan.valueProps, [clusterId]: text },
+          },
+        })),
+
+      setPathway: (clusterId, key, value) =>
+        set((state) => {
+          const prev = state.plan.pathways[clusterId] ?? {
+            L1: false,
+            L2: false,
+            L3: false,
+            L4: false,
+          };
+          return {
+            plan: {
+              ...state.plan,
+              pathways: {
+                ...state.plan.pathways,
+                [clusterId]: { ...prev, [key]: value },
+              },
+            },
+          };
+        }),
+
+
       addEvent: (e) =>
         set((state) => ({
           plan: {
@@ -243,7 +313,7 @@ export const useAppStore = create<State & Actions>()(
           },
         })),
     }),
-    { name: "sed.v4" },
+    { name: "sed.v5" },
   ),
 );
 
