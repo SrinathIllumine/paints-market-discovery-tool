@@ -18,7 +18,7 @@ export const Route = createFileRoute("/market-potential")({
   component: MarketPotentialPage,
 });
 
-const POT_WEIGHT = { H: 3, M: 2, L: 1 } as const;
+
 
 function MarketPotentialPage() {
   const shortlistedIds = useAppStore((s) => s.plan.targetClusterIds);
