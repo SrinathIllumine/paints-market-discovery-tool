@@ -279,3 +279,37 @@ export const POTENTIAL_LABEL: Record<Potential, string> = {
 export function getCluster(id: string): Cluster | undefined {
   return CLUSTERS.find((c) => c.id === id);
 }
+
+const PROSPECT_SINGULAR: Record<string, string> = {
+  schools: "School",
+  colleges: "College",
+  "mid-apartments": "Society",
+  redevelopment: "Society",
+  "gated-community": "Society",
+  hospitals: "Hospital",
+  restaurants: "Restaurant",
+  hotels: "Hotel",
+  midc: "Industrial unit",
+  warehousing: "Warehouse",
+  "marriage-halls": "Hall",
+  "paying-guest": "PG",
+  religious: "Institution",
+  "auto-showrooms": "Showroom",
+  "petrol-pumps": "Petrol pump",
+  "bus-stand-market": "Shop",
+  "highway-dhabas": "Dhaba",
+  "clinics-nursing": "Clinic",
+  jewellery: "Showroom",
+  "textile-garment": "Shop",
+};
+
+export function prospectSingular(clusterId: string): string {
+  return PROSPECT_SINGULAR[clusterId] ?? "Prospect";
+}
+
+export function prospectPlural(clusterId: string): string {
+  const s = prospectSingular(clusterId);
+  if (s.endsWith("y")) return s.slice(0, -1) + "ies";
+  if (s.endsWith("s")) return s;
+  return s + "s";
+}
