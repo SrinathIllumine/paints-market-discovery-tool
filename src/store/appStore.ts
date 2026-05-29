@@ -97,6 +97,11 @@ type Actions = {
   toggleMonthlyFocus: (clusterId: string) => void;
   setValueProp: (clusterId: string, text: string) => void;
   setPathway: (clusterId: string, key: keyof Pathways, value: boolean) => void;
+  setProspectAnswer: (
+    clusterId: string,
+    prospectId: string,
+    patch: Partial<ProspectAnswer>,
+  ) => void;
 };
 
 
