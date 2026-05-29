@@ -57,7 +57,7 @@ function PlanScreen() {
   const shortlisted = useAppStore((s) => s.plan.targetClusterIds);
   const focusIds = useAppStore((s) => s.plan.monthlyFocusIds);
   const toggleFocus = useAppStore((s) => s.toggleMonthlyFocus);
-  const prospectAnswers = useAppStore((s) => s.plan.prospectAnswers ?? {});
+  const prospectAnswers = useAppStore((s) => s.plan.prospectAnswers);
   const setProspectAnswer = useAppStore((s) => s.setProspectAnswer);
   const clustersState = useAppStore((s) => s.clusters);
   const stakeholders = useAppStore((s) => s.stakeholders);
@@ -284,7 +284,7 @@ function PlanScreen() {
                                       <ul className="divide-y divide-border rounded-xl border border-border bg-card">
                                         {r.prospects.map((p) => {
                                           const ans =
-                                            prospectAnswers[c.id]?.[p.id];
+                                            prospectAnswers?.[c.id]?.[p.id];
                                           const expanded =
                                             openProspectId === p.id;
                                           return (
@@ -394,7 +394,7 @@ function PlanScreen() {
               prospectsByCluster: Object.fromEntries(
                 focusIds.map((id) => [id, clustersState[id]?.prospects ?? []]),
               ),
-              prospectAnswers,
+              prospectAnswers: prospectAnswers ?? {},
               stakeholders,
             })
           }
