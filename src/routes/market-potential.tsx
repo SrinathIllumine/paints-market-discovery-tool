@@ -4,7 +4,9 @@ import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { CLUSTERS, getCluster, POTENTIAL_LABEL } from "@/data/clusters";
 import { useAppStore } from "@/store/appStore";
-import { MapPin, TrendingUp, Layers } from "lucide-react";
+import { MapPin, TrendingUp, Layers, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/market-potential")({
   head: () => ({
@@ -16,11 +18,12 @@ export const Route = createFileRoute("/market-potential")({
   component: MarketPotentialPage,
 });
 
-const POT_WEIGHT = { H: 3, M: 2, L: 1 } as const;
+
 
 function MarketPotentialPage() {
   const shortlistedIds = useAppStore((s) => s.plan.targetClusterIds);
   const clusterStates = useAppStore((s) => s.clusters);
+  const toggleTargetCluster = useAppStore((s) => s.toggleTargetCluster);
 
   const rows = shortlistedIds
     .map((id) => getCluster(id))
@@ -31,7 +34,7 @@ function MarketPotentialPage() {
     }));
 
   const totalProspects = rows.reduce((n, r) => n + r.prospects, 0);
-  const totalScore = rows.reduce((n, r) => n + POT_WEIGHT[r.cluster.potential], 0);
+  
   const highCount = rows.filter((r) => r.cluster.potential === "H").length;
 
   return (
@@ -58,14 +61,6 @@ function MarketPotentialPage() {
               <StatTile icon={<TrendingUp className="h-4 w-4" />} label="High potential" value={String(highCount)} />
               <StatTile icon={<MapPin className="h-4 w-4" />} label="Prospects" value={String(totalProspects)} />
             </div>
-
-            <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-              <h2 className="font-display text-xl">Potential summary</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Weighted score across shortlisted clusters: <span className="font-semibold text-foreground">{totalScore}</span>{" "}
-                (H=3 · M=2 · L=1)
-              </p>
-            </section>
 
             <section className="space-y-2">
               <h2 className="font-display text-xl px-1">Shortlisted clusters</h2>
@@ -95,6 +90,19 @@ function MarketPotentialPage() {
                     <span className="rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground">
                       {prospects} prospects
                     </span>
+                  </div>
+                  <div className="mt-3 flex justify-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        toggleTargetCluster(cluster.id);
+                        toast.success("Cluster removed from your market map", { duration: 1800 });
+                      }}
+                      className="h-8 gap-1 text-xs"
+                    >
+                      <X className="h-3.5 w-3.5" /> Remove
+                    </Button>
                   </div>
                 </div>
               ))}
