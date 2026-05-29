@@ -284,7 +284,7 @@ function PlanScreen() {
                                       <ul className="divide-y divide-border rounded-xl border border-border bg-card">
                                         {r.prospects.map((p) => {
                                           const ans =
-                                            prospectAnswers[c.id]?.[p.id];
+                                            prospectAnswers?.[c.id]?.[p.id];
                                           const expanded =
                                             openProspectId === p.id;
                                           return (
