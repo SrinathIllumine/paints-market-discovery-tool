@@ -1,91 +1,143 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { getCluster, POTENTIAL_LABEL } from "@/data/clusters";
-import type { Pathways } from "@/store/appStore";
-
-export type PathwayPriority = {
-  key: keyof Pathways;
-  label: string;
-  priority: number;
-  rationale: string;
-};
-
-const PATHWAY_LABEL: Record<keyof Pathways, string> = {
-  L1: "Personal connects (contractors / painters / contacts)",
-  L2: "Collective / contribution events",
-  L3: "Cold calling",
-  L4: "Promotional activities (brochures, e-mails)",
-};
-
-/**
- * Dynamic prioritization:
- *  - L1 (warm connects) is always preferred if available.
- *  - L2 (events) ranks higher than L3 / L4 because it builds local goodwill.
- *  - L3 (cold calling) drops if L1 is also selected (since warm contacts exist).
- *  - L4 (promo) is supportive and ranks last.
- *  - Clusters with stakeholders push L1 even higher; clusters without contacts
- *    push L2 / L3 up so the DG has a way in.
- */
-export function prioritizePathways(
-  pathways: Pathways,
-  stakeholderCount: number,
-): PathwayPriority[] {
-  const selected: { key: keyof Pathways; label: string; rationale: string }[] =
-    [];
-
-  if (pathways.L1) {
-    selected.push({
-      key: "L1",
-      label: PATHWAY_LABEL.L1,
-      rationale:
-        stakeholderCount > 0
-          ? `You already have ${stakeholderCount} contact${stakeholderCount === 1 ? "" : "s"}. Start with warm intros — fastest conversion.`
-          : "Warm intros convert fastest. Map your contacts first.",
-    });
-  }
-  if (pathways.L2) {
-    selected.push({
-      key: "L2",
-      label: PATHWAY_LABEL.L2,
-      rationale:
-        "Contribution events build trust at scale and surface new contacts.",
-    });
-  }
-  if (pathways.L3) {
-    selected.push({
-      key: "L3",
-      label: PATHWAY_LABEL.L3,
-      rationale: pathways.L1
-        ? "De-prioritised — exhaust warm connects before cold outreach."
-        : "Volume play with lower conversion; useful when warm contacts are thin.",
-    });
-  }
-  if (pathways.L4) {
-    selected.push({
-      key: "L4",
-      label: PATHWAY_LABEL.L4,
-      rationale: "Supports other pathways — pair with events or visits.",
-    });
-  }
-
-  return selected.map((s, i) => ({
-    ...s,
-    priority: i + 1,
-  }));
-}
+import {
+  getCluster,
+  POTENTIAL_LABEL,
+  prospectSingular,
+  prospectPlural,
+} from "@/data/clusters";
+import type {
+  ConnectApproach,
+  Prospect,
+  ProspectAnswer,
+  Stakeholder,
+} from "@/store/appStore";
 
 type Args = {
   focusClusterIds: string[];
-  valueProps: Record<string, string>;
-  pathways: Record<string, Pathways>;
-  stakeholders: Record<string, { id: string }[]>;
+  prospectsByCluster: Record<string, Prospect[]>;
+  prospectAnswers: Record<string, Record<string, ProspectAnswer>>;
+  stakeholders: Record<string, Stakeholder[]>;
 };
+
+const APPROACH_HEADLINE: Record<ConnectApproach, string> = {
+  L1: "with direct connects — Make a presentation",
+  L2: "with partner / contractor connects — Enable the partner to succeed",
+  L3: "with cold connects — Build trust before approaching",
+  L4: "where you would like to do promotions",
+};
+
+type Pitch = {
+  L1: { vp: string; action: string; asset?: { title: string; url: string } };
+  L2: { vp: string; action: string };
+  L3: { vp: string; action: string };
+  L4: { vp: string; action: string };
+};
+
+const GENERIC_PITCH = (clusterName: string, singular: string): Pitch => ({
+  L1: {
+    vp: `Why ${clusterName} should choose JK — superior durability, premium finish and strong after-sales backing vs. competitors. Customise the value angle to the decision maker (cost, aesthetics, longevity).`,
+    action: `Make a presentation to the ${singular.toLowerCase()} management / purchase decision makers.`,
+    asset: { title: "Pre-set sales presentation", url: "#" },
+  },
+  L2: {
+    vp: `Attractive benefits for the contractor / partner — better margins, on-site technical support, and proof points showing why JK is superior to competitors. Build their confidence in the brand.`,
+    action: `Run a workshop for contractors / painters serving this cluster in the area.`,
+  },
+  L3: {
+    vp: `Conduct a contribution or sponsored event in the cluster to build trust before commercial conversations.`,
+    action: `Plan a focused outreach sprint using the cluster contact database; warm them up via a sponsored / community activity first.`,
+  },
+  L4: {
+    vp: `Visibility-led play — pamphlets, brochures and retailer push to keep JK top-of-mind when need arises.`,
+    action: `Propose a quick audit of premises (leakages, quick touch-ups). Share pamphlets via retailers and run a targeted brochure / email campaign.`,
+  },
+});
+
+const CLUSTER_PITCH: Record<string, Partial<Pitch>> = {
+  schools: {
+    L1: {
+      vp: "How school repainting and a fresh design can become an attractive proposition for new admissions — plus durability and child-safe finish benefits over other brands.",
+      action:
+        "Make a presentation to the school management / admin / purchase department.",
+      asset: { title: "Schools sales presentation", url: "#" },
+    },
+    L2: {
+      vp: "Give attractive benefits to the contractor and pitch to improve his confidence in the brand — show why JK is superior to competitors for school projects.",
+      action: "Run a workshop for contractors painting schools in the area.",
+    },
+    L3: {
+      vp: "Conduct a contribution / sponsored event for teachers or students to build trust with the school management.",
+      action:
+        "Plan a sponsored career-counselling or learning event at the school as a trust-builder.",
+    },
+    L4: {
+      vp: "Visibility-led play with school admins and PTA contacts.",
+      action:
+        "Propose a quick audit of the school premises — identify leakages, quick touch-ups. Share pamphlets via retailers.",
+    },
+  },
+  "mid-apartments": societyPitch(),
+  redevelopment: societyPitch(),
+  "gated-community": societyPitch(),
+  midc: {
+    L1: {
+      vp: "Durable industrial coatings, lower repaint frequency and strong technical support for plant managers.",
+      action:
+        "Present plant-maintenance package to facility heads with TCO comparison vs. competitors.",
+      asset: { title: "Industrial coatings deck", url: "#" },
+    },
+  },
+  hospitals: {
+    L1: {
+      vp: "Hygienic, antimicrobial, washable finishes — directly tied to patient experience and infection-control compliance.",
+      action: "Present to facility / infection-control teams in target hospitals.",
+      asset: { title: "Healthcare finishes deck", url: "#" },
+    },
+  },
+};
+
+function societyPitch(): Partial<Pitch> {
+  return {
+    L1: {
+      vp: "How a refreshed exterior and waterproofing improves resale value, attracts buyers and reduces society maintenance costs vs. competitors.",
+      action:
+        "Present to society secretary / managing committee in a scheduled meet.",
+      asset: { title: "Residential societies pitch deck", url: "#" },
+    },
+    L2: {
+      vp: "Enable painters and contractors with attractive margins, on-site support and proof of monsoon-readiness vs. competitors.",
+      action:
+        "Run a contractor / painter meet in the locality with product demo and incentives.",
+    },
+    L3: {
+      vp: "Host a monsoon-readiness contribution event with residents to surface leakage problems and earn trust.",
+      action:
+        "Schedule a society-committee meet positioned as a free monsoon-readiness audit.",
+    },
+    L4: {
+      vp: "Door-to-door visibility via retailers, painters and site supervisors.",
+      action:
+        "Distribute waterproofing diagnostic pamphlets via retailers and painters serving the cluster.",
+    },
+  };
+}
+
+function getPitch(clusterId: string, clusterName: string, singular: string): Pitch {
+  const base = GENERIC_PITCH(clusterName, singular);
+  const override = CLUSTER_PITCH[clusterId] ?? {};
+  return {
+    L1: override.L1 ?? base.L1,
+    L2: override.L2 ?? base.L2,
+    L3: override.L3 ?? base.L3,
+    L4: override.L4 ?? base.L4,
+  };
+}
 
 export function generateMonthlyEngagementPlanPdf({
   focusClusterIds,
-  valueProps,
-  pathways,
-  stakeholders,
+  prospectsByCluster,
+  prospectAnswers,
 }: Args) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -125,11 +177,11 @@ export function generateMonthlyEngagementPlanPdf({
       y = margin;
     }
     if (sectionIndex > 0) {
-      y += 20;
+      y += 16;
       doc.setDrawColor(180);
       doc.setLineWidth(0.75);
       doc.line(margin, y - 6, pageWidth - margin, y - 6);
-      y += 22;
+      y += 18;
     }
     sectionIndex++;
     doc.setFont("helvetica", "bold");
@@ -138,7 +190,7 @@ export function generateMonthlyEngagementPlanPdf({
     y += 8;
     doc.setDrawColor(220);
     doc.line(margin, y, pageWidth - margin, y);
-    y += 16;
+    y += 14;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
   };
@@ -150,14 +202,16 @@ export function generateMonthlyEngagementPlanPdf({
     }
   };
 
-  const wrapped = (text: string, indent = 0) => {
+  const wrapped = (text: string, indent = 0, bold = false) => {
+    doc.setFont("helvetica", bold ? "bold" : "normal");
     const lines = doc.splitTextToSize(text, pageWidth - margin * 2 - indent);
     ensureSpace(lines.length * 12 + 4);
     doc.text(lines, margin + indent, y);
     y += lines.length * 12;
+    doc.setFont("helvetica", "normal");
   };
 
-  // ===== Focus clusters
+  // ===== Focus clusters table
   heading("Focus clusters for this month");
   if (focusClusterIds.length === 0) {
     doc.setTextColor(120);
@@ -167,149 +221,117 @@ export function generateMonthlyEngagementPlanPdf({
   } else {
     autoTable(doc, {
       startY: y,
-      head: [["Cluster", "Potential", "Pathways selected"]],
+      head: [["Cluster", "Potential", "Prospects covered"]],
       body: focusClusterIds.map((id) => {
         const c = getCluster(id);
-        const pw = pathways[id] ?? { L1: false, L2: false, L3: false, L4: false };
-        const selected = (Object.keys(pw) as (keyof Pathways)[])
-          .filter((k) => pw[k])
-          .join(", ");
-        return [c?.name ?? id, c ? POTENTIAL_LABEL[c.potential] : "—", selected || "—"];
+        const total = prospectsByCluster[id]?.length ?? 0;
+        const answered = Object.values(prospectAnswers[id] ?? {}).filter(
+          (a) => a.approach,
+        ).length;
+        return [
+          c?.name ?? id,
+          c ? POTENTIAL_LABEL[c.potential] : "—",
+          `${answered} / ${total} with approach decided`,
+        ];
       }),
       headStyles: { fillColor: [15, 23, 42] },
       margin: { left: margin, right: margin },
       styles: { fontSize: 10, cellPadding: 6 },
     });
-    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 12;
+    y =
+      (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable
+        .finalY + 12;
   }
 
-  // ===== Value propositions
-  heading("Value proposition by cluster");
-  if (focusClusterIds.length === 0) {
-    doc.setTextColor(120);
-    doc.text("Select clusters to capture value propositions.", margin, y);
-    doc.setTextColor(15, 23, 42);
-    y += 20;
-  } else {
-    for (const id of focusClusterIds) {
-      const c = getCluster(id);
-      if (!c) continue;
-      ensureSpace(40);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text(c.name, margin, y);
-      y += 14;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      const vp = valueProps[id]?.trim();
-      if (vp) {
-        wrapped(vp, 8);
-      } else {
-        doc.setTextColor(140);
-        wrapped("(no value proposition captured)", 8);
-        doc.setTextColor(15, 23, 42);
-      }
-      y += 6;
-    }
-  }
+  // ===== Prioritisation plan per cluster
+  for (const clusterId of focusClusterIds) {
+    const cluster = getCluster(clusterId);
+    if (!cluster) continue;
+    const singular = prospectSingular(clusterId);
+    const plural = prospectPlural(clusterId);
+    const prospects = prospectsByCluster[clusterId] ?? [];
+    const answers = prospectAnswers[clusterId] ?? {};
+    const pitch = getPitch(clusterId, cluster.name, singular);
 
-  // ===== Prioritised pathways
-  heading("Prioritised pathways (dynamic recommendation)");
-  if (focusClusterIds.length === 0) {
-    doc.setTextColor(120);
-    doc.text("Select clusters and pathways to see recommendations.", margin, y);
-    doc.setTextColor(15, 23, 42);
-    y += 20;
-  } else {
-    for (const id of focusClusterIds) {
-      const c = getCluster(id);
-      if (!c) continue;
-      const pw = pathways[id] ?? { L1: false, L2: false, L3: false, L4: false };
-      const ranked = prioritizePathways(pw, stakeholders[id]?.length ?? 0);
-      ensureSpace(40);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text(c.name, margin, y);
-      y += 14;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      if (ranked.length === 0) {
-        doc.setTextColor(140);
-        wrapped("(no pathway selected)", 8);
-        doc.setTextColor(15, 23, 42);
-      } else {
-        for (const r of ranked) {
-          wrapped(`P${r.priority} — ${r.label}`, 8);
-          doc.setTextColor(110);
-          wrapped(r.rationale, 20);
-          doc.setTextColor(15, 23, 42);
-          y += 2;
-        }
-      }
-      y += 6;
-    }
-  }
-
-  // ===== 4-week execution plan
-  heading("4-week execution plan");
-  const clusterNames = focusClusterIds
-    .map((id) => getCluster(id)?.name)
-    .filter((n): n is string => Boolean(n));
-
-  const writeWeek = (title: string, lines: string[]) => {
-    ensureSpace(20 + lines.length * 14);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text(title, margin, y);
-    y += 14;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    for (const l of lines) {
-      wrapped(l, 8);
-    }
-    y += 8;
-  };
-
-  if (clusterNames.length === 0) {
-    doc.setTextColor(120);
-    doc.text("Select clusters to generate the weekly plan.", margin, y);
-    doc.setTextColor(15, 23, 42);
-    y += 20;
-  } else {
-    writeWeek(
-      `Week 1: Reach out to ${clusterNames.length} cluster${clusterNames.length === 1 ? "" : "s"} and learn about painting needs + build contact database for each`,
-      clusterNames.map((n, i) => `${i + 1}. ${n}`),
+    heading(`${cluster.name}`);
+    wrapped(
+      `Prioritised ${plural.toLowerCase()} list (based on ${plural.toLowerCase()} with immediate needs first):`,
+      0,
+      true,
     );
+    y += 4;
 
-    // Week 2 & 3
-    ensureSpace(24);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("Week 2 & 3: Conduct workshops / campaigns for each cluster", margin, y);
-    y += 16;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    for (const id of focusClusterIds) {
-      const c = getCluster(id);
-      if (!c) continue;
-      const pw = pathways[id] ?? { L1: false, L2: false, L3: false, L4: false };
-      const ranked = prioritizePathways(pw, stakeholders[id]?.length ?? 0);
-      ensureSpace(30);
+    const approachOrder: ConnectApproach[] = ["L1", "L2", "L3", "L4"];
+
+    let anyPrinted = false;
+
+    for (let i = 0; i < approachOrder.length; i++) {
+      const approach = approachOrder[i];
+      const list = prospects.filter((p) => answers[p.id]?.approach === approach);
+      if (list.length === 0) continue;
+      anyPrinted = true;
+
+      // Sort: immediate-need Y first, then DK, then N
+      const order: Record<string, number> = { Y: 0, DK: 1, N: 2 };
+      list.sort(
+        (a, b) =>
+          (order[answers[a.id]?.immediateNeed ?? "DK"] ?? 1) -
+          (order[answers[b.id]?.immediateNeed ?? "DK"] ?? 1),
+      );
+
+      const roman = ["i", "ii", "iii", "iv"][i];
+      ensureSpace(40);
       doc.setFont("helvetica", "bold");
-      wrapped(`For ${c.name}:`, 8);
-      doc.setFont("helvetica", "normal");
-      const actions = activitiesForCluster(c.id, ranked);
-      for (const a of actions) {
-        wrapped(`• ${a}`, 20);
+      doc.setFontSize(11);
+      wrapped(
+        `${roman}) ${approach} ${plural} ${APPROACH_HEADLINE[approach]}`,
+        0,
+        true,
+      );
+      doc.setFontSize(10);
+
+      // List of prospects
+      wrapped(`a. List of ${plural.toLowerCase()}:`, 12, true);
+      for (const p of list) {
+        const need = answers[p.id]?.immediateNeed;
+        const usingJk = answers[p.id]?.usingJk;
+        const flags: string[] = [];
+        if (need === "Y") flags.push("immediate need");
+        if (usingJk === "Y") flags.push("uses JK");
+        if (usingJk === "N") flags.push("not on JK");
+        const suffix = flags.length ? ` — ${flags.join(", ")}` : "";
+        wrapped(`• ${p.name}${suffix}`, 24);
+      }
+
+      // Value proposition
+      const block = pitch[approach];
+      wrapped(`b. Value Proposition:`, 12, true);
+      wrapped(block.vp, 24);
+
+      // Action
+      wrapped(`c. Action:`, 12, true);
+      wrapped(block.action, 24);
+      if ("asset" in block && block.asset) {
+        const assetY = y;
+        const label = `→ ${block.asset.title} (link)`;
+        doc.setTextColor(37, 99, 235);
+        wrapped(label, 24);
+        doc.link(margin + 24, assetY - 12, pageWidth - margin * 2 - 24, 14, {
+          url: block.asset.url,
+        });
+        doc.setTextColor(15, 23, 42);
       }
       y += 6;
     }
 
-    writeWeek("Week 4: Follow-up and measurement", [
-      "Follow-up with participants of contribution events.",
-      "Assess the increase in demand at outlets from the focus clusters.",
-      "Capture insights and refresh contact database.",
-    ]);
+    if (!anyPrinted) {
+      doc.setTextColor(120);
+      wrapped(
+        `No approach has been decided for any ${singular.toLowerCase()} in this cluster yet.`,
+        0,
+      );
+      doc.setTextColor(15, 23, 42);
+    }
   }
 
   // Footer
@@ -328,47 +350,4 @@ export function generateMonthlyEngagementPlanPdf({
 
   const today = new Date().toISOString().slice(0, 10);
   doc.save(`JK-Monthly-Engagement-Plan-${today}.pdf`);
-}
-
-function activitiesForCluster(clusterId: string, ranked: PathwayPriority[]): string[] {
-  const out: string[] = [];
-  const has = (k: keyof Pathways) => ranked.some((r) => r.key === k);
-
-  if (clusterId === "schools") {
-    if (has("L2")) {
-      out.push(
-        "Knowledge Contribution — Conduct a workshop for school admins / principals on “How colourful exterior painting attracts new admissions.”",
-      );
-      out.push(
-        "Service Contribution — Propose a quick audit of school premises to identify leakages and quick touch-ups.",
-      );
-      out.push(
-        "Social Contribution — Propose a career-counselling session sponsored by JK (local career counsellor).",
-      );
-    }
-  } else if (clusterId === "mid-apartments" || clusterId === "gated-community" || clusterId === "redevelopment") {
-    if (has("L4")) {
-      out.push(
-        "Distribute ‘Waterproofing Diagnostic’ pamphlets via painters, site supervisors and retailers to home-owners in residential societies.",
-      );
-    }
-    if (has("L2")) {
-      out.push("Host a society-committee meet on monsoon-readiness and exterior coatings.");
-    }
-  }
-
-  // Generic fallbacks based on pathways
-  if (has("L1") && out.length === 0) {
-    out.push("Activate personal connects (contractors / painters) to set up cluster walkthroughs.");
-  }
-  if (has("L3")) {
-    out.push("Run a focused cold-calling sprint with the cluster contact database from Week 1.");
-  }
-  if (has("L4") && !out.some((o) => o.toLowerCase().includes("pamphlet") || o.toLowerCase().includes("brochure"))) {
-    out.push("Send targeted brochure / e-mail campaign to decision makers in the cluster.");
-  }
-  if (out.length === 0) {
-    out.push("Plan a cluster-specific awareness activity aligned to the selected pathways.");
-  }
-  return out;
 }
