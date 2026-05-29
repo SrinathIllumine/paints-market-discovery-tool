@@ -34,7 +34,7 @@ function MarketPotentialPage() {
     }));
 
   const totalProspects = rows.reduce((n, r) => n + r.prospects, 0);
-  const totalScore = rows.reduce((n, r) => n + POT_WEIGHT[r.cluster.potential], 0);
+  
   const highCount = rows.filter((r) => r.cluster.potential === "H").length;
 
   return (
