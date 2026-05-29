@@ -52,6 +52,14 @@ export type ClusterState = {
 
 export type Pathways = { L1: boolean; L2: boolean; L3: boolean; L4: boolean };
 
+export type ConnectApproach = "L1" | "L2" | "L3" | "L4";
+export type TriState = "Y" | "N" | "DK";
+export type ProspectAnswer = {
+  approach: ConnectApproach | null;
+  immediateNeed: TriState | null;
+  usingJk: TriState | null;
+};
+
 type State = {
   clusters: Record<string, ClusterState>;
   stakeholders: Record<string, Stakeholder[]>;
@@ -63,6 +71,7 @@ type State = {
     monthlyFocusIds: string[];
     valueProps: Record<string, string>;
     pathways: Record<string, Pathways>;
+    prospectAnswers: Record<string, Record<string, ProspectAnswer>>;
   };
 };
 
