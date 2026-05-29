@@ -1,469 +1,270 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
-import { CLUSTERS, getCluster, POTENTIAL_LABEL } from "@/data/clusters";
-import { getTopics } from "@/data/eventTopics";
-import { useAppStore, type EventType, type ReadinessAnswer } from "@/store/appStore";
+import { getCluster, POTENTIAL_LABEL } from "@/data/clusters";
+import { useAppStore, type Pathways } from "@/store/appStore";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { Plus, Trash2, Star, FileDown } from "lucide-react";
-import { generatePlanReportPdf } from "@/lib/planReport";
+import { FileDown, Sparkles } from "lucide-react";
+import {
+  generateMonthlyEngagementPlanPdf,
+  prioritizePathways,
+} from "@/lib/monthlyPlanReport";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/plan/")({
   head: () => ({
     meta: [
-      { title: "Outreach Plan · Stage 3" },
-      { name: "description", content: "Convert insights into an actionable monthly outreach plan." },
+      { title: "Monthly Market Engagement Plan" },
+      {
+        name: "description",
+        content: "Plan your monthly engagement across shortlisted clusters.",
+      },
     ],
   }),
   component: PlanScreen,
 });
 
-const POT_SCORE = { H: 3, M: 2, L: 1 } as const;
+const PATHWAYS: { key: keyof Pathways; label: string }[] = [
+  { key: "L1", label: "L1: Do you have any connects — contractors / painters, etc.?" },
+  { key: "L2", label: "L2: Do you want to do collective events / contribution events?" },
+  { key: "L3", label: "L3: Do you want to do cold calling?" },
+  { key: "L4", label: "L4: Do you want to do promotional activities (brochures, e-mails)?" },
+];
 
 function PlanScreen() {
-  const targetIds = useAppStore((s) => s.plan.targetClusterIds);
-  const toggleTarget = useAppStore((s) => s.toggleTargetCluster);
+  const shortlisted = useAppStore((s) => s.plan.targetClusterIds);
+  const focusIds = useAppStore((s) => s.plan.monthlyFocusIds);
+  const valueProps = useAppStore((s) => s.plan.valueProps);
+  const pathways = useAppStore((s) => s.plan.pathways);
   const stakeholders = useAppStore((s) => s.stakeholders);
-  const clusterStates = useAppStore((s) => s.clusters);
-  const events = useAppStore((s) => s.plan.events);
-  const addEvent = useAppStore((s) => s.addEvent);
-  const removeEvent = useAppStore((s) => s.removeEvent);
-  const readinessMap = useAppStore((s) => s.plan.readiness);
-  const setReadiness = useAppStore((s) => s.setReadiness);
 
-  const ranked = useMemo(() => {
-    return [...CLUSTERS]
-      .map((c) => {
-        const stkCount = stakeholders[c.id]?.length ?? 0;
-        const jk = clusterStates[c.id]?.jkShare;
-        const jkScore = jk === "H" ? 3 : jk === "M" ? 2 : jk === "L" ? 1 : 0;
-        const score = POT_SCORE[c.potential] * 2 + stkCount + jkScore;
-        return { cluster: c, score, stkCount };
-      })
-      .sort((a, b) => b.score - a.score);
-  }, [stakeholders, clusterStates]);
+  const toggleFocus = useAppStore((s) => s.toggleMonthlyFocus);
+  const setValueProp = useAppStore((s) => s.setValueProp);
+  const setPathway = useAppStore((s) => s.setPathway);
 
-  const [eventOpen, setEventOpen] = useState(false);
-  const [eventDraft, setEventDraft] = useState<{
-    clusterId: string;
-    type: EventType;
-    topic: string;
-    date: string;
-    note: string;
-  }>({
-    clusterId: CLUSTERS[0].id,
-    type: "Workshop",
-    topic: "",
-    date: "",
-    note: "",
-  });
-
-  const topics = getTopics(eventDraft.clusterId, eventDraft.type);
+  const focusClusters = focusIds
+    .map((id) => getCluster(id))
+    .filter((c): c is NonNullable<ReturnType<typeof getCluster>> => Boolean(c));
 
   return (
     <AppShell
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="Stage 3 of 3 · Outreach Plan"
-          title="Create an Outreach Plan  for June'26"
-          subtitle=""
-
+          eyebrow="Stage 3 of 3"
+          title="Create Monthly Market Engagement Plan"
+          subtitle="June 2026"
         />
       }
     >
       <div className="px-5 py-5">
-        <Accordion type="multiple" defaultValue={[]} className="space-y-3">
-          <AccordionItem
-            value="targets"
-            className="overflow-hidden rounded-2xl border border-border bg-card"
-          >
-            <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <div className="flex w-full items-center justify-between pr-2">
-                <span className="font-display text-lg leading-tight">1. Select Target clusters</span>
-                <span className="text-xs text-muted-foreground">
-                  {targetIds.length} selected
-                </span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <p className="mb-2 text-xs text-muted-foreground">
-                Top of the list is recommended based on potential and connects.
-              </p>
-              <div className="space-y-2">
-                {ranked.map(({ cluster, stkCount }, i) => {
-                  const active = targetIds.includes(cluster.id);
-                  return (
-                    <button
-                      key={cluster.id}
-                      onClick={() => toggleTarget(cluster.id)}
-                      className={cn(
-                        "flex w-full items-start justify-between gap-3 rounded-2xl border p-3 text-left transition-colors",
-                        active
-                          ? "border-critical bg-critical/5"
-                          : "border-border bg-card hover:bg-muted/40",
-                      )}
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          {i === 0 && (
-                            <Star className="h-3.5 w-3.5 fill-critical text-critical" />
-                          )}
-                          <p className="truncate font-medium">{cluster.name}</p>
-                        </div>
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          {POTENTIAL_LABEL[cluster.potential]} potential · {stkCount} contact
-                          {stkCount === 1 ? "" : "s"}
-                        </p>
-                      </div>
-                      <div
-                        className={cn(
-                          "mt-1 h-5 w-5 shrink-0 rounded-md border-2",
-                          active ? "border-critical bg-critical" : "border-border",
-                        )}
-                      />
-                    </button>
-                  );
-                })}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem
-            value="how"
-            className="overflow-hidden rounded-2xl border border-border bg-card"
-          >
-            <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <div className="flex w-full items-center justify-between pr-2">
-                <span className="font-display text-lg leading-tight">2. Connect approaches</span>
-                <span className="text-xs text-muted-foreground">
-                  {targetIds.length === 0
-                    ? "Pick targets first"
-                    : `${targetIds.length} cluster${targetIds.length === 1 ? "" : "s"}`}
-                </span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              {targetIds.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Select clusters above to see strategies.
+        {shortlisted.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
+            You haven’t shortlisted any clusters yet. Go to the{" "}
+            <Link to="/map" className="font-semibold text-critical underline">
+              Market Map
+            </Link>{" "}
+            and shortlist clusters first.
+          </div>
+        ) : (
+          <Accordion type="multiple" defaultValue={["focus", "vp", "pathways"]} className="space-y-3">
+            {/* Q1: Focus clusters */}
+            <AccordionItem
+              value="focus"
+              className="overflow-hidden rounded-2xl border border-border bg-card"
+            >
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <div className="flex w-full items-center justify-between pr-2">
+                  <span className="text-left font-display text-lg leading-tight">
+                    1. Which cluster would you like to focus on this month?
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {focusIds.length} / {shortlisted.length}
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Pick from the clusters you’ve shortlisted on your market map.
                 </p>
-              ) : (
-                <div className="space-y-3">
-                  {targetIds.map((id) => {
+                <div className="space-y-2">
+                  {shortlisted.map((id) => {
                     const c = getCluster(id);
                     if (!c) return null;
+                    const active = focusIds.includes(id);
                     return (
-                      <div key={id} className="rounded-2xl border border-border bg-card p-4">
-                        <p className="font-display text-lg leading-tight">{c.name}</p>
-                        <ul className="mt-2 space-y-1.5 text-sm">
-                          {c.howToConnect.slice(0, 2).map((h) => (
-                            <li key={h} className="flex gap-2">
-                              <span className="text-critical">•</span>
-                              <span>{h}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                      <button
+                        key={id}
+                        onClick={() => toggleFocus(id)}
+                        className={cn(
+                          "flex w-full items-start justify-between gap-3 rounded-2xl border p-3 text-left transition-colors",
+                          active
+                            ? "border-critical bg-critical/5"
+                            : "border-border bg-card hover:bg-muted/40",
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{c.name}</p>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            {POTENTIAL_LABEL[c.potential]} potential
+                          </p>
+                        </div>
+                        <div
+                          className={cn(
+                            "mt-1 h-5 w-5 shrink-0 rounded-md border-2",
+                            active ? "border-critical bg-critical" : "border-border",
+                          )}
+                        />
+                      </button>
                     );
                   })}
                 </div>
-              )}
-            </AccordionContent>
-          </AccordionItem>
+              </AccordionContent>
+            </AccordionItem>
 
-          <AccordionItem
-            value="events"
-            className="overflow-hidden rounded-2xl border border-border bg-card"
-          >
-            <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <div className="flex w-full items-center justify-between pr-2">
-                <span className="font-display text-lg leading-tight">3. Contribution events planned</span>
-                <span className="text-xs text-muted-foreground">
-                  {events.length} planned
+            {/* Q2: Value proposition */}
+            <AccordionItem
+              value="vp"
+              className="overflow-hidden rounded-2xl border border-border bg-card"
+            >
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <span className="text-left font-display text-lg leading-tight">
+                  2. Define your value proposition for each cluster
                 </span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <div className="mb-3 flex justify-end">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setEventDraft({
-                      clusterId: targetIds[0] ?? CLUSTERS[0].id,
-                      type: "Workshop",
-                      topic: "",
-                      date: "",
-                      note: "",
-                    });
-                    setEventOpen(true);
-                  }}
-                  className="h-8 gap-1 text-xs"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Add event
-                </Button>
-              </div>
-              {events.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No events planned yet. Add workshops, audits, awareness sessions or contractor meets.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {events.map((e) => {
-                    const c = getCluster(e.clusterId);
-                    return (
-                      <div
-                        key={e.id}
-                        className="rounded-2xl border border-border bg-card p-3"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <p className="font-display text-base leading-snug">
-                            {e.topic || e.type}
-                          </p>
-                          <button
-                            onClick={() => removeEvent(e.id)}
-                            className="rounded-full p-1.5 text-muted-foreground hover:bg-muted"
-                            aria-label="Remove event"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          <span className="rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground">
-                            {c?.name ?? e.clusterId}
-                          </span>
-                          <span className="rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground">
-                            {e.type}
-                          </span>
-                          {e.date && (
-                            <span className="rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground">
-                              {e.date}
-                            </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                {focusClusters.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Pick focus clusters above first.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {focusClusters.map((c) => (
+                      <div key={c.id} className="space-y-1.5">
+                        <p className="text-sm font-medium">{c.name}</p>
+                        <Textarea
+                          value={valueProps[c.id] ?? ""}
+                          onChange={(e) => setValueProp(c.id, e.target.value)}
+                          placeholder="What is the most compelling reason for this cluster to choose JK?"
+                          className="min-h-[72px] text-sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Q3: Pathways */}
+            <AccordionItem
+              value="pathways"
+              className="overflow-hidden rounded-2xl border border-border bg-card"
+            >
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <span className="text-left font-display text-lg leading-tight">
+                  3. Which connect models will you use for each cluster?
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                {focusClusters.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Pick focus clusters above first.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {focusClusters.map((c) => {
+                      const pw = pathways[c.id] ?? {
+                        L1: false,
+                        L2: false,
+                        L3: false,
+                        L4: false,
+                      };
+                      const ranked = prioritizePathways(
+                        pw,
+                        stakeholders[c.id]?.length ?? 0,
+                      );
+                      return (
+                        <div
+                          key={c.id}
+                          className="rounded-2xl border border-border bg-card p-3"
+                        >
+                          <p className="font-medium">{c.name}</p>
+                          <div className="mt-2 space-y-1.5">
+                            {PATHWAYS.map(({ key, label }) => {
+                              const checked = pw[key];
+                              return (
+                                <label
+                                  key={key}
+                                  className={cn(
+                                    "flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm",
+                                    checked
+                                      ? "border-critical bg-critical/5"
+                                      : "border-border bg-card",
+                                  )}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={(e) =>
+                                      setPathway(c.id, key, e.target.checked)
+                                    }
+                                    className="mt-0.5 h-4 w-4 accent-critical"
+                                  />
+                                  <span className="leading-snug">{label}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          {ranked.length > 0 && (
+                            <div className="mt-3 rounded-xl border border-dashed border-border bg-muted/30 p-3">
+                              <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-critical">
+                                <Sparkles className="h-3 w-3" /> Suggested priority
+                              </div>
+                              <ol className="space-y-1.5 text-xs">
+                                {ranked.map((r) => (
+                                  <li key={r.key} className="flex gap-2">
+                                    <span className="font-semibold text-foreground">
+                                      P{r.priority}
+                                    </span>
+                                    <div className="min-w-0">
+                                      <p className="font-medium text-foreground">{r.label}</p>
+                                      <p className="text-muted-foreground">{r.rationale}</p>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ol>
+                            </div>
                           )}
                         </div>
-                        {e.note && (
-                          <p className="mt-2 text-xs text-muted-foreground">{e.note}</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-              )}
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem
-            value="readiness"
-            className="overflow-hidden rounded-2xl border border-border bg-card"
-          >
-            <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <span className="font-display text-lg leading-tight">
-                4. Service delivery readiness status
-              </span>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <div className="space-y-3">
-                <ReadinessRow
-                  label="Are there enough retailers in the selected clusters?"
-                  value={readinessMap.retailers}
-                  onChange={(v) => setReadiness({ retailers: v })}
-                />
-                <ReadinessRow
-                  label="Do the retailers have enough stock available?"
-                  value={readinessMap.stock}
-                  onChange={(v) => setReadiness({ stock: v })}
-                />
-                <ReadinessRow
-                  label="Are there enough painters / contractors in the area?"
-                  value={readinessMap.painters}
-                  onChange={(v) => setReadiness({ painters: v })}
-                />
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+                      );
+                    })}
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        )}
 
         <Button
+          disabled={focusIds.length === 0}
           onClick={() =>
-            generatePlanReportPdf({
-              targetClusterIds: targetIds,
-              events,
-              readiness: readinessMap,
+            generateMonthlyEngagementPlanPdf({
+              focusClusterIds: focusIds,
+              valueProps,
+              pathways,
               stakeholders,
             })
           }
-          className="mt-5 h-12 w-full gap-2 bg-navy text-base font-semibold text-navy-foreground hover:bg-navy/90"
+          className="mt-5 h-12 w-full gap-2 bg-navy text-base font-semibold text-navy-foreground hover:bg-navy/90 disabled:opacity-60"
         >
-          <FileDown className="h-4 w-4" /> Generate report for outreach plan
+          <FileDown className="h-4 w-4" /> Generate Monthly Market Engagement Plan
         </Button>
       </div>
-
-      <Dialog open={eventOpen} onOpenChange={setEventOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-display text-2xl">Add event</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-1">
-            <div className="space-y-1.5">
-              <Label>Cluster</Label>
-              <select
-                value={eventDraft.clusterId}
-                onChange={(e) =>
-                  setEventDraft({ ...eventDraft, clusterId: e.target.value, topic: "" })
-                }
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                {CLUSTERS.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Type</Label>
-              <div className="grid grid-cols-2 gap-1.5">
-                {(["Workshop", "Audit", "Awareness", "Contractor Meet"] as EventType[]).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setEventDraft({ ...eventDraft, type: t, topic: "" })}
-                    className={cn(
-                      "rounded-xl border px-3 py-2 text-sm font-medium",
-                      eventDraft.type === t
-                        ? "border-navy bg-navy text-navy-foreground"
-                        : "border-border bg-card",
-                    )}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {topics.length > 0 && (
-              <div className="space-y-1.5">
-                <Label>Topic</Label>
-                <div className="space-y-1.5">
-                  {topics.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setEventDraft({ ...eventDraft, topic: t })}
-                      className={cn(
-                        "block w-full rounded-xl border px-3 py-2 text-left text-xs leading-relaxed",
-                        eventDraft.topic === t
-                          ? "border-critical bg-critical/5 text-foreground"
-                          : "border-border bg-card text-muted-foreground hover:bg-muted/40",
-                      )}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="space-y-1.5">
-              <Label htmlFor="ev-date">Date (optional)</Label>
-              <Input
-                id="ev-date"
-                type="date"
-                value={eventDraft.date}
-                onChange={(e) => setEventDraft({ ...eventDraft, date: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ev-note">Note (optional)</Label>
-              <Input
-                id="ev-note"
-                value={eventDraft.note}
-                onChange={(e) => setEventDraft({ ...eventDraft, note: e.target.value })}
-                placeholder="Venue, focus, expected attendees…"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setEventOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                addEvent({
-                  clusterId: eventDraft.clusterId,
-                  type: eventDraft.type,
-                  topic: eventDraft.topic || undefined,
-                  date: eventDraft.date || undefined,
-                  note: eventDraft.note || undefined,
-                });
-                setEventOpen(false);
-              }}
-              className="bg-critical text-critical-foreground hover:bg-critical/90"
-            >
-              Add event
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </AppShell>
-  );
-}
-
-function ReadinessRow({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: ReadinessAnswer;
-  onChange: (v: ReadinessAnswer) => void;
-}) {
-  const opts: { v: Exclude<ReadinessAnswer, null>; label: string }[] = [
-    { v: "Y", label: "Yes" },
-    { v: "P", label: "Partial" },
-    { v: "N", label: "No" },
-  ];
-  const isGap = value === "N" || value === "P";
-  return (
-    <div className="mb-3 last:mb-0">
-      <p className={cn("mb-1.5 text-sm", isGap ? "text-critical" : "text-foreground")}>{label}</p>
-      <div className="flex gap-1.5">
-        {opts.map((o) => (
-          <button
-            key={o.v}
-            type="button"
-            onClick={() => onChange(o.v)}
-            className={cn(
-              "flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium",
-              value === o.v
-                ? o.v === "Y"
-                  ? "border-navy bg-navy text-navy-foreground"
-                  : "border-critical bg-critical text-critical-foreground"
-                : "border-border bg-card text-muted-foreground",
-            )}
-          >
-            {o.label}
-          </button>
-        ))}
-      </div>
-    </div>
   );
 }
