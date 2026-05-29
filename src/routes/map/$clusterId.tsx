@@ -49,6 +49,8 @@ function ClusterDetailScreen() {
   const addProspect = useAppStore((s) => s.addProspect);
   const toggleProspectSelected = useAppStore((s) => s.toggleProspectSelected);
   const shortlistCluster = useAppStore((s) => s.shortlistCluster);
+  const toggleTargetCluster = useAppStore((s) => s.toggleTargetCluster);
+  const isShortlisted = useAppStore((s) => s.plan.targetClusterIds.includes(clusterId));
 
   const callPlaces = useServerFn(searchPlacesForCluster);
   const [loading, setLoading] = useState(false);
@@ -290,17 +292,20 @@ function ClusterDetailScreen() {
 
         <Button
           onClick={() => {
-            const already = useAppStore.getState().plan.targetClusterIds.includes(clusterId);
-            shortlistCluster(clusterId);
+            const wasShortlisted = useAppStore.getState().plan.targetClusterIds.includes(clusterId);
+            toggleTargetCluster(clusterId);
             toast.success(
-              already ? "Cluster already in your market map" : "Cluster added to your market map",
+              wasShortlisted ? "Cluster removed from your market map" : "Cluster added to your market map",
               { duration: 1800 },
             );
-            setTimeout(() => navigate({ to: "/map" }), 700);
+            if (!wasShortlisted) {
+              setTimeout(() => navigate({ to: "/map" }), 700);
+            }
           }}
           className="h-12 w-full gap-2 bg-navy text-base font-semibold text-navy-foreground hover:bg-navy/90"
         >
-          <BookmarkPlus className="h-4 w-4" /> Shortlist this cluster to my market map
+          <BookmarkPlus className="h-4 w-4" />
+          {isShortlisted ? "Remove cluster from the market map" : "Shortlist this cluster to my market map"}
         </Button>
       </div>
 
