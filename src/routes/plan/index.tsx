@@ -394,7 +394,7 @@ function PlanScreen() {
               prospectsByCluster: Object.fromEntries(
                 focusIds.map((id) => [id, clustersState[id]?.prospects ?? []]),
               ),
-              prospectAnswers,
+              prospectAnswers: prospectAnswers ?? {},
               stakeholders,
             })
           }
