@@ -43,19 +43,19 @@ function ClusterDetailScreen() {
   const cluster = useMemo(() => getCluster(clusterId), [clusterId]);
 
   const state = useAppStore((s) => s.clusters[clusterId]);
-  const stakeholders = useAppStore((s) => s.stakeholders[clusterId]) ?? [];
   const ensureCluster = useAppStore((s) => s.ensureCluster);
   const markVisited = useAppStore((s) => s.markVisited);
   const setProspects = useAppStore((s) => s.setProspects);
   const addProspect = useAppStore((s) => s.addProspect);
   const toggleProspectSelected = useAppStore((s) => s.toggleProspectSelected);
+  const shortlistCluster = useAppStore((s) => s.shortlistCluster);
 
   const callPlaces = useServerFn(searchPlacesForCluster);
   const [loading, setLoading] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [pickingPin, setPickingPin] = useState(false);
   const [pendingLatLng, setPendingLatLng] = useState<{ lat: number; lng: number } | null>(null);
-  const [stkOpen, setStkOpen] = useState(false);
+
 
   useEffect(() => {
     ensureCluster(clusterId);
