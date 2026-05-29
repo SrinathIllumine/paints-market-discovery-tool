@@ -57,7 +57,7 @@ function PlanScreen() {
   const shortlisted = useAppStore((s) => s.plan.targetClusterIds);
   const focusIds = useAppStore((s) => s.plan.monthlyFocusIds);
   const toggleFocus = useAppStore((s) => s.toggleMonthlyFocus);
-  const prospectAnswers = useAppStore((s) => s.plan.prospectAnswers ?? {});
+  const prospectAnswers = useAppStore((s) => s.plan.prospectAnswers);
   const setProspectAnswer = useAppStore((s) => s.setProspectAnswer);
   const clustersState = useAppStore((s) => s.clusters);
   const stakeholders = useAppStore((s) => s.stakeholders);
