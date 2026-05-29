@@ -48,7 +48,6 @@ function ClusterDetailScreen() {
   const setProspects = useAppStore((s) => s.setProspects);
   const addProspect = useAppStore((s) => s.addProspect);
   const toggleProspectSelected = useAppStore((s) => s.toggleProspectSelected);
-  const shortlistCluster = useAppStore((s) => s.shortlistCluster);
   const toggleTargetCluster = useAppStore((s) => s.toggleTargetCluster);
   const isShortlisted = useAppStore((s) => s.plan.targetClusterIds.includes(clusterId));
 

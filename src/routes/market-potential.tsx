@@ -4,7 +4,9 @@ import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { CLUSTERS, getCluster, POTENTIAL_LABEL } from "@/data/clusters";
 import { useAppStore } from "@/store/appStore";
-import { MapPin, TrendingUp, Layers } from "lucide-react";
+import { MapPin, TrendingUp, Layers, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/market-potential")({
   head: () => ({
@@ -21,6 +23,7 @@ const POT_WEIGHT = { H: 3, M: 2, L: 1 } as const;
 function MarketPotentialPage() {
   const shortlistedIds = useAppStore((s) => s.plan.targetClusterIds);
   const clusterStates = useAppStore((s) => s.clusters);
+  const toggleTargetCluster = useAppStore((s) => s.toggleTargetCluster);
 
   const rows = shortlistedIds
     .map((id) => getCluster(id))
