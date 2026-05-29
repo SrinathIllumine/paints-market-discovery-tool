@@ -50,6 +50,8 @@ export type ClusterState = {
   visited: boolean;
 };
 
+export type Pathways = { L1: boolean; L2: boolean; L3: boolean; L4: boolean };
+
 type State = {
   clusters: Record<string, ClusterState>;
   stakeholders: Record<string, Stakeholder[]>;
@@ -58,6 +60,9 @@ type State = {
     targetClusterIds: string[];
     events: PlanEvent[];
     readiness: Readiness;
+    monthlyFocusIds: string[];
+    valueProps: Record<string, string>;
+    pathways: Record<string, Pathways>;
   };
 };
 
@@ -76,10 +81,15 @@ type Actions = {
   removeInsight: (id: string) => void;
 
   toggleTargetCluster: (clusterId: string) => void;
+  shortlistCluster: (clusterId: string) => void;
   addEvent: (e: Omit<PlanEvent, "id">) => void;
   removeEvent: (id: string) => void;
   setReadiness: (partial: Partial<Readiness>) => void;
+  toggleMonthlyFocus: (clusterId: string) => void;
+  setValueProp: (clusterId: string, text: string) => void;
+  setPathway: (clusterId: string, key: keyof Pathways, value: boolean) => void;
 };
+
 
 const emptyCluster = (): ClusterState => ({
   jkShare: null,
