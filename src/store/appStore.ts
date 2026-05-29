@@ -303,6 +303,28 @@ export const useAppStore = create<State & Actions>()(
           };
         }),
 
+      setProspectAnswer: (clusterId, prospectId, patch) =>
+        set((state) => {
+          const all = state.plan.prospectAnswers ?? {};
+          const clusterMap = all[clusterId] ?? {};
+          const prev = clusterMap[prospectId] ?? {
+            approach: null,
+            immediateNeed: null,
+            usingJk: null,
+          };
+          return {
+            plan: {
+              ...state.plan,
+              prospectAnswers: {
+                ...all,
+                [clusterId]: { ...clusterMap, [prospectId]: { ...prev, ...patch } },
+              },
+            },
+          };
+        }),
+
+
+
 
       addEvent: (e) =>
         set((state) => ({
