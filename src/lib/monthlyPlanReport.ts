@@ -30,12 +30,13 @@ export function prioritizePathways(
   pathways: Pathways,
   stakeholderCount: number,
 ): PathwayPriority[] {
-  const selected: PathwayPriority[] = [];
+  const selected: { key: keyof Pathways; label: string; rationale: string }[] =
+    [];
+
   if (pathways.L1) {
     selected.push({
       key: "L1",
       label: PATHWAY_LABEL.L1,
-      priority: 1,
       rationale:
         stakeholderCount > 0
           ? `You already have ${stakeholderCount} contact${stakeholderCount === 1 ? "" : "s"}. Start with warm intros — fastest conversion.`
@@ -46,7 +47,6 @@ export function prioritizePathways(
     selected.push({
       key: "L2",
       label: PATHWAY_LABEL.L2,
-      priority: pathways.L1 ? 2 : 1,
       rationale:
         "Contribution events build trust at scale and surface new contacts.",
     });
@@ -55,7 +55,6 @@ export function prioritizePathways(
     selected.push({
       key: "L3",
       label: PATHWAY_LABEL.L3,
-      priority: pathways.L1 ? 3 : pathways.L2 ? 3 : 2,
       rationale: pathways.L1
         ? "De-prioritised — exhaust warm connects before cold outreach."
         : "Volume play with lower conversion; useful when warm contacts are thin.",
@@ -65,11 +64,14 @@ export function prioritizePathways(
     selected.push({
       key: "L4",
       label: PATHWAY_LABEL.L4,
-      priority: 4,
       rationale: "Supports other pathways — pair with events or visits.",
     });
   }
-  return selected.sort((a, b) => a.priority - b.priority);
+
+  return selected.map((s, i) => ({
+    ...s,
+    priority: i + 1,
+  }));
 }
 
 type Args = {
