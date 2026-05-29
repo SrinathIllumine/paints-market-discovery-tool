@@ -62,14 +62,6 @@ function MarketPotentialPage() {
               <StatTile icon={<MapPin className="h-4 w-4" />} label="Prospects" value={String(totalProspects)} />
             </div>
 
-            <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-              <h2 className="font-display text-xl">Potential summary</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Weighted score across shortlisted clusters: <span className="font-semibold text-foreground">{totalScore}</span>{" "}
-                (H=3 · M=2 · L=1)
-              </p>
-            </section>
-
             <section className="space-y-2">
               <h2 className="font-display text-xl px-1">Shortlisted clusters</h2>
               {rows.map(({ cluster, prospects }) => (
@@ -98,6 +90,19 @@ function MarketPotentialPage() {
                     <span className="rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground">
                       {prospects} prospects
                     </span>
+                  </div>
+                  <div className="mt-3 flex justify-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        toggleTargetCluster(cluster.id);
+                        toast.success("Cluster removed from your market map", { duration: 1800 });
+                      }}
+                      className="h-8 gap-1 text-xs"
+                    >
+                      <X className="h-3.5 w-3.5" /> Remove
+                    </Button>
                   </div>
                 </div>
               ))}
