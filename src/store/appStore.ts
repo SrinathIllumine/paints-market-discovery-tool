@@ -110,7 +110,15 @@ export const useAppStore = create<State & Actions>()(
       clusters: {},
       stakeholders: {},
       insights: [],
-      plan: { targetClusterIds: [], events: [], readiness: emptyReadiness() },
+      plan: {
+        targetClusterIds: [],
+        events: [],
+        readiness: emptyReadiness(),
+        monthlyFocusIds: [],
+        valueProps: {},
+        pathways: {},
+      },
+
 
       ensureCluster: (clusterId) =>
         set((s) =>
@@ -228,6 +236,58 @@ export const useAppStore = create<State & Actions>()(
             },
           };
         }),
+
+      shortlistCluster: (clusterId) =>
+        set((state) => {
+          if (state.plan.targetClusterIds.includes(clusterId)) return state;
+          return {
+            plan: {
+              ...state.plan,
+              targetClusterIds: [...state.plan.targetClusterIds, clusterId],
+            },
+          };
+        }),
+
+      toggleMonthlyFocus: (clusterId) =>
+        set((state) => {
+          const has = state.plan.monthlyFocusIds.includes(clusterId);
+          return {
+            plan: {
+              ...state.plan,
+              monthlyFocusIds: has
+                ? state.plan.monthlyFocusIds.filter((x) => x !== clusterId)
+                : [...state.plan.monthlyFocusIds, clusterId],
+            },
+          };
+        }),
+
+      setValueProp: (clusterId, text) =>
+        set((state) => ({
+          plan: {
+            ...state.plan,
+            valueProps: { ...state.plan.valueProps, [clusterId]: text },
+          },
+        })),
+
+      setPathway: (clusterId, key, value) =>
+        set((state) => {
+          const prev = state.plan.pathways[clusterId] ?? {
+            L1: false,
+            L2: false,
+            L3: false,
+            L4: false,
+          };
+          return {
+            plan: {
+              ...state.plan,
+              pathways: {
+                ...state.plan.pathways,
+                [clusterId]: { ...prev, [key]: value },
+              },
+            },
+          };
+        }),
+
 
       addEvent: (e) =>
         set((state) => ({
