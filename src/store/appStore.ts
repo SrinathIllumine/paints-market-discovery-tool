@@ -131,6 +131,7 @@ export const useAppStore = create<State & Actions>()(
         monthlyFocusIds: [],
         valueProps: {},
         pathways: {},
+        prospectAnswers: {},
       },
 
 
