@@ -52,6 +52,14 @@ export type ClusterState = {
 
 export type Pathways = { L1: boolean; L2: boolean; L3: boolean; L4: boolean };
 
+export type ConnectApproach = "L1" | "L2" | "L3" | "L4";
+export type TriState = "Y" | "N" | "DK";
+export type ProspectAnswer = {
+  approach: ConnectApproach | null;
+  immediateNeed: TriState | null;
+  usingJk: TriState | null;
+};
+
 type State = {
   clusters: Record<string, ClusterState>;
   stakeholders: Record<string, Stakeholder[]>;
@@ -63,6 +71,7 @@ type State = {
     monthlyFocusIds: string[];
     valueProps: Record<string, string>;
     pathways: Record<string, Pathways>;
+    prospectAnswers: Record<string, Record<string, ProspectAnswer>>;
   };
 };
 
@@ -88,6 +97,11 @@ type Actions = {
   toggleMonthlyFocus: (clusterId: string) => void;
   setValueProp: (clusterId: string, text: string) => void;
   setPathway: (clusterId: string, key: keyof Pathways, value: boolean) => void;
+  setProspectAnswer: (
+    clusterId: string,
+    prospectId: string,
+    patch: Partial<ProspectAnswer>,
+  ) => void;
 };
 
 
@@ -117,6 +131,7 @@ export const useAppStore = create<State & Actions>()(
         monthlyFocusIds: [],
         valueProps: {},
         pathways: {},
+        prospectAnswers: {},
       },
 
 
@@ -287,6 +302,28 @@ export const useAppStore = create<State & Actions>()(
             },
           };
         }),
+
+      setProspectAnswer: (clusterId, prospectId, patch) =>
+        set((state) => {
+          const all = state.plan.prospectAnswers ?? {};
+          const clusterMap = all[clusterId] ?? {};
+          const prev = clusterMap[prospectId] ?? {
+            approach: null,
+            immediateNeed: null,
+            usingJk: null,
+          };
+          return {
+            plan: {
+              ...state.plan,
+              prospectAnswers: {
+                ...all,
+                [clusterId]: { ...clusterMap, [prospectId]: { ...prev, ...patch } },
+              },
+            },
+          };
+        }),
+
+
 
 
       addEvent: (e) =>
