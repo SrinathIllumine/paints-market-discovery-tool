@@ -290,18 +290,30 @@ export function generateMonthlyEngagementPlanPdf({
       );
       doc.setFontSize(10);
 
-      // List of prospects
+      // List of prospects as a table
       wrapped(`a. List of ${plural.toLowerCase()}:`, 12, true);
-      for (const p of list) {
-        const need = answers[p.id]?.immediateNeed;
-        const usingJk = answers[p.id]?.usingJk;
-        const flags: string[] = [];
-        if (need === "Y") flags.push("immediate need");
-        if (usingJk === "Y") flags.push("uses JK");
-        if (usingJk === "N") flags.push("not on JK");
-        const suffix = flags.length ? ` — ${flags.join(", ")}` : "";
-        wrapped(`• ${p.name}${suffix}`, 24);
-      }
+      const triLabel = (v: string | null | undefined) =>
+        v === "Y" ? "Yes" : v === "N" ? "No" : v === "DK" ? "Don't know" : "—";
+      autoTable(doc, {
+        startY: y + 2,
+        head: [[singular, "Immediate need", "Uses JK"]],
+        body: list.map((p) => [
+          p.name,
+          triLabel(answers[p.id]?.immediateNeed),
+          triLabel(answers[p.id]?.usingJk),
+        ]),
+        headStyles: { fillColor: [15, 23, 42] },
+        margin: { left: margin + 24, right: margin },
+        styles: { fontSize: 9, cellPadding: 5 },
+        columnStyles: {
+          0: { cellWidth: "auto" },
+          1: { cellWidth: 90, halign: "center" },
+          2: { cellWidth: 70, halign: "center" },
+        },
+      });
+      y =
+        (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable
+          .finalY + 10;
 
       // Value proposition
       const block = pitch[approach];
@@ -312,13 +324,14 @@ export function generateMonthlyEngagementPlanPdf({
       wrapped(`c. Action:`, 12, true);
       wrapped(block.action, 24);
       if ("asset" in block && block.asset) {
-        const assetY = y;
-        const label = `→ ${block.asset.title} (link)`;
+        const label = "Use this pre-set presentation";
+        ensureSpace(16);
         doc.setTextColor(37, 99, 235);
-        wrapped(label, 24);
-        doc.link(margin + 24, assetY - 12, pageWidth - margin * 2 - 24, 14, {
-          url: block.asset.url,
+        doc.setFont("helvetica", "normal");
+        doc.textWithLink(label, margin + 24, y, {
+          url: "https://example.com/jk-presentation",
         });
+        y += 14;
         doc.setTextColor(15, 23, 42);
       }
       y += 6;
