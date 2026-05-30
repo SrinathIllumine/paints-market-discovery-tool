@@ -421,7 +421,7 @@ function ValueOrActionStep({
             className="rounded-2xl border border-border bg-card p-3"
           >
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="font-display text-sm font-semibold">{c.name}</p>
+              <p className="text-sm font-bold">{c.name}</p>
               <span className="rounded-full bg-critical/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-critical">
                 {model} · {CONNECT_MODEL_LABEL[model]}
               </span>
