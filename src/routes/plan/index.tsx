@@ -333,7 +333,7 @@ function ConnectStep({
             key={c.id}
             className="rounded-2xl border border-border bg-muted/30 p-3"
           >
-            <p className="mb-2 font-display text-sm font-semibold">{c.name}</p>
+            <p className="mb-2 text-sm font-bold">{c.name}</p>
             <div className="space-y-1.5">
               {CONNECT_MODEL_OPTIONS.map((opt) => {
                 const active = selected === opt.key;
