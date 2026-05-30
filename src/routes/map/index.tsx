@@ -39,7 +39,7 @@ function MarketMapScreen() {
             to="/market-potential"
             className="mb-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-critical text-base font-semibold text-critical-foreground shadow-lg shadow-critical/20"
           >
-            View Market Potential Map ({shortlistedIds.length})
+            View my Market Map ({shortlistedIds.length})
             <ArrowRight className="h-4 w-4" />
           </Link>
         )}

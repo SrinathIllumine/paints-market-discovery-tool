@@ -60,6 +60,10 @@ export type ProspectAnswer = {
   usingJk: TriState | null;
 };
 
+export type ConnectModel = "L1" | "L2" | "L3";
+export type RoadmapStep = "focus" | "connect" | "value" | "action";
+export type RoadmapCompletion = Record<RoadmapStep, boolean>;
+
 type State = {
   clusters: Record<string, ClusterState>;
   stakeholders: Record<string, Stakeholder[]>;
@@ -72,6 +76,8 @@ type State = {
     valueProps: Record<string, string>;
     pathways: Record<string, Pathways>;
     prospectAnswers: Record<string, Record<string, ProspectAnswer>>;
+    connectModelByCluster: Record<string, ConnectModel>;
+    roadmapCompletion: RoadmapCompletion;
   };
 };
 
@@ -102,6 +108,10 @@ type Actions = {
     prospectId: string,
     patch: Partial<ProspectAnswer>,
   ) => void;
+  setConnectModel: (clusterId: string, model: ConnectModel) => void;
+  clearConnectModel: (clusterId: string) => void;
+  setRoadmapStep: (step: RoadmapStep, completed: boolean) => void;
+  resetRoadmap: () => void;
 };
 
 
@@ -132,6 +142,8 @@ export const useAppStore = create<State & Actions>()(
         valueProps: {},
         pathways: {},
         prospectAnswers: {},
+        connectModelByCluster: {},
+        roadmapCompletion: { focus: false, connect: false, value: false, action: false },
       },
 
 
@@ -323,7 +335,57 @@ export const useAppStore = create<State & Actions>()(
           };
         }),
 
+      setConnectModel: (clusterId, model) =>
+        set((state) => ({
+          plan: {
+            ...state.plan,
+            connectModelByCluster: {
+              ...(state.plan.connectModelByCluster ?? {}),
+              [clusterId]: model,
+            },
+            roadmapCompletion: {
+              ...(state.plan.roadmapCompletion ?? { focus: false, connect: false, value: false, action: false }),
+              value: false,
+              action: false,
+            },
+          },
+        })),
 
+      clearConnectModel: (clusterId) =>
+        set((state) => {
+          const map = { ...(state.plan.connectModelByCluster ?? {}) };
+          delete map[clusterId];
+          return {
+            plan: {
+              ...state.plan,
+              connectModelByCluster: map,
+              roadmapCompletion: {
+                ...(state.plan.roadmapCompletion ?? { focus: false, connect: false, value: false, action: false }),
+                value: false,
+                action: false,
+              },
+            },
+          };
+        }),
+
+      setRoadmapStep: (step, completed) =>
+        set((state) => ({
+          plan: {
+            ...state.plan,
+            roadmapCompletion: {
+              ...(state.plan.roadmapCompletion ?? { focus: false, connect: false, value: false, action: false }),
+              [step]: completed,
+            },
+          },
+        })),
+
+      resetRoadmap: () =>
+        set((state) => ({
+          plan: {
+            ...state.plan,
+            roadmapCompletion: { focus: false, connect: false, value: false, action: false },
+          },
+        })),
 
 
       addEvent: (e) =>
