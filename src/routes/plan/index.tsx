@@ -405,7 +405,7 @@ function ValueOrActionStep({
               key={c.id}
               className="rounded-2xl border border-dashed border-border bg-muted/30 p-3 text-sm text-muted-foreground"
             >
-              <p className="font-display font-semibold text-foreground">
+              <p className="font-bold text-foreground">
                 {c.name}
               </p>
               <p className="mt-1 text-xs">
