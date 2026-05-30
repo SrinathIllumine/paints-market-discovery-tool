@@ -142,6 +142,8 @@ export const useAppStore = create<State & Actions>()(
         valueProps: {},
         pathways: {},
         prospectAnswers: {},
+        connectModelByCluster: {},
+        roadmapCompletion: { focus: false, connect: false, value: false, action: false },
       },
 
 
