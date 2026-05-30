@@ -335,7 +335,57 @@ export const useAppStore = create<State & Actions>()(
           };
         }),
 
+      setConnectModel: (clusterId, model) =>
+        set((state) => ({
+          plan: {
+            ...state.plan,
+            connectModelByCluster: {
+              ...(state.plan.connectModelByCluster ?? {}),
+              [clusterId]: model,
+            },
+            roadmapCompletion: {
+              ...(state.plan.roadmapCompletion ?? { focus: false, connect: false, value: false, action: false }),
+              value: false,
+              action: false,
+            },
+          },
+        })),
 
+      clearConnectModel: (clusterId) =>
+        set((state) => {
+          const map = { ...(state.plan.connectModelByCluster ?? {}) };
+          delete map[clusterId];
+          return {
+            plan: {
+              ...state.plan,
+              connectModelByCluster: map,
+              roadmapCompletion: {
+                ...(state.plan.roadmapCompletion ?? { focus: false, connect: false, value: false, action: false }),
+                value: false,
+                action: false,
+              },
+            },
+          };
+        }),
+
+      setRoadmapStep: (step, completed) =>
+        set((state) => ({
+          plan: {
+            ...state.plan,
+            roadmapCompletion: {
+              ...(state.plan.roadmapCompletion ?? { focus: false, connect: false, value: false, action: false }),
+              [step]: completed,
+            },
+          },
+        })),
+
+      resetRoadmap: () =>
+        set((state) => ({
+          plan: {
+            ...state.plan,
+            roadmapCompletion: { focus: false, connect: false, value: false, action: false },
+          },
+        })),
 
 
       addEvent: (e) =>
