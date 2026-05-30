@@ -60,6 +60,10 @@ export type ProspectAnswer = {
   usingJk: TriState | null;
 };
 
+export type ConnectModel = "L1" | "L2" | "L3";
+export type RoadmapStep = "focus" | "connect" | "value" | "action";
+export type RoadmapCompletion = Record<RoadmapStep, boolean>;
+
 type State = {
   clusters: Record<string, ClusterState>;
   stakeholders: Record<string, Stakeholder[]>;
@@ -72,6 +76,8 @@ type State = {
     valueProps: Record<string, string>;
     pathways: Record<string, Pathways>;
     prospectAnswers: Record<string, Record<string, ProspectAnswer>>;
+    connectModelByCluster: Record<string, ConnectModel>;
+    roadmapCompletion: RoadmapCompletion;
   };
 };
 
