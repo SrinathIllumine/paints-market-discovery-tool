@@ -185,14 +185,14 @@ function PlanScreen() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Card 2: Decide your connect approach */}
+            {/* Card 2: Design your connect approach */}
             <AccordionItem
               value="approach"
               className="overflow-hidden rounded-2xl border border-border bg-card"
             >
               <AccordionTrigger className="px-4 py-3 hover:no-underline">
                 <span className="text-left font-display text-lg leading-tight">
-                  2. Decide your connect approach
+                  2. Design your connect approach
                 </span>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
