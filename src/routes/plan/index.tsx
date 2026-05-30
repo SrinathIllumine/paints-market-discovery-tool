@@ -163,7 +163,7 @@ function PlanScreen() {
                       onClick={() => setOpenStep(isOpen ? ("" as RoadmapStep) : step.id)}
                       className="flex w-full items-center justify-between gap-3 py-3 pl-10 pr-4 text-left"
                     >
-                      <span className="font-display text-base leading-tight">
+                      <span className="text-base font-bold leading-tight">
                         {idx + 1}. {step.title}
                       </span>
                       <div className="flex shrink-0 items-center gap-2">
