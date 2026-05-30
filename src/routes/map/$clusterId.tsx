@@ -274,7 +274,7 @@ function ClusterDetailScreen() {
         </section>
 
         {/* Trigger questions */}
-        <Section title="Checkpoints to consider before shortlisting">
+        <Section title="Key points to consider before shortlisting">
           <ul className="space-y-2.5 text-sm">
             {[
               "Is there enough potential for JK from this cluster?",
