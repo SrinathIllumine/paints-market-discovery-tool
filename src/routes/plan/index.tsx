@@ -128,7 +128,7 @@ function PlanScreen() {
             {/* Mini section header */}
             <div className="mb-3 flex items-center gap-2">
               <Map className="h-4 w-4 text-critical" />
-              <h2 className="font-display text-base font-semibold uppercase tracking-wider text-muted-foreground">
+              <h2 className="text-base font-bold uppercase tracking-wider text-muted-foreground">
                 Roadmap
               </h2>
             </div>
@@ -163,7 +163,7 @@ function PlanScreen() {
                       onClick={() => setOpenStep(isOpen ? ("" as RoadmapStep) : step.id)}
                       className="flex w-full items-center justify-between gap-3 py-3 pl-10 pr-4 text-left"
                     >
-                      <span className="font-display text-base leading-tight">
+                      <span className="text-base font-bold leading-tight">
                         {idx + 1}. {step.title}
                       </span>
                       <div className="flex shrink-0 items-center gap-2">
@@ -333,7 +333,7 @@ function ConnectStep({
             key={c.id}
             className="rounded-2xl border border-border bg-muted/30 p-3"
           >
-            <p className="mb-2 font-display text-sm font-semibold">{c.name}</p>
+            <p className="mb-2 text-sm font-bold">{c.name}</p>
             <div className="space-y-1.5">
               {CONNECT_MODEL_OPTIONS.map((opt) => {
                 const active = selected === opt.key;
@@ -405,7 +405,7 @@ function ValueOrActionStep({
               key={c.id}
               className="rounded-2xl border border-dashed border-border bg-muted/30 p-3 text-sm text-muted-foreground"
             >
-              <p className="font-display font-semibold text-foreground">
+              <p className="font-bold text-foreground">
                 {c.name}
               </p>
               <p className="mt-1 text-xs">
@@ -421,7 +421,7 @@ function ValueOrActionStep({
             className="rounded-2xl border border-border bg-card p-3"
           >
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="font-display text-sm font-semibold">{c.name}</p>
+              <p className="text-sm font-bold">{c.name}</p>
               <span className="rounded-full bg-critical/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-critical">
                 {model} · {CONNECT_MODEL_LABEL[model]}
               </span>
