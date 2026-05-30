@@ -108,6 +108,10 @@ type Actions = {
     prospectId: string,
     patch: Partial<ProspectAnswer>,
   ) => void;
+  setConnectModel: (clusterId: string, model: ConnectModel) => void;
+  clearConnectModel: (clusterId: string) => void;
+  setRoadmapStep: (step: RoadmapStep, completed: boolean) => void;
+  resetRoadmap: () => void;
 };
 
 
