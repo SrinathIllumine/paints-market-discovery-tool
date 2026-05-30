@@ -128,7 +128,7 @@ function PlanScreen() {
             {/* Mini section header */}
             <div className="mb-3 flex items-center gap-2">
               <Map className="h-4 w-4 text-critical" />
-              <h2 className="font-display text-base font-semibold uppercase tracking-wider text-muted-foreground">
+              <h2 className="text-base font-bold uppercase tracking-wider text-muted-foreground">
                 Roadmap
               </h2>
             </div>
