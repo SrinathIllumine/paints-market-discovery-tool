@@ -3,7 +3,8 @@ import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
-import { getCluster, POTENTIAL_LABEL } from "@/data/clusters";
+import { getCluster } from "@/data/clusters";
+import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore, type RoadmapStep } from "@/store/appStore";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -50,24 +51,15 @@ function PlanScreen() {
 
   const [openStep, setOpenStep] = useState<RoadmapStep>("focus");
 
-  // Sort shortlisted clusters by aggregate score (descending), tie-break by H/M/L.
+  // Sort shortlisted clusters by aggregate cluster potential score (desc).
   const sortedShortlisted = useMemo(() => {
-    const potRank = { H: 3, M: 2, L: 1 } as const;
-    return [...shortlisted].sort((a, b) => {
-      const sa = assessments[a]
-        ? (() => {
-            const c = getCluster(a);
-            if (!c) return 0;
-            // re-compute on the fly via stored answers
-            return 0;
-          })()
-        : 0;
-      void sa;
-      const ca = getCluster(a);
-      const cb = getCluster(b);
-      // simple fallback: H>M>L; with assessments tied-on potential
-      return (potRank[cb?.potential ?? "L"] ?? 0) - (potRank[ca?.potential ?? "L"] ?? 0);
-    });
+    const scoreFor = (id: string): number => {
+      const a = assessments[id];
+      const c = getCluster(id);
+      if (!a || !c) return 0;
+      return computeClusterScores(c, 0, a).aggregate;
+    };
+    return [...shortlisted].sort((a, b) => scoreFor(b) - scoreFor(a));
   }, [shortlisted, assessments]);
 
   const focusClusters = useMemo(
@@ -259,7 +251,6 @@ function FocusStep({
             >
               <div className="min-w-0">
                 <p className="truncate font-medium">{c.name}</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">{POTENTIAL_LABEL[c.potential]} potential</p>
               </div>
               <div className={cn("mt-1 h-5 w-5 shrink-0 rounded-md border-2", active ? "border-critical bg-critical" : "border-border")} />
             </button>

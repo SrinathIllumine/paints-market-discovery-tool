@@ -136,7 +136,7 @@ function ClusterDetailScreen() {
     competitiveAnswers,
     completedAt: Date.now(),
   };
-  const scores = computeClusterScores(cluster, prospects.length, provisionalAssessment);
+  void computeClusterScores(cluster, prospects.length, provisionalAssessment);
 
   const canSave = accessRank !== null;
 
@@ -255,112 +255,117 @@ function ClusterDetailScreen() {
           )}
         </section>
 
-        {/* ──────────────── Cluster scoring sub-sections ──────────────── */}
+        {/* ──────────────── Cluster scoring sub-sections (collapsible, one open at a time) ──────────────── */}
 
-        <Section title="Cluster Revenue Potential" badge={`Score ${scores.revenue}/10`}>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Tile label="Prospects in cluster" value={String(prospects.length)} />
-            <Tile label="Avg. revenue / prospect" value={formatRupees(profile.avgRevenuePerProspect)} />
-            <Tile
-              label={`Avg. usable area`}
-              value={profile.sqftBand}
-              subtle
-            />
-            <Tile
-              label="Total cluster revenue potential"
-              value={formatRupees(totalRevenue)}
-              highlight
-            />
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Estimated from typical paint-cycle revenue per {cluster.nature.toLowerCase()} prospect.
-          </p>
-        </Section>
+        <Accordion type="single" collapsible defaultValue="revenue" className="space-y-3">
+          <AccordionItem value="revenue" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <span className="font-display text-xl">Cluster Revenue Potential</span>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Tile label="Prospects in cluster" value={String(prospects.length)} />
+                <Tile label="Avg. revenue / prospect" value={formatRupees(profile.avgRevenuePerProspect)} />
+                <Tile label="Avg. usable area" value={profile.sqftBand} subtle />
+                <Tile label="Total cluster revenue potential" value={formatRupees(totalRevenue)} highlight />
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Estimated from typical paint-cycle revenue per {cluster.nature.toLowerCase()} prospect.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
 
-        <Section title="Cluster Access" badge={`Score ${scores.access}/10`}>
-          <p className="text-sm font-semibold">Access capability</p>
-          <div className="mt-2 space-y-2">
-            {accessQuestions.map((q, i) => (
-              <YesNoRow
-                key={q}
-                question={q}
-                value={accessAnswers[i]}
-                onChange={(v) =>
-                  setAccessAnswers((prev) => {
-                    const next = [...prev];
-                    next[i] = v;
-                    return next;
-                  })
-                }
-              />
-            ))}
-          </div>
+          <AccordionItem value="access" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <span className="font-display text-xl">Cluster Access</span>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <p className="text-sm font-semibold">Access capability</p>
+              <div className="mt-2 space-y-2">
+                {accessQuestions.map((q, i) => (
+                  <YesNoRow
+                    key={q}
+                    question={q}
+                    value={accessAnswers[i]}
+                    onChange={(v) =>
+                      setAccessAnswers((prev) => {
+                        const next = [...prev];
+                        next[i] = v;
+                        return next;
+                      })
+                    }
+                  />
+                ))}
+              </div>
 
-          <p className="mt-4 text-sm font-semibold">Access ranking</p>
-          <div className="mt-2 space-y-2">
-            {(
-              [
-                { key: "A", label: "A — Already strong connects" },
-                { key: "B", label: "B — Capable of building insidership but have to build" },
-                { key: "C", label: "C — Cold cluster without any connects" },
-              ] as { key: AccessRank; label: string }[]
-            ).map((opt) => (
-              <label
-                key={opt.key}
-                className={cn(
-                  "flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-sm",
-                  accessRank === opt.key ? "border-critical bg-critical/5" : "border-border bg-card",
-                )}
-              >
-                <input
-                  type="radio"
-                  name={`access-rank-${clusterId}`}
-                  checked={accessRank === opt.key}
-                  onChange={() => setAccessRank(opt.key)}
-                  className="h-4 w-4 accent-critical"
-                />
-                <span>{opt.label}</span>
-              </label>
-            ))}
-          </div>
-        </Section>
+              <p className="mt-4 text-sm font-semibold">Access ranking</p>
+              <div className="mt-2 space-y-2">
+                {(
+                  [
+                    { key: "A", label: "A — Already strong connects" },
+                    { key: "B", label: "B — Capable of building insidership but have to build" },
+                    { key: "C", label: "C — Cold cluster without any connects" },
+                  ] as { key: AccessRank; label: string }[]
+                ).map((opt) => (
+                  <label
+                    key={opt.key}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-sm",
+                      accessRank === opt.key ? "border-critical bg-critical/5" : "border-border bg-card",
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name={`access-rank-${clusterId}`}
+                      checked={accessRank === opt.key}
+                      onChange={() => setAccessRank(opt.key)}
+                      className="h-4 w-4 accent-critical"
+                    />
+                    <span>{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
 
-        <Section title="Competitive Strength" badge={`Score ${scores.competitive}/10`}>
-          <div className="space-y-2">
-            {competitiveQuestions.map((q, i) => (
-              <YesNoRow
-                key={q}
-                question={q}
-                value={competitiveAnswers[i]}
-                onChange={(v) =>
-                  setCompetitiveAnswers((prev) => {
-                    const next = [...prev];
-                    next[i] = v;
-                    return next;
-                  })
-                }
-              />
-            ))}
-          </div>
-        </Section>
+          <AccordionItem value="competitive" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <span className="font-display text-xl">Competitive Strength</span>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="space-y-2">
+                {competitiveQuestions.map((q, i) => (
+                  <YesNoRow
+                    key={q}
+                    question={q}
+                    value={competitiveAnswers[i]}
+                    onChange={(v) =>
+                      setCompetitiveAnswers((prev) => {
+                        const next = [...prev];
+                        next[i] = v;
+                        return next;
+                      })
+                    }
+                  />
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
 
-        <Section title="Ease of Sale" badge={`Score ${scores.ease}/10`}>
-          <div className="rounded-xl border border-border bg-muted/30 p-3">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">
-              Avg. cycle time
-            </p>
-            <p className="mt-0.5 font-display text-xl leading-tight">{cycle.label}</p>
-            <p className="mt-2 text-sm text-muted-foreground">{cycle.explanation}</p>
-          </div>
-        </Section>
+          <AccordionItem value="ease" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <span className="font-display text-xl">Ease of Sale</span>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="rounded-xl border border-border bg-muted/30 p-3">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">Avg. cycle time</p>
+                <p className="mt-0.5 font-display text-xl leading-tight">{cycle.label}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{cycle.explanation}</p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
-        <div className="rounded-2xl border border-critical/30 bg-critical/5 p-4">
-          <p className="text-xs uppercase tracking-wider text-critical">Cluster Potential (aggregate)</p>
-          <p className="mt-1 font-display text-3xl leading-none">{scores.aggregate} / 10</p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Equal-weighted mean of revenue, access, competitive strength and ease of sale.
-          </p>
-        </div>
 
         <Button
           onClick={handleSave}

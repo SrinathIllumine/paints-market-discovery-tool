@@ -136,26 +136,26 @@ function SnapshotMatrix({ rows }: { rows: Row[] }) {
   const yFor = (v: number) => H - pad - (v / 10) * innerH;
 
   return (
-    <div className="mt-3 overflow-x-auto">
+    <div className="mt-3 overflow-x-auto text-foreground">
       <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto block h-auto w-full max-w-sm">
         {/* quadrant backgrounds */}
-        <rect x={pad} y={pad} width={innerW / 2} height={innerH / 2} fill="hsl(var(--muted) / 0.25)" />
-        <rect x={pad + innerW / 2} y={pad} width={innerW / 2} height={innerH / 2} fill="hsl(var(--muted) / 0.45)" />
-        <rect x={pad} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="hsl(var(--muted) / 0.15)" />
-        <rect x={pad + innerW / 2} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="hsl(var(--muted) / 0.3)" />
+        <rect x={pad} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.35} />
+        <rect x={pad + innerW / 2} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--critical)" fillOpacity={0.12} />
+        <rect x={pad} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.15} />
+        <rect x={pad + innerW / 2} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.55} />
 
         {/* axes */}
-        <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.3" />
-        <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.3" />
+        <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
+        <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
         {/* mid lines */}
-        <line x1={pad + innerW / 2} y1={pad} x2={pad + innerW / 2} y2={H - pad} stroke="currentColor" strokeOpacity="0.15" strokeDasharray="3 3" />
-        <line x1={pad} y1={pad + innerH / 2} x2={W - pad} y2={pad + innerH / 2} stroke="currentColor" strokeOpacity="0.15" strokeDasharray="3 3" />
+        <line x1={pad + innerW / 2} y1={pad} x2={pad + innerW / 2} y2={H - pad} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
+        <line x1={pad} y1={pad + innerH / 2} x2={W - pad} y2={pad + innerH / 2} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
 
         {/* quadrant labels */}
-        <text x={pad + 6} y={pad + 14} fontSize="9" fill="currentColor" opacity="0.5">Low access · High potential</text>
-        <text x={W - pad - 6} y={pad + 14} fontSize="9" fill="currentColor" opacity="0.6" textAnchor="end">High access · High potential</text>
-        <text x={pad + 6} y={H - pad - 6} fontSize="9" fill="currentColor" opacity="0.4">Low access · Low potential</text>
-        <text x={W - pad - 6} y={H - pad - 6} fontSize="9" fill="currentColor" opacity="0.5" textAnchor="end">High access · Low potential</text>
+        <text x={pad + 6} y={pad + 14} fontSize="9" fill="currentColor" opacity="0.6">Low access · High potential</text>
+        <text x={W - pad - 6} y={pad + 14} fontSize="9" fill="currentColor" opacity="0.7" textAnchor="end">High access · High potential</text>
+        <text x={pad + 6} y={H - pad - 6} fontSize="9" fill="currentColor" opacity="0.5">Low access · Low potential</text>
+        <text x={W - pad - 6} y={H - pad - 6} fontSize="9" fill="currentColor" opacity="0.6" textAnchor="end">High access · Low potential</text>
 
         {/* axis titles */}
         <text x={W / 2} y={H - 8} fontSize="10" fill="currentColor" textAnchor="middle">Access →</text>
@@ -164,7 +164,7 @@ function SnapshotMatrix({ rows }: { rows: Row[] }) {
         {/* points */}
         {rows.map((r) => (
           <g key={r.clusterId}>
-            <circle cx={xFor(r.access)} cy={yFor(r.potential)} r={6} fill="hsl(var(--critical))" />
+            <circle cx={xFor(r.access)} cy={yFor(r.potential)} r={6} fill="var(--critical)" stroke="var(--background)" strokeWidth={1.5} />
             <text x={xFor(r.access) + 9} y={yFor(r.potential) + 3} fontSize="9" fill="currentColor">
               {shortLabel(r.name)}
             </text>
