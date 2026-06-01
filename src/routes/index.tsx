@@ -32,9 +32,9 @@ function IntroScreen() {
       ? `${totalConnects} connect${totalConnects === 1 ? "" : "s"} created for ${clustersWithConnects.length} cluster${clustersWithConnects.length === 1 ? "" : "s"}`
       : null;
 
-  const planProgress = targetClusterIds.length > 0 ? "" : null;
+  const planProgress = targetClusterIds.length > 0 ? " " : null;
 
-  const insightsProgress = "";
+  const insightsProgress = " ";
 
   const props = [
     {
