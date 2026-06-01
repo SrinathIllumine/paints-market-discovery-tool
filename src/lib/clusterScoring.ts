@@ -242,11 +242,11 @@ export function getCompetitiveQuestions(clusterId: string): string[] {
 
 /* ─────────────────────────────────────────── scoring */
 
-export function scoreRevenue(totalRevenue: number): number {
-  if (totalRevenue < 10_00_000) return 2;
-  if (totalRevenue < 25_00_000) return 4;
-  if (totalRevenue < 50_00_000) return 6;
-  if (totalRevenue < 1_00_00_000) return 8;
+export function scoreRevenue(avgRevenuePerProspect: number): number {
+  if (avgRevenuePerProspect < 1_00_000) return 2;
+  if (avgRevenuePerProspect < 5_00_000) return 4;
+  if (avgRevenuePerProspect < 15_00_000) return 6;
+  if (avgRevenuePerProspect < 30_00_000) return 8;
   return 10;
 }
 
