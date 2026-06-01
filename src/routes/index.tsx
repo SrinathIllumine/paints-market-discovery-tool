@@ -7,7 +7,7 @@ import { useAppStore } from "@/store/appStore";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Market Discovery Tool" },
+      { title: "Demand Discovery Tool" },
       {
         name: "description",
         content:
