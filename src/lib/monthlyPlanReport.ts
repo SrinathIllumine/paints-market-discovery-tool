@@ -105,7 +105,7 @@ export function generateMonthlyEngagementPlanPdf({
   } else {
     autoTable(doc, {
       startY: y,
-      head: [["Cluster", "Potential", "Connect model", "Prospects"]],
+      head: [["Cluster", "Potential", "Connect strategy", "Prospects"]],
       body: focusClusterIds.map((id) => {
         const c = getCluster(id);
         const model = connectModelByCluster[id];
@@ -136,13 +136,13 @@ export function generateMonthlyEngagementPlanPdf({
 
     if (!model) {
       doc.setTextColor(120);
-      wrapped("No connect model selected for this cluster.", 0);
+      wrapped("No connect strategy selected for this cluster.", 0);
       doc.setTextColor(15, 23, 42);
       continue;
     }
 
     wrapped(
-      `Connect model: ${model} — ${CONNECT_MODEL_LABEL[model]}`,
+      `Connect strategy: ${model} — ${CONNECT_MODEL_LABEL[model]}`,
       0,
       true,
     );
