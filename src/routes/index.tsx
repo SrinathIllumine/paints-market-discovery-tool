@@ -32,33 +32,29 @@ function IntroScreen() {
       ? `${totalConnects} connect${totalConnects === 1 ? "" : "s"} created for ${clustersWithConnects.length} cluster${clustersWithConnects.length === 1 ? "" : "s"}`
       : null;
 
-  const planProgress =
-    targetClusterIds.length > 0
-      ? `Outreach plan created for ${targetClusterIds.length} cluster${targetClusterIds.length === 1 ? "" : "s"}`
-      : null;
+  const planProgress = targetClusterIds.length > 0 ? "" : null;
 
-  const totalInsights = 3 + insights.length;
-  const insightsProgress = `${totalInsights} market insights received from MEs and Retailers`;
+  const insightsProgress = "";
 
   const props = [
     {
       icon: MapIcon,
-      title: "Build Your Market Potential",
-      desc: "Visualise your market with clusters, shortlist them to create a market potential map",
+      title: "Identify Your Cluster Potential",
+      desc: "Map your clusters with their revenue potential, access level, competitive strength and ease of sale.",
       to: "/map" as const,
       progress: connectsProgress,
     },
     {
       icon: Users,
-      title: "Create Monthly Market Engagement Plan",
-      desc: "Define the value proposition of clusters, plan stakeholder connects and contribution events month by month.",
+      title: "Create Monthly Cluster Engagement Plan",
+      desc: "Select your cluster strategy, build engagement with the prospects to become an insider and build brand awareness.",
       to: "/plan" as const,
       progress: planProgress,
     },
     {
       icon: Lightbulb,
-      title: "Track local market intelligence",
-      desc: "Capture insights at every step and reuse them across stages.",
+      title: "Sales Enablement",
+      desc: "",
       to: "/insights" as const,
       progress: insightsProgress,
     },
@@ -70,7 +66,7 @@ function IntroScreen() {
         <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60">
           JK Cement · Demand Generator
         </p>
-        <h1 className="mt-2 font-display text-3xl leading-tight">Market Discovery Tool</h1>
+        <h1 className="mt-2 font-display text-3xl leading-tight">Demand Discovery Tool</h1>
         <p className="mt-2 text-sm text-white/75">Welcome Sunil Kumar</p>
       </div>
 
