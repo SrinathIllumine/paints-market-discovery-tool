@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 
 const items = [
   { to: "/map", icon: MapIcon, label: "Market Map", disabled: false },
-  { to: "/plan", icon: ClipboardList, label: "Market Engagement", disabled: false },
-  { to: "/insights", icon: Lightbulb, label: "Insights", disabled: false },
+  { to: "/plan", icon: ClipboardList, label: "Cluster Engagement", disabled: false },
+  { to: "/insights", icon: Lightbulb, label: "Sales Enablement", disabled: false },
   { to: "/connects", icon: Users, label: "Connects", disabled: true },
 ] as const;
 

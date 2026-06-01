@@ -11,8 +11,8 @@ import { Briefcase, Store, Plus, Trash2, Lightbulb } from "lucide-react";
 export const Route = createFileRoute("/insights")({
   head: () => ({
     meta: [
-      { title: "Market Intelligence · Insights" },
-      { name: "description", content: "Track local market intelligence — insights from MEs, retailers and your own observations." },
+      { title: "Sales Enablement" },
+      { name: "description", content: "Get the enablers and best practices to follow during sales engagements." },
     ],
   }),
   component: InsightsScreen,
@@ -38,9 +38,9 @@ function InsightsScreen() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="Market Intelligence"
-          title="Track local intelligence"
-          subtitle="Capture insights from the field and reuse them across stages."
+          eyebrow="Sales Enablement"
+          title="Sales Enablement"
+          subtitle="Get the enablers and best practices to follow during sales engagements."
         />
       }
     >

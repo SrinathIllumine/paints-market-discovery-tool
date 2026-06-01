@@ -22,7 +22,7 @@ import {
 export const Route = createFileRoute("/plan/")({
   head: () => ({
     meta: [
-      { title: "Monthly Market Engagement Plan" },
+      { title: "Monthly Cluster Engagement Plan" },
       {
         name: "description",
         content: "Plan your monthly engagement across shortlisted clusters.",
