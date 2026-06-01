@@ -34,7 +34,7 @@ export const Route = createFileRoute("/plan/")({
 
 const STEPS: { id: RoadmapStep; title: string }[] = [
   { id: "focus", title: "Which cluster would you like to focus on this month?" },
-  { id: "connect", title: "Design your connect model" },
+  { id: "connect", title: "Design your connect strategy" },
   { id: "value", title: "Value proposition" },
   { id: "action", title: "Action plan" },
 ];
