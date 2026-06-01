@@ -1,74 +1,85 @@
-# Implementation Plan
 
-## 1. Clickable home cards + new Insights page
-- `src/routes/index.tsx`: wrap each of the 3 prop cards in `<Link>`:
-  - "Create a cluster map" → `/map`
-  - "Build a structured outreach plan" → `/plan`
-  - "Track local market intelligence" → `/insights`
-- Create `src/routes/insights.tsx` (new route) — Stage-styled page with three sections:
-  - **Market Insights from Marketing Executives** — preset card with the MMRDA redevelopment insight.
-  - **Market Insights from Retailers** — preset cards (Khopoli schools repainting, waterproofing pre-monsoon).
-  - **Your insights** — text area + "Add insight" button; insights stored in `useAppStore` (new `insights: { id, text, createdAt }[]` slice, persisted).
-- `src/components/app/BottomNav.tsx`: add a 4th tab `Insights` (e.g. `Lightbulb` icon) → grid becomes `grid-cols-4`.
+# Plan
 
-## 2. Market Map page — remove H/M/L tags
-- `src/components/app/BubbleCircle.tsx`: remove the H/M/L pill badge and the `ring`-by-potential coloring (use a single neutral ring style). Keep the cluster name + contacts badge.
-- `src/routes/map/index.tsx`: unchanged structurally.
+A large multi-part restructure. I'll keep all logic frontend-only (scoring runs in `src/lib/clusterScoring.ts` as deterministic helpers — "backend intelligence" simulated client-side).
 
-## 3. Cluster page header carries the nature
-- `src/data/clusters.ts`: add a short `nature` string per cluster (e.g. Residential Construction → "Residential Construction" / "Mid-size apartments & affordable housing"). Use existing `description` as the source; add a new concise `nature` field where the existing text is too long.
-- `src/routes/map/$clusterId.tsx`:
-  - Pass `subtitle={cluster.nature}` to `StageHeader` (replacing the current "High potential · N prospects" line — move prospect count into the Market Potential card only).
-  - **Delete** the `Nature & Description` Section entirely.
+## 1. Navigation & shell
 
-## 4. Market Potential reasoning bullets
-- `src/data/clusters.ts`: add `potentialReasons: string[]` (3–4 items) per cluster. Seed Residential Construction with the 4 example points; write equivalent concrete points for each other cluster.
-- `src/routes/map/$clusterId.tsx` Market Potential section: render the H/M/L pill + `cs.prospects.length` count, plus a bulleted list of `cluster.potentialReasons`.
+- **Delete** `src/routes/connects/index.tsx` and `src/routes/connects/$clusterId.tsx` (Connects page removed).
+- **Sales Enablement**: rename route from `/insights` → `/sales-enablement`. Empty the page body (just header + "Coming soon" notice). Disable bottom-nav entry (greyed, tooltip "Coming soon"), same pattern as Connects today.
+- **Handhold Customers** (new): add `/handhold` route → disabled "Coming soon" page. Add disabled bottom-nav entry.
+- `BottomNav` slots become: Cluster Potential · Cluster Engagement · Sales Enablement (disabled) · Handhold (disabled). Drop the disabled "Connects" entry.
 
-## 5. Remove JK Share & Demand Classification cards
-- `src/routes/map/$clusterId.tsx`: delete the `Your JK Share here` and `Demand Classification` Sections.
-- Keep `setJkShare` in the store (used by plan ranking) but it simply won't be set from this page — ranking falls back to potential + stakeholder count.
+## 2. Home page (`src/routes/index.tsx`)
 
-## 6. Show ALL prospects + regional segmentation
-- `src/lib/places.functions.ts`: remove the 3-page cap. Loop until no `nextPageToken` (safety cap ~10 pages). Also accept a larger `radiusMeters` (default 20–25km to cover Panvel + Khopoli neighborhood) — keep default but allow override.
-- Add a small **clustering helper** `src/lib/regions.ts`: takes prospects + `k` (3–5), runs a deterministic k-means (seeded by lat/lng quantiles) on `(lat,lng)`, returns `{ regionId, label, color, centroid, prospects[] }[]`. Region labels derived from nearest locality token from `formattedAddress` (fallback `Region A/B/C…`). Color palette: 5 distinct semantic colors added to `src/styles.css`.
-- `src/components/maps/GoogleMap.tsx`:
-  - Accept new prop `regions: Region[]` and `panvelBoundary: LatLng[]` (optional).
-  - Color each marker by its region.
-  - Draw dotted polygon/convex-hull per region using `google.maps.Polygon` with `strokeOpacity:0` + `icons` dashed pattern (standard Google Maps dotted-line trick).
-  - Draw an overall dotted Panvel boundary polygon (hardcoded ~8-point polygon around Panvel taluka in `src/data/panvelBoundary.ts`).
-- `src/routes/map/$clusterId.tsx`:
-  - Compute `regions = useMemo(() => groupIntoRegions(cs.prospects, 4), [cs.prospects])`.
-  - Pass `regions` and the Panvel boundary to `<GoogleMap>`.
-  - Replace the single "All prospects" Accordion with **one Accordion per region** (collapsed by default), each showing region color dot, name, count and the list of prospects (reusing the existing row UI).
+- Update Sales Enablement card: new description, disabled (no nav, greyed visual, "Coming soon" pill), but `to="/sales-enablement"` for when enabled.
+- Add new disabled card "Handhold Customers" — "Handhold the customers post-sales."
+- Remove the "Start with Market Map" CTA button.
+- First card label remains the same but its `to` still goes to `/map`.
 
-## 7. Event topics by cluster × type
-- `src/data/eventTopics.ts` (new): `Record<clusterId, Record<EventType, string[]>>` seeded with realistic topics. Example for `residential / Awareness`: the two strings in the request. Provide 2–4 topics per cluster/type combo.
-- `src/routes/plan/index.tsx` Add-event dialog:
-  - After Type buttons, render a "Topic" list (radio buttons / clickable chips) sourced from `eventTopics[clusterId][type]`. Allow "Other" → free text falls back to existing `note` field.
-  - Persist topic on the event: extend `PlanEvent` with `topic?: string` in `src/store/appStore.ts`; show it in the event row.
+## 3. Cluster Potential (renamed from Market Map)
 
-## 8. Service Delivery Readiness cleanup
-- `src/store/appStore.ts`: remove `trained` from `Readiness` type, `emptyReadiness`, and the setter shape (or keep type but stop rendering it — simpler: keep field, drop UI).
-- `src/routes/plan/index.tsx`:
-  - Delete the 4th `ReadinessRow` ("trained").
-  - Update `gapsCount` to only consider `retailers | stock | painters`.
-  - Remove the `gaps` / `All set` label in the AccordionTrigger — keep only the section title.
+- **Renames**: `StageHeader` eyebrow/title, `BottomNav` label, `<title>` meta. The route stays `/map` (keeps state/URLs stable); label everywhere becomes "Cluster Potential". "View my Market Map" CTA → "View my Cluster Map".
+- **Cluster card (`/map/$clusterId`)**:
+  - Remove "Market Potential" section.
+  - Remove "Key points to consider before shortlisting".
+  - Remove the shortlist/remove button at bottom.
+  - In Geo View + List view: remove per-prospect select/deselect. Default = all prospects included. Strip `selectedProspectIds` UI affordances.
+  - Bump Places search limits: server fn already returns up to ~60; raise `pageSize` / loop pages until all are returned (max 3 pages = ~60 hard cap from Places API; document this in code comments). Drop any client-side truncation.
+  - **Replace shortlist button** with a "Save cluster potential" action that records the 4-section scores into store and adds the cluster to `targetClusterIds` automatically.
+- **New 4 sub-sections below List View**, in this order:
+  - **a. Cluster Revenue Potential** — auto-calculated. Per cluster, define `avgRevenuePerProspect` based on cluster type (schools ~₹8L, factories ~₹40L, houses/PG ~₹1.5L, gated/redevelopment ~₹15L, etc.) inside a new `CLUSTER_REVENUE_PROFILE` map in `src/lib/clusterScoring.ts`. Show: avg revenue/prospect with sq.ft band, total prospects, total revenue potential, market-potential rank.
+  - **b. Cluster Access** — two parts:
+    - Access Capability: 2–3 yes/no questions, generated per cluster from a `getAccessQuestions(clusterId)` helper (school touchpoints differ from MIDC touchpoints).
+    - Ranking radio: A / B / C with the descriptions listed.
+  - **c. Competitive Strength** — 3–4 yes/no questions generated per cluster (grammar-checked, cluster-specific wording). Score 1-10 based on % "yes".
+  - **d. Ease of Sale** — auto. Each cluster maps to an avg cycle time (e.g. PG: 1-2 weeks, schools: 2 months, MIDC/warehousing: 6 months, gated: 4 months). Display cycle + one-liner explanation.
+- **Aggregate "Cluster Potential" score**: 4 sub-scores (each /10), equal 25% weight → /10. Persist per cluster in store as `clusterAssessments`.
 
-## 9. "Generate report for outreach plan" PDF
-- Add `jspdf` (well-supported in browser; no native deps): `bun add jspdf`.
-- `src/lib/planReport.ts` (new): function `generatePlanReportPdf(state)` that pulls from `useAppStore` and renders:
-  - Title + generation date.
-  - **Target clusters** with potential + contact count.
-  - **How to connect** bullets per target.
-  - **Contribution events** table (Cluster · Type · Topic · Date · Note).
-  - **Service delivery readiness** matrix (3 questions × clusters).
-  - Saves as `JK-Outreach-Plan-YYYY-MM-DD.pdf`.
-- `src/routes/plan/index.tsx`: add a primary `Button` at the bottom of the page ("Generate report for outreach plan") that calls the helper.
+## 4. View my Cluster Map (`/market-potential`)
 
-## Technical notes
-- Region clustering: lightweight k-means in pure TS (~50 lines), deterministic seeding via sorted quantiles so the same input always yields the same regions.
-- Dotted polygon trick on Google Maps: zero `strokeOpacity` + `icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity:1, scale:3 }, offset: '0', repeat:'15px' }]`.
-- The Khopoli schools insight is informational only — no schema changes needed for Insights other than the new persisted store slice.
-- All new colors (region palette) go into `src/styles.css` as semantic tokens.
-- No backend / migration changes.
+Two new sections (replace existing content):
+- **Cluster Snapshot**: 2×2 matrix (SVG). X-axis = Access (avg of access score + ease-of-sale score). Y-axis = Potential (avg of revenue score + competitive strength). Plot dot per scored cluster, labeled.
+- **Cluster Potential**: list cards (descending overall score) showing 4 sub-scores + overall. If <2 scored clusters → alert "Map the potential for more clusters to rank them for comparison".
+- Backed by the new `clusterAssessments` slice. Only clusters with a completed assessment appear.
+
+## 5. Cluster Engagement Plan (`/plan`)
+
+- Step 1 "Focus": same UI, but sort options by aggregate cluster potential desc (fallback potential H/M/L when no score).
+- Step 2 "Design your connect strategy": replace `CONNECT_MODEL_OPTIONS` with 4 strategies — Brand-driven, Contractor-driven, Outreach-driven, D2C-driven. Per-strategy follow-up forms:
+  - Brand-driven: yes/no "Do you want to run local campaigns?" + (if yes) free-text campaign idea.
+  - Contractor-driven: yes/no "Do you already know contractors?" + repeatable contractor list (name/phone/area).
+  - Outreach-driven: yes/no "Do you have a touchpoint in the community?", yes/no "Considered contribution events?" + cluster-relevant event suggestions from `src/data/eventTopics.ts`.
+  - D2C-driven: yes/no "Do you want to directly reach end customers?" + channel checkboxes (WhatsApp, walk-in, retailer, etc.).
+- Step 3 "Value proposition" → **removed**. Roadmap becomes 3 steps: focus → connect strategy → action plan.
+- Step 4 "Action plan": dynamically generated from the connect strategy + per-strategy answers. Replace `getRoadmapVariants` with `generateActionPlan(clusterId, strategy, answers)`.
+- Generated PDF (`src/lib/monthlyPlanReport.ts`): mirror the new structure — verb-actionable headings ("Focus on these clusters", "Design the connect strategy", "Execute the action plan"), include per-cluster strategy + answers + action steps, add whitespace between sections.
+
+## 6. Store changes (`src/store/appStore.ts`)
+
+- Add `clusterAssessments: Record<clusterId, ClusterAssessment>` where assessment holds: access capability answers, access rank (A/B/C), competitive answers, plus computed scores + total.
+- Add `connectStrategyByCluster: Record<clusterId, ConnectStrategy>` (Brand/Contractor/Outreach/D2C) replacing `connectModelByCluster` (keep old key for backwards persistence but unused).
+- Add `strategyAnswersByCluster` for free-text/contractor lists/event flags.
+- Remove `selectedProspectIds` usage from UI (keep type for store compatibility; default-select all).
+- Bump persist `name` to `sed.v6` so old broken state doesn't poison the new shape.
+
+## 7. New helpers (`src/lib/clusterScoring.ts`)
+
+- `CLUSTER_REVENUE_PROFILE[clusterId]` → avg sq.ft band, avg revenue per prospect.
+- `CLUSTER_CYCLE[clusterId]` → cycle time + one-liner.
+- `getAccessQuestions(clusterId)`, `getCompetitiveQuestions(clusterId)` → cluster-tailored yes/no sets.
+- `scoreRevenue(totalRevenue) → 1–10` (using the bands you specified).
+- `scoreAccess(rank) → 1–10` (A=10, B=7, C=3).
+- `scoreCompetitive(yesCount, total) → 1–10`.
+- `scoreEaseOfSale(clusterId) → 1–10` (faster cycle = higher).
+- `aggregate(scores)` → mean (each 25%).
+
+## Out-of-scope clarifications
+
+- "Backend intelligence" is implemented as deterministic frontend tables/helpers (no real backend) — same approach as the existing roadmap content. I won't introduce a server.
+- Places API hard caps at ~60 per text query (3 pages × 20). I'll fetch all pages but can't exceed Google's cap.
+- "Disabled temporarily" for Sales Enablement / Handhold = card and nav item are visibly disabled, non-clickable, with "Coming soon" affordance. Easy to re-enable by flipping a `disabled` flag.
+
+## Verification
+
+After implementing I'll: build-check, open the preview, walk through `/map` → cluster card (new sub-sections fill in) → `/market-potential` (matrix + ranking) → `/plan` (new strategies → action plan → PDF). Capture screenshots if anything looks off.

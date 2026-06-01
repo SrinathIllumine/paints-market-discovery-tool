@@ -9,23 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SalesEnablementRouteImport } from './routes/sales-enablement'
 import { Route as MarketPotentialRouteImport } from './routes/market-potential'
-import { Route as InsightsRouteImport } from './routes/insights'
+import { Route as HandholdRouteImport } from './routes/handhold'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlanIndexRouteImport } from './routes/plan/index'
 import { Route as MapIndexRouteImport } from './routes/map/index'
-import { Route as ConnectsIndexRouteImport } from './routes/connects/index'
 import { Route as MapClusterIdRouteImport } from './routes/map/$clusterId'
-import { Route as ConnectsClusterIdRouteImport } from './routes/connects/$clusterId'
 
+const SalesEnablementRoute = SalesEnablementRouteImport.update({
+  id: '/sales-enablement',
+  path: '/sales-enablement',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketPotentialRoute = MarketPotentialRouteImport.update({
   id: '/market-potential',
   path: '/market-potential',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InsightsRoute = InsightsRouteImport.update({
-  id: '/insights',
-  path: '/insights',
+const HandholdRoute = HandholdRouteImport.update({
+  id: '/handhold',
+  path: '/handhold',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -43,50 +47,37 @@ const MapIndexRoute = MapIndexRouteImport.update({
   path: '/map/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ConnectsIndexRoute = ConnectsIndexRouteImport.update({
-  id: '/connects/',
-  path: '/connects/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const MapClusterIdRoute = MapClusterIdRouteImport.update({
   id: '/map/$clusterId',
   path: '/map/$clusterId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ConnectsClusterIdRoute = ConnectsClusterIdRouteImport.update({
-  id: '/connects/$clusterId',
-  path: '/connects/$clusterId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/insights': typeof InsightsRoute
+  '/handhold': typeof HandholdRoute
   '/market-potential': typeof MarketPotentialRoute
-  '/connects/$clusterId': typeof ConnectsClusterIdRoute
+  '/sales-enablement': typeof SalesEnablementRoute
   '/map/$clusterId': typeof MapClusterIdRoute
-  '/connects/': typeof ConnectsIndexRoute
   '/map/': typeof MapIndexRoute
   '/plan/': typeof PlanIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/insights': typeof InsightsRoute
+  '/handhold': typeof HandholdRoute
   '/market-potential': typeof MarketPotentialRoute
-  '/connects/$clusterId': typeof ConnectsClusterIdRoute
+  '/sales-enablement': typeof SalesEnablementRoute
   '/map/$clusterId': typeof MapClusterIdRoute
-  '/connects': typeof ConnectsIndexRoute
   '/map': typeof MapIndexRoute
   '/plan': typeof PlanIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/insights': typeof InsightsRoute
+  '/handhold': typeof HandholdRoute
   '/market-potential': typeof MarketPotentialRoute
-  '/connects/$clusterId': typeof ConnectsClusterIdRoute
+  '/sales-enablement': typeof SalesEnablementRoute
   '/map/$clusterId': typeof MapClusterIdRoute
-  '/connects/': typeof ConnectsIndexRoute
   '/map/': typeof MapIndexRoute
   '/plan/': typeof PlanIndexRoute
 }
@@ -94,48 +85,51 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/insights'
+    | '/handhold'
     | '/market-potential'
-    | '/connects/$clusterId'
+    | '/sales-enablement'
     | '/map/$clusterId'
-    | '/connects/'
     | '/map/'
     | '/plan/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/insights'
+    | '/handhold'
     | '/market-potential'
-    | '/connects/$clusterId'
+    | '/sales-enablement'
     | '/map/$clusterId'
-    | '/connects'
     | '/map'
     | '/plan'
   id:
     | '__root__'
     | '/'
-    | '/insights'
+    | '/handhold'
     | '/market-potential'
-    | '/connects/$clusterId'
+    | '/sales-enablement'
     | '/map/$clusterId'
-    | '/connects/'
     | '/map/'
     | '/plan/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  InsightsRoute: typeof InsightsRoute
+  HandholdRoute: typeof HandholdRoute
   MarketPotentialRoute: typeof MarketPotentialRoute
-  ConnectsClusterIdRoute: typeof ConnectsClusterIdRoute
+  SalesEnablementRoute: typeof SalesEnablementRoute
   MapClusterIdRoute: typeof MapClusterIdRoute
-  ConnectsIndexRoute: typeof ConnectsIndexRoute
   MapIndexRoute: typeof MapIndexRoute
   PlanIndexRoute: typeof PlanIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sales-enablement': {
+      id: '/sales-enablement'
+      path: '/sales-enablement'
+      fullPath: '/sales-enablement'
+      preLoaderRoute: typeof SalesEnablementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/market-potential': {
       id: '/market-potential'
       path: '/market-potential'
@@ -143,11 +137,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketPotentialRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/insights': {
-      id: '/insights'
-      path: '/insights'
-      fullPath: '/insights'
-      preLoaderRoute: typeof InsightsRouteImport
+    '/handhold': {
+      id: '/handhold'
+      path: '/handhold'
+      fullPath: '/handhold'
+      preLoaderRoute: typeof HandholdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -171,13 +165,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/connects/': {
-      id: '/connects/'
-      path: '/connects'
-      fullPath: '/connects/'
-      preLoaderRoute: typeof ConnectsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/map/$clusterId': {
       id: '/map/$clusterId'
       path: '/map/$clusterId'
@@ -185,23 +172,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapClusterIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/connects/$clusterId': {
-      id: '/connects/$clusterId'
-      path: '/connects/$clusterId'
-      fullPath: '/connects/$clusterId'
-      preLoaderRoute: typeof ConnectsClusterIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  InsightsRoute: InsightsRoute,
+  HandholdRoute: HandholdRoute,
   MarketPotentialRoute: MarketPotentialRoute,
-  ConnectsClusterIdRoute: ConnectsClusterIdRoute,
+  SalesEnablementRoute: SalesEnablementRoute,
   MapClusterIdRoute: MapClusterIdRoute,
-  ConnectsIndexRoute: ConnectsIndexRoute,
   MapIndexRoute: MapIndexRoute,
   PlanIndexRoute: PlanIndexRoute,
 }

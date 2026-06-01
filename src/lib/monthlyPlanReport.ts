@@ -1,27 +1,23 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { getCluster, POTENTIAL_LABEL } from "@/data/clusters";
-import type {
-  ConnectModel,
-  Prospect,
-  Stakeholder,
-} from "@/store/appStore";
+import { getCluster } from "@/data/clusters";
 import {
-  CONNECT_MODEL_LABEL,
-  getRoadmapVariants,
-} from "@/lib/roadmapContent";
+  CONNECT_STRATEGY_LABEL,
+  generateActionPlan,
+  type ConnectStrategy,
+  type StrategyAnswers,
+} from "@/lib/strategyContent";
 
 type Args = {
   focusClusterIds: string[];
-  prospectsByCluster: Record<string, Prospect[]>;
-  connectModelByCluster: Record<string, ConnectModel>;
-  stakeholders: Record<string, Stakeholder[]>;
+  strategyByCluster: Record<string, ConnectStrategy>;
+  answersByCluster: Record<string, StrategyAnswers>;
 };
 
 export function generateMonthlyEngagementPlanPdf({
   focusClusterIds,
-  prospectsByCluster,
-  connectModelByCluster,
+  strategyByCluster,
+  answersByCluster,
 }: Args) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -34,15 +30,11 @@ export function generateMonthlyEngagementPlanPdf({
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("Monthly Engagement Plan for June 2026", margin, 35);
+  doc.text("Monthly Cluster Engagement Plan — June 2026", margin, 35);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
-    `Generated ${new Date().toLocaleDateString(undefined, {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })}`,
+    `Generated ${new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}`,
     margin,
     54,
   );
@@ -52,20 +44,17 @@ export function generateMonthlyEngagementPlanPdf({
   doc.setFont("helvetica", "normal");
   doc.text("Area: Panvel", pageWidth - margin, 46, { align: "right" });
   doc.setTextColor(15, 23, 42);
-  y = 100;
+  y = 110;
 
   let sectionIndex = 0;
   const heading = (text: string) => {
-    if (y > 760) {
-      doc.addPage();
-      y = margin;
-    }
+    if (y > 760) { doc.addPage(); y = margin; }
     if (sectionIndex > 0) {
-      y += 16;
+      y += 18;
       doc.setDrawColor(180);
       doc.setLineWidth(0.75);
       doc.line(margin, y - 6, pageWidth - margin, y - 6);
-      y += 18;
+      y += 22;
     }
     sectionIndex++;
     doc.setFont("helvetica", "bold");
@@ -74,16 +63,13 @@ export function generateMonthlyEngagementPlanPdf({
     y += 8;
     doc.setDrawColor(220);
     doc.line(margin, y, pageWidth - margin, y);
-    y += 14;
+    y += 16;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
   };
 
   const ensureSpace = (h: number) => {
-    if (y + h > 780) {
-      doc.addPage();
-      y = margin;
-    }
+    if (y + h > 780) { doc.addPage(); y = margin; }
   };
 
   const wrapped = (text: string, indent = 0, bold = false) => {
@@ -95,8 +81,8 @@ export function generateMonthlyEngagementPlanPdf({
     doc.setFont("helvetica", "normal");
   };
 
-  // ===== Focus clusters overview
-  heading("Focus clusters for this month");
+  // ===== Focus clusters
+  heading("Focus on these clusters");
   if (focusClusterIds.length === 0) {
     doc.setTextColor(120);
     doc.text("No clusters selected for this month.", margin, y);
@@ -105,91 +91,77 @@ export function generateMonthlyEngagementPlanPdf({
   } else {
     autoTable(doc, {
       startY: y,
-      head: [["Cluster", "Potential", "Connect strategy", "Prospects"]],
+      head: [["Cluster", "Connect strategy"]],
       body: focusClusterIds.map((id) => {
         const c = getCluster(id);
-        const model = connectModelByCluster[id];
-        const total = prospectsByCluster[id]?.length ?? 0;
-        return [
-          c?.name ?? id,
-          c ? POTENTIAL_LABEL[c.potential] : "—",
-          model ? `${model} · ${CONNECT_MODEL_LABEL[model]}` : "—",
-          String(total),
-        ];
+        const s = strategyByCluster[id];
+        return [c?.name ?? id, s ? CONNECT_STRATEGY_LABEL[s] : "—"];
       }),
       headStyles: { fillColor: [15, 23, 42] },
       margin: { left: margin, right: margin },
       styles: { fontSize: 10, cellPadding: 6 },
     });
-    y =
-      (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable
-        .finalY + 12;
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 16;
   }
 
-  // ===== Per-cluster roadmap (value prop + action plan)
+  // ===== Per-cluster strategy + action plan
+  heading("Design the connect strategy & execute the action plan");
+
   for (const clusterId of focusClusterIds) {
     const cluster = getCluster(clusterId);
     if (!cluster) continue;
-    const model = connectModelByCluster[clusterId];
+    const strategy = strategyByCluster[clusterId];
+    const answers = answersByCluster[clusterId] ?? {};
 
-    heading(cluster.name);
+    ensureSpace(60);
+    y += 6;
+    doc.setFontSize(12);
+    wrapped(cluster.name, 0, true);
+    doc.setFontSize(10);
 
-    if (!model) {
+    if (!strategy) {
       doc.setTextColor(120);
       wrapped("No connect strategy selected for this cluster.", 0);
       doc.setTextColor(15, 23, 42);
+      y += 4;
       continue;
     }
 
-    wrapped(
-      `Connect strategy: ${model} — ${CONNECT_MODEL_LABEL[model]}`,
-      0,
-      true,
-    );
+    wrapped(`Connect strategy: ${CONNECT_STRATEGY_LABEL[strategy]}`, 0, true);
     y += 4;
 
-    const variants = getRoadmapVariants(clusterId, model);
-
-    variants.forEach((v, i) => {
-      ensureSpace(40);
-      const roman = ["i", "ii", "iii", "iv"][i] ?? `${i + 1}`;
-      doc.setFontSize(11);
-      wrapped(`${roman}) ${v.audience}`, 0, true);
-      doc.setFontSize(10);
-
-      wrapped("Value proposition:", 12, true);
-      v.valueProps.forEach((vp) => wrapped(`• ${vp}`, 24));
-
-      y += 2;
-      wrapped("Action plan:", 12, true);
-      v.actions.forEach((a, idx) => wrapped(`${idx + 1}. ${a}`, 24));
-      y += 6;
-    });
-
-    // Prospect list (if any) — concise table
-    const prospects = prospectsByCluster[clusterId] ?? [];
-    if (prospects.length > 0) {
-      ensureSpace(40);
-      wrapped("Prospects identified in this cluster:", 0, true);
-      autoTable(doc, {
-        startY: y + 2,
-        head: [["#", "Name", "Locality"]],
-        body: prospects.map((p, i) => [
-          String(i + 1),
-          p.name,
-          p.locality ?? "—",
-        ]),
-        headStyles: { fillColor: [15, 23, 42] },
-        margin: { left: margin, right: margin },
-        styles: { fontSize: 9, cellPadding: 5 },
-        columnStyles: {
-          0: { cellWidth: 30, halign: "center" },
-        },
-      });
-      y =
-        (doc as unknown as { lastAutoTable: { finalY: number } })
-          .lastAutoTable.finalY + 10;
+    // Capture key answers as bullets (generic phrasing)
+    const facts: string[] = [];
+    if (strategy === "BRAND") {
+      if (answers.runLocalCampaigns) facts.push(`Run local campaigns: ${answers.runLocalCampaigns === "Y" ? "Yes" : "No"}`);
+      if (answers.campaignIdea) facts.push(`Campaign idea: ${answers.campaignIdea}`);
     }
+    if (strategy === "CONTRACTOR") {
+      if (answers.knowsContractors) facts.push(`Already knows contractors: ${answers.knowsContractors === "Y" ? "Yes" : "No"}`);
+      const cts = answers.contractors ?? [];
+      if (cts.length > 0) facts.push(`Contractors on file: ${cts.map((c) => c.name || "Unnamed").join(", ")}`);
+    }
+    if (strategy === "OUTREACH") {
+      if (answers.hasCommunityTouchpoint) facts.push(`Community touchpoint: ${answers.hasCommunityTouchpoint === "Y" ? "Yes" : "No"}`);
+      if (answers.consideredContributionEvents) facts.push(`Considered contribution events: ${answers.consideredContributionEvents === "Y" ? "Yes" : "No"}`);
+      const ts = answers.selectedEventTopics ?? [];
+      if (ts.length > 0) facts.push(`Selected events: ${ts.join("; ")}`);
+    }
+    if (strategy === "D2C") {
+      if (answers.wantsDirectReach) facts.push(`Direct end-customer reach: ${answers.wantsDirectReach === "Y" ? "Yes" : "No"}`);
+      const ch = answers.d2cChannels ?? [];
+      if (ch.length > 0) facts.push(`Channels: ${ch.join(", ")}`);
+    }
+    if (facts.length > 0) {
+      wrapped("Inputs captured:", 0, true);
+      facts.forEach((f) => wrapped(`• ${f}`, 12));
+      y += 4;
+    }
+
+    wrapped("Action plan:", 0, true);
+    const steps = generateActionPlan(clusterId, strategy, answers);
+    steps.forEach((s, i) => wrapped(`${i + 1}. ${s}`, 12));
+    y += 10;
   }
 
   // Footer
@@ -199,7 +171,7 @@ export function generateMonthlyEngagementPlanPdf({
     doc.setFontSize(8);
     doc.setTextColor(150);
     doc.text(
-      `JK Cement · Monthly Engagement Plan · Page ${i} of ${pageCount}`,
+      `JK Cement · Monthly Cluster Engagement Plan · Page ${i} of ${pageCount}`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 20,
       { align: "center" },
@@ -207,5 +179,5 @@ export function generateMonthlyEngagementPlanPdf({
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  doc.save(`JK-Monthly-Engagement-Plan-${today}.pdf`);
+  doc.save(`JK-Monthly-Cluster-Engagement-Plan-${today}.pdf`);
 }

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
@@ -12,17 +12,27 @@ import {
 } from "@/components/ui/accordion";
 import { GoogleMap } from "@/components/maps/GoogleMap";
 import { AddProspectSheet } from "@/components/maps/AddProspectSheet";
-import { CLUSTERS, getCluster, POTENTIAL_LABEL } from "@/data/clusters";
+import { CLUSTERS, getCluster } from "@/data/clusters";
 import { PANVEL_CENTER } from "@/data/clusters";
 import { PANVEL_BOUNDARY } from "@/data/panvelBoundary";
 import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, MapPin, Check, BookmarkPlus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Plus, Loader2, MapPin, BookmarkCheck } from "lucide-react";
 import { toast } from "sonner";
-
+import {
+  computeClusterScores,
+  getAccessQuestions,
+  getCompetitiveQuestions,
+  getCycle,
+  getRevenueProfile,
+  formatRupees,
+  type AccessRank,
+  type YesNo,
+  type ClusterAssessment,
+} from "@/lib/clusterScoring";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/map/$clusterId")({
   component: ClusterDetailScreen,
@@ -39,7 +49,6 @@ export const Route = createFileRoute("/map/$clusterId")({
 
 function ClusterDetailScreen() {
   const { clusterId } = Route.useParams();
-  const navigate = useNavigate();
   const cluster = useMemo(() => getCluster(clusterId), [clusterId]);
 
   const state = useAppStore((s) => s.clusters[clusterId]);
@@ -47,16 +56,14 @@ function ClusterDetailScreen() {
   const markVisited = useAppStore((s) => s.markVisited);
   const setProspects = useAppStore((s) => s.setProspects);
   const addProspect = useAppStore((s) => s.addProspect);
-  const toggleProspectSelected = useAppStore((s) => s.toggleProspectSelected);
-  const toggleTargetCluster = useAppStore((s) => s.toggleTargetCluster);
-  const isShortlisted = useAppStore((s) => s.plan.targetClusterIds.includes(clusterId));
+  const existingAssessment = useAppStore((s) => s.assessments[clusterId]);
+  const setAssessment = useAppStore((s) => s.setAssessment);
 
   const callPlaces = useServerFn(searchPlacesForCluster);
   const [loading, setLoading] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [pickingPin, setPickingPin] = useState(false);
   const [pendingLatLng, setPendingLatLng] = useState<{ lat: number; lng: number } | null>(null);
-
 
   useEffect(() => {
     ensureCluster(clusterId);
@@ -67,6 +74,8 @@ function ClusterDetailScreen() {
     if (!cluster) return;
     if (!state || state.prospects.length > 0) return;
     setLoading(true);
+    // Pull all available prospects from Google Places (paged inside the
+    // server fn). Google's Places API caps text search at ~60 results.
     callPlaces({
       data: {
         textQuery: cluster.placesQuery,
@@ -92,9 +101,22 @@ function ClusterDetailScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cluster?.id]);
 
-  const cs = state ?? { jkShare: null, prospects: [], selectedProspectIds: [], visited: true };
+  const prospects = state?.prospects ?? [];
+  const regions = useMemo(() => groupIntoRegions(prospects), [prospects]);
+  const selectedAllIds = useMemo(() => prospects.map((p) => p.id), [prospects]);
 
-  const regions = useMemo(() => groupIntoRegions(cs.prospects), [cs.prospects]);
+  // Assessment local state (seed from store if present)
+  const accessQuestions = useMemo(() => getAccessQuestions(clusterId), [clusterId]);
+  const competitiveQuestions = useMemo(() => getCompetitiveQuestions(clusterId), [clusterId]);
+  const [accessAnswers, setAccessAnswers] = useState<YesNo[]>(
+    () => existingAssessment?.accessAnswers ?? accessQuestions.map(() => "N"),
+  );
+  const [accessRank, setAccessRank] = useState<AccessRank | null>(
+    existingAssessment?.accessRank ?? null,
+  );
+  const [competitiveAnswers, setCompetitiveAnswers] = useState<YesNo[]>(
+    () => existingAssessment?.competitiveAnswers ?? competitiveQuestions.map(() => "N"),
+  );
 
   if (!cluster) {
     return (
@@ -103,6 +125,29 @@ function ClusterDetailScreen() {
       </AppShell>
     );
   }
+
+  const profile = getRevenueProfile(clusterId);
+  const cycle = getCycle(clusterId);
+  const totalRevenue = profile.avgRevenuePerProspect * prospects.length;
+
+  const provisionalAssessment: ClusterAssessment = {
+    accessAnswers,
+    accessRank,
+    competitiveAnswers,
+    completedAt: Date.now(),
+  };
+  const scores = computeClusterScores(cluster, prospects.length, provisionalAssessment);
+
+  const canSave = accessRank !== null;
+
+  const handleSave = () => {
+    if (!canSave) {
+      toast.error("Pick an access ranking (A / B / C) to save");
+      return;
+    }
+    setAssessment(clusterId, provisionalAssessment);
+    toast.success("Cluster potential saved", { duration: 1800 });
+  };
 
   return (
     <AppShell
@@ -117,26 +162,6 @@ function ClusterDetailScreen() {
       }
     >
       <div className="space-y-5 px-5 py-5">
-        {/* Market potential */}
-        <Section title="Market Potential">
-          <div className="mb-3 flex items-center gap-3">
-            <span className="rounded-full bg-critical/10 px-3 py-1 text-xs font-semibold text-critical">
-              {POTENTIAL_LABEL[cluster.potential]}
-            </span>
-            <span className="text-sm text-muted-foreground">
-              {loading ? "Loading prospects…" : `${cs.prospects.length} prospects identified`}
-            </span>
-          </div>
-          <ul className="space-y-1.5 text-sm">
-            {cluster.potentialReasons.map((r) => (
-              <li key={r} className="flex gap-2">
-                <span className="text-critical">•</span>
-                <span>{r}</span>
-              </li>
-            ))}
-          </ul>
-        </Section>
-
         {/* Map */}
         <Section
           title="Geo View"
@@ -153,9 +178,10 @@ function ClusterDetailScreen() {
         >
           <div className="relative h-72 w-full overflow-hidden rounded-2xl border border-border">
             <GoogleMap
-              prospects={cs.prospects}
-              selectedIds={cs.selectedProspectIds}
-              onToggle={(id) => toggleProspectSelected(clusterId, id)}
+              prospects={prospects}
+              selectedIds={selectedAllIds}
+              onToggle={() => {}}
+              readOnly
               pickingPin={pickingPin}
               onPinDropped={(ll) => {
                 setPendingLatLng(ll);
@@ -176,36 +202,16 @@ function ClusterDetailScreen() {
               </div>
             )}
           </div>
-          {regions.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {regions.map((r) => (
-                <div
-                  key={r.id}
-                  className="flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[11px]"
-                >
-                  <span
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: r.color }}
-                  />
-                  <span className="font-medium">{r.label}</span>
-                  <span className="text-muted-foreground">({r.prospects.length})</span>
-                </div>
-              ))}
-              <div className="flex items-center gap-1.5 rounded-full border border-dashed border-foreground/40 px-2.5 py-1 text-[11px] text-muted-foreground">
-                Panvel area outline
-              </div>
-            </div>
-          )}
           <p className="mt-2 text-xs text-muted-foreground">
             <MapPin className="mr-1 inline h-3 w-3" />
-            {cs.prospects.length} prospects on map · {cs.selectedProspectIds.length} selected
+            {prospects.length} prospects on map · all included by default
           </p>
         </Section>
 
-        {/* Prospects by region (collapsible cards) */}
+        {/* Prospects by region (collapsible cards) — view only */}
         <section className="space-y-3">
           <h2 className="font-display text-xl">Prospects by region</h2>
-          {cs.prospects.length === 0 ? (
+          {prospects.length === 0 ? (
             <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
               {loading ? "Loading prospects…" : "No prospects identified yet."}
             </div>
@@ -233,38 +239,14 @@ function ClusterDetailScreen() {
                   </AccordionTrigger>
                   <AccordionContent className="px-4 pb-3">
                     <ul className="divide-y divide-border">
-                      {r.prospects.map((p) => {
-                        const isSel = cs.selectedProspectIds.includes(p.id);
-                        return (
-                          <li key={p.id}>
-                            <button
-                              type="button"
-                              onClick={() => toggleProspectSelected(clusterId, p.id)}
-                              className="flex w-full items-start justify-between gap-3 py-2.5 text-left"
-                            >
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-medium">{p.name}</p>
-                                {p.locality && (
-                                  <p className="truncate text-xs text-muted-foreground">
-                                    {p.locality}
-                                  </p>
-                                )}
-                              </div>
-                              <span
-                                className={cn(
-                                  "mt-0.5 flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[10px] font-semibold",
-                                  isSel
-                                    ? "bg-critical text-critical-foreground"
-                                    : "border border-border bg-muted/40 text-muted-foreground",
-                                )}
-                              >
-                                {isSel && <Check className="h-3 w-3" />}
-                                {isSel ? "Selected" : "Select"}
-                              </span>
-                            </button>
-                          </li>
-                        );
-                      })}
+                      {r.prospects.map((p) => (
+                        <li key={p.id} className="py-2.5">
+                          <p className="truncate text-sm font-medium">{p.name}</p>
+                          {p.locality && (
+                            <p className="truncate text-xs text-muted-foreground">{p.locality}</p>
+                          )}
+                        </li>
+                      ))}
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
@@ -273,38 +255,120 @@ function ClusterDetailScreen() {
           )}
         </section>
 
-        {/* Trigger questions */}
-        <Section title="Key points to consider before shortlisting">
-          <ul className="space-y-2.5 text-sm">
-            {[
-              "Is there enough potential for JK from this cluster?",
-              "Is the cluster easy to access?",
-              "Does JK have enough retailers with stocks to service this cluster?",
-            ].map((q) => (
-              <li key={q} className="flex gap-2">
-                <span className="text-critical">•</span>
-                <span>{q}</span>
-              </li>
-            ))}
-          </ul>
+        {/* ──────────────── Cluster scoring sub-sections ──────────────── */}
+
+        <Section title="Cluster Revenue Potential" badge={`Score ${scores.revenue}/10`}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Tile label="Prospects in cluster" value={String(prospects.length)} />
+            <Tile label="Avg. revenue / prospect" value={formatRupees(profile.avgRevenuePerProspect)} />
+            <Tile
+              label={`Avg. usable area`}
+              value={profile.sqftBand}
+              subtle
+            />
+            <Tile
+              label="Total cluster revenue potential"
+              value={formatRupees(totalRevenue)}
+              highlight
+            />
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Estimated from typical paint-cycle revenue per {cluster.nature.toLowerCase()} prospect.
+          </p>
         </Section>
 
+        <Section title="Cluster Access" badge={`Score ${scores.access}/10`}>
+          <p className="text-sm font-semibold">Access capability</p>
+          <div className="mt-2 space-y-2">
+            {accessQuestions.map((q, i) => (
+              <YesNoRow
+                key={q}
+                question={q}
+                value={accessAnswers[i]}
+                onChange={(v) =>
+                  setAccessAnswers((prev) => {
+                    const next = [...prev];
+                    next[i] = v;
+                    return next;
+                  })
+                }
+              />
+            ))}
+          </div>
+
+          <p className="mt-4 text-sm font-semibold">Access ranking</p>
+          <div className="mt-2 space-y-2">
+            {(
+              [
+                { key: "A", label: "A — Already strong connects" },
+                { key: "B", label: "B — Capable of building insidership but have to build" },
+                { key: "C", label: "C — Cold cluster without any connects" },
+              ] as { key: AccessRank; label: string }[]
+            ).map((opt) => (
+              <label
+                key={opt.key}
+                className={cn(
+                  "flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-sm",
+                  accessRank === opt.key ? "border-critical bg-critical/5" : "border-border bg-card",
+                )}
+              >
+                <input
+                  type="radio"
+                  name={`access-rank-${clusterId}`}
+                  checked={accessRank === opt.key}
+                  onChange={() => setAccessRank(opt.key)}
+                  className="h-4 w-4 accent-critical"
+                />
+                <span>{opt.label}</span>
+              </label>
+            ))}
+          </div>
+        </Section>
+
+        <Section title="Competitive Strength" badge={`Score ${scores.competitive}/10`}>
+          <div className="space-y-2">
+            {competitiveQuestions.map((q, i) => (
+              <YesNoRow
+                key={q}
+                question={q}
+                value={competitiveAnswers[i]}
+                onChange={(v) =>
+                  setCompetitiveAnswers((prev) => {
+                    const next = [...prev];
+                    next[i] = v;
+                    return next;
+                  })
+                }
+              />
+            ))}
+          </div>
+        </Section>
+
+        <Section title="Ease of Sale" badge={`Score ${scores.ease}/10`}>
+          <div className="rounded-xl border border-border bg-muted/30 p-3">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              Avg. cycle time
+            </p>
+            <p className="mt-0.5 font-display text-xl leading-tight">{cycle.label}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{cycle.explanation}</p>
+          </div>
+        </Section>
+
+        <div className="rounded-2xl border border-critical/30 bg-critical/5 p-4">
+          <p className="text-xs uppercase tracking-wider text-critical">Cluster Potential (aggregate)</p>
+          <p className="mt-1 font-display text-3xl leading-none">{scores.aggregate} / 10</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Equal-weighted mean of revenue, access, competitive strength and ease of sale.
+          </p>
+        </div>
+
         <Button
-          onClick={() => {
-            const wasShortlisted = useAppStore.getState().plan.targetClusterIds.includes(clusterId);
-            toggleTargetCluster(clusterId);
-            toast.success(
-              wasShortlisted ? "Cluster removed from your market map" : "Cluster added to your market map",
-              { duration: 1800 },
-            );
-            if (!wasShortlisted) {
-              setTimeout(() => navigate({ to: "/map" }), 700);
-            }
-          }}
+          onClick={handleSave}
+          disabled={!canSave}
           className="h-12 w-full gap-2 bg-navy text-base font-semibold text-navy-foreground hover:bg-navy/90"
         >
-          <BookmarkPlus className="h-4 w-4" />
-          {isShortlisted ? "Remove cluster from the market map" : "Shortlist this cluster to my market map"}
+          <BookmarkCheck className="h-4 w-4" />
+          {existingAssessment ? "Update cluster potential" : "Save cluster potential"}
         </Button>
       </div>
 
@@ -329,24 +393,89 @@ function ClusterDetailScreen() {
   );
 }
 
-
 function Section({
   title,
   right,
+  badge,
   children,
 }: {
   title: string;
   right?: React.ReactNode;
+  badge?: string;
   children: React.ReactNode;
 }) {
   return (
     <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="font-display text-xl">{title}</h2>
-        {right}
+        {badge ? (
+          <span className="shrink-0 rounded-full bg-critical/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-critical">
+            {badge}
+          </span>
+        ) : (
+          right
+        )}
       </div>
       {children}
     </section>
+  );
+}
+
+function Tile({
+  label,
+  value,
+  subtle,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  subtle?: boolean;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl border p-3",
+        highlight ? "border-critical/30 bg-critical/5" : "border-border bg-muted/30",
+        subtle && "opacity-90",
+      )}
+    >
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="mt-0.5 font-display text-lg leading-tight">{value}</p>
+    </div>
+  );
+}
+
+function YesNoRow({
+  question,
+  value,
+  onChange,
+}: {
+  question: string;
+  value: YesNo | undefined;
+  onChange: (v: YesNo) => void;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2.5 text-sm">
+      <p className="leading-snug">{question}</p>
+      <div className="flex shrink-0 gap-1.5">
+        {(["Y", "N"] as YesNo[]).map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(opt)}
+            className={cn(
+              "h-7 w-9 rounded-md border text-xs font-semibold",
+              value === opt
+                ? "border-critical bg-critical text-critical-foreground"
+                : "border-border bg-card text-muted-foreground hover:bg-muted/40",
+            )}
+          >
+            {opt === "Y" ? "Yes" : "No"}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
