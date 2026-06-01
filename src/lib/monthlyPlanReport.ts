@@ -105,7 +105,7 @@ export function generateMonthlyEngagementPlanPdf({
   } else {
     autoTable(doc, {
       startY: y,
-      head: [["Cluster", "Potential", "Connect model", "Prospects"]],
+      head: [["Cluster", "Potential", "Connect strategy", "Prospects"]],
       body: focusClusterIds.map((id) => {
         const c = getCluster(id);
         const model = connectModelByCluster[id];
