@@ -59,7 +59,7 @@ export type StrategyAnswers = {
   d2cChannels?: string[]; // e.g. "Retailer", "WhatsApp", "Walk-in", "Site visit"
 };
 
-export const D2C_CHANNELS = ["Retailer counter", "WhatsApp blasts", "Walk-in / site visits", "Local digital ads"];
+export const D2C_CHANNELS = ["Retailer counter", "WhatsApp", "Walk-in / site visits", "Local digital ads"];
 
 /* ───────────── action plan generator ───────────── */
 
