@@ -251,7 +251,6 @@ function FocusStep({
             >
               <div className="min-w-0">
                 <p className="truncate font-medium">{c.name}</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">{POTENTIAL_LABEL[c.potential]} potential</p>
               </div>
               <div className={cn("mt-1 h-5 w-5 shrink-0 rounded-md border-2", active ? "border-critical bg-critical" : "border-border")} />
             </button>
