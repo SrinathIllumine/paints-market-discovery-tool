@@ -389,7 +389,7 @@ function ValueOrActionStep({
   if (incomplete.length === focusClusters.length) {
     return (
       <p className="text-sm text-muted-foreground">
-        Select a connect model in step 2 to see your{" "}
+        Select a connect strategy in step 2 to see your{" "}
         {kind === "value" ? "value proposition" : "action plan"}.
       </p>
     );
@@ -409,7 +409,7 @@ function ValueOrActionStep({
                 {c.name}
               </p>
               <p className="mt-1 text-xs">
-                Pick a connect model in step 2 first.
+                Pick a connect strategy in step 2 first.
               </p>
             </div>
           );
