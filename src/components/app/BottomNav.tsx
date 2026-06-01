@@ -1,12 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Map as MapIcon, Users, ClipboardList, Lightbulb } from "lucide-react";
+import { Map as MapIcon, ClipboardList, Lightbulb, HandHeart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
-  { to: "/map", icon: MapIcon, label: "Market Map", disabled: false },
+  { to: "/map", icon: MapIcon, label: "Cluster Potential", disabled: false },
   { to: "/plan", icon: ClipboardList, label: "Cluster Engagement", disabled: false },
-  { to: "/insights", icon: Lightbulb, label: "Sales Enablement", disabled: false },
-  { to: "/connects", icon: Users, label: "Connects", disabled: true },
+  { to: "/sales-enablement", icon: Lightbulb, label: "Sales Enablement", disabled: true },
+  { to: "/handhold", icon: HandHeart, label: "Handhold", disabled: true },
 ] as const;
 
 export function BottomNav() {
