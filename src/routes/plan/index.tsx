@@ -50,24 +50,15 @@ function PlanScreen() {
 
   const [openStep, setOpenStep] = useState<RoadmapStep>("focus");
 
-  // Sort shortlisted clusters by aggregate score (descending), tie-break by H/M/L.
+  // Sort shortlisted clusters by aggregate cluster potential score (desc).
   const sortedShortlisted = useMemo(() => {
-    const potRank = { H: 3, M: 2, L: 1 } as const;
-    return [...shortlisted].sort((a, b) => {
-      const sa = assessments[a]
-        ? (() => {
-            const c = getCluster(a);
-            if (!c) return 0;
-            // re-compute on the fly via stored answers
-            return 0;
-          })()
-        : 0;
-      void sa;
-      const ca = getCluster(a);
-      const cb = getCluster(b);
-      // simple fallback: H>M>L; with assessments tied-on potential
-      return (potRank[cb?.potential ?? "L"] ?? 0) - (potRank[ca?.potential ?? "L"] ?? 0);
-    });
+    const scoreFor = (id: string): number => {
+      const a = assessments[id];
+      const c = getCluster(id);
+      if (!a || !c) return 0;
+      return computeClusterScores(c, 0, a).aggregate;
+    };
+    return [...shortlisted].sort((a, b) => scoreFor(b) - scoreFor(a));
   }, [shortlisted, assessments]);
 
   const focusClusters = useMemo(
