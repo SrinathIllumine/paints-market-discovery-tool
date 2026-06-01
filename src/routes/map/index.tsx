@@ -10,16 +10,16 @@ import { ArrowRight } from "lucide-react";
 export const Route = createFileRoute("/map/")({
   head: () => ({
     meta: [
-      { title: "Market Map · Stage 1" },
-      { name: "description", content: "Browse clusters relevant to Panvel and open each one for details." },
+      { title: "Cluster Potential" },
+      { name: "description", content: "Browse clusters relevant to Panvel and map their potential." },
     ],
   }),
-  component: MarketMapScreen,
+  component: ClusterPotentialScreen,
 });
 
-function MarketMapScreen() {
+function ClusterPotentialScreen() {
   const navigate = useNavigate();
-  const stakeholders = useAppStore((s) => s.stakeholders);
+  const assessments = useAppStore((s) => s.assessments);
   const shortlistedIds = useAppStore((s) => s.plan.targetClusterIds);
 
   return (
@@ -27,9 +27,9 @@ function MarketMapScreen() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="Stage 1 of 3 · Market Map"
+          eyebrow="Stage 1 of 3 · Cluster Potential"
           title="Clusters in Panvel"
-          subtitle="Tap a bubble to open the cluster card."
+          subtitle="Tap a bubble to open the cluster card and map its potential."
         />
       }
     >
@@ -39,26 +39,19 @@ function MarketMapScreen() {
             to="/market-potential"
             className="mb-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-critical text-base font-semibold text-critical-foreground shadow-lg shadow-critical/20"
           >
-            View my Market Map ({shortlistedIds.length})
+            View my Cluster Map ({shortlistedIds.length})
             <ArrowRight className="h-4 w-4" />
           </Link>
         )}
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
           {CLUSTERS.map((c) => {
-            const stkCount = stakeholders[c.id]?.length ?? 0;
-            const shortlisted = shortlistedIds.includes(c.id);
+            const scored = Boolean(assessments[c.id]);
             return (
               <BubbleCircle
                 key={c.id}
                 cluster={c}
                 onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
-                badge={
-                  shortlisted
-                    ? "Shortlisted"
-                    : stkCount > 0
-                      ? `${stkCount} contact${stkCount === 1 ? "" : "s"}`
-                      : undefined
-                }
+                badge={scored ? "Mapped" : undefined}
               />
             );
           })}
