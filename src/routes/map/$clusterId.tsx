@@ -136,7 +136,7 @@ function ClusterDetailScreen() {
     competitiveAnswers,
     completedAt: Date.now(),
   };
-  const scores = computeClusterScores(cluster, prospects.length, provisionalAssessment);
+  void computeClusterScores(cluster, prospects.length, provisionalAssessment);
 
   const canSave = accessRank !== null;
 
