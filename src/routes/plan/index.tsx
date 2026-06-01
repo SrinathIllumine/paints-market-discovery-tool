@@ -4,6 +4,7 @@ import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { getCluster, POTENTIAL_LABEL } from "@/data/clusters";
+import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore, type RoadmapStep } from "@/store/appStore";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
