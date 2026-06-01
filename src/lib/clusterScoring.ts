@@ -292,8 +292,8 @@ export function computeClusterScores(
   assessment: ClusterAssessment,
 ): ClusterScores {
   const profile = getRevenueProfile(cluster.id);
-  const totalRevenue = profile.avgRevenuePerProspect * prospectCount;
-  const revenue = scoreRevenue(totalRevenue);
+  void prospectCount;
+  const revenue = scoreRevenue(profile.avgRevenuePerProspect);
   const access = scoreAccess(assessment.accessRank);
   const compYes = assessment.competitiveAnswers.filter((a) => a === "Y").length;
   const competitive = scoreCompetitive(compYes, assessment.competitiveAnswers.length);
