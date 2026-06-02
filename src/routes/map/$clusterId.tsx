@@ -298,7 +298,7 @@ function ClusterDetailScreen() {
           <AccordionItem value="revenue" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="flex w-full items-center justify-between gap-3 pr-2">
-                <span className="font-display text-xl">1)	Is the revenue potential high in the cluster?</span>
+                <span className="font-display text-xl">Cluster Revenue Potential</span>
                 <HMLBadge hml={revenueHML} />
               </span>
             </AccordionTrigger>
@@ -332,7 +332,7 @@ function ClusterDetailScreen() {
           <AccordionItem value="access" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="flex w-full items-center justify-between gap-3 pr-2">
-                <span className="font-display text-xl">2)	Do you have access to this cluster?</span>
+                <span className="font-display text-xl">Cluster Access</span>
                 <HMLBadge hml={accessHML} />
               </span>
             </AccordionTrigger>
@@ -374,7 +374,7 @@ function ClusterDetailScreen() {
           <AccordionItem value="competitive" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="flex w-full items-center justify-between gap-3 pr-2">
-                <span className="font-display text-xl">3) Is the competitive strength stopping us from entering the cluster?</span>
+                <span className="font-display text-xl">Competitive Strength</span>
                 <HMLBadge hml={competitiveHML} />
               </span>
             </AccordionTrigger>
@@ -421,7 +421,7 @@ function ClusterDetailScreen() {
           <AccordionItem value="ease" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="flex w-full items-center justify-between gap-3 pr-2">
-                <span className="font-display text-xl">4) Is the average cycle time supporting the ease of sale?</span>
+                <span className="font-display text-xl">Ease of Sale</span>
                 <HMLBadge hml={easeHML} />
               </span>
             </AccordionTrigger>
