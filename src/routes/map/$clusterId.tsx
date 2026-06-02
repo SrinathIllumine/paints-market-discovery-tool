@@ -159,18 +159,23 @@ function ClusterDetailScreen() {
   }, []);
   const cycleBenchmarkMonths = Math.round((cycleBenchmarkDays / 30) * 10) / 10;
 
-  // Static HML for revenue & ease (data-driven, not user-rated)
-  const revenueHML: HML = scoreToHML(scoreRevenue(profile.avgRevenuePerProspect));
-  const easeHML: HML = scoreToHML(scoreEaseOfSale(clusterId));
-  const accessHML: HML | null = accessRank ? (accessRank === "A" ? "H" : accessRank === "B" ? "M" : "L") : null;
-  const competitiveScore = scoreCompetitiveBrands(brandPresence);
-  const competitiveHML: HML | null = competitiveScore > 0 ? scoreToHML(competitiveScore) : null;
+  // Backend intelligence (Google Maps + internet sources) — drives static HML
+  const intel = useMemo(
+    () => getClusterIntel(clusterId, prospects.length || profile.avgRevenuePerProspect ? prospects.length : 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [clusterId, prospects.length],
+  );
+  const revenueHML: HML = intel.revenueHML;
+  const easeHML: HML = intel.easeHML;
+  const competitiveHML: HML = intel.competitiveHML;
+  // Access updates from DG input (Yes/No). Default to intel-backed High.
+  const hasConnects: "Y" | "N" | null =
+    accessRank === "A" ? "Y" : accessRank === "C" ? "N" : null;
+  const accessHML: HML = hasConnects === "N" ? "M" : "H";
 
-  // Difficulty narrative for ease of sale
-  const difficultyLabel: string =
-    easeHML === "H" ? "Easy — shorter cycles than most clusters" :
-    easeHML === "M" ? "Moderate — comparable to typical clusters" :
-    "Hard — longer cycle with more approvals than average";
+  // Effective totals for revenue narrative — prefer backend-observed count if available
+  const observedCount = intel.totalProspectsObserved || prospectCount;
+  const observedTotalRevenue = profile.avgRevenuePerProspect * observedCount;
 
   const provisionalAssessment: ClusterAssessment = {
     accessAnswers: existingAssessment?.accessAnswers ?? [],
