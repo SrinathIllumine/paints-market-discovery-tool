@@ -25,6 +25,7 @@ export type ContactEntry = {
   name: string;
   phone?: string;
   area?: string;
+  brandPreference?: string;
 };
 
 // Kept as alias for back-compat.
