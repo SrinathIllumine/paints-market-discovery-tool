@@ -541,33 +541,24 @@ function StrategyQuestions({
   // D2C
   const channels = answers.d2cChannels ?? [];
   return (
-    <div className="space-y-2">
-      <YesNo
-        question="Do you want to directly reach end customers?"
-        value={answers.wantsDirectReach}
-        onChange={(v) => onChange({ wantsDirectReach: v })}
-      />
-      {answers.wantsDirectReach === "Y" && (
-        <div className="rounded-md border border-border bg-card p-2">
-          <p className="mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">Pick your choice of direct channels strategy</p>
-          <div className="space-y-1">
-            {D2C_CHANNELS.map((ch) => {
-              const on = channels.includes(ch);
-              return (
-                <label key={ch} className="flex cursor-pointer items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={on}
-                    onChange={() => onChange({ d2cChannels: on ? channels.filter((x) => x !== ch) : [...channels, ch] })}
-                    className="h-3.5 w-3.5 accent-critical"
-                  />
-                  {ch}
-                </label>
-              );
-            })}
-          </div>
-        </div>
-      )}
+    <div className="rounded-md border border-border bg-card p-2">
+      <p className="mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">Pick your choice of direct channels strategy</p>
+      <div className="space-y-1">
+        {D2C_CHANNELS.map((ch) => {
+          const on = channels.includes(ch);
+          return (
+            <label key={ch} className="flex cursor-pointer items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={on}
+                onChange={() => onChange({ d2cChannels: on ? channels.filter((x) => x !== ch) : [...channels, ch] })}
+                className="h-3.5 w-3.5 accent-critical"
+              />
+              {ch}
+            </label>
+          );
+        })}
+      </div>
     </div>
   );
 }
