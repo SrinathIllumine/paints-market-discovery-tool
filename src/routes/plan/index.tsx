@@ -552,7 +552,7 @@ function StrategyQuestions({
       />
       {answers.wantsDirectReach === "Y" && (
         <div className="rounded-md border border-border bg-card p-2">
-          <p className="mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">Pick direct channels</p>
+          <p className="mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">Pick your choice of direct channels strategy</p>
           <div className="space-y-1">
             {D2C_CHANNELS.map((ch) => {
               const on = channels.includes(ch);
