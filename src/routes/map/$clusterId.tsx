@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
@@ -12,14 +12,14 @@ import {
 } from "@/components/ui/accordion";
 import { GoogleMap } from "@/components/maps/GoogleMap";
 import { AddProspectSheet } from "@/components/maps/AddProspectSheet";
-import { CLUSTERS, getCluster, prospectSingular, prospectPlural } from "@/data/clusters";
+import { CLUSTERS, getCluster, prospectPlural } from "@/data/clusters";
 import { PANVEL_CENTER } from "@/data/clusters";
 import { PANVEL_BOUNDARY } from "@/data/panvelBoundary";
 import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, MapPin, BookmarkCheck, Pencil } from "lucide-react";
+import { Plus, Loader2, MapPin, BookmarkCheck } from "lucide-react";
 import { toast } from "sonner";
 import {
   computeClusterScores,
@@ -27,7 +27,9 @@ import {
   getRevenueProfile,
   formatRupees,
   scoreToHML,
-  cycleTimeToEaseHML,
+  scoreRevenue,
+  scoreEaseOfSale,
+  scoreCompetitiveBrands,
   COMPETITIVE_BRANDS,
   HML_LABEL,
   type AccessRank,
