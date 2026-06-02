@@ -30,6 +30,7 @@ import {
   scoreRevenue,
   scoreEaseOfSale,
   scoreCompetitiveBrands,
+  getClusterIntel,
   COMPETITIVE_BRANDS,
   HML_LABEL,
   type AccessRank,
