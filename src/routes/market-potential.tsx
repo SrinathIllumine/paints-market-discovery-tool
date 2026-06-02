@@ -95,7 +95,7 @@ function ClusterMapPage() {
                       </p>
                       <p className="mt-0.5 font-display text-lg leading-tight">{r.name}</p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-critical/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-critical">
+                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider ${scorePillClass(r.scores.aggregate)}`}>
                       {r.scores.aggregate} / 10
                     </span>
                   </div>
@@ -115,10 +115,22 @@ function ClusterMapPage() {
   );
 }
 
+function scoreColorClass(value: number): string {
+  if (value > 7) return "border-green-300 bg-green-50 text-green-800";
+  if (value >= 5) return "border-orange-300 bg-orange-50 text-orange-800";
+  return "border-red-300 bg-red-50 text-red-800";
+}
+
+function scorePillClass(value: number): string {
+  if (value > 7) return "bg-green-100 text-green-800";
+  if (value >= 5) return "bg-orange-100 text-orange-800";
+  return "bg-red-100 text-red-800";
+}
+
 function ScoreTile({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-border bg-muted/30 p-2 text-center">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+    <div className={`rounded-xl border p-2 text-center ${scoreColorClass(value)}`}>
+      <p className="text-[10px] uppercase tracking-wider opacity-80">{label}</p>
       <p className="mt-0.5 font-display text-base leading-tight">{value}/10</p>
     </div>
   );

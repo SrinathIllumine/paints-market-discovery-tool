@@ -7,16 +7,25 @@ import { getCluster } from "@/data/clusters";
 import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore, type RoadmapStep } from "@/store/appStore";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { Check, ChevronDown, FileDown, Map, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronDown, ExternalLink, FileDown, Map, Plus, Trash2 } from "lucide-react";
 import { generateMonthlyEngagementPlanPdf } from "@/lib/monthlyPlanReport";
 import {
   CONNECT_STRATEGY_OPTIONS,
   CONNECT_STRATEGY_LABEL,
   D2C_CHANNELS,
   generateActionPlan,
+  getLocalCampaignSuggestions,
+  type ActionLink,
   type ConnectStrategy,
-  type ContractorContact,
+  type ContactEntry,
   type StrategyAnswers,
 } from "@/lib/strategyContent";
 import { getTopics } from "@/data/eventTopics";
@@ -51,7 +60,6 @@ function PlanScreen() {
 
   const [openStep, setOpenStep] = useState<RoadmapStep>("focus");
 
-  // Sort shortlisted clusters by aggregate cluster potential score (desc).
   const sortedShortlisted = useMemo(() => {
     const scoreFor = (id: string): number => {
       const a = assessments[id];
@@ -162,7 +170,7 @@ function PlanScreen() {
                           />
                         )}
                         {step.id === "action" && (
-                          <ActionStep
+                          <ActionStepView
                             focusClusters={focusClusters}
                             strategyByCluster={strategyByCluster}
                             answersByCluster={answersByCluster}
@@ -329,6 +337,80 @@ function ConnectStep({
   );
 }
 
+function ContactList({
+  contacts,
+  onChange,
+  addLabel,
+}: {
+  contacts: ContactEntry[];
+  onChange: (next: ContactEntry[]) => void;
+  addLabel: string;
+}) {
+  return (
+    <div className="space-y-2">
+      {contacts.map((ct, i) => (
+        <div key={ct.id} className="flex items-start gap-2 rounded-md border border-border bg-card p-2">
+          <div className="grid flex-1 gap-1.5 sm:grid-cols-3">
+            <input
+              placeholder="Name"
+              value={ct.name}
+              onChange={(e) => {
+                const next = [...contacts];
+                next[i] = { ...ct, name: e.target.value };
+                onChange(next);
+              }}
+              className="rounded border border-border bg-background px-2 py-1 text-xs"
+            />
+            <input
+              placeholder="Phone"
+              value={ct.phone ?? ""}
+              onChange={(e) => {
+                const next = [...contacts];
+                next[i] = { ...ct, phone: e.target.value };
+                onChange(next);
+              }}
+              className="rounded border border-border bg-background px-2 py-1 text-xs"
+            />
+            <input
+              placeholder="Area"
+              value={ct.area ?? ""}
+              onChange={(e) => {
+                const next = [...contacts];
+                next[i] = { ...ct, area: e.target.value };
+                onChange(next);
+              }}
+              className="rounded border border-border bg-background px-2 py-1 text-xs"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange(contacts.filter((_, j) => j !== i))}
+            className="rounded p-1 text-muted-foreground hover:bg-muted"
+            aria-label="Remove contact"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="gap-1"
+        onClick={() => {
+          const newCt: ContactEntry = {
+            id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            name: "",
+          };
+          onChange([...contacts, newCt]);
+        }}
+      >
+        <Plus className="h-3.5 w-3.5" /> {addLabel}
+      </Button>
+    </div>
+  );
+}
+
 function StrategyQuestions({
   clusterId,
   strategy,
@@ -341,16 +423,41 @@ function StrategyQuestions({
   onChange: (patch: Partial<StrategyAnswers>) => void;
 }) {
   if (strategy === "BRAND") {
+    const suggestions = getLocalCampaignSuggestions(clusterId);
+    const selected = answers.selectedCampaigns ?? [];
     return (
       <div className="space-y-2">
-        <YesNo question="Do you want to run local campaigns?" value={answers.runLocalCampaigns} onChange={(v) => onChange({ runLocalCampaigns: v })} />
+        <YesNo
+          question="Do you want to run local campaigns?"
+          value={answers.runLocalCampaigns}
+          onChange={(v) => onChange({ runLocalCampaigns: v })}
+        />
         {answers.runLocalCampaigns === "Y" && (
-          <textarea
-            value={answers.campaignIdea ?? ""}
-            onChange={(e) => onChange({ campaignIdea: e.target.value })}
-            placeholder="What's the campaign idea or hook?"
-            className="min-h-[60px] w-full rounded-md border border-border bg-card p-2 text-sm"
-          />
+          <div className="rounded-md border border-border bg-card p-2">
+            <p className="mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
+              Suggested local campaigns
+            </p>
+            <div className="space-y-1">
+              {suggestions.map((s) => {
+                const on = selected.includes(s);
+                return (
+                  <label key={s} className="flex cursor-pointer items-start gap-2 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={() =>
+                        onChange({
+                          selectedCampaigns: on ? selected.filter((x) => x !== s) : [...selected, s],
+                        })
+                      }
+                      className="mt-0.5 h-3.5 w-3.5 accent-critical"
+                    />
+                    <span className="leading-snug">{s}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
         )}
       </div>
     );
@@ -360,89 +467,55 @@ function StrategyQuestions({
     const contractors = answers.contractors ?? [];
     return (
       <div className="space-y-2">
-        <YesNo question="Do you already know some of the contractors?" value={answers.knowsContractors} onChange={(v) => onChange({ knowsContractors: v })} />
+        <YesNo
+          question="Do you already know some of the contractors?"
+          value={answers.knowsContractors}
+          onChange={(v) => onChange({ knowsContractors: v })}
+        />
         {answers.knowsContractors === "Y" && (
-          <div className="space-y-2">
-            {contractors.map((ct, i) => (
-              <div key={ct.id} className="flex items-start gap-2 rounded-md border border-border bg-card p-2">
-                <div className="grid flex-1 gap-1.5 sm:grid-cols-3">
-                  <input
-                    placeholder="Name"
-                    value={ct.name}
-                    onChange={(e) => {
-                      const next = [...contractors];
-                      next[i] = { ...ct, name: e.target.value };
-                      onChange({ contractors: next });
-                    }}
-                    className="rounded border border-border bg-background px-2 py-1 text-xs"
-                  />
-                  <input
-                    placeholder="Phone"
-                    value={ct.phone ?? ""}
-                    onChange={(e) => {
-                      const next = [...contractors];
-                      next[i] = { ...ct, phone: e.target.value };
-                      onChange({ contractors: next });
-                    }}
-                    className="rounded border border-border bg-background px-2 py-1 text-xs"
-                  />
-                  <input
-                    placeholder="Area"
-                    value={ct.area ?? ""}
-                    onChange={(e) => {
-                      const next = [...contractors];
-                      next[i] = { ...ct, area: e.target.value };
-                      onChange({ contractors: next });
-                    }}
-                    className="rounded border border-border bg-background px-2 py-1 text-xs"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onChange({ contractors: contractors.filter((_, j) => j !== i) })}
-                  className="rounded p-1 text-muted-foreground hover:bg-muted"
-                  aria-label="Remove contractor"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="gap-1"
-              onClick={() => {
-                const newCt: ContractorContact = {
-                  id: `ct-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-                  name: "",
-                };
-                onChange({ contractors: [...contractors, newCt] });
-              }}
-            >
-              <Plus className="h-3.5 w-3.5" /> Add contractor
-            </Button>
-          </div>
+          <ContactList
+            contacts={contractors}
+            onChange={(next) => onChange({ contractors: next })}
+            addLabel="Add contractor"
+          />
         )}
       </div>
     );
   }
 
   if (strategy === "OUTREACH") {
+    const community = answers.communityContacts ?? [];
     const awareTopics = getTopics(clusterId, "Awareness");
     const meetTopics = getTopics(clusterId, "Contractor Meet");
     const allTopics = [...awareTopics, ...meetTopics];
-    const selected = answers.selectedEventTopics ?? [];
+    const selectedTopics = answers.selectedEventTopics ?? [];
     return (
       <div className="space-y-2">
-        <YesNo question="Do you have a touchpoint in the community?" value={answers.hasCommunityTouchpoint} onChange={(v) => onChange({ hasCommunityTouchpoint: v })} />
-        <YesNo question="Have you thought of contribution events?" value={answers.consideredContributionEvents} onChange={(v) => onChange({ consideredContributionEvents: v })} />
+        <YesNo
+          question="Do you have a touchpoint in the community?"
+          value={answers.hasCommunityTouchpoint}
+          onChange={(v) => onChange({ hasCommunityTouchpoint: v })}
+        />
+        {answers.hasCommunityTouchpoint === "Y" && (
+          <ContactList
+            contacts={community}
+            onChange={(next) => onChange({ communityContacts: next })}
+            addLabel="Add community contact"
+          />
+        )}
+        <YesNo
+          question="Have you thought of contribution events?"
+          value={answers.consideredContributionEvents}
+          onChange={(v) => onChange({ consideredContributionEvents: v })}
+        />
         {answers.consideredContributionEvents === "Y" && allTopics.length > 0 && (
           <div className="rounded-md border border-border bg-card p-2">
-            <p className="mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">Suggested contribution events</p>
+            <p className="mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
+              Suggested contribution events
+            </p>
             <div className="space-y-1">
               {allTopics.map((t) => {
-                const isSel = selected.includes(t);
+                const isSel = selectedTopics.includes(t);
                 return (
                   <label key={t} className="flex cursor-pointer items-start gap-2 text-xs">
                     <input
@@ -450,7 +523,9 @@ function StrategyQuestions({
                       checked={isSel}
                       onChange={() => {
                         onChange({
-                          selectedEventTopics: isSel ? selected.filter((x) => x !== t) : [...selected, t],
+                          selectedEventTopics: isSel
+                            ? selectedTopics.filter((x) => x !== t)
+                            : [...selectedTopics, t],
                         });
                       }}
                       className="mt-0.5 h-3.5 w-3.5 accent-critical"
@@ -470,7 +545,11 @@ function StrategyQuestions({
   const channels = answers.d2cChannels ?? [];
   return (
     <div className="space-y-2">
-      <YesNo question="Do you want to directly reach end customers?" value={answers.wantsDirectReach} onChange={(v) => onChange({ wantsDirectReach: v })} />
+      <YesNo
+        question="Do you want to directly reach end customers?"
+        value={answers.wantsDirectReach}
+        onChange={(v) => onChange({ wantsDirectReach: v })}
+      />
       {answers.wantsDirectReach === "Y" && (
         <div className="rounded-md border border-border bg-card p-2">
           <p className="mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">Pick direct channels</p>
@@ -496,7 +575,15 @@ function StrategyQuestions({
   );
 }
 
-function YesNo({ question, value, onChange }: { question: string; value: "Y" | "N" | undefined; onChange: (v: "Y" | "N") => void }) {
+function YesNo({
+  question,
+  value,
+  onChange,
+}: {
+  question: string;
+  value: "Y" | "N" | undefined;
+  onChange: (v: "Y" | "N") => void;
+}) {
   return (
     <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 text-sm">
       <p className="leading-snug">{question}</p>
@@ -521,7 +608,7 @@ function YesNo({ question, value, onChange }: { question: string; value: "Y" | "
   );
 }
 
-function ActionStep({
+function ActionStepView({
   focusClusters,
   strategyByCluster,
   answersByCluster,
@@ -530,38 +617,88 @@ function ActionStep({
   strategyByCluster: Record<string, ConnectStrategy>;
   answersByCluster: Record<string, StrategyAnswers>;
 }) {
+  const [openLink, setOpenLink] = useState<ActionLink | null>(null);
+
   if (focusClusters.length === 0) {
     return <p className="text-sm text-muted-foreground">Pick focus clusters in step 1 first.</p>;
   }
   return (
-    <div className="space-y-3">
-      {focusClusters.map((c) => {
-        const strategy = strategyByCluster[c.id];
-        if (!strategy) {
+    <>
+      <div className="space-y-3">
+        {focusClusters.map((c) => {
+          const strategy = strategyByCluster[c.id];
+          if (!strategy) {
+            return (
+              <div key={c.id} className="rounded-2xl border border-dashed border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+                <p className="font-bold text-foreground">{c.name}</p>
+                <p className="mt-1 text-xs">Pick a connect strategy in step 2 first.</p>
+              </div>
+            );
+          }
+          const steps = generateActionPlan(c.id, strategy, answersByCluster[c.id] ?? {});
           return (
-            <div key={c.id} className="rounded-2xl border border-dashed border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-              <p className="font-bold text-foreground">{c.name}</p>
-              <p className="mt-1 text-xs">Pick a connect strategy in step 2 first.</p>
+            <div key={c.id} className="rounded-2xl border border-border bg-card p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-sm font-bold">{c.name}</p>
+                <span className="rounded-full bg-critical/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-critical">
+                  {CONNECT_STRATEGY_LABEL[strategy]}
+                </span>
+              </div>
+              <ol className="list-decimal space-y-2 pl-5 text-sm leading-snug">
+                {steps.map((s, i) => (
+                  <li key={i}>
+                    <span>{s.text}</span>
+                    {s.link && (
+                      <button
+                        type="button"
+                        onClick={() => setOpenLink(s.link!)}
+                        className="ml-1 inline-flex items-center gap-1 align-baseline text-critical underline underline-offset-2 hover:no-underline"
+                      >
+                        {s.link.label}
+                        <ExternalLink className="h-3 w-3" />
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ol>
             </div>
           );
-        }
-        const steps = generateActionPlan(c.id, strategy, answersByCluster[c.id] ?? {});
-        return (
-          <div key={c.id} className="rounded-2xl border border-border bg-card p-3">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-sm font-bold">{c.name}</p>
-              <span className="rounded-full bg-critical/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-critical">
-                {CONNECT_STRATEGY_LABEL[strategy]}
-              </span>
-            </div>
-            <ol className="list-decimal space-y-1.5 pl-5 text-sm leading-snug">
-              {steps.map((s, i) => (
-                <li key={i}>{s}</li>
+        })}
+      </div>
+
+      <Dialog open={Boolean(openLink)} onOpenChange={(o) => !o && setOpenLink(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{openLink?.label}</DialogTitle>
+            {openLink?.kind === "deck" && (
+              <DialogDescription>
+                Opening <span className="font-mono text-foreground">{openLink.deckTitle}</span> (placeholder deck).
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          {openLink?.kind === "popup-list" && (
+            <ul className="space-y-1.5 text-sm">
+              {(openLink.items ?? []).map((it, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="text-critical">•</span>
+                  <span>{it}</span>
+                </li>
               ))}
-            </ol>
-          </div>
-        );
-      })}
-    </div>
+            </ul>
+          )}
+          {openLink?.kind === "popup-text" && (
+            <p className="whitespace-pre-line text-sm leading-relaxed">{openLink.body}</p>
+          )}
+          {openLink?.kind === "deck" && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">{openLink.body}</p>
+              <div className="rounded-lg border border-dashed border-border bg-muted/40 p-4 text-center text-xs text-muted-foreground">
+                Deck preview unavailable — this is a placeholder reference.
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
