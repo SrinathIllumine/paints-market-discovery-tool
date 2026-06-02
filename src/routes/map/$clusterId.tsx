@@ -19,7 +19,7 @@ import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, MapPin, BookmarkCheck } from "lucide-react";
+import { Plus, Loader2, MapPin, BookmarkCheck, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import {
   computeClusterScores,
@@ -27,6 +27,7 @@ import {
   getRevenueProfile,
   formatRupees,
   scoreToHML,
+  cycleTimeToEaseHML,
   COMPETITIVE_BRANDS,
   HML_LABEL,
   type AccessRank,
@@ -161,6 +162,8 @@ function ClusterDetailScreen() {
 
   const canSave = accessRank !== null;
 
+  const hideSummaryOnEdit = () => setShowSummary(false);
+
   const handleSave = () => {
     if (!canSave) {
       toast.error("Pick an access ranking (A / B / C) to estimate");
@@ -268,20 +271,29 @@ function ClusterDetailScreen() {
           {/* Revenue */}
           <AccordionItem value="revenue" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <span className="font-display text-xl">Cluster Revenue Potential</span>
+              <span className="flex w-full items-center justify-between gap-3 pr-2">
+                <span className="font-display text-xl">Cluster Revenue Potential</span>
+                <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="Editable" />
+              </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
               <div className="grid gap-3 sm:grid-cols-2">
                 <EditableTile
                   label={`${pluralCap} in cluster`}
                   value={prospectCount}
-                  onChange={setProspectCount}
+                  onChange={(n) => {
+                    hideSummaryOnEdit();
+                    setProspectCount(n);
+                  }}
                   type="int"
                 />
                 <EditableTile
                   label={`Avg. revenue / ${singularCap.toLowerCase()}`}
                   value={avgRevenue}
-                  onChange={setAvgRevenue}
+                  onChange={(n) => {
+                    hideSummaryOnEdit();
+                    setAvgRevenue(n);
+                  }}
                   type="rupees"
                   formatted={formatRupees(avgRevenue)}
                 />
@@ -299,7 +311,10 @@ function ClusterDetailScreen() {
               <HMLPicker
                 label="What do you think about this cluster's revenue potential?"
                 value={revenueRating}
-                onChange={setRevenueRating}
+                onChange={(v) => {
+                  hideSummaryOnEdit();
+                  setRevenueRating(v);
+                }}
               />
             </AccordionContent>
           </AccordionItem>
