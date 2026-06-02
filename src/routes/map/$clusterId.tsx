@@ -365,13 +365,13 @@ function ClusterDetailScreen() {
                             setBrandPresence((prev) => ({ ...prev, [brand]: lvl }))
                           }
                           className={cn(
-                            "h-7 w-9 rounded-md border text-xs font-semibold",
+                            "h-7 w-auto min-w-[36px] px-1.5 rounded-md border text-xs font-semibold",
                             brandPresence[brand] === lvl
                               ? "border-critical bg-critical text-critical-foreground"
                               : "border-border bg-card text-muted-foreground hover:bg-muted/40",
                           )}
                         >
-                          {lvl}
+                          {HML_LABEL[lvl]}
                         </button>
                       ))}
                     </div>
