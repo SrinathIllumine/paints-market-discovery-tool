@@ -307,31 +307,17 @@ function ClusterDetailScreen() {
             <AccordionContent className="px-4 pb-4">
               {(() => {
                 const singular = pluralCap.toLowerCase().replace(/s$/, "");
-                const benchmarkTotal = revenueBenchmark * prospectCount;
-                const ratio = profile.avgRevenuePerProspect / revenueBenchmark;
-                const position =
-                  ratio >= 1.1 ? { word: "above", cls: "text-green-700" } :
-                  ratio <= 0.9 ? { word: "below", cls: "text-red-700" } :
-                  { word: "around", cls: "text-orange-700" };
-                const sizeWord =
-                  ratio >= 1.1 ? "relatively higher" :
-                  ratio <= 0.9 ? "relatively lower" :
-                  "in line with";
-                const overallWord = HML_LABEL[revenueHML].toLowerCase();
                 return (
                   <ul className="space-y-2 text-sm leading-relaxed">
                     <NarrativeBullet>
-                      Total cluster revenue potential is <b className="text-critical">{formatRupees(totalRevenue)}</b>. The benchmark {singular} potential is <b>{formatRupees(benchmarkTotal)}</b>. So, this cluster sits{" "}
-                      <b className={position.cls}>{position.word}</b> the benchmark.
+                      There are <b>{observedCount} {pluralCap.toLowerCase()}</b> present in this cluster.
                     </NarrativeBullet>
                     <NarrativeBullet>
-                      There are <b>{prospectCount} {pluralCap.toLowerCase()}</b> present in this cluster with an average usable area of <b>{profile.sqftBand}</b>. This is <b>{sizeWord}</b> for a {singular} compared to the benchmark.
+                      The national average revenue per {singular} is <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
                     </NarrativeBullet>
                     <NarrativeBullet>
-                      Each {singular} can typically deliver <b>{formatRupees(profile.avgRevenuePerProspect)}</b> in revenue.
-                    </NarrativeBullet>
-                    <NarrativeBullet>
-                      Therefore, the overall revenue potential for this cluster is <b className="uppercase">{overallWord}</b>.
+                      Total cluster revenue potential for {pluralCap.toLowerCase()} is{" "}
+                      <b className="text-critical">{formatRupees(observedTotalRevenue)}</b>.
                     </NarrativeBullet>
                   </ul>
                 );
@@ -348,34 +334,33 @@ function ClusterDetailScreen() {
               </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              <p className="text-sm font-semibold">Select your access level for this cluster</p>
-              <div className="mt-2 space-y-2">
-                {(
-                  [
-                    { key: "A", label: "A - I already have strong connects in this cluster" },
-                    { key: "B", label: "B - I have few connects in this cluster" },
-                    { key: "C", label: "C - I don't have any connects in this cluster" },
-                  ] as { key: AccessRank; label: string }[]
-                ).map((opt) => (
-                  <label
+              <ul className="mb-3 space-y-2 text-sm leading-relaxed">
+                <NarrativeBullet>
+                  JK has a strong contractor base of <b>{intel.contractorCount} contractors</b> specifically focussed on {pluralCap.toLowerCase()}.
+                </NarrativeBullet>
+              </ul>
+              <p className="text-sm font-semibold">Do you already have connects in this cluster?</p>
+              <div className="mt-2 flex gap-2">
+                {([
+                  { key: "Y", label: "Yes", rank: "A" as AccessRank },
+                  { key: "N", label: "No", rank: "C" as AccessRank },
+                ]).map((opt) => (
+                  <button
                     key={opt.key}
+                    type="button"
+                    onClick={() => {
+                      hideSummaryOnEdit();
+                      setAccessRank(opt.rank);
+                    }}
                     className={cn(
-                      "flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-sm",
-                      accessRank === opt.key ? "border-critical bg-critical/5" : "border-border bg-card",
+                      "flex-1 rounded-lg border px-3 py-2 text-sm font-medium",
+                      hasConnects === opt.key
+                        ? "border-critical bg-critical/10 text-critical"
+                        : "border-border bg-card text-foreground hover:bg-muted/40",
                     )}
                   >
-                    <input
-                      type="radio"
-                      name={`access-rank-${clusterId}`}
-                      checked={accessRank === opt.key}
-                      onChange={() => {
-                        hideSummaryOnEdit();
-                        setAccessRank(opt.key);
-                      }}
-                      className="h-4 w-4 accent-critical"
-                    />
-                    <span>{opt.label}</span>
-                  </label>
+                    {opt.label}
+                  </button>
                 ))}
               </div>
             </AccordionContent>
@@ -390,41 +375,17 @@ function ClusterDetailScreen() {
               </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              <p className="mb-2 text-sm text-muted-foreground">
-                Mark each brand's presence in this cluster:
-              </p>
-              <div className="space-y-2">
-                {COMPETITIVE_BRANDS.map((brand) => (
-                  <div
-                    key={brand}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2"
-                  >
-                    <span className="text-sm font-medium">{brand}</span>
-                    <div className="flex shrink-0 gap-1.5">
-                      {(["H", "M", "L"] as HML[]).map((lvl) => (
-                        <button
-                          key={lvl}
-                          type="button"
-                          onClick={() =>
-                            {
-                              hideSummaryOnEdit();
-                              setBrandPresence((prev) => ({ ...prev, [brand]: lvl }));
-                            }
-                          }
-                          className={cn(
-                            "h-7 w-auto min-w-[36px] px-1.5 rounded-md border text-xs font-semibold",
-                            brandPresence[brand] === lvl
-                              ? "border-critical bg-critical text-critical-foreground"
-                              : "border-border bg-card text-muted-foreground hover:bg-muted/40",
-                          )}
-                        >
-                          {HML_LABEL[lvl]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <ul className="space-y-2 text-sm leading-relaxed">
+                <NarrativeBullet>
+                  JK already has <b>{intel.jkPenetrationLabel} market penetration</b> in this cluster in Panvel.
+                </NarrativeBullet>
+                <NarrativeBullet>
+                  JK has presence in <b>{intel.jkPresenceCount} of the {intel.totalProspectsObserved} {pluralCap.toLowerCase()}</b>.
+                </NarrativeBullet>
+                <NarrativeBullet>
+                  <b>{intel.leadingCompetitor}</b> has the largest market share in the cluster.
+                </NarrativeBullet>
+              </ul>
             </AccordionContent>
           </AccordionItem>
 
@@ -442,20 +403,6 @@ function ClusterDetailScreen() {
                   Average sales cycle in this cluster is <b>{cycle.label}</b> (~{cycle.months} months).
                 </NarrativeBullet>
                 <NarrativeBullet>{cycle.explanation}</NarrativeBullet>
-                <NarrativeBullet>
-                  Benchmark: typical Panvel cluster closes in ~<b>{cycleBenchmarkMonths} months</b>. This cluster runs{" "}
-                  <b className={cn(
-                    cycle.days <= cycleBenchmarkDays * 0.9 ? "text-green-700"
-                    : cycle.days >= cycleBenchmarkDays * 1.1 ? "text-red-700"
-                    : "text-orange-700",
-                  )}>
-                    {cycle.days <= cycleBenchmarkDays * 0.9 ? "faster than" :
-                     cycle.days >= cycleBenchmarkDays * 1.1 ? "slower than" : "around"}
-                  </b>{" "}the benchmark.
-                </NarrativeBullet>
-                <NarrativeBullet>
-                  Difficulty: <b>{difficultyLabel}</b>.
-                </NarrativeBullet>
               </ul>
             </AccordionContent>
           </AccordionItem>
