@@ -436,39 +436,30 @@ function StrategyQuestions({
     const suggestions = getLocalCampaignSuggestions(clusterId);
     const selected = answers.selectedCampaigns ?? [];
     return (
-      <div className="space-y-2">
-        <YesNo
-          question="Do you want to run local campaigns?"
-          value={answers.runLocalCampaigns}
-          onChange={(v) => onChange({ runLocalCampaigns: v })}
-        />
-        {answers.runLocalCampaigns === "Y" && (
-          <div className="rounded-md border border-border bg-card p-2">
-            <p className="mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
-              Suggested local campaigns
-            </p>
-            <div className="space-y-1">
-              {suggestions.map((s) => {
-                const on = selected.includes(s);
-                return (
-                  <label key={s} className="flex cursor-pointer items-start gap-2 text-xs">
-                    <input
-                      type="checkbox"
-                      checked={on}
-                      onChange={() =>
-                        onChange({
-                          selectedCampaigns: on ? selected.filter((x) => x !== s) : [...selected, s],
-                        })
-                      }
-                      className="mt-0.5 h-3.5 w-3.5 accent-critical"
-                    />
-                    <span className="leading-snug">{s}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-        )}
+      <div className="rounded-md border border-border bg-card p-2">
+        <p className="mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
+          Pick your choice of local campaigns
+        </p>
+        <div className="space-y-1">
+          {suggestions.map((s) => {
+            const on = selected.includes(s);
+            return (
+              <label key={s} className="flex cursor-pointer items-start gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={on}
+                  onChange={() =>
+                    onChange({
+                      selectedCampaigns: on ? selected.filter((x) => x !== s) : [...selected, s],
+                    })
+                  }
+                  className="mt-0.5 h-3.5 w-3.5 accent-critical"
+                />
+                <span className="leading-snug">{s}</span>
+              </label>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -477,18 +468,14 @@ function StrategyQuestions({
     const contractors = answers.contractors ?? [];
     return (
       <div className="space-y-2">
-        <YesNo
-          question="Do you already know some of the contractors?"
-          value={answers.knowsContractors}
-          onChange={(v) => onChange({ knowsContractors: v })}
+        <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+          Add the contractors active in this cluster
+        </p>
+        <ContactList
+          contacts={contractors}
+          onChange={(next) => onChange({ contractors: next })}
+          addLabel="Add contractor"
         />
-        {answers.knowsContractors === "Y" && (
-          <ContactList
-            contacts={contractors}
-            onChange={(next) => onChange({ contractors: next })}
-            addLabel="Add contractor"
-          />
-        )}
       </div>
     );
   }
