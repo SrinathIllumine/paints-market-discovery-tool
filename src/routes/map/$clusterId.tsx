@@ -342,7 +342,7 @@ function ClusterDetailScreen() {
                 {(
                   [
                     { key: "A", label: "A - I already have strong connects in this cluster" },
-                    { key: "B", label: "B - I have moderate connects in this cluster" },
+                    { key: "B", label: "B - I have few connects in this cluster" },
                     { key: "C", label: "C - I don't have any connects in this cluster" },
                   ] as { key: AccessRank; label: string }[]
                 ).map((opt) => (
