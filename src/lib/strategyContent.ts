@@ -86,13 +86,14 @@ export function getLocalCampaignSuggestions(clusterId: string): string[] {
 
 /* ─────────────────────────── action plan with intelligent links */
 
-export type ActionLinkKind = "popup-list" | "popup-text" | "deck";
+export type ActionLinkKind = "popup-list" | "popup-text" | "popup-contacts" | "deck";
 
 export type ActionLink = {
   label: string;
   kind: ActionLinkKind;
-  // popup-list: array of bullets; popup-text: single body; deck: filename + summary
+  // popup-list: array of bullets; popup-text: single body; popup-contacts: contact entries; deck: filename + summary
   items?: string[];
+  contacts?: ContactEntry[];
   body?: string;
   deckTitle?: string;
 };
@@ -127,28 +128,19 @@ function pamphletDeck(clusterId: string): ActionLink {
   };
 }
 
-function contractorList(clusterId: string, names: string[]): ActionLink {
-  const plural = prospectPlural(clusterId).toLowerCase();
+function contractorContacts(contacts: ContactEntry[]): ActionLink {
   return {
-    label: "Click to see the list of contractors",
-    kind: "popup-list",
-    items: names.length > 0
-      ? names
-      : [
-          `Sample contractor 1 — active in ${plural}`,
-          `Sample contractor 2 — active in ${plural}`,
-          `Sample contractor 3 — active in ${plural}`,
-        ],
+    label: "Click to see contractor details",
+    kind: "popup-contacts",
+    contacts,
   };
 }
 
-function communityList(clusterId: string, contacts: ContactEntry[]): ActionLink {
+function communityContactsLink(contacts: ContactEntry[]): ActionLink {
   return {
     label: "Click to see community touchpoints",
-    kind: "popup-list",
-    items: contacts.length > 0
-      ? contacts.map((c) => `${c.name || "Contact"}${c.phone ? ` · ${c.phone}` : ""}${c.area ? ` · ${c.area}` : ""}`)
-      : [`Identify one community touchpoint in ${clusterId}`],
+    kind: "popup-contacts",
+    contacts,
   };
 }
 
