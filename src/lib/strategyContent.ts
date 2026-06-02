@@ -10,14 +10,14 @@ export const CONNECT_STRATEGY_LABEL: Record<ConnectStrategy, string> = {
   BRAND: "Brand-driven",
   CONTRACTOR: "Contractor-driven",
   OUTREACH: "Outreach-driven",
-  D2C: "D2C-driven",
+  D2C: "Direct Sales-driven",
 };
 
 export const CONNECT_STRATEGY_OPTIONS: { key: ConnectStrategy; label: string; description: string }[] = [
   { key: "BRAND",      label: "Brand-driven",      description: "Build awareness through local campaigns, hoardings and visibility plays." },
   { key: "CONTRACTOR", label: "Contractor-driven", description: "Activate the contractor network already operating in this cluster." },
   { key: "OUTREACH",   label: "Outreach-driven",   description: "Use community touchpoints and contribution events to build trust." },
-  { key: "D2C",        label: "D2C-driven",        description: "Reach end customers directly through retailer, walk-in and digital channels." },
+  { key: "D2C",        label: "Direct Sales-driven",        description: "Reach end customers directly through retailer, walk-in and digital channels." },
 ];
 
 export type ContactEntry = {
