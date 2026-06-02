@@ -1,12 +1,11 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { getCluster, prospectPlural, prospectSingular } from "@/data/clusters";
-import { getRevenueProfile, formatRupees, getCycle, computeClusterScores, HML_LABEL } from "@/lib/clusterScoring";
-import { useAppStore } from "@/store/appStore";
+import { getCluster } from "@/data/clusters";
 import {
   CONNECT_STRATEGY_LABEL,
   generateActionPlan,
   getLocalCampaignSuggestions,
+  type ActionLink,
   type ConnectStrategy,
   type StrategyAnswers,
 } from "@/lib/strategyContent";
@@ -16,6 +15,32 @@ type Args = {
   strategyByCluster: Record<string, ConnectStrategy>;
   answersByCluster: Record<string, StrategyAnswers>;
 };
+
+function normalisePdfText(text: string): string {
+  return text
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2013\u2014]/g, "-")
+    .replace(/→/g, "-")
+    .replace(/•/g, "-")
+    .replace(/·/g, "-")
+    .replace(/…/g, "...");
+}
+
+function slugify(text: string): string {
+  return normalisePdfText(text)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "resource";
+}
+
+function actionLinkReference(link: ActionLink): string {
+  if (link.kind === "deck") {
+    const filename = link.deckTitle ?? "JK-placeholder-deck.pptx";
+    return `${link.label}: https://example.com/decks/${filename}`;
+  }
+  return `${link.label}: https://example.com/resources/${slugify(link.label)}`;
+}
 
 export function generateMonthlyEngagementPlanPdf({
   focusClusterIds,
@@ -33,7 +58,7 @@ export function generateMonthlyEngagementPlanPdf({
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("Monthly Cluster Engagement Plan — June 2026", margin, 35);
+  doc.text("Monthly Cluster Engagement Plan - June 2026", margin, 35);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
@@ -77,17 +102,15 @@ export function generateMonthlyEngagementPlanPdf({
 
   const wrapped = (text: string, indent = 0, bold = false) => {
     doc.setFont("helvetica", bold ? "bold" : "normal");
-    const lines = doc.splitTextToSize(text, pageWidth - margin * 2 - indent);
+    const safeText = normalisePdfText(text);
+    const lines = doc.splitTextToSize(safeText, pageWidth - margin * 2 - indent);
     ensureSpace(lines.length * 12 + 4);
     doc.text(lines, margin + indent, y);
     y += lines.length * 12;
     doc.setFont("helvetica", "normal");
   };
 
-  const assessments = useAppStore.getState().assessments;
-  const clusterStates = useAppStore.getState().clusters;
-
-  /* ===== Focus clusters with potential snapshot ===== */
+  /* ===== Focus clusters selected for engagement ===== */
   heading("Focus on these clusters");
   if (focusClusterIds.length === 0) {
     doc.setTextColor(120);
@@ -97,13 +120,11 @@ export function generateMonthlyEngagementPlanPdf({
   } else {
     autoTable(doc, {
       startY: y,
-      head: [["Cluster", "Connect strategy", "Potential / 10"]],
+      head: [["Cluster", "Connect strategy"]],
       body: focusClusterIds.map((id) => {
         const c = getCluster(id);
         const s = strategyByCluster[id];
-        const a = assessments[id];
-        const agg = c && a ? computeClusterScores(c, 0, a).aggregate : "—";
-        return [c?.name ?? id, s ? CONNECT_STRATEGY_LABEL[s] : "—", String(agg)];
+        return [c?.name ?? id, s ? CONNECT_STRATEGY_LABEL[s] : "-"];
       }),
       headStyles: { fillColor: [15, 23, 42] },
       margin: { left: margin, right: margin },
@@ -120,50 +141,12 @@ export function generateMonthlyEngagementPlanPdf({
     if (!cluster) continue;
     const strategy = strategyByCluster[clusterId];
     const answers = answersByCluster[clusterId] ?? {};
-    const assessment = assessments[clusterId];
-    const profile = getRevenueProfile(clusterId);
-    const cycle = getCycle(clusterId);
-    const cstate = clusterStates[clusterId];
-
-    const prospectCount = assessment?.prospectCountOverride ?? cstate?.prospects.length ?? cluster.prospectCountEstimate;
-    const avgRev = assessment?.avgRevenueOverride ?? profile.avgRevenuePerProspect;
-    const totalRev = prospectCount * avgRev;
-    const months = assessment?.cycleMonths ?? cycle.months;
-    const plural = prospectPlural(clusterId).toLowerCase();
-    const singular = prospectSingular(clusterId).toLowerCase();
 
     ensureSpace(80);
     y += 6;
     doc.setFontSize(12);
     wrapped(cluster.name, 0, true);
     doc.setFontSize(10);
-
-    /* Cluster potential snapshot */
-    wrapped("Cluster potential snapshot:", 0, true);
-    const facts: string[] = [
-      `${prospectCount} ${plural} in cluster`,
-      `Avg. revenue / ${singular}: ${formatRupees(avgRev)}`,
-      `Total cluster revenue potential: ${formatRupees(totalRev)}`,
-      `Avg. cycle time: ${months} months`,
-    ];
-    if (assessment?.accessRank) facts.push(`Access ranking: ${assessment.accessRank}`);
-    if (assessment?.revenueRating) facts.push(`Revenue potential rating: ${HML_LABEL[assessment.revenueRating]}`);
-    if (assessment?.cycleEase) facts.push(`Cycle-time rating: ${HML_LABEL[assessment.cycleEase]}`);
-    facts.forEach((f) => wrapped(`• ${f}`, 12));
-
-    if (assessment?.brandPresence && Object.keys(assessment.brandPresence).length > 0) {
-      y += 2;
-      wrapped("Competitor presence in cluster:", 0, true);
-      Object.entries(assessment.brandPresence).forEach(([brand, lvl]) => {
-        if (lvl) wrapped(`• ${brand}: ${HML_LABEL[lvl]}`, 12);
-      });
-    }
-
-    y += 4;
-    wrapped("Market context:", 0, true);
-    cluster.potentialReasons.slice(0, 2).forEach((r) => wrapped(`• ${r}`, 12));
-
-    y += 6;
     if (!strategy) {
       doc.setTextColor(120);
       wrapped("No connect strategy selected for this cluster.", 0);
@@ -234,12 +217,8 @@ export function generateMonthlyEngagementPlanPdf({
     steps.forEach((s, i) => {
       wrapped(`${i + 1}. ${s.text}`, 12);
       if (s.link) {
-        const ref =
-          s.link.kind === "deck"
-            ? `${s.link.label} → ${s.link.deckTitle}`
-            : s.link.label;
         doc.setTextColor(180, 38, 38);
-        wrapped(`→ ${ref}`, 24);
+        wrapped(actionLinkReference(s.link), 24);
         doc.setTextColor(15, 23, 42);
       }
     });
@@ -253,7 +232,7 @@ export function generateMonthlyEngagementPlanPdf({
     doc.setFontSize(8);
     doc.setTextColor(150);
     doc.text(
-      `JK Cement · Monthly Cluster Engagement Plan · Page ${i} of ${pageCount}`,
+      `JK Cement - Monthly Cluster Engagement Plan - Page ${i} of ${pageCount}`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 20,
       { align: "center" },

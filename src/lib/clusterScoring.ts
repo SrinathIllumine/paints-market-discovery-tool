@@ -148,6 +148,12 @@ export function scoreFromHML(v: HML | undefined): number {
   return v ? HML_SCORE[v] : 0;
 }
 
+export function cycleTimeToEaseHML(v: HML): HML {
+  if (v === "H") return "L";
+  if (v === "L") return "H";
+  return "M";
+}
+
 /** Brand-presence competitive score.
  * - For competitors (non-JK): Low presence = strong for JK → L=10, M=6, H=2.
  * - For JK Maxx: High presence = strong for JK → H=10, M=6, L=2.
@@ -195,7 +201,7 @@ export function computeClusterScores(
   const revenue = assessment.revenueRating ? scoreFromHML(assessment.revenueRating) : scoreRevenue(avg);
   const access = scoreAccess(assessment.accessRank);
   const competitive = scoreCompetitiveBrands(assessment.brandPresence);
-  const ease = assessment.cycleEase ? scoreFromHML(assessment.cycleEase) : scoreEaseOfSale(cluster.id, assessment.cycleMonths);
+  const ease = assessment.cycleEase ? scoreFromHML(cycleTimeToEaseHML(assessment.cycleEase)) : scoreEaseOfSale(cluster.id, assessment.cycleMonths);
   const aggregate = Number(((revenue + access + competitive + ease) / 4).toFixed(1));
   return { revenue, access, competitive, ease, aggregate };
 }
