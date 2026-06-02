@@ -517,14 +517,6 @@ function ClusterDetailScreen() {
   );
 }
 
-/** Ease label inverse of cycle time: low cycle ⇒ high ease. Honour user H/M/L if set. */
-function easeFromCycle(months: number, override: HML | undefined): HML {
-  if (override) return cycleTimeToEaseHML(override);
-  if (months <= 1) return "H";
-  if (months <= 3) return "M";
-  return "L";
-}
-
 function Section({
   title,
   right,
@@ -545,106 +537,117 @@ function Section({
   );
 }
 
-function Tile({
-  label,
-  value,
-  subtle,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  subtle?: boolean;
-  highlight?: boolean;
-}) {
+function HMLBadge({ hml }: { hml: HML | null }) {
+  if (!hml) return null;
+  const cls =
+    hml === "H" ? "bg-green-100 text-green-800 border-green-300"
+    : hml === "M" ? "bg-orange-100 text-orange-800 border-orange-300"
+    : "bg-red-100 text-red-800 border-red-300";
   return (
-    <div
-      className={cn(
-        "rounded-xl border p-3",
-        highlight ? "border-critical/30 bg-critical/5" : "border-border bg-muted/30",
-        subtle && "opacity-90",
-      )}
-    >
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-0.5 font-display text-lg leading-tight">{value}</p>
+    <span className={cn("shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider", cls)}>
+      {HML_LABEL[hml]}
+    </span>
+  );
+}
+
+function NarrativeBullet({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="flex gap-2">
+      <span className="mt-0.5 text-critical">•</span>
+      <span className="flex-1">{children}</span>
+    </li>
+  );
+}
+
+function ScoreTile({ label, value }: { label: string; value: number }) {
+  const cls =
+    value > 7 ? "border-green-300 bg-green-50 text-green-800"
+    : value >= 5 ? "border-orange-300 bg-orange-50 text-orange-800"
+    : "border-red-300 bg-red-50 text-red-800";
+  return (
+    <div className={cn("rounded-xl border p-2 text-center", cls)}>
+      <p className="text-[10px] uppercase tracking-wider opacity-80">{label}</p>
+      <p className="mt-0.5 font-display text-base leading-tight">{value}/10</p>
     </div>
   );
 }
 
-function EditableTile({
-  label,
-  value,
-  onChange,
-  type,
-  formatted,
-}: {
-  label: string;
-  value: number;
-  onChange: (n: number) => void;
-  type: "int" | "rupees";
-  formatted?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-muted/30 p-3">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <input
-        type="number"
-        min={0}
-        step={type === "int" ? 1 : 10000}
-        value={value}
-        onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))}
-        className="mt-0.5 w-full rounded-md border border-transparent bg-transparent px-0 py-0 font-display text-lg leading-tight focus:border-border focus:bg-background focus:px-2"
-      />
-      {type === "rupees" && formatted && (
-        <p className="mt-0.5 text-[11px] text-muted-foreground">{formatted}</p>
-      )}
-    </div>
-  );
-}
+function ClusterSnapshotMatrix({ highlightId }: { highlightId: string }) {
+  const assessments = useAppStore((s) => s.assessments);
+  const clusterStates = useAppStore((s) => s.clusters);
+  const navigate = useNavigate();
 
-function HMLPicker({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: HML | undefined;
-  onChange: (v: HML) => void;
-}) {
-  return (
-    <div className="mt-3 rounded-xl border border-border bg-muted/30 p-3">
-      <p className="mb-2 text-sm">{label}</p>
-      <div className="flex gap-2">
-        {(["H", "M", "L"] as HML[]).map((lvl) => (
-          <button
-            key={lvl}
-            type="button"
-            onClick={() => onChange(lvl)}
-            className={cn(
-              "flex-1 rounded-lg border px-3 py-2 text-sm font-semibold",
-              value === lvl
-                ? "border-critical bg-critical text-critical-foreground"
-                : "border-border bg-card text-muted-foreground hover:bg-muted/40",
-            )}
-          >
-            {HML_LABEL[lvl]}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
+  type Pt = { id: string; name: string; access: number; potential: number; current: boolean };
+  const points: Pt[] = useMemo(() => {
+    return Object.entries(assessments)
+      .map(([id, a]) => {
+        const c = getCluster(id);
+        if (!c) return null;
+        const count = clusterStates[id]?.prospects.length ?? c.prospectCountEstimate;
+        const s = computeClusterScores(c, count, a);
+        return {
+          id,
+          name: c.name,
+          access: (s.access + s.ease) / 2,
+          potential: (s.revenue + s.competitive) / 2,
+          current: id === highlightId,
+        } satisfies Pt;
+      })
+      .filter((p): p is Pt => Boolean(p));
+  }, [assessments, clusterStates, highlightId]);
 
-function SummaryCell({ label, hml }: { label: string; hml: HML }) {
-  const styles =
-    hml === "H"
-      ? "bg-green-100 text-green-800 border-green-300"
-      : hml === "M"
-      ? "bg-orange-100 text-orange-800 border-orange-300"
-      : "bg-red-100 text-red-800 border-red-300";
+  const W = 320;
+  const H = 320;
+  const pad = 40;
+  const innerW = W - pad * 2;
+  const innerH = H - pad * 2;
+  const xFor = (v: number) => pad + (v / 10) * innerW;
+  const yFor = (v: number) => H - pad - (v / 10) * innerH;
+
   return (
-    <div className={cn("rounded-xl border p-3 text-center", styles)}>
-      <p className="text-[10px] font-semibold uppercase tracking-wider opacity-80">{label}</p>
-      <p className="mt-1 font-display text-2xl font-bold leading-tight">{HML_LABEL[hml]}</p>
+    <div className="mt-3 overflow-x-auto text-foreground">
+      <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto block h-auto w-full max-w-sm">
+        <rect x={pad} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.35} />
+        <rect x={pad + innerW / 2} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--critical)" fillOpacity={0.12} />
+        <rect x={pad} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.15} />
+        <rect x={pad + innerW / 2} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.55} />
+        <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
+        <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
+        <line x1={pad + innerW / 2} y1={pad} x2={pad + innerW / 2} y2={H - pad} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
+        <line x1={pad} y1={pad + innerH / 2} x2={W - pad} y2={pad + innerH / 2} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
+
+        <text x={pad + 6} y={pad + 14} fontSize="9" fill="currentColor" opacity="0.6">Low access · High potential</text>
+        <text x={W - pad - 6} y={pad + 14} fontSize="9" fill="currentColor" opacity="0.7" textAnchor="end">High access · High potential</text>
+        <text x={pad + 6} y={H - pad - 6} fontSize="9" fill="currentColor" opacity="0.5">Low access · Low potential</text>
+        <text x={W - pad - 6} y={H - pad - 6} fontSize="9" fill="currentColor" opacity="0.6" textAnchor="end">High access · Low potential</text>
+        <text x={W / 2} y={H - 8} fontSize="10" fill="currentColor" textAnchor="middle">Access →</text>
+        <text x={12} y={H / 2} fontSize="10" fill="currentColor" textAnchor="middle" transform={`rotate(-90 12 ${H / 2})`}>Potential →</text>
+
+        {points.map((p) => {
+          const cx = xFor(p.access);
+          const cy = yFor(p.potential);
+          return (
+            <g key={p.id} className="cursor-pointer" onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: p.id } })}>
+              <circle
+                cx={cx}
+                cy={cy}
+                r={p.current ? 8 : 6}
+                fill={p.current ? "var(--critical)" : "currentColor"}
+                fillOpacity={p.current ? 1 : 0.25}
+                stroke={p.current ? "var(--background)" : "currentColor"}
+                strokeOpacity={p.current ? 1 : 0.4}
+                strokeWidth={p.current ? 2 : 1}
+              />
+              <text x={cx + 9} y={cy + 3} fontSize="9" fill="currentColor" opacity={p.current ? 1 : 0.4}>
+                {p.name.length > 20 ? p.name.slice(0, 19) + "…" : p.name}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <p className="mt-2 text-center text-xs text-muted-foreground">
+        {points.length} cluster{points.length === 1 ? "" : "s"} mapped so far
+      </p>
     </div>
   );
 }
