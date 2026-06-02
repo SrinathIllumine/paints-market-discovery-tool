@@ -191,15 +191,11 @@ function ClusterDetailScreen() {
   };
   const scores = computeClusterScores(cluster, prospects.length, provisionalAssessment);
 
-  const canSave = accessRank !== null;
+  const canSave = true; // Backend-driven; user input optional
 
   const hideSummaryOnEdit = () => setShowSummary(false);
 
   const handleSave = () => {
-    if (!canSave) {
-      toast.error("Pick an access ranking (A / B / C) to estimate");
-      return;
-    }
     setAssessment(clusterId, provisionalAssessment);
     setShowSummary(true);
     toast.success("Cluster potential estimated", { duration: 1800 });
