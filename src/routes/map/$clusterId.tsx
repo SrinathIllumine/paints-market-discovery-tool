@@ -345,7 +345,10 @@ function ClusterDetailScreen() {
                       type="radio"
                       name={`access-rank-${clusterId}`}
                       checked={accessRank === opt.key}
-                      onChange={() => setAccessRank(opt.key)}
+                      onChange={() => {
+                        hideSummaryOnEdit();
+                        setAccessRank(opt.key);
+                      }}
                       className="h-4 w-4 accent-critical"
                     />
                     <span>{opt.label}</span>
@@ -377,7 +380,10 @@ function ClusterDetailScreen() {
                           key={lvl}
                           type="button"
                           onClick={() =>
-                            setBrandPresence((prev) => ({ ...prev, [brand]: lvl }))
+                            {
+                              hideSummaryOnEdit();
+                              setBrandPresence((prev) => ({ ...prev, [brand]: lvl }));
+                            }
                           }
                           className={cn(
                             "h-7 w-auto min-w-[36px] px-1.5 rounded-md border text-xs font-semibold",
@@ -399,7 +405,10 @@ function ClusterDetailScreen() {
           {/* Ease of sale */}
           <AccordionItem value="ease" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <span className="font-display text-xl">Ease of Sale</span>
+              <span className="flex w-full items-center justify-between gap-3 pr-2">
+                <span className="font-display text-xl">Ease of Sale</span>
+                <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="Editable" />
+              </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
               <div className="rounded-xl border border-border bg-muted/30 p-3">
@@ -410,7 +419,10 @@ function ClusterDetailScreen() {
                     step="0.5"
                     min="0.5"
                     value={cycleMonths}
-                    onChange={(e) => setCycleMonths(Number(e.target.value) || 0)}
+                    onChange={(e) => {
+                      hideSummaryOnEdit();
+                      setCycleMonths(Number(e.target.value) || 0);
+                    }}
                     className="w-24 rounded-md border border-border bg-background px-2 py-1 font-display text-xl"
                   />
                   <span className="text-sm text-muted-foreground">months</span>
@@ -420,7 +432,10 @@ function ClusterDetailScreen() {
               <HMLPicker
                 label="What do you think about the average cycle time for this cluster?"
                 value={cycleEase}
-                onChange={setCycleEase}
+                onChange={(v) => {
+                  hideSummaryOnEdit();
+                  setCycleEase(v);
+                }}
               />
             </AccordionContent>
           </AccordionItem>
