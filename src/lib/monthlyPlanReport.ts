@@ -1,12 +1,11 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { getCluster, prospectPlural, prospectSingular } from "@/data/clusters";
-import { getRevenueProfile, formatRupees, getCycle, computeClusterScores, HML_LABEL } from "@/lib/clusterScoring";
-import { useAppStore } from "@/store/appStore";
+import { getCluster } from "@/data/clusters";
 import {
   CONNECT_STRATEGY_LABEL,
   generateActionPlan,
   getLocalCampaignSuggestions,
+  type ActionLink,
   type ConnectStrategy,
   type StrategyAnswers,
 } from "@/lib/strategyContent";
@@ -77,17 +76,15 @@ export function generateMonthlyEngagementPlanPdf({
 
   const wrapped = (text: string, indent = 0, bold = false) => {
     doc.setFont("helvetica", bold ? "bold" : "normal");
-    const lines = doc.splitTextToSize(text, pageWidth - margin * 2 - indent);
+    const safeText = normalisePdfText(text);
+    const lines = doc.splitTextToSize(safeText, pageWidth - margin * 2 - indent);
     ensureSpace(lines.length * 12 + 4);
     doc.text(lines, margin + indent, y);
     y += lines.length * 12;
     doc.setFont("helvetica", "normal");
   };
 
-  const assessments = useAppStore.getState().assessments;
-  const clusterStates = useAppStore.getState().clusters;
-
-  /* ===== Focus clusters with potential snapshot ===== */
+  /* ===== Focus clusters selected for engagement ===== */
   heading("Focus on these clusters");
   if (focusClusterIds.length === 0) {
     doc.setTextColor(120);
@@ -97,13 +94,11 @@ export function generateMonthlyEngagementPlanPdf({
   } else {
     autoTable(doc, {
       startY: y,
-      head: [["Cluster", "Connect strategy", "Potential / 10"]],
+      head: [["Cluster", "Connect strategy"]],
       body: focusClusterIds.map((id) => {
         const c = getCluster(id);
         const s = strategyByCluster[id];
-        const a = assessments[id];
-        const agg = c && a ? computeClusterScores(c, 0, a).aggregate : "—";
-        return [c?.name ?? id, s ? CONNECT_STRATEGY_LABEL[s] : "—", String(agg)];
+        return [c?.name ?? id, s ? CONNECT_STRATEGY_LABEL[s] : "-"];
       }),
       headStyles: { fillColor: [15, 23, 42] },
       margin: { left: margin, right: margin },
