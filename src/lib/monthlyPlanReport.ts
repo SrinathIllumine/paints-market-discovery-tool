@@ -134,50 +134,12 @@ export function generateMonthlyEngagementPlanPdf({
     if (!cluster) continue;
     const strategy = strategyByCluster[clusterId];
     const answers = answersByCluster[clusterId] ?? {};
-    const assessment = assessments[clusterId];
-    const profile = getRevenueProfile(clusterId);
-    const cycle = getCycle(clusterId);
-    const cstate = clusterStates[clusterId];
-
-    const prospectCount = assessment?.prospectCountOverride ?? cstate?.prospects.length ?? cluster.prospectCountEstimate;
-    const avgRev = assessment?.avgRevenueOverride ?? profile.avgRevenuePerProspect;
-    const totalRev = prospectCount * avgRev;
-    const months = assessment?.cycleMonths ?? cycle.months;
-    const plural = prospectPlural(clusterId).toLowerCase();
-    const singular = prospectSingular(clusterId).toLowerCase();
 
     ensureSpace(80);
     y += 6;
     doc.setFontSize(12);
     wrapped(cluster.name, 0, true);
     doc.setFontSize(10);
-
-    /* Cluster potential snapshot */
-    wrapped("Cluster potential snapshot:", 0, true);
-    const facts: string[] = [
-      `${prospectCount} ${plural} in cluster`,
-      `Avg. revenue / ${singular}: ${formatRupees(avgRev)}`,
-      `Total cluster revenue potential: ${formatRupees(totalRev)}`,
-      `Avg. cycle time: ${months} months`,
-    ];
-    if (assessment?.accessRank) facts.push(`Access ranking: ${assessment.accessRank}`);
-    if (assessment?.revenueRating) facts.push(`Revenue potential rating: ${HML_LABEL[assessment.revenueRating]}`);
-    if (assessment?.cycleEase) facts.push(`Cycle-time rating: ${HML_LABEL[assessment.cycleEase]}`);
-    facts.forEach((f) => wrapped(`• ${f}`, 12));
-
-    if (assessment?.brandPresence && Object.keys(assessment.brandPresence).length > 0) {
-      y += 2;
-      wrapped("Competitor presence in cluster:", 0, true);
-      Object.entries(assessment.brandPresence).forEach(([brand, lvl]) => {
-        if (lvl) wrapped(`• ${brand}: ${HML_LABEL[lvl]}`, 12);
-      });
-    }
-
-    y += 4;
-    wrapped("Market context:", 0, true);
-    cluster.potentialReasons.slice(0, 2).forEach((r) => wrapped(`• ${r}`, 12));
-
-    y += 6;
     if (!strategy) {
       doc.setTextColor(120);
       wrapped("No connect strategy selected for this cluster.", 0);
