@@ -210,12 +210,8 @@ export function generateMonthlyEngagementPlanPdf({
     steps.forEach((s, i) => {
       wrapped(`${i + 1}. ${s.text}`, 12);
       if (s.link) {
-        const ref =
-          s.link.kind === "deck"
-            ? `${s.link.label} → ${s.link.deckTitle}`
-            : s.link.label;
         doc.setTextColor(180, 38, 38);
-        wrapped(`→ ${ref}`, 24);
+        wrapped(actionLinkReference(s.link), 24);
         doc.setTextColor(15, 23, 42);
       }
     });
@@ -229,7 +225,7 @@ export function generateMonthlyEngagementPlanPdf({
     doc.setFontSize(8);
     doc.setTextColor(150);
     doc.text(
-      `JK Cement · Monthly Cluster Engagement Plan · Page ${i} of ${pageCount}`,
+      `JK Cement - Monthly Cluster Engagement Plan - Page ${i} of ${pageCount}`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 20,
       { align: "center" },
