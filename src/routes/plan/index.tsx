@@ -350,7 +350,7 @@ function ContactList({
     <div className="space-y-2">
       {contacts.map((ct, i) => (
         <div key={ct.id} className="flex items-start gap-2 rounded-md border border-border bg-card p-2">
-          <div className="grid flex-1 gap-1.5 sm:grid-cols-3">
+          <div className="grid flex-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
             <input
               placeholder="Name"
               value={ct.name}
@@ -377,6 +377,16 @@ function ContactList({
               onChange={(e) => {
                 const next = [...contacts];
                 next[i] = { ...ct, area: e.target.value };
+                onChange(next);
+              }}
+              className="rounded border border-border bg-background px-2 py-1 text-xs"
+            />
+            <input
+              placeholder="Brand Preference"
+              value={ct.brandPreference ?? ""}
+              onChange={(e) => {
+                const next = [...contacts];
+                next[i] = { ...ct, brandPreference: e.target.value };
                 onChange(next);
               }}
               className="rounded border border-border bg-background px-2 py-1 text-xs"
@@ -426,39 +436,30 @@ function StrategyQuestions({
     const suggestions = getLocalCampaignSuggestions(clusterId);
     const selected = answers.selectedCampaigns ?? [];
     return (
-      <div className="space-y-2">
-        <YesNo
-          question="Do you want to run local campaigns?"
-          value={answers.runLocalCampaigns}
-          onChange={(v) => onChange({ runLocalCampaigns: v })}
-        />
-        {answers.runLocalCampaigns === "Y" && (
-          <div className="rounded-md border border-border bg-card p-2">
-            <p className="mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
-              Suggested local campaigns
-            </p>
-            <div className="space-y-1">
-              {suggestions.map((s) => {
-                const on = selected.includes(s);
-                return (
-                  <label key={s} className="flex cursor-pointer items-start gap-2 text-xs">
-                    <input
-                      type="checkbox"
-                      checked={on}
-                      onChange={() =>
-                        onChange({
-                          selectedCampaigns: on ? selected.filter((x) => x !== s) : [...selected, s],
-                        })
-                      }
-                      className="mt-0.5 h-3.5 w-3.5 accent-critical"
-                    />
-                    <span className="leading-snug">{s}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-        )}
+      <div className="rounded-md border border-border bg-card p-2">
+        <p className="mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
+          Pick your choice of local campaigns
+        </p>
+        <div className="space-y-1">
+          {suggestions.map((s) => {
+            const on = selected.includes(s);
+            return (
+              <label key={s} className="flex cursor-pointer items-start gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={on}
+                  onChange={() =>
+                    onChange({
+                      selectedCampaigns: on ? selected.filter((x) => x !== s) : [...selected, s],
+                    })
+                  }
+                  className="mt-0.5 h-3.5 w-3.5 accent-critical"
+                />
+                <span className="leading-snug">{s}</span>
+              </label>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -467,18 +468,14 @@ function StrategyQuestions({
     const contractors = answers.contractors ?? [];
     return (
       <div className="space-y-2">
-        <YesNo
-          question="Do you already know some of the contractors?"
-          value={answers.knowsContractors}
-          onChange={(v) => onChange({ knowsContractors: v })}
+        <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+          Add the contractors active in this cluster
+        </p>
+        <ContactList
+          contacts={contractors}
+          onChange={(next) => onChange({ contractors: next })}
+          addLabel="Add contractor"
         />
-        {answers.knowsContractors === "Y" && (
-          <ContactList
-            contacts={contractors}
-            onChange={(next) => onChange({ contractors: next })}
-            addLabel="Add contractor"
-          />
-        )}
       </div>
     );
   }
@@ -544,33 +541,24 @@ function StrategyQuestions({
   // D2C
   const channels = answers.d2cChannels ?? [];
   return (
-    <div className="space-y-2">
-      <YesNo
-        question="Do you want to directly reach end customers?"
-        value={answers.wantsDirectReach}
-        onChange={(v) => onChange({ wantsDirectReach: v })}
-      />
-      {answers.wantsDirectReach === "Y" && (
-        <div className="rounded-md border border-border bg-card p-2">
-          <p className="mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">Pick your choice of direct channels strategy</p>
-          <div className="space-y-1">
-            {D2C_CHANNELS.map((ch) => {
-              const on = channels.includes(ch);
-              return (
-                <label key={ch} className="flex cursor-pointer items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={on}
-                    onChange={() => onChange({ d2cChannels: on ? channels.filter((x) => x !== ch) : [...channels, ch] })}
-                    className="h-3.5 w-3.5 accent-critical"
-                  />
-                  {ch}
-                </label>
-              );
-            })}
-          </div>
-        </div>
-      )}
+    <div className="rounded-md border border-border bg-card p-2">
+      <p className="mb-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">Pick your choice of direct channels strategy</p>
+      <div className="space-y-1">
+        {D2C_CHANNELS.map((ch) => {
+          const on = channels.includes(ch);
+          return (
+            <label key={ch} className="flex cursor-pointer items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={on}
+                onChange={() => onChange({ d2cChannels: on ? channels.filter((x) => x !== ch) : [...channels, ch] })}
+                className="h-3.5 w-3.5 accent-critical"
+              />
+              {ch}
+            </label>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -688,6 +676,24 @@ function ActionStepView({
           )}
           {openLink?.kind === "popup-text" && (
             <p className="whitespace-pre-line text-sm leading-relaxed">{openLink.body}</p>
+          )}
+          {openLink?.kind === "popup-contacts" && (
+            <div className="space-y-2">
+              {(openLink.contacts ?? []).length === 0 ? (
+                <p className="text-sm text-muted-foreground">No contacts added yet.</p>
+              ) : (
+                (openLink.contacts ?? []).map((c, i) => (
+                  <div key={c.id ?? i} className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
+                    <p className="font-semibold">{c.name || "Unnamed contact"}</p>
+                    <dl className="mt-1 grid grid-cols-[110px_1fr] gap-y-1 text-xs">
+                      {c.phone && (<><dt className="text-muted-foreground">Phone</dt><dd>{c.phone}</dd></>)}
+                      {c.area && (<><dt className="text-muted-foreground">Area</dt><dd>{c.area}</dd></>)}
+                      {c.brandPreference && (<><dt className="text-muted-foreground">Brand Preference</dt><dd>{c.brandPreference}</dd></>)}
+                    </dl>
+                  </div>
+                ))
+              )}
+            </div>
           )}
           {openLink?.kind === "deck" && (
             <div className="space-y-3">

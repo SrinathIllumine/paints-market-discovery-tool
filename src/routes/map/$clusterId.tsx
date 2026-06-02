@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
@@ -12,14 +12,14 @@ import {
 } from "@/components/ui/accordion";
 import { GoogleMap } from "@/components/maps/GoogleMap";
 import { AddProspectSheet } from "@/components/maps/AddProspectSheet";
-import { CLUSTERS, getCluster, prospectSingular, prospectPlural } from "@/data/clusters";
+import { CLUSTERS, getCluster, prospectPlural } from "@/data/clusters";
 import { PANVEL_CENTER } from "@/data/clusters";
 import { PANVEL_BOUNDARY } from "@/data/panvelBoundary";
 import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, MapPin, BookmarkCheck, Pencil } from "lucide-react";
+import { Plus, Loader2, MapPin, BookmarkCheck } from "lucide-react";
 import { toast } from "sonner";
 import {
   computeClusterScores,
@@ -27,7 +27,9 @@ import {
   getRevenueProfile,
   formatRupees,
   scoreToHML,
-  cycleTimeToEaseHML,
+  scoreRevenue,
+  scoreEaseOfSale,
+  scoreCompetitiveBrands,
   COMPETITIVE_BRANDS,
   HML_LABEL,
   type AccessRank,
@@ -142,9 +144,32 @@ function ClusterDetailScreen() {
     );
   }
 
-  const singularCap = prospectSingular(clusterId);
   const pluralCap = prospectPlural(clusterId);
   const totalRevenue = avgRevenue * prospectCount;
+
+  // Benchmarks across all clusters
+  const revenueBenchmark = useMemo(() => {
+    const all = CLUSTERS.map((c) => getRevenueProfile(c.id).avgRevenuePerProspect);
+    return all.reduce((a, b) => a + b, 0) / all.length;
+  }, []);
+  const cycleBenchmarkDays = useMemo(() => {
+    const all = CLUSTERS.map((c) => getCycle(c.id).days);
+    return all.reduce((a, b) => a + b, 0) / all.length;
+  }, []);
+  const cycleBenchmarkMonths = Math.round((cycleBenchmarkDays / 30) * 10) / 10;
+
+  // Static HML for revenue & ease (data-driven, not user-rated)
+  const revenueHML: HML = scoreToHML(scoreRevenue(profile.avgRevenuePerProspect));
+  const easeHML: HML = scoreToHML(scoreEaseOfSale(clusterId));
+  const accessHML: HML | null = accessRank ? (accessRank === "A" ? "H" : accessRank === "B" ? "M" : "L") : null;
+  const competitiveScore = scoreCompetitiveBrands(brandPresence);
+  const competitiveHML: HML | null = competitiveScore > 0 ? scoreToHML(competitiveScore) : null;
+
+  // Difficulty narrative for ease of sale
+  const difficultyLabel: string =
+    easeHML === "H" ? "Easy — shorter cycles than most clusters" :
+    easeHML === "M" ? "Moderate — comparable to typical clusters" :
+    "Hard — longer cycle with more approvals than average";
 
   const provisionalAssessment: ClusterAssessment = {
     accessAnswers: existingAssessment?.accessAnswers ?? [],
@@ -267,62 +292,49 @@ function ClusterDetailScreen() {
         </section>
 
         {/* ──────────────── Cluster scoring sub-sections ──────────────── */}
+        <h2 className="px-1 pt-1 font-display text-2xl">Map the Cluster Potential</h2>
         <Accordion type="single" collapsible defaultValue="revenue" className="space-y-3">
           {/* Revenue */}
           <AccordionItem value="revenue" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="flex w-full items-center justify-between gap-3 pr-2">
                 <span className="font-display text-xl">1)	Is the revenue potential high in the cluster?</span>
-                <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="Editable" />
+                <HMLBadge hml={revenueHML} />
               </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <EditableTile
-                  label={`${pluralCap} in cluster`}
-                  value={prospectCount}
-                  onChange={(n) => {
-                    hideSummaryOnEdit();
-                    setProspectCount(n);
-                  }}
-                  type="int"
-                />
-                <EditableTile
-                  label={`Avg. revenue / ${singularCap.toLowerCase()}`}
-                  value={avgRevenue}
-                  onChange={(n) => {
-                    hideSummaryOnEdit();
-                    setAvgRevenue(n);
-                  }}
-                  type="rupees"
-                  formatted={formatRupees(avgRevenue)}
-                />
-                <Tile label="Avg. usable area" value={profile.sqftBand} subtle />
-                <Tile label="Total cluster revenue potential" value={formatRupees(totalRevenue)} highlight />
-              </div>
-              <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
-                {cluster.potentialReasons.slice(0, 2).map((r) => (
-                  <li key={r} className="flex gap-2">
-                    <span className="text-critical">•</span>
-                    <span>{r}</span>
-                  </li>
-                ))}
+              <ul className="space-y-2 text-sm leading-relaxed">
+                <NarrativeBullet>
+                  This cluster has roughly <b>{prospectCount} {pluralCap.toLowerCase()}</b> with an average usable area of <b>{profile.sqftBand}</b>.
+                </NarrativeBullet>
+                <NarrativeBullet>
+                  Each {pluralCap.toLowerCase().replace(/s$/, "")} can typically deliver <b>{formatRupees(profile.avgRevenuePerProspect)}</b> in revenue.
+                </NarrativeBullet>
+                <NarrativeBullet>
+                  Total cluster revenue potential is <b className="text-critical">{formatRupees(totalRevenue)}</b> — a meaningful pool to anchor your monthly plan.
+                </NarrativeBullet>
+                <NarrativeBullet>
+                  Benchmark: avg cluster prospect across Panvel delivers <b>{formatRupees(revenueBenchmark)}</b>. This cluster sits{" "}
+                  <b className={cn(
+                    profile.avgRevenuePerProspect >= revenueBenchmark * 1.1 ? "text-green-700"
+                    : profile.avgRevenuePerProspect <= revenueBenchmark * 0.9 ? "text-red-700"
+                    : "text-orange-700",
+                  )}>
+                    {profile.avgRevenuePerProspect >= revenueBenchmark * 1.1 ? "above" :
+                     profile.avgRevenuePerProspect <= revenueBenchmark * 0.9 ? "below" : "around"}
+                  </b>{" "}the benchmark.
+                </NarrativeBullet>
               </ul>
-              <HMLPicker
-                label="What do you think about this cluster's revenue potential?"
-                value={revenueRating}
-                onChange={(v) => {
-                  hideSummaryOnEdit();
-                  setRevenueRating(v);
-                }}
-              />
             </AccordionContent>
           </AccordionItem>
 
           {/* Access */}
           <AccordionItem value="access" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <span className="font-display text-xl">2)	Do you have access to this cluster?</span>
+              <span className="flex w-full items-center justify-between gap-3 pr-2">
+                <span className="font-display text-xl">2)	Do you have access to this cluster?</span>
+                <HMLBadge hml={accessHML} />
+              </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
               <p className="text-sm font-semibold">Select your access level for this cluster</p>
@@ -361,7 +373,10 @@ function ClusterDetailScreen() {
           {/* Competitive */}
           <AccordionItem value="competitive" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <span className="font-display text-xl">3) Is the competitive strength stopping us from entering the cluster?</span>
+              <span className="flex w-full items-center justify-between gap-3 pr-2">
+                <span className="font-display text-xl">3) Is the competitive strength stopping us from entering the cluster?</span>
+                <HMLBadge hml={competitiveHML} />
+              </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
               <p className="mb-2 text-sm text-muted-foreground">
@@ -407,36 +422,30 @@ function ClusterDetailScreen() {
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="flex w-full items-center justify-between gap-3 pr-2">
                 <span className="font-display text-xl">4) Is the average cycle time supporting the ease of sale?</span>
-                <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="Editable" />
+                <HMLBadge hml={easeHML} />
               </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              <div className="rounded-xl border border-border bg-muted/30 p-3">
-                <label className="text-xs uppercase tracking-wider text-muted-foreground">Avg. cycle time (months)</label>
-                <div className="mt-1 flex items-baseline gap-2">
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0.5"
-                    value={cycleMonths}
-                    onChange={(e) => {
-                      hideSummaryOnEdit();
-                      setCycleMonths(Number(e.target.value) || 0);
-                    }}
-                    className="w-24 rounded-md border border-border bg-background px-2 py-1 font-display text-xl"
-                  />
-                  <span className="text-sm text-muted-foreground">months</span>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">{cycle.explanation}</p>
-              </div>
-              <HMLPicker
-                label="What do you think about the average cycle time for this cluster?"
-                value={cycleEase}
-                onChange={(v) => {
-                  hideSummaryOnEdit();
-                  setCycleEase(v);
-                }}
-              />
+              <ul className="space-y-2 text-sm leading-relaxed">
+                <NarrativeBullet>
+                  Average sales cycle in this cluster is <b>{cycle.label}</b> (~{cycle.months} months).
+                </NarrativeBullet>
+                <NarrativeBullet>{cycle.explanation}</NarrativeBullet>
+                <NarrativeBullet>
+                  Benchmark: typical Panvel cluster closes in ~<b>{cycleBenchmarkMonths} months</b>. This cluster runs{" "}
+                  <b className={cn(
+                    cycle.days <= cycleBenchmarkDays * 0.9 ? "text-green-700"
+                    : cycle.days >= cycleBenchmarkDays * 1.1 ? "text-red-700"
+                    : "text-orange-700",
+                  )}>
+                    {cycle.days <= cycleBenchmarkDays * 0.9 ? "faster than" :
+                     cycle.days >= cycleBenchmarkDays * 1.1 ? "slower than" : "around"}
+                  </b>{" "}the benchmark.
+                </NarrativeBullet>
+                <NarrativeBullet>
+                  Difficulty: <b>{difficultyLabel}</b>.
+                </NarrativeBullet>
+              </ul>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
@@ -450,18 +459,40 @@ function ClusterDetailScreen() {
         </Button>
 
         {showSummary && (
-          <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <h2 className="font-display text-xl">Cluster Potential Summary</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Quick read of where this cluster lands on each axis.
-            </p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <SummaryCell label="1)	Is the revenue potential high in the cluster?" hml={scoreToHML(scores.revenue)} />
-              <SummaryCell label="2)	Do you have access to this cluster?" hml={scoreToHML(scores.access)} />
-              <SummaryCell label="3) Is the competitive strength stopping us from entering the cluster?" hml={scoreToHML(scores.competitive)} />
-              <SummaryCell label="4) Is the average cycle time supporting the ease of sale?" hml={easeFromCycle(cycleMonths, cycleEase)} />
-            </div>
-          </section>
+          <>
+            <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <h2 className="font-display text-xl">Total Cluster Mapped</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Snapshot across all clusters — this cluster is highlighted.
+              </p>
+              <ClusterSnapshotMatrix highlightId={clusterId} />
+            </section>
+
+            <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="font-display text-xl leading-tight">{cluster.name}</h2>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Cluster Potential Score
+                  </p>
+                </div>
+                <span className={cn(
+                  "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider",
+                  scores.aggregate > 7 ? "bg-green-100 text-green-800"
+                  : scores.aggregate >= 5 ? "bg-orange-100 text-orange-800"
+                  : "bg-red-100 text-red-800",
+                )}>
+                  {scores.aggregate} / 10
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <ScoreTile label="Revenue" value={scores.revenue} />
+                <ScoreTile label="Access" value={scores.access} />
+                <ScoreTile label="Competitive" value={scores.competitive} />
+                <ScoreTile label="Ease of sale" value={scores.ease} />
+              </div>
+            </section>
+          </>
         )}
       </div>
 
@@ -486,14 +517,6 @@ function ClusterDetailScreen() {
   );
 }
 
-/** Ease label inverse of cycle time: low cycle ⇒ high ease. Honour user H/M/L if set. */
-function easeFromCycle(months: number, override: HML | undefined): HML {
-  if (override) return cycleTimeToEaseHML(override);
-  if (months <= 1) return "H";
-  if (months <= 3) return "M";
-  return "L";
-}
-
 function Section({
   title,
   right,
@@ -514,106 +537,117 @@ function Section({
   );
 }
 
-function Tile({
-  label,
-  value,
-  subtle,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  subtle?: boolean;
-  highlight?: boolean;
-}) {
+function HMLBadge({ hml }: { hml: HML | null }) {
+  if (!hml) return null;
+  const cls =
+    hml === "H" ? "bg-green-100 text-green-800 border-green-300"
+    : hml === "M" ? "bg-orange-100 text-orange-800 border-orange-300"
+    : "bg-red-100 text-red-800 border-red-300";
   return (
-    <div
-      className={cn(
-        "rounded-xl border p-3",
-        highlight ? "border-critical/30 bg-critical/5" : "border-border bg-muted/30",
-        subtle && "opacity-90",
-      )}
-    >
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-0.5 font-display text-lg leading-tight">{value}</p>
+    <span className={cn("shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider", cls)}>
+      {HML_LABEL[hml]}
+    </span>
+  );
+}
+
+function NarrativeBullet({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="flex gap-2">
+      <span className="mt-0.5 text-critical">•</span>
+      <span className="flex-1">{children}</span>
+    </li>
+  );
+}
+
+function ScoreTile({ label, value }: { label: string; value: number }) {
+  const cls =
+    value > 7 ? "border-green-300 bg-green-50 text-green-800"
+    : value >= 5 ? "border-orange-300 bg-orange-50 text-orange-800"
+    : "border-red-300 bg-red-50 text-red-800";
+  return (
+    <div className={cn("rounded-xl border p-2 text-center", cls)}>
+      <p className="text-[10px] uppercase tracking-wider opacity-80">{label}</p>
+      <p className="mt-0.5 font-display text-base leading-tight">{value}/10</p>
     </div>
   );
 }
 
-function EditableTile({
-  label,
-  value,
-  onChange,
-  type,
-  formatted,
-}: {
-  label: string;
-  value: number;
-  onChange: (n: number) => void;
-  type: "int" | "rupees";
-  formatted?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-muted/30 p-3">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <input
-        type="number"
-        min={0}
-        step={type === "int" ? 1 : 10000}
-        value={value}
-        onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))}
-        className="mt-0.5 w-full rounded-md border border-transparent bg-transparent px-0 py-0 font-display text-lg leading-tight focus:border-border focus:bg-background focus:px-2"
-      />
-      {type === "rupees" && formatted && (
-        <p className="mt-0.5 text-[11px] text-muted-foreground">{formatted}</p>
-      )}
-    </div>
-  );
-}
+function ClusterSnapshotMatrix({ highlightId }: { highlightId: string }) {
+  const assessments = useAppStore((s) => s.assessments);
+  const clusterStates = useAppStore((s) => s.clusters);
+  const navigate = useNavigate();
 
-function HMLPicker({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: HML | undefined;
-  onChange: (v: HML) => void;
-}) {
-  return (
-    <div className="mt-3 rounded-xl border border-border bg-muted/30 p-3">
-      <p className="mb-2 text-sm">{label}</p>
-      <div className="flex gap-2">
-        {(["H", "M", "L"] as HML[]).map((lvl) => (
-          <button
-            key={lvl}
-            type="button"
-            onClick={() => onChange(lvl)}
-            className={cn(
-              "flex-1 rounded-lg border px-3 py-2 text-sm font-semibold",
-              value === lvl
-                ? "border-critical bg-critical text-critical-foreground"
-                : "border-border bg-card text-muted-foreground hover:bg-muted/40",
-            )}
-          >
-            {HML_LABEL[lvl]}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
+  type Pt = { id: string; name: string; access: number; potential: number; current: boolean };
+  const points: Pt[] = useMemo(() => {
+    return Object.entries(assessments)
+      .map(([id, a]) => {
+        const c = getCluster(id);
+        if (!c) return null;
+        const count = clusterStates[id]?.prospects.length ?? c.prospectCountEstimate;
+        const s = computeClusterScores(c, count, a);
+        return {
+          id,
+          name: c.name,
+          access: (s.access + s.ease) / 2,
+          potential: (s.revenue + s.competitive) / 2,
+          current: id === highlightId,
+        } satisfies Pt;
+      })
+      .filter((p): p is Pt => Boolean(p));
+  }, [assessments, clusterStates, highlightId]);
 
-function SummaryCell({ label, hml }: { label: string; hml: HML }) {
-  const styles =
-    hml === "H"
-      ? "bg-green-100 text-green-800 border-green-300"
-      : hml === "M"
-      ? "bg-orange-100 text-orange-800 border-orange-300"
-      : "bg-red-100 text-red-800 border-red-300";
+  const W = 320;
+  const H = 320;
+  const pad = 40;
+  const innerW = W - pad * 2;
+  const innerH = H - pad * 2;
+  const xFor = (v: number) => pad + (v / 10) * innerW;
+  const yFor = (v: number) => H - pad - (v / 10) * innerH;
+
   return (
-    <div className={cn("rounded-xl border p-3 text-center", styles)}>
-      <p className="text-[10px] font-semibold uppercase tracking-wider opacity-80">{label}</p>
-      <p className="mt-1 font-display text-2xl font-bold leading-tight">{HML_LABEL[hml]}</p>
+    <div className="mt-3 overflow-x-auto text-foreground">
+      <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto block h-auto w-full max-w-sm">
+        <rect x={pad} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.35} />
+        <rect x={pad + innerW / 2} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--critical)" fillOpacity={0.12} />
+        <rect x={pad} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.15} />
+        <rect x={pad + innerW / 2} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.55} />
+        <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
+        <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
+        <line x1={pad + innerW / 2} y1={pad} x2={pad + innerW / 2} y2={H - pad} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
+        <line x1={pad} y1={pad + innerH / 2} x2={W - pad} y2={pad + innerH / 2} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
+
+        <text x={pad + 6} y={pad + 14} fontSize="9" fill="currentColor" opacity="0.6">Low access · High potential</text>
+        <text x={W - pad - 6} y={pad + 14} fontSize="9" fill="currentColor" opacity="0.7" textAnchor="end">High access · High potential</text>
+        <text x={pad + 6} y={H - pad - 6} fontSize="9" fill="currentColor" opacity="0.5">Low access · Low potential</text>
+        <text x={W - pad - 6} y={H - pad - 6} fontSize="9" fill="currentColor" opacity="0.6" textAnchor="end">High access · Low potential</text>
+        <text x={W / 2} y={H - 8} fontSize="10" fill="currentColor" textAnchor="middle">Access →</text>
+        <text x={12} y={H / 2} fontSize="10" fill="currentColor" textAnchor="middle" transform={`rotate(-90 12 ${H / 2})`}>Potential →</text>
+
+        {points.map((p) => {
+          const cx = xFor(p.access);
+          const cy = yFor(p.potential);
+          return (
+            <g key={p.id} className="cursor-pointer" onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: p.id } })}>
+              <circle
+                cx={cx}
+                cy={cy}
+                r={p.current ? 8 : 6}
+                fill={p.current ? "var(--critical)" : "currentColor"}
+                fillOpacity={p.current ? 1 : 0.25}
+                stroke={p.current ? "var(--background)" : "currentColor"}
+                strokeOpacity={p.current ? 1 : 0.4}
+                strokeWidth={p.current ? 2 : 1}
+              />
+              <text x={cx + 9} y={cy + 3} fontSize="9" fill="currentColor" opacity={p.current ? 1 : 0.4}>
+                {p.name.length > 20 ? p.name.slice(0, 19) + "…" : p.name}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <p className="mt-2 text-center text-xs text-muted-foreground">
+        {points.length} cluster{points.length === 1 ? "" : "s"} mapped so far
+      </p>
     </div>
   );
 }

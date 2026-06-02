@@ -25,6 +25,7 @@ export type ContactEntry = {
   name: string;
   phone?: string;
   area?: string;
+  brandPreference?: string;
 };
 
 // Kept as alias for back-compat.
@@ -85,13 +86,14 @@ export function getLocalCampaignSuggestions(clusterId: string): string[] {
 
 /* ─────────────────────────── action plan with intelligent links */
 
-export type ActionLinkKind = "popup-list" | "popup-text" | "deck";
+export type ActionLinkKind = "popup-list" | "popup-text" | "popup-contacts" | "deck";
 
 export type ActionLink = {
   label: string;
   kind: ActionLinkKind;
-  // popup-list: array of bullets; popup-text: single body; deck: filename + summary
+  // popup-list: array of bullets; popup-text: single body; popup-contacts: contact entries; deck: filename + summary
   items?: string[];
+  contacts?: ContactEntry[];
   body?: string;
   deckTitle?: string;
 };
@@ -126,28 +128,19 @@ function pamphletDeck(clusterId: string): ActionLink {
   };
 }
 
-function contractorList(clusterId: string, names: string[]): ActionLink {
-  const plural = prospectPlural(clusterId).toLowerCase();
+function contractorContacts(contacts: ContactEntry[]): ActionLink {
   return {
-    label: "Click to see the list of contractors",
-    kind: "popup-list",
-    items: names.length > 0
-      ? names
-      : [
-          `Sample contractor 1 — active in ${plural}`,
-          `Sample contractor 2 — active in ${plural}`,
-          `Sample contractor 3 — active in ${plural}`,
-        ],
+    label: "Click to see contractor details",
+    kind: "popup-contacts",
+    contacts,
   };
 }
 
-function communityList(clusterId: string, contacts: ContactEntry[]): ActionLink {
+function communityContactsLink(contacts: ContactEntry[]): ActionLink {
   return {
     label: "Click to see community touchpoints",
-    kind: "popup-list",
-    items: contacts.length > 0
-      ? contacts.map((c) => `${c.name || "Contact"}${c.phone ? ` · ${c.phone}` : ""}${c.area ? ` · ${c.area}` : ""}`)
-      : [`Identify one community touchpoint in ${clusterId}`],
+    kind: "popup-contacts",
+    contacts,
   };
 }
 
@@ -198,12 +191,10 @@ export function generateActionPlan(
   const steps: ActionStep[] = [];
 
   if (strategy === "BRAND") {
-    if (answers.runLocalCampaigns === "Y") {
-      const picks = answers.selectedCampaigns ?? [];
+    const picks = answers.selectedCampaigns ?? [];
+    if (picks.length > 0) {
       steps.push({
-        text: picks.length > 0
-          ? `Brief the local creative team on these campaigns: ${picks.join("; ")}.`
-          : `Brief the local creative team on a campaign for ${plural} in this area.`,
+        text: `Brief the local creative team on the selected local campaigns.`,
         link: campaignDeck(clusterId),
       });
       steps.push({ text: "Identify high-footfall hoarding sites and retailer counters for visibility." });
@@ -217,18 +208,18 @@ export function generateActionPlan(
   }
 
   if (strategy === "CONTRACTOR") {
-    if (answers.knowsContractors === "Y" && (answers.contractors ?? []).length > 0) {
-      const names = (answers.contractors ?? []).map((c) => c.name).filter(Boolean);
+    const contractors = answers.contractors ?? [];
+    if (contractors.length > 0) {
       steps.push({
-        text: `Re-engage the contractors you already know${names.length ? ` (${names.slice(0, 3).join(", ")}${names.length > 3 ? "…" : ""})` : ""}.`,
-        link: contractorList(clusterId, names),
+        text: `Re-engage your known contractors active in this cluster.`,
+        link: contractorContacts(contractors),
       });
       steps.push({ text: `Brief them on the JK proposition specifically for ${plural}.`, link: jkProposition(clusterId) });
       steps.push({ text: "Co-design pamphlets they can distribute to their site supervisors.", link: pamphletDeck(clusterId) });
       steps.push({ text: `Schedule joint visits to 3 priority ${plural} this month.` });
       steps.push({ text: "Track which contractor brings in the warmest leads." });
     } else {
-      steps.push({ text: `Map active contractors serving ${plural} in this cluster.`, link: contractorList(clusterId, []) });
+      steps.push({ text: `Map active contractors serving ${plural} in this cluster.` });
       steps.push({ text: "Pull a starter list from retailer references and field observation." });
       steps.push({ text: "Set up an introductory contractor meet with a clear margin / loyalty pitch.", link: eventDeck() });
       steps.push({ text: `Co-design pamphlets for ${plural} and distribute through the contractors.`, link: pamphletDeck(clusterId) });
@@ -237,15 +228,15 @@ export function generateActionPlan(
   }
 
   if (strategy === "OUTREACH") {
-    if (answers.hasCommunityTouchpoint === "Y") {
+    const community = answers.communityContacts ?? [];
+    if (community.length > 0) {
       steps.push({
-        text: `Leverage your existing community touchpoint to host an introduction with ${plural}.`,
-        link: communityList(clusterId, answers.communityContacts ?? []),
+        text: `Leverage your existing community touchpoints to host an introduction with ${plural}.`,
+        link: communityContactsLink(community),
       });
     } else {
       steps.push({
         text: `Identify one community touchpoint (RWA, association, school admin, dealer council) that can warm-introduce JK to ${plural}.`,
-        link: communityList(clusterId, []),
       });
     }
     if (answers.consideredContributionEvents === "Y") {
@@ -268,21 +259,16 @@ export function generateActionPlan(
   }
 
   if (strategy === "D2C") {
-    if (answers.wantsDirectReach === "Y") {
-      const channels = answers.d2cChannels ?? [];
-      steps.push({
-        text: channels.length > 0
-          ? `Activate these direct channels: ${channels.join(", ")}.`
-          : "Shortlist 2 direct channels to test (e.g. retailer counter activation + WhatsApp).",
-        link: channelMap(channels),
-      });
-      steps.push({ text: `Equip retailers serving ${plural} with collateral and demo material.`, link: retailerKit() });
-      steps.push({ text: "Run a 2-week walk-in / WhatsApp pilot and measure conversion." });
-      steps.push({ text: "Capture customer feedback and refine the pitch.", link: jkProposition(clusterId) });
-    } else {
-      steps.push({ text: `Map the direct purchase journey of a typical ${singular} customer.` });
-      steps.push({ text: "Identify the easiest channel to pilot first.", link: channelMap([]) });
-    }
+    const channels = answers.d2cChannels ?? [];
+    steps.push({
+      text: channels.length > 0
+        ? `Activate these direct channels: ${channels.join(", ")}.`
+        : `Shortlist 2 direct channels to test for ${singular} customers (e.g. retailer counter activation + WhatsApp).`,
+      link: channelMap(channels),
+    });
+    steps.push({ text: `Equip retailers serving ${plural} with collateral and demo material.`, link: retailerKit() });
+    steps.push({ text: "Run a 2-week walk-in / WhatsApp pilot and measure conversion." });
+    steps.push({ text: "Capture customer feedback and refine the pitch.", link: jkProposition(clusterId) });
   }
 
   return steps;

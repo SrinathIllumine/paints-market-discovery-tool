@@ -3,7 +3,7 @@ import { Map as MapIcon, ClipboardList, Lightbulb, HandHeart } from "lucide-reac
 import { cn } from "@/lib/utils";
 
 const items = [
-  { to: "/map", icon: MapIcon, label: "Cluster Potential", disabled: false },
+  { to: "/map", icon: MapIcon, label: "Market Potential", disabled: false },
   { to: "/plan", icon: ClipboardList, label: "Cluster Engagement", disabled: false },
     { to: "/sales-enablement", icon: Lightbulb, label: "Sales Enablers", disabled: true },
     { to: "/handhold", icon: HandHeart, label: "Ongoing Customer Relationship", disabled: true },
