@@ -7,8 +7,8 @@ import { HandHeart } from "lucide-react";
 export const Route = createFileRoute("/handhold")({
   head: () => ({
     meta: [
-      { title: "Handhold Customers" },
-      { name: "description", content: "Handhold the customers post-sales." },
+      { title: "Ongoing Customer Relationship" },
+      { name: "description", content: "Maintain customer relationship post-sales" },
     ],
   }),
   component: HandholdScreen,
@@ -20,9 +20,9 @@ function HandholdScreen() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="Handhold Customers"
-          title="Handhold Customers"
-          subtitle="Handhold the customers post-sales."
+          eyebrow="Ongoing Customer Relationship"
+          title="Ongoing Customer Relationship"
+          subtitle="Maintain customer relationship post-sales"
         />
       }
     >

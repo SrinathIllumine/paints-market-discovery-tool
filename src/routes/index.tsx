@@ -47,13 +47,13 @@ function IntroScreen() {
     {
       icon: Users,
       title: "Create Monthly Cluster Engagement Plan",
-      desc: "Select your cluster strategy, build engagement with the prospects to become an insider and build brand awareness.",
+      desc: "Select your cluster strategy, build engagement to create brand awareness in the market",
       to: "/plan",
       progress: planProgress,
     },
     {
       icon: Lightbulb,
-      title: "Sales Enablement",
+      title: "Sales Enablers",
       desc: "Get the enablers and best practices to follow during sales engagements.",
       to: "/sales-enablement",
       progress: null,
@@ -61,8 +61,8 @@ function IntroScreen() {
     },
     {
       icon: HandHeart,
-      title: "Handhold Customers",
-      desc: "Handhold the customers post-sales.",
+      title: "Ongoing Customer Relationship",
+      desc: "Maintain customer relationship post-sales",
       to: "/handhold",
       progress: null,
       disabled: true,

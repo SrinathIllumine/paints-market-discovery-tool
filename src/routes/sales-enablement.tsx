@@ -7,7 +7,7 @@ import { Lightbulb } from "lucide-react";
 export const Route = createFileRoute("/sales-enablement")({
   head: () => ({
     meta: [
-      { title: "Sales Enablement" },
+      { title: "Sales Enablers" },
       {
         name: "description",
         content: "Get the enablers and best practices to follow during sales engagements.",
@@ -23,8 +23,8 @@ function SalesEnablementScreen() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="Sales Enablement"
-          title="Sales Enablement"
+          eyebrow="Sales Enablers"
+          title="Sales Enablers"
           subtitle="Get the enablers and best practices to follow during sales engagements."
         />
       }
