@@ -144,9 +144,32 @@ function ClusterDetailScreen() {
     );
   }
 
-  const singularCap = prospectSingular(clusterId);
   const pluralCap = prospectPlural(clusterId);
   const totalRevenue = avgRevenue * prospectCount;
+
+  // Benchmarks across all clusters
+  const revenueBenchmark = useMemo(() => {
+    const all = CLUSTERS.map((c) => getRevenueProfile(c.id).avgRevenuePerProspect);
+    return all.reduce((a, b) => a + b, 0) / all.length;
+  }, []);
+  const cycleBenchmarkDays = useMemo(() => {
+    const all = CLUSTERS.map((c) => getCycle(c.id).days);
+    return all.reduce((a, b) => a + b, 0) / all.length;
+  }, []);
+  const cycleBenchmarkMonths = Math.round((cycleBenchmarkDays / 30) * 10) / 10;
+
+  // Static HML for revenue & ease (data-driven, not user-rated)
+  const revenueHML: HML = scoreToHML(scoreRevenue(profile.avgRevenuePerProspect));
+  const easeHML: HML = scoreToHML(scoreEaseOfSale(clusterId));
+  const accessHML: HML | null = accessRank ? (accessRank === "A" ? "H" : accessRank === "B" ? "M" : "L") : null;
+  const competitiveScore = scoreCompetitiveBrands(brandPresence);
+  const competitiveHML: HML | null = competitiveScore > 0 ? scoreToHML(competitiveScore) : null;
+
+  // Difficulty narrative for ease of sale
+  const difficultyLabel: string =
+    easeHML === "H" ? "Easy — shorter cycles than most clusters" :
+    easeHML === "M" ? "Moderate — comparable to typical clusters" :
+    "Hard — longer cycle with more approvals than average";
 
   const provisionalAssessment: ClusterAssessment = {
     accessAnswers: existingAssessment?.accessAnswers ?? [],
