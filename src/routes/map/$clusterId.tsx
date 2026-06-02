@@ -302,9 +302,9 @@ function ClusterDetailScreen() {
               <div className="mt-2 space-y-2">
                 {(
                   [
-                    { key: "A", label: "A — Already strong connects" },
-                    { key: "B", label: "B — Capable of building insidership but have to build" },
-                    { key: "C", label: "C — Cold cluster without any connects" },
+                    { key: "A", label: "A - I already have strong connects in this cluster" },
+                    { key: "B", label: "B - I have moderate connects in this cluster" },
+                    { key: "C", label: "C - I don't have any connects in this cluster" },
                   ] as { key: AccessRank; label: string }[]
                 ).map((opt) => (
                   <label
