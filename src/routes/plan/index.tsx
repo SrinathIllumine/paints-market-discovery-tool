@@ -504,7 +504,7 @@ function StrategyQuestions({
           />
         )}
         <YesNo
-          question="Have you thought of contribution events?"
+          question="Do you want to conduct contribution events?"
           value={answers.consideredContributionEvents}
           onChange={(v) => onChange({ consideredContributionEvents: v })}
         />
