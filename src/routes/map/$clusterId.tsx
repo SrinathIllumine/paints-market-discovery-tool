@@ -272,7 +272,7 @@ function ClusterDetailScreen() {
           <AccordionItem value="revenue" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="flex w-full items-center justify-between gap-3 pr-2">
-                <span className="font-display text-xl">Cluster Revenue Potential</span>
+                <span className="font-display text-xl">1)	Is the revenue potential high in the cluster?</span>
                 <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="Editable" />
               </span>
             </AccordionTrigger>
@@ -322,7 +322,7 @@ function ClusterDetailScreen() {
           {/* Access */}
           <AccordionItem value="access" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <span className="font-display text-xl">Cluster Access</span>
+              <span className="font-display text-xl">2)	Do you have access to this cluster?</span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
               <p className="text-sm font-semibold">Select your access level for this cluster</p>
@@ -361,7 +361,7 @@ function ClusterDetailScreen() {
           {/* Competitive */}
           <AccordionItem value="competitive" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <span className="font-display text-xl">Competitive Strength</span>
+              <span className="font-display text-xl">3) Is the competitive strength stopping us from entering the cluster?</span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
               <p className="mb-2 text-sm text-muted-foreground">
@@ -406,7 +406,7 @@ function ClusterDetailScreen() {
           <AccordionItem value="ease" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="flex w-full items-center justify-between gap-3 pr-2">
-                <span className="font-display text-xl">Ease of Sale</span>
+                <span className="font-display text-xl">4) Is the average cycle time supporting the ease of sale?</span>
                 <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="Editable" />
               </span>
             </AccordionTrigger>
@@ -456,10 +456,10 @@ function ClusterDetailScreen() {
               Quick read of where this cluster lands on each axis.
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <SummaryCell label="Revenue Potential" hml={scoreToHML(scores.revenue)} />
-              <SummaryCell label="Access" hml={scoreToHML(scores.access)} />
-              <SummaryCell label="Competitive Strength" hml={scoreToHML(scores.competitive)} />
-              <SummaryCell label="Ease of Sale" hml={easeFromCycle(cycleMonths, cycleEase)} />
+              <SummaryCell label="1)	Is the revenue potential high in the cluster?" hml={scoreToHML(scores.revenue)} />
+              <SummaryCell label="2)	Do you have access to this cluster?" hml={scoreToHML(scores.access)} />
+              <SummaryCell label="3) Is the competitive strength stopping us from entering the cluster?" hml={scoreToHML(scores.competitive)} />
+              <SummaryCell label="4) Is the average cycle time supporting the ease of sale?" hml={easeFromCycle(cycleMonths, cycleEase)} />
             </div>
           </section>
         )}
