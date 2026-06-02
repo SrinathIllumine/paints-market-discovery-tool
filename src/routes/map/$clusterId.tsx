@@ -303,28 +303,37 @@ function ClusterDetailScreen() {
               </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              <ul className="space-y-2 text-sm leading-relaxed">
-                <NarrativeBullet>
-                  This cluster has roughly <b>{prospectCount} {pluralCap.toLowerCase()}</b> with an average usable area of <b>{profile.sqftBand}</b>.
-                </NarrativeBullet>
-                <NarrativeBullet>
-                  Each {pluralCap.toLowerCase().replace(/s$/, "")} can typically deliver <b>{formatRupees(profile.avgRevenuePerProspect)}</b> in revenue.
-                </NarrativeBullet>
-                <NarrativeBullet>
-                  Total cluster revenue potential is <b className="text-critical">{formatRupees(totalRevenue)}</b> — a meaningful pool to anchor your monthly plan.
-                </NarrativeBullet>
-                <NarrativeBullet>
-                  Benchmark: avg cluster prospect across Panvel delivers <b>{formatRupees(revenueBenchmark)}</b>. This cluster sits{" "}
-                  <b className={cn(
-                    profile.avgRevenuePerProspect >= revenueBenchmark * 1.1 ? "text-green-700"
-                    : profile.avgRevenuePerProspect <= revenueBenchmark * 0.9 ? "text-red-700"
-                    : "text-orange-700",
-                  )}>
-                    {profile.avgRevenuePerProspect >= revenueBenchmark * 1.1 ? "above" :
-                     profile.avgRevenuePerProspect <= revenueBenchmark * 0.9 ? "below" : "around"}
-                  </b>{" "}the benchmark.
-                </NarrativeBullet>
-              </ul>
+              {(() => {
+                const singular = pluralCap.toLowerCase().replace(/s$/, "");
+                const benchmarkTotal = revenueBenchmark * prospectCount;
+                const ratio = profile.avgRevenuePerProspect / revenueBenchmark;
+                const position =
+                  ratio >= 1.1 ? { word: "above", cls: "text-green-700" } :
+                  ratio <= 0.9 ? { word: "below", cls: "text-red-700" } :
+                  { word: "around", cls: "text-orange-700" };
+                const sizeWord =
+                  ratio >= 1.1 ? "relatively higher" :
+                  ratio <= 0.9 ? "relatively lower" :
+                  "in line with";
+                const overallWord = HML_LABEL[revenueHML].toLowerCase();
+                return (
+                  <ul className="space-y-2 text-sm leading-relaxed">
+                    <NarrativeBullet>
+                      Total cluster revenue potential is <b className="text-critical">{formatRupees(totalRevenue)}</b>. The benchmark {singular} potential is <b>{formatRupees(benchmarkTotal)}</b>. So, this cluster sits{" "}
+                      <b className={position.cls}>{position.word}</b> the benchmark.
+                    </NarrativeBullet>
+                    <NarrativeBullet>
+                      There are <b>{prospectCount} {pluralCap.toLowerCase()}</b> present in this cluster with an average usable area of <b>{profile.sqftBand}</b>. This is <b>{sizeWord}</b> for a {singular} compared to the benchmark.
+                    </NarrativeBullet>
+                    <NarrativeBullet>
+                      Each {singular} can typically deliver <b>{formatRupees(profile.avgRevenuePerProspect)}</b> in revenue.
+                    </NarrativeBullet>
+                    <NarrativeBullet>
+                      Therefore, the overall revenue potential for this cluster is <b className="uppercase">{overallWord}</b>.
+                    </NarrativeBullet>
+                  </ul>
+                );
+              })()}
             </AccordionContent>
           </AccordionItem>
 
