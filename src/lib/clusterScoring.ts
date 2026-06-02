@@ -1,29 +1,42 @@
-// Cluster scoring "intelligence" — deterministic frontend lookups that simulate
-// what a backend model would compute. All scores are on a 1–10 scale; the
-// aggregate "Cluster Potential" is the simple mean of the four sub-scores
-// (equal 25% weight each), per the spec.
+// Cluster scoring — deterministic frontend lookups. All scores are 1–10 and
+// the aggregate is the simple mean of the four sub-scores (25% each).
 
 import type { Cluster } from "@/data/clusters";
 
 export type AccessRank = "A" | "B" | "C";
-
 export type YesNo = "Y" | "N";
+export type HML = "H" | "M" | "L";
+
+export const COMPETITIVE_BRANDS = [
+  "Akzo Nobel (Dulux)",
+  "Asian Paints",
+  "Berger Paints",
+  "Birla Opus",
+  "JK Maxx",
+] as const;
+
+export type CompetitiveBrand = (typeof COMPETITIVE_BRANDS)[number];
 
 export type ClusterAssessment = {
-  // Capability questions: ordered yes/no answers, aligned with getAccessQuestions().
+  // Kept for back-compat (no longer driven by UI)
   accessAnswers: YesNo[];
   accessRank: AccessRank | null;
-  // Competitive yes/no answers, aligned with getCompetitiveQuestions().
   competitiveAnswers: YesNo[];
+  // New: brand presence H/M/L
+  brandPresence?: Partial<Record<string, HML>>;
+  // Editable overrides
+  cycleMonths?: number;
+  cycleEase?: HML;
+  prospectCountOverride?: number;
+  avgRevenueOverride?: number;
+  revenueRating?: HML;
   completedAt: number;
 };
 
 /* ─────────────────────────────────────────── revenue profile */
 
 export type RevenueProfile = {
-  /** Average usable area for one prospect (e.g. "15k – 2L sq.ft"). */
   sqftBand: string;
-  /** Average revenue (₹) per prospect on a typical paint cycle. */
   avgRevenuePerProspect: number;
 };
 
@@ -69,15 +82,13 @@ export function formatRupees(n: number): string {
 /* ─────────────────────────────────────────── ease of sale */
 
 export type CycleProfile = {
-  /** Short human label, e.g. "≈ 2 months". */
   label: string;
-  /** Average cycle in days (used for scoring). */
   days: number;
-  /** One-line explanation. */
+  months: number;
   explanation: string;
 };
 
-const CYCLE: Record<string, CycleProfile> = {
+const CYCLE: Record<string, Omit<CycleProfile, "months">> = {
   "mid-apartments":   { label: "≈ 6 weeks",  days: 45,  explanation: "Society committees decide collectively, so a few site visits and quotes close it." },
   redevelopment:      { label: "≈ 3 months", days: 90,  explanation: "Builder + RWA approvals stretch the cycle but volumes are larger." },
   "gated-community":  { label: "≈ 4 months", days: 120, explanation: "Multi-stakeholder townships need facility-manager + builder sign-off." },
@@ -101,143 +112,17 @@ const CYCLE: Record<string, CycleProfile> = {
 };
 
 export function getCycle(clusterId: string): CycleProfile {
-  return CYCLE[clusterId] ?? { label: "Varies", days: 45, explanation: "Cycle depends on the specific prospect." };
+  const c = CYCLE[clusterId] ?? { label: "Varies", days: 45, explanation: "Cycle depends on the specific prospect." };
+  return { ...c, months: Math.max(0.5, Math.round((c.days / 30) * 10) / 10) };
 }
 
-/* ─────────────────────────────────────────── cluster-specific questions */
+/* ─────────────────────────────────────────── legacy capability questions (kept for back-compat with stored data) */
 
-export function getAccessQuestions(clusterId: string): string[] {
-  const map: Record<string, string[]> = {
-    schools: [
-      "Do you already have a connect with any school principals or trustees?",
-      "Do you know contractors who regularly take up school repaint jobs?",
-    ],
-    colleges: [
-      "Do you have a touchpoint with any campus admin or estate department?",
-      "Do you know AMC contractors working on college campuses?",
-    ],
-    "mid-apartments": [
-      "Do you have a touchpoint with society chairmen or secretaries?",
-      "Do you know painting contractors active in mid-sized societies?",
-    ],
-    redevelopment: [
-      "Do you have a connect with any redevelopment builders in the area?",
-      "Do you know contractors handling redevelopment finishing work?",
-    ],
-    "gated-community": [
-      "Do you have a connect with any RWA office-bearers or facility managers?",
-      "Do you know contractors empanelled with gated townships?",
-    ],
-    midc: [
-      "Do you have a touchpoint with any plant maintenance heads in the MIDC?",
-      "Do you know industrial coating contractors active in Taloja?",
-    ],
-    warehousing: [
-      "Do you have a connect with warehouse operators or 3PL companies?",
-      "Do you know PEB / industrial painting contractors in the area?",
-    ],
-    hospitals: [
-      "Do you have a touchpoint with any hospital admin or facility heads?",
-      "Do you know contractors working on hospital interiors?",
-    ],
-    restaurants: [
-      "Do you have a connect with restaurant owners or F&B fit-out designers?",
-      "Do you know contractors who do quick-turnaround interior repaints?",
-    ],
-    hotels: [
-      "Do you have a touchpoint with any hotel GM or maintenance head?",
-      "Do you know contractors empanelled for hospitality refurbishments?",
-    ],
-    "marriage-halls": [
-      "Do you have a connect with banquet owners or event-venue managers?",
-      "Do you know contractors active in banquet repaint work?",
-    ],
-    "paying-guest": [
-      "Do you have a touchpoint with any PG operator in the area?",
-      "Do you know painters who service PG / hostel turnover work?",
-    ],
-    religious: [
-      "Do you have a connect with temple / trust committee members?",
-      "Do you know contractors who take up religious-building repaints?",
-    ],
-    "auto-showrooms": [
-      "Do you have a touchpoint with dealer-principals of any showrooms?",
-      "Do you know contractors empanelled for OEM brand-livery refreshes?",
-    ],
-    "petrol-pumps": [
-      "Do you have a connect with petrol-pump dealers or OMC officials?",
-      "Do you know contractors handling canopy / forecourt repaints?",
-    ],
-    "bus-stand-market": [
-      "Do you have a connect with shop owners or the market association?",
-      "Do you know local painters who do shopfront refreshes?",
-    ],
-    "highway-dhabas": [
-      "Do you have a touchpoint with any highway dhaba or motel owners?",
-      "Do you know painters who handle highway-property repaints?",
-    ],
-    "clinics-nursing": [
-      "Do you have a touchpoint with any local clinic owners or doctors?",
-      "Do you know contractors handling clinic / nursing-home interiors?",
-    ],
-    jewellery: [
-      "Do you have a connect with jewellery showroom owners or AMC vendors?",
-      "Do you know contractors empanelled for luxury retail interiors?",
-    ],
-    "textile-garment": [
-      "Do you have a touchpoint with garment shop owners or the local market body?",
-      "Do you know painters who do retail interior refreshes between seasons?",
-    ],
-  };
-  return map[clusterId] ?? [
-    "Do you already have any direct touchpoints in this cluster?",
-    "Do you know contractors who service this cluster regularly?",
-  ];
+export function getAccessQuestions(_clusterId: string): string[] {
+  return [];
 }
-
-export function getCompetitiveQuestions(clusterId: string): string[] {
-  const map: Record<string, string[]> = {
-    schools: [
-      "Are most of the leading schools in this area already JK customers?",
-      "Do you have a school-specific product story that beats competitors?",
-      "Have you closed any school orders in this area in the last 12 months?",
-    ],
-    midc: [
-      "Do you have a clear product advantage for industrial coatings here?",
-      "Are the larger plants in this MIDC pocket already JK customers?",
-      "Have we historically been the preferred brand for industrial repaints here?",
-    ],
-    "mid-apartments": [
-      "Have we closed orders in the larger societies in this area recently?",
-      "Do you have a society-friendly product story that wins on durability?",
-      "Are JK painters / contractors the most active in this society pocket?",
-    ],
-    "gated-community": [
-      "Are any premium townships in this belt already JK customers?",
-      "Do you have a premium-finish story that suits gated communities?",
-      "Have we been recommended by any builder or facility manager here?",
-    ],
-    redevelopment: [
-      "Do you have a redevelopment-builder relationship in this area?",
-      "Have we executed any redevelopment handover paint jobs recently?",
-      "Is JK seen as the preferred premium brand for handover finishes here?",
-    ],
-    hospitals: [
-      "Do you have a hygienic / antimicrobial story tailored for hospitals?",
-      "Are any major hospitals in the area already JK customers?",
-      "Have you won AMC paint work in any healthcare facility recently?",
-    ],
-    warehousing: [
-      "Are the larger logistics parks in this area already JK customers?",
-      "Do you have a clear edge on durable industrial coatings here?",
-      "Have we recently executed any large warehouse repaints in the area?",
-    ],
-  };
-  return map[clusterId] ?? [
-    "Is this a cluster where we have clear product advantages?",
-    "Have we traditionally been a leader in this cluster?",
-    "Are most of the top prospects in this cluster already our customers?",
-  ];
+export function getCompetitiveQuestions(_clusterId: string): string[] {
+  return [];
 }
 
 /* ─────────────────────────────────────────── scoring */
@@ -257,18 +142,32 @@ export function scoreAccess(rank: AccessRank | null): number {
   return 0;
 }
 
-export function scoreCompetitive(yes: number, total: number): number {
-  if (total === 0) return 0;
-  const r = yes / total;
-  if (r >= 0.85) return 10;
-  if (r >= 0.6) return 8;
-  if (r >= 0.4) return 6;
-  if (r >= 0.2) return 4;
-  return 2;
+const HML_SCORE: Record<HML, number> = { H: 10, M: 6, L: 2 };
+
+export function scoreFromHML(v: HML | undefined): number {
+  return v ? HML_SCORE[v] : 0;
 }
 
-export function scoreEaseOfSale(clusterId: string): number {
-  const days = getCycle(clusterId).days;
+/** Brand-presence competitive score.
+ * - For competitors (non-JK): Low presence = strong for JK → L=10, M=6, H=2.
+ * - For JK Maxx: High presence = strong for JK → H=10, M=6, L=2.
+ * Returns 0 if nothing rated.
+ */
+export function scoreCompetitiveBrands(presence: Partial<Record<string, HML>> | undefined): number {
+  if (!presence) return 0;
+  const vals: number[] = [];
+  for (const brand of COMPETITIVE_BRANDS) {
+    const v = presence[brand];
+    if (!v) continue;
+    if (brand === "JK Maxx") vals.push(HML_SCORE[v]);
+    else vals.push(({ L: 10, M: 6, H: 2 } as const)[v]);
+  }
+  if (vals.length === 0) return 0;
+  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+}
+
+export function scoreEaseOfSale(clusterId: string, cycleMonthsOverride?: number): number {
+  const days = cycleMonthsOverride !== undefined ? cycleMonthsOverride * 30 : getCycle(clusterId).days;
   if (days <= 14) return 10;
   if (days <= 30) return 8;
   if (days <= 60) return 6;
@@ -282,7 +181,6 @@ export type ClusterScores = {
   access: number;
   competitive: number;
   ease: number;
-  /** Mean of the four sub-scores, 1 dp. */
   aggregate: number;
 };
 
@@ -293,11 +191,20 @@ export function computeClusterScores(
 ): ClusterScores {
   const profile = getRevenueProfile(cluster.id);
   void prospectCount;
-  const revenue = scoreRevenue(profile.avgRevenuePerProspect);
+  const avg = assessment.avgRevenueOverride ?? profile.avgRevenuePerProspect;
+  const revenue = assessment.revenueRating ? scoreFromHML(assessment.revenueRating) : scoreRevenue(avg);
   const access = scoreAccess(assessment.accessRank);
-  const compYes = assessment.competitiveAnswers.filter((a) => a === "Y").length;
-  const competitive = scoreCompetitive(compYes, assessment.competitiveAnswers.length);
-  const ease = scoreEaseOfSale(cluster.id);
+  const competitive = scoreCompetitiveBrands(assessment.brandPresence);
+  const ease = assessment.cycleEase ? scoreFromHML(assessment.cycleEase) : scoreEaseOfSale(cluster.id, assessment.cycleMonths);
   const aggregate = Number(((revenue + access + competitive + ease) / 4).toFixed(1));
   return { revenue, access, competitive, ease, aggregate };
 }
+
+/** Convert a numeric 0–10 score to H/M/L. */
+export function scoreToHML(score: number): HML {
+  if (score >= 7) return "H";
+  if (score >= 4) return "M";
+  return "L";
+}
+
+export const HML_LABEL: Record<HML, string> = { H: "High", M: "Medium", L: "Low" };
