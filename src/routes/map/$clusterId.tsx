@@ -325,7 +325,7 @@ function ClusterDetailScreen() {
               <span className="font-display text-xl">Cluster Access</span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              <p className="text-sm font-semibold">Access ranking</p>
+              <p className="text-sm font-semibold">Select your access level for this cluster</p>
               <div className="mt-2 space-y-2">
                 {(
                   [
