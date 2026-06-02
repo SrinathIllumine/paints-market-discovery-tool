@@ -488,7 +488,7 @@ function ClusterDetailScreen() {
 
 /** Ease label inverse of cycle time: low cycle ⇒ high ease. Honour user H/M/L if set. */
 function easeFromCycle(months: number, override: HML | undefined): HML {
-  if (override) return override;
+  if (override) return cycleTimeToEaseHML(override);
   if (months <= 1) return "H";
   if (months <= 3) return "M";
   return "L";
