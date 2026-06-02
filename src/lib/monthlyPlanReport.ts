@@ -27,12 +27,19 @@ function normalisePdfText(text: string): string {
     .replace(/…/g, "...");
 }
 
+function slugify(text: string): string {
+  return normalisePdfText(text)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "resource";
+}
+
 function actionLinkReference(link: ActionLink): string {
   if (link.kind === "deck") {
     const filename = link.deckTitle ?? "JK-placeholder-deck.pptx";
-    return `${link.label}: https://example.com/${filename}`;
+    return `${link.label}: https://example.com/decks/${filename}`;
   }
-  return link.label;
+  return `${link.label}: https://example.com/resources/${slugify(link.label)}`;
 }
 
 export function generateMonthlyEngagementPlanPdf({
