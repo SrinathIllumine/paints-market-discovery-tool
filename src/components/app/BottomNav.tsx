@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 const items = [
   { to: "/map", icon: MapIcon, label: "Cluster Potential", disabled: false },
   { to: "/plan", icon: ClipboardList, label: "Cluster Engagement", disabled: false },
-  { to: "/sales-enablement", icon: Lightbulb, label: "Sales Enablement", disabled: true },
-  { to: "/handhold", icon: HandHeart, label: "Handhold", disabled: true },
+    { to: "/sales-enablement", icon: Lightbulb, label: "Sales Enablers", disabled: true },
+    { to: "/handhold", icon: HandHeart, label: "Ongoing Customer Relationship", disabled: true },
 ] as const;
 
 export function BottomNav() {
