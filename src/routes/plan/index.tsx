@@ -350,7 +350,7 @@ function ContactList({
     <div className="space-y-2">
       {contacts.map((ct, i) => (
         <div key={ct.id} className="flex items-start gap-2 rounded-md border border-border bg-card p-2">
-          <div className="grid flex-1 gap-1.5 sm:grid-cols-3">
+          <div className="grid flex-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
             <input
               placeholder="Name"
               value={ct.name}
@@ -377,6 +377,16 @@ function ContactList({
               onChange={(e) => {
                 const next = [...contacts];
                 next[i] = { ...ct, area: e.target.value };
+                onChange(next);
+              }}
+              className="rounded border border-border bg-background px-2 py-1 text-xs"
+            />
+            <input
+              placeholder="Brand Preference"
+              value={ct.brandPreference ?? ""}
+              onChange={(e) => {
+                const next = [...contacts];
+                next[i] = { ...ct, brandPreference: e.target.value };
                 onChange(next);
               }}
               className="rounded border border-border bg-background px-2 py-1 text-xs"
