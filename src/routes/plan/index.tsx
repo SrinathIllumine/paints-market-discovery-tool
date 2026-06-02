@@ -677,6 +677,24 @@ function ActionStepView({
           {openLink?.kind === "popup-text" && (
             <p className="whitespace-pre-line text-sm leading-relaxed">{openLink.body}</p>
           )}
+          {openLink?.kind === "popup-contacts" && (
+            <div className="space-y-2">
+              {(openLink.contacts ?? []).length === 0 ? (
+                <p className="text-sm text-muted-foreground">No contacts added yet.</p>
+              ) : (
+                (openLink.contacts ?? []).map((c, i) => (
+                  <div key={c.id ?? i} className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
+                    <p className="font-semibold">{c.name || "Unnamed contact"}</p>
+                    <dl className="mt-1 grid grid-cols-[110px_1fr] gap-y-1 text-xs">
+                      {c.phone && (<><dt className="text-muted-foreground">Phone</dt><dd>{c.phone}</dd></>)}
+                      {c.area && (<><dt className="text-muted-foreground">Area</dt><dd>{c.area}</dd></>)}
+                      {c.brandPreference && (<><dt className="text-muted-foreground">Brand Preference</dt><dd>{c.brandPreference}</dd></>)}
+                    </dl>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
           {openLink?.kind === "deck" && (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">{openLink.body}</p>
