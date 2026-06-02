@@ -16,6 +16,25 @@ type Args = {
   answersByCluster: Record<string, StrategyAnswers>;
 };
 
+function normalisePdfText(text: string): string {
+  return text
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2013\u2014]/g, "-")
+    .replace(/→/g, "-")
+    .replace(/•/g, "-")
+    .replace(/·/g, "-")
+    .replace(/…/g, "...");
+}
+
+function actionLinkReference(link: ActionLink): string {
+  if (link.kind === "deck") {
+    const filename = link.deckTitle ?? "JK-placeholder-deck.pptx";
+    return `${link.label}: https://example.com/${filename}`;
+  }
+  return link.label;
+}
+
 export function generateMonthlyEngagementPlanPdf({
   focusClusterIds,
   strategyByCluster,
@@ -32,7 +51,7 @@ export function generateMonthlyEngagementPlanPdf({
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("Monthly Cluster Engagement Plan — June 2026", margin, 35);
+  doc.text("Monthly Cluster Engagement Plan - June 2026", margin, 35);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
