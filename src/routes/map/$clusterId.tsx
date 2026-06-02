@@ -456,8 +456,8 @@ function ClusterDetailScreen() {
               Quick read of where this cluster lands on each axis.
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <SummaryCell label="Revenue Potential" hml={scoreToHML(scores.revenue)} />
-              <SummaryCell label="Access" hml={scoreToHML(scores.access)} />
+              <SummaryCell label="1)	Is the revenue potential high in the cluster?" hml={scoreToHML(scores.revenue)} />
+              <SummaryCell label="2)	Do you have access to this cluster?" hml={scoreToHML(scores.access)} />
               <SummaryCell label="3) Is the competitive strength stopping us from entering the cluster?" hml={scoreToHML(scores.competitive)} />
               <SummaryCell label="4) Is the average cycle time supporting the ease of sale?" hml={easeFromCycle(cycleMonths, cycleEase)} />
             </div>
