@@ -214,3 +214,49 @@ export function scoreToHML(score: number): HML {
 }
 
 export const HML_LABEL: Record<HML, string> = { H: "High", M: "Medium", L: "Low" };
+
+/* ─────────────────────────────────────────── cluster intelligence (backend signals) */
+
+export type ClusterIntel = {
+  revenueHML: HML;
+  competitiveHML: HML;
+  easeHML: HML;
+  contractorCount: number;
+  jkPresenceCount: number;
+  totalProspectsObserved: number;
+  leadingCompetitor: string;
+  jkPenetrationLabel: string; // e.g. "moderate", "low", "strong"
+};
+
+const INTEL: Partial<Record<string, ClusterIntel>> = {
+  schools: {
+    revenueHML: "H",
+    competitiveHML: "M",
+    easeHML: "M",
+    contractorCount: 6,
+    jkPresenceCount: 6,
+    totalProspectsObserved: 60,
+    leadingCompetitor: "Asian Paints",
+    jkPenetrationLabel: "moderate",
+  },
+};
+
+export function getClusterIntel(clusterId: string, fallbackProspectCount: number): ClusterIntel {
+  const seeded = INTEL[clusterId];
+  if (seeded) return seeded;
+  // Derive a reasonable default from existing scoring tables
+  const profile = getRevenueProfile(clusterId);
+  const revenueHML = scoreToHML(scoreRevenue(profile.avgRevenuePerProspect));
+  const easeHML = scoreToHML(scoreEaseOfSale(clusterId));
+  const jk = Math.max(2, Math.round(fallbackProspectCount * 0.1));
+  return {
+    revenueHML,
+    competitiveHML: "M",
+    easeHML,
+    contractorCount: Math.max(3, Math.round(fallbackProspectCount * 0.12)),
+    jkPresenceCount: jk,
+    totalProspectsObserved: fallbackProspectCount,
+    leadingCompetitor: "Asian Paints",
+    jkPenetrationLabel: "moderate",
+  };
+}
