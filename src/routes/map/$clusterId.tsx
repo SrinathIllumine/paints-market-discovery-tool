@@ -292,62 +292,49 @@ function ClusterDetailScreen() {
         </section>
 
         {/* ──────────────── Cluster scoring sub-sections ──────────────── */}
+        <h2 className="px-1 pt-1 font-display text-2xl">Map the Cluster Potential</h2>
         <Accordion type="single" collapsible defaultValue="revenue" className="space-y-3">
           {/* Revenue */}
           <AccordionItem value="revenue" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="flex w-full items-center justify-between gap-3 pr-2">
                 <span className="font-display text-xl">1)	Is the revenue potential high in the cluster?</span>
-                <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="Editable" />
+                <HMLBadge hml={revenueHML} />
               </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <EditableTile
-                  label={`${pluralCap} in cluster`}
-                  value={prospectCount}
-                  onChange={(n) => {
-                    hideSummaryOnEdit();
-                    setProspectCount(n);
-                  }}
-                  type="int"
-                />
-                <EditableTile
-                  label={`Avg. revenue / ${singularCap.toLowerCase()}`}
-                  value={avgRevenue}
-                  onChange={(n) => {
-                    hideSummaryOnEdit();
-                    setAvgRevenue(n);
-                  }}
-                  type="rupees"
-                  formatted={formatRupees(avgRevenue)}
-                />
-                <Tile label="Avg. usable area" value={profile.sqftBand} subtle />
-                <Tile label="Total cluster revenue potential" value={formatRupees(totalRevenue)} highlight />
-              </div>
-              <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
-                {cluster.potentialReasons.slice(0, 2).map((r) => (
-                  <li key={r} className="flex gap-2">
-                    <span className="text-critical">•</span>
-                    <span>{r}</span>
-                  </li>
-                ))}
+              <ul className="space-y-2 text-sm leading-relaxed">
+                <NarrativeBullet>
+                  This cluster has roughly <b>{prospectCount} {pluralCap.toLowerCase()}</b> with an average usable area of <b>{profile.sqftBand}</b>.
+                </NarrativeBullet>
+                <NarrativeBullet>
+                  Each {pluralCap.toLowerCase().replace(/s$/, "")} can typically deliver <b>{formatRupees(profile.avgRevenuePerProspect)}</b> in revenue.
+                </NarrativeBullet>
+                <NarrativeBullet>
+                  Total cluster revenue potential is <b className="text-critical">{formatRupees(totalRevenue)}</b> — a meaningful pool to anchor your monthly plan.
+                </NarrativeBullet>
+                <NarrativeBullet>
+                  Benchmark: avg cluster prospect across Panvel delivers <b>{formatRupees(revenueBenchmark)}</b>. This cluster sits{" "}
+                  <b className={cn(
+                    profile.avgRevenuePerProspect >= revenueBenchmark * 1.1 ? "text-green-700"
+                    : profile.avgRevenuePerProspect <= revenueBenchmark * 0.9 ? "text-red-700"
+                    : "text-orange-700",
+                  )}>
+                    {profile.avgRevenuePerProspect >= revenueBenchmark * 1.1 ? "above" :
+                     profile.avgRevenuePerProspect <= revenueBenchmark * 0.9 ? "below" : "around"}
+                  </b>{" "}the benchmark.
+                </NarrativeBullet>
               </ul>
-              <HMLPicker
-                label="What do you think about this cluster's revenue potential?"
-                value={revenueRating}
-                onChange={(v) => {
-                  hideSummaryOnEdit();
-                  setRevenueRating(v);
-                }}
-              />
             </AccordionContent>
           </AccordionItem>
 
           {/* Access */}
           <AccordionItem value="access" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <span className="font-display text-xl">2)	Do you have access to this cluster?</span>
+              <span className="flex w-full items-center justify-between gap-3 pr-2">
+                <span className="font-display text-xl">2)	Do you have access to this cluster?</span>
+                <HMLBadge hml={accessHML} />
+              </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
               <p className="text-sm font-semibold">Select your access level for this cluster</p>
@@ -386,7 +373,10 @@ function ClusterDetailScreen() {
           {/* Competitive */}
           <AccordionItem value="competitive" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <span className="font-display text-xl">3) Is the competitive strength stopping us from entering the cluster?</span>
+              <span className="flex w-full items-center justify-between gap-3 pr-2">
+                <span className="font-display text-xl">3) Is the competitive strength stopping us from entering the cluster?</span>
+                <HMLBadge hml={competitiveHML} />
+              </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
               <p className="mb-2 text-sm text-muted-foreground">
@@ -432,36 +422,30 @@ function ClusterDetailScreen() {
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="flex w-full items-center justify-between gap-3 pr-2">
                 <span className="font-display text-xl">4) Is the average cycle time supporting the ease of sale?</span>
-                <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="Editable" />
+                <HMLBadge hml={easeHML} />
               </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              <div className="rounded-xl border border-border bg-muted/30 p-3">
-                <label className="text-xs uppercase tracking-wider text-muted-foreground">Avg. cycle time (months)</label>
-                <div className="mt-1 flex items-baseline gap-2">
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0.5"
-                    value={cycleMonths}
-                    onChange={(e) => {
-                      hideSummaryOnEdit();
-                      setCycleMonths(Number(e.target.value) || 0);
-                    }}
-                    className="w-24 rounded-md border border-border bg-background px-2 py-1 font-display text-xl"
-                  />
-                  <span className="text-sm text-muted-foreground">months</span>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">{cycle.explanation}</p>
-              </div>
-              <HMLPicker
-                label="What do you think about the average cycle time for this cluster?"
-                value={cycleEase}
-                onChange={(v) => {
-                  hideSummaryOnEdit();
-                  setCycleEase(v);
-                }}
-              />
+              <ul className="space-y-2 text-sm leading-relaxed">
+                <NarrativeBullet>
+                  Average sales cycle in this cluster is <b>{cycle.label}</b> (~{cycle.months} months).
+                </NarrativeBullet>
+                <NarrativeBullet>{cycle.explanation}</NarrativeBullet>
+                <NarrativeBullet>
+                  Benchmark: typical Panvel cluster closes in ~<b>{cycleBenchmarkMonths} months</b>. This cluster runs{" "}
+                  <b className={cn(
+                    cycle.days <= cycleBenchmarkDays * 0.9 ? "text-green-700"
+                    : cycle.days >= cycleBenchmarkDays * 1.1 ? "text-red-700"
+                    : "text-orange-700",
+                  )}>
+                    {cycle.days <= cycleBenchmarkDays * 0.9 ? "faster than" :
+                     cycle.days >= cycleBenchmarkDays * 1.1 ? "slower than" : "around"}
+                  </b>{" "}the benchmark.
+                </NarrativeBullet>
+                <NarrativeBullet>
+                  Difficulty: <b>{difficultyLabel}</b>.
+                </NarrativeBullet>
+              </ul>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
@@ -475,18 +459,40 @@ function ClusterDetailScreen() {
         </Button>
 
         {showSummary && (
-          <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <h2 className="font-display text-xl">Cluster Potential Summary</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Quick read of where this cluster lands on each axis.
-            </p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <SummaryCell label="1)	Is the revenue potential high in the cluster?" hml={scoreToHML(scores.revenue)} />
-              <SummaryCell label="2)	Do you have access to this cluster?" hml={scoreToHML(scores.access)} />
-              <SummaryCell label="3) Is the competitive strength stopping us from entering the cluster?" hml={scoreToHML(scores.competitive)} />
-              <SummaryCell label="4) Is the average cycle time supporting the ease of sale?" hml={easeFromCycle(cycleMonths, cycleEase)} />
-            </div>
-          </section>
+          <>
+            <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <h2 className="font-display text-xl">Total Cluster Mapped</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Snapshot across all clusters — this cluster is highlighted.
+              </p>
+              <ClusterSnapshotMatrix highlightId={clusterId} />
+            </section>
+
+            <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="font-display text-xl leading-tight">{cluster.name}</h2>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Cluster Potential Score
+                  </p>
+                </div>
+                <span className={cn(
+                  "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider",
+                  scores.aggregate > 7 ? "bg-green-100 text-green-800"
+                  : scores.aggregate >= 5 ? "bg-orange-100 text-orange-800"
+                  : "bg-red-100 text-red-800",
+                )}>
+                  {scores.aggregate} / 10
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <ScoreTile label="Revenue" value={scores.revenue} />
+                <ScoreTile label="Access" value={scores.access} />
+                <ScoreTile label="Competitive" value={scores.competitive} />
+                <ScoreTile label="Ease of sale" value={scores.ease} />
+              </div>
+            </section>
+          </>
         )}
       </div>
 
