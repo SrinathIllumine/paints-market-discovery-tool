@@ -355,16 +355,16 @@ function ContactList({
   return (
 
     <div className="space-y-2">
-      {contacts.map((ct, i) => (
+      {display.map((ct, i) => (
         <div key={ct.id} className="flex items-start gap-2 rounded-md border border-border bg-card p-2">
           <div className="grid flex-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
             <input
               placeholder="Name"
               value={ct.name}
               onChange={(e) => {
-                const next = [...contacts];
+                const next = [...display];
                 next[i] = { ...ct, name: e.target.value };
-                onChange(next);
+                emit(next);
               }}
               className="rounded border border-border bg-background px-2 py-1 text-xs"
             />
@@ -372,9 +372,9 @@ function ContactList({
               placeholder="Phone"
               value={ct.phone ?? ""}
               onChange={(e) => {
-                const next = [...contacts];
+                const next = [...display];
                 next[i] = { ...ct, phone: e.target.value };
-                onChange(next);
+                emit(next);
               }}
               className="rounded border border-border bg-background px-2 py-1 text-xs"
             />
@@ -382,9 +382,9 @@ function ContactList({
               placeholder="Area"
               value={ct.area ?? ""}
               onChange={(e) => {
-                const next = [...contacts];
+                const next = [...display];
                 next[i] = { ...ct, area: e.target.value };
-                onChange(next);
+                emit(next);
               }}
               className="rounded border border-border bg-background px-2 py-1 text-xs"
             />
@@ -392,16 +392,16 @@ function ContactList({
               placeholder="Brand Preference"
               value={ct.brandPreference ?? ""}
               onChange={(e) => {
-                const next = [...contacts];
+                const next = [...display];
                 next[i] = { ...ct, brandPreference: e.target.value };
-                onChange(next);
+                emit(next);
               }}
               className="rounded border border-border bg-background px-2 py-1 text-xs"
             />
           </div>
           <button
             type="button"
-            onClick={() => onChange(contacts.filter((_, j) => j !== i))}
+            onClick={() => emit(display.filter((_, j) => j !== i))}
             className="rounded p-1 text-muted-foreground hover:bg-muted"
             aria-label="Remove contact"
           >
@@ -419,7 +419,7 @@ function ContactList({
             id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
             name: "",
           };
-          onChange([...contacts, newCt]);
+          emit([...display, newCt]);
         }}
       >
         <Plus className="h-3.5 w-3.5" /> {addLabel}
@@ -427,6 +427,7 @@ function ContactList({
     </div>
   );
 }
+
 
 function StrategyQuestions({
   clusterId,
