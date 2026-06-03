@@ -446,7 +446,7 @@ function StrategyQuestions({
     return (
       <div className="rounded-md border border-border bg-card p-2">
         <p className="mb-1.5 uppercase tracking-wider text-muted-foreground text-xs">
-          Which brand awareness strategy would you like to do?
+          Which brand awareness strategies would you like to do?
         </p>
         <div className="space-y-1">
           {suggestions.map((s) => {
