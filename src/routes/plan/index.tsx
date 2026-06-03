@@ -437,7 +437,7 @@ function StrategyQuestions({
     const selected = answers.selectedCampaigns ?? [];
     return (
       <div className="rounded-md border border-border bg-card p-2">
-        <p className="mb-1.5 uppercase tracking-wider text-muted-foreground text-sm">
+        <p className="mb-1.5 uppercase tracking-wider text-muted-foreground text-xs">
           Which brand awareness strategy would you like to do?
         </p>
         <div className="space-y-1">
@@ -507,7 +507,7 @@ function StrategyQuestions({
         />
         {answers.consideredContributionEvents === "Y" && allTopics.length > 0 && (
           <div className="rounded-md border border-border bg-card p-2">
-            <p className="mb-1.5 uppercase tracking-wider text-muted-foreground text-sm">
+            <p className="mb-1.5 uppercase tracking-wider text-muted-foreground text-xs">
               Suggested contribution events
             </p>
             <div className="space-y-1">
@@ -542,7 +542,7 @@ function StrategyQuestions({
   const channels = answers.d2cChannels ?? [];
   return (
     <div className="rounded-md border border-border bg-card p-2">
-      <p className="mb-1.5 uppercase tracking-wider text-muted-foreground text-sm">Pick your choice of direct channels strategy</p>
+      <p className="mb-1.5 uppercase tracking-wider text-muted-foreground text-xs">Pick your choice of direct channels strategy</p>
       <div className="space-y-1">
         {D2C_CHANNELS.map((ch) => {
           const on = channels.includes(ch);
