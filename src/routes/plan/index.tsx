@@ -347,7 +347,13 @@ function ContactList({
   onChange: (next: ContactEntry[]) => void;
   addLabel: string;
 }) {
+  // Always show at least one input row by default so DG can start typing immediately.
+  const display = contacts.length > 0
+    ? contacts
+    : [{ id: `c-${Date.now()}-seed`, name: "" } as ContactEntry];
+  const emit = (next: ContactEntry[]) => onChange(next);
   return (
+
     <div className="space-y-2">
       {contacts.map((ct, i) => (
         <div key={ct.id} className="flex items-start gap-2 rounded-md border border-border bg-card p-2">
