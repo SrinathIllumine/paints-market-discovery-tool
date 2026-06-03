@@ -202,12 +202,76 @@ export function computeClusterScores(
   void prospectCount;
   const avg = assessment.avgRevenueOverride ?? profile.avgRevenuePerProspect;
   const revenue = assessment.revenueRating ? scoreFromHML(assessment.revenueRating) : scoreRevenue(avg);
-  const access = scoreAccess(assessment.accessRank);
+  // Access from new 3-question form if present; else from legacy rank
+  const access = assessment.accessAnswers3 && assessment.accessAnswers3.some((a) => a !== undefined)
+    ? scoreAccessFromAnswers(assessment.accessAnswers3)
+    : scoreAccess(assessment.accessRank);
   const competitive = scoreCompetitiveBrands(assessment.brandPresence);
   const ease = assessment.cycleEase ? scoreFromHML(cycleTimeToEaseHML(assessment.cycleEase)) : scoreEaseOfSale(cluster.id, assessment.cycleMonths);
-  const aggregate = Number(((revenue + access + competitive + ease) / 4).toFixed(1));
+  // Overall aggregate uses ONLY Revenue + Access
+  const aggregate = Number(((revenue + access) / 2).toFixed(1));
   return { revenue, access, competitive, ease, aggregate };
 }
+
+export function scoreAccessFromAnswers(answers: (YesNo | undefined)[]): number {
+  const yes = answers.filter((a) => a === "Y").length;
+  return [2, 4, 7, 10][yes] ?? 2;
+}
+
+/* ─────────────────────────────────────────── access insights & contractors */
+
+export type DominantContractor = { name: string; phone: string; area: string; brandPreference: string };
+
+const ACCESS_INSIGHTS: Partial<Record<string, string[]>> = {
+  schools: [
+    "JK has unique products for specific applications in schools such as heat reduction, anti-fungal hygienic coatings, and weather-resilient exterior protection.",
+    "Sales cycles for schools are generally moderate to high, with an average sales cycle of 2–3 months.",
+    "Repaint windows are tied to vacations; trustee approvals add lead time.",
+  ],
+  hospitals: [
+    "JK offers antimicrobial, washable finishes ideal for healthcare environments.",
+    "Hospital sales cycles run ~2 months, governed by trust / admin approvals.",
+    "Phased ward shutdowns slow execution, so planning around low-occupancy windows is critical.",
+  ],
+  midc: [
+    "JK has industrial-grade durable coatings suited to factory shopfloors and tank farms.",
+    "Sales cycles are long (~6 months), tied to procurement tenders and shutdown windows.",
+    "Decisions involve plant heads + procurement; relationship building is key.",
+  ],
+};
+
+export function getAccessInsights(clusterId: string): string[] {
+  const seeded = ACCESS_INSIGHTS[clusterId];
+  if (seeded) return seeded;
+  const cycle = getCycle(clusterId);
+  return [
+    "JK has tailored product propositions well-suited to this cluster's needs.",
+    `Average sales cycle is ${cycle.label} (~${cycle.months} months).`,
+    cycle.explanation,
+  ];
+}
+
+const CONTRACTOR_POOL: DominantContractor[] = [
+  { name: "Ramesh Patil",  phone: "+91 98201 12345", area: "Old Panvel", brandPreference: "Asian Paints" },
+  { name: "Suresh Jadhav", phone: "+91 98202 33445", area: "Kharghar",   brandPreference: "Berger Paints" },
+  { name: "Imran Shaikh",  phone: "+91 98203 55667", area: "Kamothe",    brandPreference: "Dulux" },
+  { name: "Vikas Sawant",  phone: "+91 98204 77889", area: "Taloja",     brandPreference: "Birla Opus" },
+];
+
+export function getDominantContractors(_clusterId: string): DominantContractor[] {
+  return CONTRACTOR_POOL;
+}
+
+export type AccessQuestion = { id: string; question: string; kind?: "contractors" };
+
+export function getAccessQuestions3(_clusterId: string): AccessQuestion[] {
+  return [
+    { id: "brand-known",  question: "Is the JK brand well-known in this cluster?" },
+    { id: "contractors",  question: "There are 3–4 contractors dominating this cluster. Do you have a close relation with them?", kind: "contractors" },
+    { id: "stakeholders", question: "Do you have access to key stakeholders who can introduce you into the cluster?" },
+  ];
+}
+
 
 /** Convert a numeric 0–10 score to H/M/L. */
 export function scoreToHML(score: number): HML {
