@@ -297,39 +297,40 @@ function ConnectStep({
               {CONNECT_STRATEGY_OPTIONS.map((opt) => {
                 const active = selected === opt.key;
                 return (
-                  <label
-                    key={opt.key}
-                    className={cn(
-                      "flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm",
-                      active ? "border-critical bg-critical/5" : "border-border bg-card",
+                  <div key={opt.key}>
+                    <label
+                      className={cn(
+                        "flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm",
+                        active ? "border-critical bg-critical/5" : "border-border bg-card",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name={`strategy-${c.id}`}
+                        checked={active}
+                        onChange={() => onSelectStrategy(c.id, opt.key)}
+                        className="mt-0.5 h-4 w-4 accent-critical"
+                      />
+                      <span className="leading-snug">
+                        <span className="font-semibold">{opt.label}</span>
+                        <span className="block text-xs text-muted-foreground">{opt.description}</span>
+                      </span>
+                    </label>
+                    {active && (
+                      <div className="mt-2 ml-6 rounded-lg border border-border bg-card p-3">
+                        <StrategyQuestions
+                          clusterId={c.id}
+                          strategy={opt.key}
+                          answers={answers}
+                          onChange={(patch) => onSetAnswers(c.id, patch)}
+                        />
+                      </div>
                     )}
-                  >
-                    <input
-                      type="radio"
-                      name={`strategy-${c.id}`}
-                      checked={active}
-                      onChange={() => onSelectStrategy(c.id, opt.key)}
-                      className="mt-0.5 h-4 w-4 accent-critical"
-                    />
-                    <span className="leading-snug">
-                      <span className="font-semibold">{opt.label}</span>
-                      <span className="block text-xs text-muted-foreground">{opt.description}</span>
-                    </span>
-                  </label>
+                  </div>
                 );
               })}
             </div>
 
-            {selected && (
-              <div className="mt-3 border-t border-border pt-3">
-                <StrategyQuestions
-                  clusterId={c.id}
-                  strategy={selected}
-                  answers={answers}
-                  onChange={(patch) => onSetAnswers(c.id, patch)}
-                />
-              </div>
-            )}
           </div>
         );
       })}
