@@ -297,39 +297,40 @@ function ConnectStep({
               {CONNECT_STRATEGY_OPTIONS.map((opt) => {
                 const active = selected === opt.key;
                 return (
-                  <label
-                    key={opt.key}
-                    className={cn(
-                      "flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm",
-                      active ? "border-critical bg-critical/5" : "border-border bg-card",
+                  <div key={opt.key}>
+                    <label
+                      className={cn(
+                        "flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm",
+                        active ? "border-critical bg-critical/5" : "border-border bg-card",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name={`strategy-${c.id}`}
+                        checked={active}
+                        onChange={() => onSelectStrategy(c.id, opt.key)}
+                        className="mt-0.5 h-4 w-4 accent-critical"
+                      />
+                      <span className="leading-snug">
+                        <span className="font-semibold">{opt.label}</span>
+                        <span className="block text-xs text-muted-foreground">{opt.description}</span>
+                      </span>
+                    </label>
+                    {active && (
+                      <div className="mt-2 ml-6 rounded-lg border border-border bg-card p-3">
+                        <StrategyQuestions
+                          clusterId={c.id}
+                          strategy={opt.key}
+                          answers={answers}
+                          onChange={(patch) => onSetAnswers(c.id, patch)}
+                        />
+                      </div>
                     )}
-                  >
-                    <input
-                      type="radio"
-                      name={`strategy-${c.id}`}
-                      checked={active}
-                      onChange={() => onSelectStrategy(c.id, opt.key)}
-                      className="mt-0.5 h-4 w-4 accent-critical"
-                    />
-                    <span className="leading-snug">
-                      <span className="font-semibold">{opt.label}</span>
-                      <span className="block text-xs text-muted-foreground">{opt.description}</span>
-                    </span>
-                  </label>
+                  </div>
                 );
               })}
             </div>
 
-            {selected && (
-              <div className="mt-3 border-t border-border pt-3">
-                <StrategyQuestions
-                  clusterId={c.id}
-                  strategy={selected}
-                  answers={answers}
-                  onChange={(patch) => onSetAnswers(c.id, patch)}
-                />
-              </div>
-            )}
           </div>
         );
       })}
@@ -346,18 +347,24 @@ function ContactList({
   onChange: (next: ContactEntry[]) => void;
   addLabel: string;
 }) {
+  // Always show at least one input row by default so DG can start typing immediately.
+  const display = contacts.length > 0
+    ? contacts
+    : [{ id: `c-${Date.now()}-seed`, name: "" } as ContactEntry];
+  const emit = (next: ContactEntry[]) => onChange(next);
   return (
+
     <div className="space-y-2">
-      {contacts.map((ct, i) => (
+      {display.map((ct, i) => (
         <div key={ct.id} className="flex items-start gap-2 rounded-md border border-border bg-card p-2">
           <div className="grid flex-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
             <input
               placeholder="Name"
               value={ct.name}
               onChange={(e) => {
-                const next = [...contacts];
+                const next = [...display];
                 next[i] = { ...ct, name: e.target.value };
-                onChange(next);
+                emit(next);
               }}
               className="rounded border border-border bg-background px-2 py-1 text-xs"
             />
@@ -365,9 +372,9 @@ function ContactList({
               placeholder="Phone"
               value={ct.phone ?? ""}
               onChange={(e) => {
-                const next = [...contacts];
+                const next = [...display];
                 next[i] = { ...ct, phone: e.target.value };
-                onChange(next);
+                emit(next);
               }}
               className="rounded border border-border bg-background px-2 py-1 text-xs"
             />
@@ -375,9 +382,9 @@ function ContactList({
               placeholder="Area"
               value={ct.area ?? ""}
               onChange={(e) => {
-                const next = [...contacts];
+                const next = [...display];
                 next[i] = { ...ct, area: e.target.value };
-                onChange(next);
+                emit(next);
               }}
               className="rounded border border-border bg-background px-2 py-1 text-xs"
             />
@@ -385,16 +392,16 @@ function ContactList({
               placeholder="Brand Preference"
               value={ct.brandPreference ?? ""}
               onChange={(e) => {
-                const next = [...contacts];
+                const next = [...display];
                 next[i] = { ...ct, brandPreference: e.target.value };
-                onChange(next);
+                emit(next);
               }}
               className="rounded border border-border bg-background px-2 py-1 text-xs"
             />
           </div>
           <button
             type="button"
-            onClick={() => onChange(contacts.filter((_, j) => j !== i))}
+            onClick={() => emit(display.filter((_, j) => j !== i))}
             className="rounded p-1 text-muted-foreground hover:bg-muted"
             aria-label="Remove contact"
           >
@@ -412,7 +419,7 @@ function ContactList({
             id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
             name: "",
           };
-          onChange([...contacts, newCt]);
+          emit([...display, newCt]);
         }}
       >
         <Plus className="h-3.5 w-3.5" /> {addLabel}
@@ -420,6 +427,7 @@ function ContactList({
     </div>
   );
 }
+
 
 function StrategyQuestions({
   clusterId,
