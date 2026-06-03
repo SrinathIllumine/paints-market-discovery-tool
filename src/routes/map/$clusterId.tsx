@@ -125,6 +125,10 @@ function ClusterDetailScreen() {
   const cycle = getCycle(clusterId);
 
   const [accessRank, setAccessRank] = useState<AccessRank | null>(existingAssessment?.accessRank ?? null);
+  const [accessAnswers, setAccessAnswers] = useState<(YesNo | undefined)[]>(
+    existingAssessment?.accessAnswers3 ?? [undefined, undefined, undefined],
+  );
+  const [contractorsOpen, setContractorsOpen] = useState(false);
   const [brandPresence, setBrandPresence] = useState<Partial<Record<string, HML>>>(
     existingAssessment?.brandPresence ?? {},
   );
@@ -140,6 +144,7 @@ function ClusterDetailScreen() {
   );
   const [revenueRating, setRevenueRating] = useState<HML | undefined>(existingAssessment?.revenueRating);
   const [showSummary, setShowSummary] = useState<boolean>(Boolean(existingAssessment));
+
 
   // Keep prospectCount synced if user hasn't overridden and places result lands later
   useEffect(() => {
