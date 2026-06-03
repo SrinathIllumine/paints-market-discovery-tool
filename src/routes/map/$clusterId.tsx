@@ -185,10 +185,15 @@ function ClusterDetailScreen() {
   const revenueHML: HML = intel.revenueHML;
   const easeHML: HML = intel.easeHML;
   const competitiveHML: HML = intel.competitiveHML;
-  // Access updates from DG input (Yes/No). Default to intel-backed High.
-  const hasConnects: "Y" | "N" | null =
-    accessRank === "A" ? "Y" : accessRank === "C" ? "N" : null;
-  const accessHML: HML = hasConnects === "N" ? "M" : "H";
+  void easeHML;
+  void competitiveHML;
+
+  // Access HML: until the user answers any question, show the intel default;
+  // once any answer is provided, derive dynamically from the answers.
+  const answersTouched = accessAnswers.some((a) => a !== undefined);
+  const accessHML: HML = answersTouched
+    ? scoreToHML(scoreAccessFromAnswers(accessAnswers))
+    : "H";
 
   // Effective totals for revenue narrative — prefer backend-observed count if available
   const observedCount = intel.totalProspectsObserved || prospectCount;
@@ -199,6 +204,7 @@ function ClusterDetailScreen() {
     accessRank,
     competitiveAnswers: existingAssessment?.competitiveAnswers ?? [],
     brandPresence,
+    accessAnswers3: accessAnswers,
     cycleMonths,
     cycleEase,
     prospectCountOverride: prospectCount,
@@ -207,6 +213,7 @@ function ClusterDetailScreen() {
     completedAt: Date.now(),
   };
   const scores = computeClusterScores(cluster, prospects.length, provisionalAssessment);
+
 
   const canSave = true; // Backend-driven; user input optional
 
