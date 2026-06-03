@@ -30,14 +30,26 @@ import {
   scoreRevenue,
   scoreEaseOfSale,
   scoreCompetitiveBrands,
+  scoreAccessFromAnswers,
   getClusterIntel,
+  getAccessInsights,
+  getAccessQuestions3,
+  getDominantContractors,
   COMPETITIVE_BRANDS,
   HML_LABEL,
   type AccessRank,
   type ClusterAssessment,
   type HML,
+  type YesNo,
 } from "@/lib/clusterScoring";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 
 export const Route = createFileRoute("/map/$clusterId")({
   component: ClusterDetailScreen,
