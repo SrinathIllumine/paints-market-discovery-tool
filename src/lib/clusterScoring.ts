@@ -24,6 +24,8 @@ export type ClusterAssessment = {
   competitiveAnswers: YesNo[];
   // New: brand presence H/M/L
   brandPresence?: Partial<Record<string, HML>>;
+  // New: 3 yes/no answers driving the Cluster Access score
+  accessAnswers3?: (YesNo | undefined)[];
   // Editable overrides
   cycleMonths?: number;
   cycleEase?: HML;
@@ -32,6 +34,7 @@ export type ClusterAssessment = {
   revenueRating?: HML;
   completedAt: number;
 };
+
 
 /* ─────────────────────────────────────────── revenue profile */
 
