@@ -349,7 +349,7 @@ function ClusterDetailScreen() {
             </AccordionContent>
           </AccordionItem>
 
-          {/* Access */}
+          {/* Access — merges old Competitive Strength + Ease of Sale */}
           <AccordionItem value="access" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="flex w-full items-center justify-between gap-3 pr-2">
@@ -358,79 +358,84 @@ function ClusterDetailScreen() {
               </span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              <ul className="mb-3 space-y-2 text-sm leading-relaxed">
-                <NarrativeBullet>
-                  JK has a strong contractor base of <b>{intel.contractorCount} contractors</b> specifically focussed on {pluralCap.toLowerCase()}.
-                </NarrativeBullet>
-              </ul>
-              <p className="text-sm font-semibold">Do you already have connects in this cluster?</p>
-              <div className="mt-2 flex gap-2">
-                {([
-                  { key: "Y", label: "Yes", rank: "A" as AccessRank },
-                  { key: "N", label: "No", rank: "C" as AccessRank },
-                ]).map((opt) => (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => {
-                      hideSummaryOnEdit();
-                      setAccessRank(opt.rank);
-                    }}
-                    className={cn(
-                      "flex-1 rounded-lg border px-3 py-2 text-sm font-medium",
-                      hasConnects === opt.key
-                        ? "border-critical bg-critical/10 text-critical"
-                        : "border-border bg-card text-foreground hover:bg-muted/40",
-                    )}
-                  >
-                    {opt.label}
-                  </button>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Insights</p>
+              <ul className="mb-4 space-y-2 text-sm leading-relaxed">
+                {getAccessInsights(clusterId).map((line, i) => (
+                  <NarrativeBullet key={i}>{line}</NarrativeBullet>
                 ))}
+              </ul>
+
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Quick checks</p>
+              <div className="space-y-2">
+                {getAccessQuestions3(clusterId).map((q, i) => {
+                  const v = accessAnswers[i];
+                  return (
+                    <div key={q.id} className="rounded-lg border border-border bg-card p-3">
+                      <p className="text-sm leading-snug">
+                        {q.question}
+                        {q.kind === "contractors" && (
+                          <>
+                            {" "}
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setContractorsOpen(true); }}
+                              className="text-critical underline underline-offset-2 hover:no-underline"
+                            >
+                              Click here to see the list of contractors
+                            </button>
+                          </>
+                        )}
+                      </p>
+                      <div className="mt-2 flex gap-2">
+                        {(["Y", "N"] as const).map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => {
+                              hideSummaryOnEdit();
+                              const next = [...accessAnswers];
+                              next[i] = opt;
+                              setAccessAnswers(next);
+                            }}
+                            className={cn(
+                              "h-8 min-w-[56px] rounded-md border px-3 text-xs font-semibold",
+                              v === opt
+                                ? "border-critical bg-critical text-critical-foreground"
+                                : "border-border bg-card text-muted-foreground hover:bg-muted/40",
+                            )}
+                          >
+                            {opt === "Y" ? "Yes" : "No"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </AccordionContent>
           </AccordionItem>
-
-          {/* Competitive */}
-          <AccordionItem value="competitive" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <span className="flex w-full items-center justify-between gap-3 pr-2">
-                <span className="font-display text-xl">Competitive Strength</span>
-                <HMLBadge hml={competitiveHML} />
-              </span>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <ul className="space-y-2 text-sm leading-relaxed">
-                <NarrativeBullet>
-                  JK already has <b>{intel.jkPenetrationLabel} market penetration</b> in this cluster in Panvel.
-                </NarrativeBullet>
-                <NarrativeBullet>
-                  JK has presence in <b>{intel.jkPresenceCount} of the {intel.totalProspectsObserved} {pluralCap.toLowerCase()}</b>.
-                </NarrativeBullet>
-                <NarrativeBullet>
-                  <b>{intel.leadingCompetitor}</b> has the largest market share in the cluster.
-                </NarrativeBullet>
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* Ease of sale */}
-          <AccordionItem value="ease" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <span className="flex w-full items-center justify-between gap-3 pr-2">
-                <span className="font-display text-xl">Ease of Sale</span>
-                <HMLBadge hml={easeHML} />
-              </span>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <ul className="space-y-2 text-sm leading-relaxed">
-                <NarrativeBullet>
-                  Average sales cycle in this cluster is <b>{cycle.label}</b> (~{cycle.months} months).
-                </NarrativeBullet>
-                <NarrativeBullet>{cycle.explanation}</NarrativeBullet>
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
         </Accordion>
+
+        <Dialog open={contractorsOpen} onOpenChange={setContractorsOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Dominant contractors in this cluster</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              {getDominantContractors(clusterId).map((c, i) => (
+                <div key={i} className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
+                  <p className="font-semibold">{c.name}</p>
+                  <dl className="mt-1 grid grid-cols-[110px_1fr] gap-y-1 text-xs">
+                    <dt className="text-muted-foreground">Phone</dt><dd>{c.phone}</dd>
+                    <dt className="text-muted-foreground">Area</dt><dd>{c.area}</dd>
+                    <dt className="text-muted-foreground">Brand Preference</dt><dd>{c.brandPreference}</dd>
+                  </dl>
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+
 
         <Button
           onClick={handleSave}
