@@ -220,9 +220,13 @@ export function computeClusterScores(
 }
 
 export function scoreAccessFromAnswers(answers: (YesNo | undefined)[]): number {
-  const yes = answers.filter((a) => a === "Y").length;
-  // Supports up to 2 questions now
-  return [2, 6, 10][yes] ?? 2;
+  const answered = answers.filter((a) => a !== undefined);
+  if (answered.length === 0) return 0;
+  const yes = answered.filter((a) => a === "Y").length;
+  const ratio = yes / answered.length;
+  if (ratio >= 0.99) return 10;
+  if (ratio >= 0.5) return 6;
+  return 2;
 }
 
 /* ─────────────────────────────────────────── access insights & contractors */
