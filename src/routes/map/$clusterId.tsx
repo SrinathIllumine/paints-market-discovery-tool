@@ -128,7 +128,7 @@ function ClusterDetailScreen() {
 
   const [accessRank, setAccessRank] = useState<AccessRank | null>(existingAssessment?.accessRank ?? null);
   const [accessAnswers, setAccessAnswers] = useState<(YesNo | undefined)[]>(
-    existingAssessment?.accessAnswers3 ?? [undefined, undefined, undefined],
+    (existingAssessment?.accessAnswers3 ?? [undefined, undefined]).slice(0, 2),
   );
   const [contractorsOpen, setContractorsOpen] = useState(false);
   const [brandPresence, setBrandPresence] = useState<Partial<Record<string, HML>>>(
