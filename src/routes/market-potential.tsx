@@ -79,7 +79,7 @@ function ClusterMapPage() {
             <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
               <h2 className="font-display text-xl">Cluster Snapshot</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Cluster Access vs Revenue Potential.
+                Cluster Access (access + ease of sale) vs Revenue Potential (revenue + competitive).
               </p>
               <SnapshotMatrix rows={rows} />
             </section>
