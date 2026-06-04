@@ -548,6 +548,18 @@ function HMLBadge({ hml }: { hml: HML | null }) {
   );
 }
 
+function SubSection({ title, hml, children }: { title: string; hml: HML; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border bg-muted/20 p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="font-display text-base">{title}</h3>
+        <HMLBadge hml={hml} />
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function NarrativeBullet({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex gap-2">
