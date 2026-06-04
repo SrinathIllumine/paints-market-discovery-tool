@@ -482,9 +482,11 @@ function ClusterDetailScreen() {
                   {scores.aggregate} / 10
                 </span>
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <ScoreTile label="Revenue" value={scores.revenue} />
+                <ScoreTile label="Competitive" value={scores.competitive} />
                 <ScoreTile label="Access" value={scores.access} />
+                <ScoreTile label="Ease of Sale" value={scores.ease} />
               </div>
 
             </section>
