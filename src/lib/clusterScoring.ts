@@ -222,30 +222,38 @@ export function scoreAccessFromAnswers(answers: (YesNo | undefined)[]): number {
 
 export type DominantContractor = { name: string; phone: string; area: string; brandPreference: string };
 
-const ACCESS_INSIGHTS: Partial<Record<string, string[]>> = {
+const COMPETITIVE_INSIGHTS: Partial<Record<string, string[]>> = {
   schools: [
+    "Asian Paints is the market leader in this cluster.",
+    "JK stands third in this cluster.",
     "JK has unique products for specific applications in schools such as heat reduction, anti-fungal hygienic coatings, and weather-resilient exterior protection.",
-    "Sales cycles for schools are generally moderate to high, with an average sales cycle of 2–3 months.",
-    "Repaint windows are tied to vacations; trustee approvals add lead time.",
   ],
   hospitals: [
+    "Asian Paints leads the healthcare segment in this cluster.",
+    "JK is among the top three brands in this cluster.",
     "JK offers antimicrobial, washable finishes ideal for healthcare environments.",
-    "Hospital sales cycles run ~2 months, governed by trust / admin approvals.",
-    "Phased ward shutdowns slow execution, so planning around low-occupancy windows is critical.",
   ],
   midc: [
+    "Asian Paints and Berger dominate industrial coatings in this cluster.",
+    "JK has a growing but moderate presence in industrial accounts here.",
     "JK has industrial-grade durable coatings suited to factory shopfloors and tank farms.",
-    "Sales cycles are long (~6 months), tied to procurement tenders and shutdown windows.",
-    "Decisions involve plant heads + procurement; relationship building is key.",
   ],
 };
 
-export function getAccessInsights(clusterId: string): string[] {
-  const seeded = ACCESS_INSIGHTS[clusterId];
+export function getCompetitiveInsights(clusterId: string): string[] {
+  const seeded = COMPETITIVE_INSIGHTS[clusterId];
   if (seeded) return seeded;
+  const intel = getClusterIntel(clusterId, 0);
+  return [
+    `${intel.leadingCompetitor} is the market leader in this cluster.`,
+    `JK has ${intel.jkPenetrationLabel} presence in this cluster.`,
+    "JK offers tailored product propositions well-suited to this cluster's applications.",
+  ];
+}
+
+export function getEaseInsights(clusterId: string): string[] {
   const cycle = getCycle(clusterId);
   return [
-    "JK has tailored product propositions well-suited to this cluster's needs.",
     `Average sales cycle is ${cycle.label} (~${cycle.months} months).`,
     cycle.explanation,
   ];
