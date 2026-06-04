@@ -598,8 +598,8 @@ function ClusterSnapshotMatrix({ highlightId }: { highlightId: string }) {
         return {
           id,
           name: c.name,
-          access: s.access,
-          potential: s.revenue,
+          access: (s.access + s.ease) / 2,
+          potential: (s.revenue + s.competitive) / 2,
 
           current: id === highlightId,
         } satisfies Pt;
