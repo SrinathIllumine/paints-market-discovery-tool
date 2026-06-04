@@ -99,9 +99,11 @@ function ClusterMapPage() {
                       {r.scores.aggregate} / 10
                     </span>
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     <ScoreTile label="Revenue" value={r.scores.revenue} />
-                    <ScoreTile label="Cluster Access" value={r.scores.access} />
+                    <ScoreTile label="Competitive" value={r.scores.competitive} />
+                    <ScoreTile label="Access" value={r.scores.access} />
+                    <ScoreTile label="Ease of Sale" value={r.scores.ease} />
                   </div>
                 </div>
               ))}
