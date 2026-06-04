@@ -321,98 +321,107 @@ function ClusterDetailScreen() {
         {/* ──────────────── Cluster scoring sub-sections ──────────────── */}
         <h2 className="px-1 pt-1 font-display text-2xl">Map the Cluster Potential</h2>
         <Accordion type="single" collapsible defaultValue="revenue" className="space-y-3">
-          {/* Revenue */}
           <AccordionItem value="revenue" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="flex w-full items-center justify-between gap-3 pr-2">
                 <span className="font-display text-xl">Cluster Revenue Potential</span>
-                <HMLBadge hml={revenueHML} />
+                <HMLBadge hml={potentialCombinedHML} />
               </span>
             </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              {(() => {
-                const singular = pluralCap.toLowerCase().replace(/s$/, "");
-                return (
-                  <ul className="space-y-2 text-sm leading-relaxed">
-                    <NarrativeBullet>
-                      There are <b>{observedCount} {pluralCap.toLowerCase()}</b> present in this cluster.
-                    </NarrativeBullet>
-                    <NarrativeBullet>
-                      The national average revenue per {singular} is <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
-                    </NarrativeBullet>
-                    <NarrativeBullet>
-                      Total cluster revenue potential for {pluralCap.toLowerCase()} is{" "}
-                      <b className="text-critical">{formatRupees(observedTotalRevenue)}</b>.
-                    </NarrativeBullet>
-                  </ul>
-                );
-              })()}
+            <AccordionContent className="px-4 pb-4 space-y-4">
+              <SubSection title="Revenue Potential" hml={revenueHML}>
+                {(() => {
+                  const singular = pluralCap.toLowerCase().replace(/s$/, "");
+                  return (
+                    <ul className="space-y-2 text-sm leading-relaxed">
+                      <NarrativeBullet>
+                        There are <b>{observedCount} {pluralCap.toLowerCase()}</b> present in this cluster.
+                      </NarrativeBullet>
+                      <NarrativeBullet>
+                        The national average revenue per {singular} is <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
+                      </NarrativeBullet>
+                      <NarrativeBullet>
+                        Total cluster revenue potential for {pluralCap.toLowerCase()} is{" "}
+                        <b className="text-critical">{formatRupees(observedTotalRevenue)}</b>.
+                      </NarrativeBullet>
+                    </ul>
+                  );
+                })()}
+              </SubSection>
+              <SubSection title="Competitive Strength" hml={competitiveHML}>
+                <ul className="space-y-2 text-sm leading-relaxed">
+                  {getCompetitiveInsights(clusterId).map((line: string, i: number) => (
+                    <NarrativeBullet key={i}>{line}</NarrativeBullet>
+                  ))}
+                </ul>
+              </SubSection>
             </AccordionContent>
           </AccordionItem>
 
-          {/* Access — merges old Competitive Strength + Ease of Sale */}
+          {/* Cluster Access */}
           <AccordionItem value="access" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
               <span className="flex w-full items-center justify-between gap-3 pr-2">
                 <span className="font-display text-xl">Cluster Access</span>
-                <HMLBadge hml={accessHML} />
+                <HMLBadge hml={accessCombinedHML} />
               </span>
             </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Insights</p>
-              <ul className="mb-4 space-y-2 text-sm leading-relaxed">
-                {getAccessInsights(clusterId).map((line, i) => (
-                  <NarrativeBullet key={i}>{line}</NarrativeBullet>
-                ))}
-              </ul>
-
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Quick checks</p>
-              <div className="space-y-2">
-                {getAccessQuestions3(clusterId).map((q, i) => {
-                  const v = accessAnswers[i];
-                  return (
-                    <div key={q.id} className="rounded-lg border border-border bg-card p-3">
-                      <p className="text-sm leading-snug">
-                        {q.question}
-                        {q.kind === "contractors" && (
-                          <>
-                            {" "}
+            <AccordionContent className="px-4 pb-4 space-y-4">
+              <SubSection title="Access" hml={scoreToHML(accessAnswerScore)}>
+                <div className="space-y-2">
+                  {getAccessQuestions3(clusterId).map((q, i) => {
+                    const v = accessAnswers[i];
+                    return (
+                      <div key={q.id} className="rounded-lg border border-border bg-card p-3">
+                        <p className="text-sm leading-snug">
+                          {q.question}
+                          {q.kind === "contractors" && (
+                            <>
+                              {" "}
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setContractorsOpen(true); }}
+                                className="text-critical underline underline-offset-2 hover:no-underline"
+                              >
+                                Click here to see the list of contractors
+                              </button>
+                            </>
+                          )}
+                        </p>
+                        <div className="mt-2 flex gap-2">
+                          {(["Y", "N"] as const).map((opt) => (
                             <button
+                              key={opt}
                               type="button"
-                              onClick={(e) => { e.stopPropagation(); setContractorsOpen(true); }}
-                              className="text-critical underline underline-offset-2 hover:no-underline"
+                              onClick={() => {
+                                hideSummaryOnEdit();
+                                const next = [...accessAnswers];
+                                next[i] = opt;
+                                setAccessAnswers(next);
+                              }}
+                              className={cn(
+                                "h-8 min-w-[56px] rounded-md border px-3 text-xs font-semibold",
+                                v === opt
+                                  ? "border-critical bg-critical text-critical-foreground"
+                                  : "border-border bg-card text-muted-foreground hover:bg-muted/40",
+                              )}
                             >
-                              Click here to see the list of contractors
+                              {opt === "Y" ? "Yes" : "No"}
                             </button>
-                          </>
-                        )}
-                      </p>
-                      <div className="mt-2 flex gap-2">
-                        {(["Y", "N"] as const).map((opt) => (
-                          <button
-                            key={opt}
-                            type="button"
-                            onClick={() => {
-                              hideSummaryOnEdit();
-                              const next = [...accessAnswers];
-                              next[i] = opt;
-                              setAccessAnswers(next);
-                            }}
-                            className={cn(
-                              "h-8 min-w-[56px] rounded-md border px-3 text-xs font-semibold",
-                              v === opt
-                                ? "border-critical bg-critical text-critical-foreground"
-                                : "border-border bg-card text-muted-foreground hover:bg-muted/40",
-                            )}
-                          >
-                            {opt === "Y" ? "Yes" : "No"}
-                          </button>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              </SubSection>
+              <SubSection title="Ease of Sale" hml={easeHML}>
+                <ul className="space-y-2 text-sm leading-relaxed">
+                  {getEaseInsights(clusterId).map((line: string, i: number) => (
+                    <NarrativeBullet key={i}>{line}</NarrativeBullet>
+                  ))}
+                </ul>
+              </SubSection>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
