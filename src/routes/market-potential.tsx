@@ -42,8 +42,8 @@ function ClusterMapPage() {
           clusterId,
           name: cluster.name,
           scores,
-          potential: scores.revenue,
-          access: scores.access,
+          potential: Number(((scores.revenue + scores.competitive) / 2).toFixed(1)),
+          access: Number(((scores.access + scores.ease) / 2).toFixed(1)),
         } satisfies Row;
       })
       .filter((r): r is Row => Boolean(r))
