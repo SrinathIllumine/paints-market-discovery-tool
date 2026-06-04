@@ -202,20 +202,27 @@ export function computeClusterScores(
   void prospectCount;
   const avg = assessment.avgRevenueOverride ?? profile.avgRevenuePerProspect;
   const revenue = assessment.revenueRating ? scoreFromHML(assessment.revenueRating) : scoreRevenue(avg);
-  // Access from new 3-question form if present; else from legacy rank
+  // Access from new 2-question form if present; else from legacy rank
   const access = assessment.accessAnswers3 && assessment.accessAnswers3.some((a) => a !== undefined)
     ? scoreAccessFromAnswers(assessment.accessAnswers3)
     : scoreAccess(assessment.accessRank);
-  const competitive = scoreCompetitiveBrands(assessment.brandPresence);
-  const ease = assessment.cycleEase ? scoreFromHML(cycleTimeToEaseHML(assessment.cycleEase)) : scoreEaseOfSale(cluster.id, assessment.cycleMonths);
-  // Overall aggregate uses ONLY Revenue + Access
-  const aggregate = Number(((revenue + access) / 2).toFixed(1));
+  // Competitive & ease come from backend intel (HML → numeric)
+  const intel = getClusterIntel(cluster.id, prospectCount);
+  const competitive = assessment.brandPresence && Object.keys(assessment.brandPresence).length > 0
+    ? scoreCompetitiveBrands(assessment.brandPresence)
+    : scoreFromHML(intel.competitiveHML);
+  const ease = assessment.cycleEase
+    ? scoreFromHML(cycleTimeToEaseHML(assessment.cycleEase))
+    : scoreFromHML(intel.easeHML);
+  // Aggregate uses all 4 sub-scores
+  const aggregate = Number(((revenue + competitive + access + ease) / 4).toFixed(1));
   return { revenue, access, competitive, ease, aggregate };
 }
 
 export function scoreAccessFromAnswers(answers: (YesNo | undefined)[]): number {
   const yes = answers.filter((a) => a === "Y").length;
-  return [2, 4, 7, 10][yes] ?? 2;
+  // Supports up to 2 questions now
+  return [2, 6, 10][yes] ?? 2;
 }
 
 /* ─────────────────────────────────────────── access insights & contractors */
