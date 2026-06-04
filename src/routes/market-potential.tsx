@@ -42,8 +42,8 @@ function ClusterMapPage() {
           clusterId,
           name: cluster.name,
           scores,
-          potential: scores.revenue,
-          access: scores.access,
+          potential: Number(((scores.revenue + scores.competitive) / 2).toFixed(1)),
+          access: Number(((scores.access + scores.ease) / 2).toFixed(1)),
         } satisfies Row;
       })
       .filter((r): r is Row => Boolean(r))
@@ -79,7 +79,7 @@ function ClusterMapPage() {
             <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
               <h2 className="font-display text-xl">Cluster Snapshot</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Cluster Access vs Revenue Potential.
+                Cluster Access (access + ease of sale) vs Revenue Potential (revenue + competitive).
               </p>
               <SnapshotMatrix rows={rows} />
             </section>
@@ -99,9 +99,11 @@ function ClusterMapPage() {
                       {r.scores.aggregate} / 10
                     </span>
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     <ScoreTile label="Revenue" value={r.scores.revenue} />
-                    <ScoreTile label="Cluster Access" value={r.scores.access} />
+                    <ScoreTile label="Competitive" value={r.scores.competitive} />
+                    <ScoreTile label="Access" value={r.scores.access} />
+                    <ScoreTile label="Ease of Sale" value={r.scores.ease} />
                   </div>
                 </div>
               ))}

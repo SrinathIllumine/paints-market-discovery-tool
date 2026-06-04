@@ -202,50 +202,69 @@ export function computeClusterScores(
   void prospectCount;
   const avg = assessment.avgRevenueOverride ?? profile.avgRevenuePerProspect;
   const revenue = assessment.revenueRating ? scoreFromHML(assessment.revenueRating) : scoreRevenue(avg);
-  // Access from new 3-question form if present; else from legacy rank
+  // Access from new 2-question form if present; else from legacy rank
   const access = assessment.accessAnswers3 && assessment.accessAnswers3.some((a) => a !== undefined)
     ? scoreAccessFromAnswers(assessment.accessAnswers3)
     : scoreAccess(assessment.accessRank);
-  const competitive = scoreCompetitiveBrands(assessment.brandPresence);
-  const ease = assessment.cycleEase ? scoreFromHML(cycleTimeToEaseHML(assessment.cycleEase)) : scoreEaseOfSale(cluster.id, assessment.cycleMonths);
-  // Overall aggregate uses ONLY Revenue + Access
-  const aggregate = Number(((revenue + access) / 2).toFixed(1));
+  // Competitive & ease come from backend intel (HML → numeric)
+  const intel = getClusterIntel(cluster.id, prospectCount);
+  const competitive = assessment.brandPresence && Object.keys(assessment.brandPresence).length > 0
+    ? scoreCompetitiveBrands(assessment.brandPresence)
+    : scoreFromHML(intel.competitiveHML);
+  const ease = assessment.cycleEase
+    ? scoreFromHML(cycleTimeToEaseHML(assessment.cycleEase))
+    : scoreFromHML(intel.easeHML);
+  // Aggregate uses all 4 sub-scores
+  const aggregate = Number(((revenue + competitive + access + ease) / 4).toFixed(1));
   return { revenue, access, competitive, ease, aggregate };
 }
 
 export function scoreAccessFromAnswers(answers: (YesNo | undefined)[]): number {
-  const yes = answers.filter((a) => a === "Y").length;
-  return [2, 4, 7, 10][yes] ?? 2;
+  const answered = answers.filter((a) => a !== undefined);
+  if (answered.length === 0) return 0;
+  const yes = answered.filter((a) => a === "Y").length;
+  const ratio = yes / answered.length;
+  if (ratio >= 0.99) return 10;
+  if (ratio >= 0.5) return 6;
+  return 2;
 }
 
 /* ─────────────────────────────────────────── access insights & contractors */
 
 export type DominantContractor = { name: string; phone: string; area: string; brandPreference: string };
 
-const ACCESS_INSIGHTS: Partial<Record<string, string[]>> = {
+const COMPETITIVE_INSIGHTS: Partial<Record<string, string[]>> = {
   schools: [
+    "Asian Paints is the market leader in this cluster.",
+    "JK stands third in this cluster.",
     "JK has unique products for specific applications in schools such as heat reduction, anti-fungal hygienic coatings, and weather-resilient exterior protection.",
-    "Sales cycles for schools are generally moderate to high, with an average sales cycle of 2–3 months.",
-    "Repaint windows are tied to vacations; trustee approvals add lead time.",
   ],
   hospitals: [
+    "Asian Paints leads the healthcare segment in this cluster.",
+    "JK is among the top three brands in this cluster.",
     "JK offers antimicrobial, washable finishes ideal for healthcare environments.",
-    "Hospital sales cycles run ~2 months, governed by trust / admin approvals.",
-    "Phased ward shutdowns slow execution, so planning around low-occupancy windows is critical.",
   ],
   midc: [
+    "Asian Paints and Berger dominate industrial coatings in this cluster.",
+    "JK has a growing but moderate presence in industrial accounts here.",
     "JK has industrial-grade durable coatings suited to factory shopfloors and tank farms.",
-    "Sales cycles are long (~6 months), tied to procurement tenders and shutdown windows.",
-    "Decisions involve plant heads + procurement; relationship building is key.",
   ],
 };
 
-export function getAccessInsights(clusterId: string): string[] {
-  const seeded = ACCESS_INSIGHTS[clusterId];
+export function getCompetitiveInsights(clusterId: string): string[] {
+  const seeded = COMPETITIVE_INSIGHTS[clusterId];
   if (seeded) return seeded;
+  const intel = getClusterIntel(clusterId, 0);
+  return [
+    `${intel.leadingCompetitor} is the market leader in this cluster.`,
+    `JK has ${intel.jkPenetrationLabel} presence in this cluster.`,
+    "JK offers tailored product propositions well-suited to this cluster's applications.",
+  ];
+}
+
+export function getEaseInsights(clusterId: string): string[] {
   const cycle = getCycle(clusterId);
   return [
-    "JK has tailored product propositions well-suited to this cluster's needs.",
     `Average sales cycle is ${cycle.label} (~${cycle.months} months).`,
     cycle.explanation,
   ];
@@ -266,7 +285,6 @@ export type AccessQuestion = { id: string; question: string; kind?: "contractors
 
 export function getAccessQuestions3(_clusterId: string): AccessQuestion[] {
   return [
-    { id: "brand-known",  question: "Is the JK brand well-known in this cluster?" },
     { id: "contractors",  question: "There are 3–4 contractors dominating this cluster. Do you have a close relation with them?", kind: "contractors" },
     { id: "stakeholders", question: "Do you have access to key stakeholders who can introduce you into the cluster?" },
   ];
