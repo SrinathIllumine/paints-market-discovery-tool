@@ -281,7 +281,6 @@ export type AccessQuestion = { id: string; question: string; kind?: "contractors
 
 export function getAccessQuestions3(_clusterId: string): AccessQuestion[] {
   return [
-    { id: "brand-known",  question: "Is the JK brand well-known in this cluster?" },
     { id: "contractors",  question: "There are 3–4 contractors dominating this cluster. Do you have a close relation with them?", kind: "contractors" },
     { id: "stakeholders", question: "Do you have access to key stakeholders who can introduce you into the cluster?" },
   ];
