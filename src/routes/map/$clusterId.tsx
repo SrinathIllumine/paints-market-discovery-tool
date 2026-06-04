@@ -187,15 +187,14 @@ function ClusterDetailScreen() {
   const revenueHML: HML = intel.revenueHML;
   const easeHML: HML = intel.easeHML;
   const competitiveHML: HML = intel.competitiveHML;
-  void easeHML;
-  void competitiveHML;
 
-  // Access HML: until the user answers any question, show the intel default;
-  // once any answer is provided, derive dynamically from the answers.
+  // Combined HML badges for each accordion
+  const potentialCombinedHML: HML = scoreToHML(
+    (scoreFromHML(revenueHML) + scoreFromHML(competitiveHML)) / 2,
+  );
   const answersTouched = accessAnswers.some((a) => a !== undefined);
-  const accessHML: HML = answersTouched
-    ? scoreToHML(scoreAccessFromAnswers(accessAnswers))
-    : "H";
+  const accessAnswerScore = answersTouched ? scoreAccessFromAnswers(accessAnswers) : scoreFromHML("H");
+  const accessCombinedHML: HML = scoreToHML((accessAnswerScore + scoreFromHML(easeHML)) / 2);
 
   // Effective totals for revenue narrative — prefer backend-observed count if available
   const observedCount = intel.totalProspectsObserved || prospectCount;
