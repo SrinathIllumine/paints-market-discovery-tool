@@ -28,7 +28,7 @@ import {
   formatRupees,
   scoreToHML,
   scoreRevenue,
-  scoreEaseOfSale,
+  scoreEaseOfSale as _scoreEaseOfSale,
   scoreCompetitiveBrands,
   scoreFromHML,
   scoreAccessFromAnswers,
