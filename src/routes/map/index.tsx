@@ -4,7 +4,7 @@ import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { BubbleCircle } from "@/components/app/BubbleCircle";
 import { CLUSTERS } from "@/data/clusters";
-import { useAppStore } from "@/store/appStore";
+
 import { ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/map/")({
