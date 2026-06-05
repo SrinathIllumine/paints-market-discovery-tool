@@ -71,17 +71,35 @@ function PlanScreen() {
 
   const [openStep, setOpenStep] = useState<RoadmapStep>("value");
   const [assetOpen, setAssetOpen] = useState<ActionAsset | null>(null);
+  const [clusterQuery, setClusterQuery] = useState("");
+  const [clusterPickerOpen, setClusterPickerOpen] = useState(true);
 
-  // Show ALL clusters sorted by access + potential
+  // Bucket all clusters by potential × access (H/M/L combinations).
   const sortedClusters = useMemo(() => {
-    return [...CLUSTERS].sort((a, b) => {
-      const sa = computeClusterScores(a, clusterStates[a.id]?.prospects.length ?? a.prospectCountEstimate);
-      const sb = computeClusterScores(b, clusterStates[b.id]?.prospects.length ?? b.prospectCountEstimate);
-      const combinedA = (sa.access + sa.ease + sa.revenue + sa.competitive) / 4;
-      const combinedB = (sb.access + sb.ease + sb.revenue + sb.competitive) / 4;
-      return combinedB - combinedA;
+    return [...CLUSTERS].map((c) => {
+      const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
+      const sc = computeClusterScores(c, pc);
+      return { c, sc };
     });
   }, [clusterStates]);
+
+  const filtered = useMemo(() => {
+    const q = clusterQuery.trim().toLowerCase();
+    if (!q) return sortedClusters;
+    return sortedClusters.filter(({ c }) => c.name.toLowerCase().includes(q));
+  }, [sortedClusters, clusterQuery]);
+
+  const BUCKETS: { potential: HML; access: HML; label: string; recommended?: boolean }[] = [
+    { potential: "H", access: "H", label: "High Potential · High Access", recommended: true },
+    { potential: "H", access: "M", label: "High Potential · Medium Access" },
+    { potential: "H", access: "L", label: "High Potential · Low Access" },
+    { potential: "M", access: "H", label: "Medium Potential · High Access" },
+    { potential: "M", access: "M", label: "Medium Potential · Medium Access" },
+    { potential: "M", access: "L", label: "Medium Potential · Low Access" },
+    { potential: "L", access: "H", label: "Low Potential · High Access" },
+    { potential: "L", access: "M", label: "Low Potential · Medium Access" },
+    { potential: "L", access: "L", label: "Low Potential · Low Access" },
+  ];
 
   const focusClusterId = focusIds[0];
   const focusCluster = focusClusterId ? getCluster(focusClusterId) : undefined;
@@ -131,46 +149,95 @@ function PlanScreen() {
       }
     >
       <div className="space-y-5 px-5 py-5">
-        {/* Focus question — at the top, outside the roadmap */}
+        {/* Cluster focus picker — bucketed, searchable, collapses on select */}
         <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <h2 className={STAGE_HEADING_CLS}>
-            Which cluster would you like to focus on this month?
-          </h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            All clusters sorted by access + potential.
-          </p>
-          <div className="mt-3 space-y-2">
-            {sortedClusters.map((c) => {
-              const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
-              const sc = computeClusterScores(c, pc);
-              const intel = getClusterIntel(c.id, pc);
-              const active = focusClusterId === c.id;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setMonthlyFocus(c.id)}
-                  className={cn(
-                    "flex w-full items-center justify-between gap-3 rounded-2xl border p-3 text-left transition-colors",
-                    active ? "border-critical bg-critical/5" : "border-border bg-card hover:bg-muted/40",
-                  )}
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{c.name}</p>
-                    <p className="mt-0.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      <LabelChip label="Potential" hml={sc.potentialHML} />
-                      <LabelChip label="Access" hml={intel.accessHML === sc.accessRollupHML ? intel.accessHML : sc.accessRollupHML} />
-                    </p>
+          <button
+            type="button"
+            onClick={() => setClusterPickerOpen((v) => !v)}
+            className="flex w-full items-start justify-between gap-3 text-left"
+          >
+            <div className="min-w-0">
+              <h2 className={STAGE_HEADING_CLS}>
+                Which cluster would you like to focus on this month?
+              </h2>
+              {focusCluster && !clusterPickerOpen && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Focused: <b className="text-foreground">{focusCluster.name}</b> · tap to change
+                </p>
+              )}
+            </div>
+            <ChevronDown className={cn(
+              "mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+              clusterPickerOpen && "rotate-180",
+            )} />
+          </button>
+
+          {clusterPickerOpen && (
+            <div className="mt-3 space-y-3">
+              <input
+                value={clusterQuery}
+                onChange={(e) => setClusterQuery(e.target.value)}
+                placeholder="Search clusters…"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              />
+              {BUCKETS.map((b) => {
+                const items = filtered.filter(
+                  ({ sc }) => sc.potentialHML === b.potential && sc.accessRollupHML === b.access,
+                );
+                if (items.length === 0) return null;
+                return (
+                  <div key={b.label} className="rounded-xl border border-border bg-muted/20 p-3">
+                    <div className="mb-2 flex items-center gap-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
+                        {b.label}
+                      </p>
+                      {b.recommended && (
+                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-green-800">
+                          Recommended
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      {items.map(({ c, sc }) => {
+                        const active = focusClusterId === c.id;
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              setMonthlyFocus(c.id);
+                              setClusterPickerOpen(false);
+                            }}
+                            className={cn(
+                              "flex w-full items-center justify-between gap-3 rounded-lg border p-2.5 text-left transition-colors",
+                              active ? "border-critical bg-critical/5" : "border-border bg-background hover:bg-muted/40",
+                            )}
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium">{c.name}</p>
+                              <p className="mt-0.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                <LabelChip label="Potential" hml={sc.potentialHML} />
+                                <LabelChip label="Access" hml={sc.accessRollupHML} />
+                              </p>
+                            </div>
+                            <div className={cn(
+                              "h-5 w-5 shrink-0 rounded-full border-2",
+                              active ? "border-critical bg-critical" : "border-border",
+                            )} />
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className={cn(
-                    "h-5 w-5 shrink-0 rounded-full border-2",
-                    active ? "border-critical bg-critical" : "border-border",
-                  )} />
-                </button>
-              );
-            })}
-          </div>
+                );
+              })}
+              {filtered.length === 0 && (
+                <p className="text-sm text-muted-foreground">No clusters match "{clusterQuery}".</p>
+              )}
+            </div>
+          )}
         </section>
+
 
         {/* Roadmap */}
         {focusCluster && (
