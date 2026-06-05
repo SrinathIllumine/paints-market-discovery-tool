@@ -173,6 +173,14 @@ export type ClusterScores = {
   competitive: number;
   ease: number;
   aggregate: number;
+  // HML rollups
+  revenueHML: HML;
+  competitiveHML: HML;
+  accessHML: HML;
+  easeHML: HML;
+  potentialHML: HML;   // avg of revenue + competitive
+  accessRollupHML: HML; // avg of access + ease
+  aggregateHML: HML;
 };
 
 export function computeClusterScores(
@@ -186,7 +194,18 @@ export function computeClusterScores(
   const access = scoreFromHML(intel.accessHML);
   const ease = scoreFromHML(intel.easeHML);
   const aggregate = Number(((revenue + competitive + access + ease) / 4).toFixed(1));
-  return { revenue, access, competitive, ease, aggregate };
+  const potentialScore = (revenue + competitive) / 2;
+  const accessRollupScore = (access + ease) / 2;
+  return {
+    revenue, access, competitive, ease, aggregate,
+    revenueHML: intel.revenueHML,
+    competitiveHML: intel.competitiveHML,
+    accessHML: intel.accessHML,
+    easeHML: intel.easeHML,
+    potentialHML: scoreToHML(potentialScore),
+    accessRollupHML: scoreToHML(accessRollupScore),
+    aggregateHML: scoreToHML(aggregate),
+  };
 }
 
 /* ─────────────────────────── access insights & contractors */
