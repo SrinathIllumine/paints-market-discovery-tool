@@ -60,7 +60,6 @@ function ClusterDetailScreen() {
   const addProspect = useAppStore((s) => s.addProspect);
   const existingAssessment = useAppStore((s) => s.assessments[clusterId]);
   const setAssessment = useAppStore((s) => s.setAssessment);
-  const clusterStates = useAppStore((s) => s.clusters);
 
   const callPlaces = useServerFn(searchPlacesForCluster);
   const [loading, setLoading] = useState(false);
