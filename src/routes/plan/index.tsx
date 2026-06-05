@@ -91,15 +91,11 @@ function PlanScreen() {
 
   const BUCKETS: { potential: HML; access: HML; label: string; recommended?: boolean }[] = [
     { potential: "H", access: "H", label: "High Potential · High Access", recommended: true },
-    { potential: "H", access: "M", label: "High Potential · Medium Access" },
     { potential: "H", access: "L", label: "High Potential · Low Access" },
-    { potential: "M", access: "H", label: "Medium Potential · High Access" },
-    { potential: "M", access: "M", label: "Medium Potential · Medium Access" },
-    { potential: "M", access: "L", label: "Medium Potential · Low Access" },
     { potential: "L", access: "H", label: "Low Potential · High Access" },
-    { potential: "L", access: "M", label: "Low Potential · Medium Access" },
     { potential: "L", access: "L", label: "Low Potential · Low Access" },
   ];
+
 
   const focusClusterId = focusIds[0];
   const focusCluster = focusClusterId ? getCluster(focusClusterId) : undefined;
