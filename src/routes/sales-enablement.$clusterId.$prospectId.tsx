@@ -241,6 +241,9 @@ function ProspectDetailPage() {
             Work completed across stages so far.
           </p>
           <div className="mt-3 space-y-3">
+            {doneAcross.length === 0 && (
+              <p className="text-sm text-muted-foreground">No prior stages completed yet.</p>
+            )}
             {doneAcross.map(({ stage, items }) => (
               <div key={stage}>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
