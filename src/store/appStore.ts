@@ -147,7 +147,7 @@ type Actions = {
   setProspectStage: (clusterId: string, prospectId: string, stage: SalesStage) => void;
   recordProspectActivity: (prospectId: string, patch: Partial<ProspectActivity>) => void;
   addProspectOutcome: (prospectId: string, outcome: string) => void;
-  markProspectNotInterested: (prospectId: string) => void;
+  markProspectNotInterested: (clusterId: string, prospectId: string) => void;
 };
 
 const emptyCluster = (): ClusterState => ({ jkShare: null, prospects: [], visited: false });
