@@ -370,6 +370,41 @@ function LabelChip({ label, hml }: { label: string; hml: HML }) {
   );
 }
 
+function BucketCard({
+  label, recommended, defaultOpen, count, children,
+}: {
+  label: string;
+  recommended?: boolean;
+  defaultOpen?: boolean;
+  count: number;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState<boolean>(Boolean(defaultOpen));
+  return (
+    <div className="rounded-xl border border-border bg-muted/20 p-3">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-2 text-left"
+      >
+        <div className="flex items-center gap-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
+            {label}
+          </p>
+          {recommended && (
+            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-green-800">
+              Recommended
+            </span>
+          )}
+          <span className="text-[10px] text-muted-foreground">({count})</span>
+        </div>
+        <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} />
+      </button>
+      {open && <div className="mt-2">{children}</div>}
+    </div>
+  );
+}
+
 /* ---------------- Step components ---------------- */
 
 function ValueStep({
