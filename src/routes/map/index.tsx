@@ -41,17 +41,13 @@ function ClusterPotentialScreen() {
           <ArrowRight className="h-4 w-4" />
         </Link>
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
-          {CLUSTERS.map((c) => {
-            const scored = Boolean(assessments[c.id]);
-            return (
-              <BubbleCircle
-                key={c.id}
-                cluster={c}
-                onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
-                badge={scored ? "Mapped" : undefined}
-              />
-            );
-          })}
+          {CLUSTERS.map((c) => (
+            <BubbleCircle
+              key={c.id}
+              cluster={c}
+              onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
+            />
+          ))}
         </div>
       </div>
     </AppShell>
