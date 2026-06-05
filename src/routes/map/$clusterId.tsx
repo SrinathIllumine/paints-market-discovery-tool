@@ -230,31 +230,9 @@ function ClusterDetailScreen() {
           )}
         </section>
 
-        {/* Cluster snapshot 2x2 for this cluster */}
-        <section className="space-y-3">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="font-display text-2xl">Cluster Snapshot</h2>
-            <HMLBadge hml={scores.aggregateHML} />
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <p className="mb-2 text-xs text-muted-foreground">
-              Position of <b>{cluster.name}</b> against all other clusters.
-            </p>
-            <SnapshotMatrix rows={snapshotRows} highlightId={cluster.id} />
-          </div>
-
-          {/* 4-up individual HML breakdown for this cluster */}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <HMLTile label="Revenue" hml={scores.revenueHML} />
-            <HMLTile label="Competitive" hml={scores.competitiveHML} />
-            <HMLTile label="Access" hml={scores.accessHML} />
-            <HMLTile label="Ease of Sale" hml={scores.easeHML} />
-          </div>
-        </section>
-
-        {/* Cluster Revenue Potential (parent card with 2 sub-cards) */}
-        <ParentCard title="Cluster Revenue Potential" hml={scores.potentialHML}>
-          <SubCard title="Revenue Potential" hml={intel.revenueHML}>
+        {/* 4 collapsible sub-sections, Revenue Potential opens by default */}
+        <Accordion type="multiple" defaultValue={["revenue"]} className="space-y-2">
+          <CollapsibleSub value="revenue" title="Revenue Potential" hml={intel.revenueHML}>
             <ul className="space-y-2 text-sm leading-relaxed">
               <Bullet>
                 There are <b>{observedCount} {pluralCap.toLowerCase()}</b> present in this cluster.
@@ -267,19 +245,17 @@ function ClusterDetailScreen() {
                 <b className="text-critical">{formatRupees(totalRevenue)}</b>.
               </Bullet>
             </ul>
-          </SubCard>
-          <SubCard title="Competitive Strength" hml={intel.competitiveHML}>
+          </CollapsibleSub>
+
+          <CollapsibleSub value="competitive" title="Competitive Strength" hml={intel.competitiveHML}>
             <ul className="space-y-2 text-sm leading-relaxed">
               {getCompetitiveInsights(clusterId).slice(0, 2).map((line, i) => (
                 <Bullet key={i}>{highlightBrands(line)}</Bullet>
               ))}
             </ul>
-          </SubCard>
-        </ParentCard>
+          </CollapsibleSub>
 
-        {/* Cluster Access (parent card with 2 sub-cards) */}
-        <ParentCard title="Cluster Access" hml={scores.accessRollupHML}>
-          <SubCard title="Access" hml={intel.accessHML}>
+          <CollapsibleSub value="access" title="Access" hml={intel.accessHML}>
             <ul className="space-y-2 text-sm leading-relaxed">
               <Bullet>
                 There are <b>{intel.contractorCount}</b> contractors dominating this cluster.
@@ -288,15 +264,37 @@ function ClusterDetailScreen() {
                 There are <b>{intel.retailerCount}</b> retailers operating within this cluster.
               </Bullet>
             </ul>
-          </SubCard>
-          <SubCard title="Ease of Sale" hml={intel.easeHML}>
+          </CollapsibleSub>
+
+          <CollapsibleSub value="ease" title="Ease of Sale" hml={intel.easeHML}>
             <ul className="space-y-2 text-sm leading-relaxed">
               {getEaseInsights(clusterId).map((line, i) => (
                 <Bullet key={i}>{line}</Bullet>
               ))}
             </ul>
-          </SubCard>
-        </ParentCard>
+          </CollapsibleSub>
+        </Accordion>
+
+        {/* Cluster snapshot + scoring tiles — moved below the 4 sections */}
+        <section className="space-y-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="font-display text-2xl">Cluster Snapshot</h2>
+            <HMLBadge hml={scores.aggregateHML} />
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <p className="mb-2 text-xs text-muted-foreground">
+              Position of <b>{cluster.name}</b> against all other clusters.
+            </p>
+            <SnapshotMatrix rows={snapshotRows} highlightId={cluster.id} />
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <HMLTile label="Revenue" hml={scores.revenueHML} />
+            <HMLTile label="Competitive" hml={scores.competitiveHML} />
+            <HMLTile label="Access" hml={scores.accessHML} />
+            <HMLTile label="Ease of Sale" hml={scores.easeHML} />
+          </div>
+        </section>
+
       </div>
 
       <AddProspectSheet
