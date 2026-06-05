@@ -186,17 +186,13 @@ function PlanScreen() {
                 );
                 if (items.length === 0) return null;
                 return (
-                  <div key={b.label} className="rounded-xl border border-border bg-muted/20 p-3">
-                    <div className="mb-2 flex items-center gap-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
-                        {b.label}
-                      </p>
-                      {b.recommended && (
-                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-green-800">
-                          Recommended
-                        </span>
-                      )}
-                    </div>
+                  <BucketCard
+                    key={b.label}
+                    label={b.label}
+                    recommended={b.recommended}
+                    defaultOpen={Boolean(b.recommended)}
+                    count={items.length}
+                  >
                     <div className="space-y-1.5">
                       {items.map(({ c, sc }) => {
                         const active = focusClusterId === c.id;
@@ -228,7 +224,7 @@ function PlanScreen() {
                         );
                       })}
                     </div>
-                  </div>
+                  </BucketCard>
                 );
               })}
               {filtered.length === 0 && (
