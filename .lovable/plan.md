@@ -1,85 +1,107 @@
 
-# Plan
+# Demand Discovery Tool — UI/UX & Flow Enhancements
 
-A large multi-part restructure. I'll keep all logic frontend-only (scoring runs in `src/lib/clusterScoring.ts` as deterministic helpers — "backend intelligence" simulated client-side).
+Three workstreams: (1) Cluster Card refinements, (2) Engagement plan redesign, (3) New Sales Enablers funnel. Plus nav cleanup.
 
-## 1. Navigation & shell
+---
 
-- **Delete** `src/routes/connects/index.tsx` and `src/routes/connects/$clusterId.tsx` (Connects page removed).
-- **Sales Enablement**: rename route from `/insights` → `/sales-enablement`. Empty the page body (just header + "Coming soon" notice). Disable bottom-nav entry (greyed, tooltip "Coming soon"), same pattern as Connects today.
-- **Handhold Customers** (new): add `/handhold` route → disabled "Coming soon" page. Add disabled bottom-nav entry.
-- `BottomNav` slots become: Cluster Potential · Cluster Engagement · Sales Enablement (disabled) · Handhold (disabled). Drop the disabled "Connects" entry.
+## 1. Cluster Card / Market Map (`src/routes/map/$clusterId.tsx`, `src/lib/clusterScoring.ts`, `src/routes/market-potential.tsx`)
 
-## 2. Home page (`src/routes/index.tsx`)
+**Competitive Strength**
+- In `getCompetitiveInsights` / `COMPETITIVE_INSIGHTS`: keep only the first 2 insights per cluster (drop the JK product-fit bullet).
+- Render competitor names (Asian Paints, Berger, Dulux, Birla Opus, JK) bold via a small `<HighlightBrands>` text wrapper that wraps known brand tokens in `<strong className="text-navy">`.
 
-- Update Sales Enablement card: new description, disabled (no nav, greyed visual, "Coming soon" pill), but `to="/sales-enablement"` for when enabled.
-- Add new disabled card "Handhold Customers" — "Handhold the customers post-sales."
-- Remove the "Start with Market Map" CTA button.
-- First card label remains the same but its `to` still goes to `/map`.
+**Cluster Access — remove all questions**
+- Delete the question UI block (lines ~370-416) and the `accessAnswers` / `accessRank` / contractor-dialog state.
+- Replace with 2 backend-driven insight bullets sourced from `getClusterIntel`:
+  - "There are **{contractorCount}** contractors dominating this cluster."
+  - "There are **{retailerCount}** retailers operating within this cluster." (add `retailerCount` to `ClusterIntel`, derived from prospects/cluster heuristic.)
+- Score for Access sub-section now comes purely from intel (new `accessHML` field in `ClusterIntel`, defaulted from `contractorCount` + cluster heuristics). No user input.
 
-## 3. Cluster Potential (renamed from Market Map)
+**Dynamic H/M/L**
+- `scoreToHML` already maps numeric scores → labels — keep it.
+- Refactor `computeClusterScores` so each sub-score (revenue, competitive, access, ease) is derived solely from backend intel + revenue profile (no assessment overrides driving the badge). This guarantees the same H/M/L on `/market-potential` and `/map/$clusterId`.
+- Remove the "Save / cluster potential estimated" toast flow; visiting the cluster automatically registers the assessment (so the cluster appears on My Cluster Map without manual save). Keep `setAssessment` call inside the `markVisited` effect with a derived assessment object.
 
-- **Renames**: `StageHeader` eyebrow/title, `BottomNav` label, `<title>` meta. The route stays `/map` (keeps state/URLs stable); label everywhere becomes "Cluster Potential". "View my Market Map" CTA → "View my Cluster Map".
-- **Cluster card (`/map/$clusterId`)**:
-  - Remove "Market Potential" section.
-  - Remove "Key points to consider before shortlisting".
-  - Remove the shortlist/remove button at bottom.
-  - In Geo View + List view: remove per-prospect select/deselect. Default = all prospects included. Strip `selectedProspectIds` UI affordances.
-  - Bump Places search limits: server fn already returns up to ~60; raise `pageSize` / loop pages until all are returned (max 3 pages = ~60 hard cap from Places API; document this in code comments). Drop any client-side truncation.
-  - **Replace shortlist button** with a "Save cluster potential" action that records the 4-section scores into store and adds the cluster to `targetClusterIds` automatically.
-- **New 4 sub-sections below List View**, in this order:
-  - **a. Cluster Revenue Potential** — auto-calculated. Per cluster, define `avgRevenuePerProspect` based on cluster type (schools ~₹8L, factories ~₹40L, houses/PG ~₹1.5L, gated/redevelopment ~₹15L, etc.) inside a new `CLUSTER_REVENUE_PROFILE` map in `src/lib/clusterScoring.ts`. Show: avg revenue/prospect with sq.ft band, total prospects, total revenue potential, market-potential rank.
-  - **b. Cluster Access** — two parts:
-    - Access Capability: 2–3 yes/no questions, generated per cluster from a `getAccessQuestions(clusterId)` helper (school touchpoints differ from MIDC touchpoints).
-    - Ranking radio: A / B / C with the descriptions listed.
-  - **c. Competitive Strength** — 3–4 yes/no questions generated per cluster (grammar-checked, cluster-specific wording). Score 1-10 based on % "yes".
-  - **d. Ease of Sale** — auto. Each cluster maps to an avg cycle time (e.g. PG: 1-2 weeks, schools: 2 months, MIDC/warehousing: 6 months, gated: 4 months). Display cycle + one-liner explanation.
-- **Aggregate "Cluster Potential" score**: 4 sub-scores (each /10), equal 25% weight → /10. Persist per cluster in store as `clusterAssessments`.
+**Flatter visual hierarchy**
+- Replace the nested `Accordion > AccordionItem > SubSection` (3 levels) with a single flat list of 4 cards on the cluster page:
+  1. Revenue Potential (badge)
+  2. Competitive Strength (badge)
+  3. Access (badge)
+  4. Ease of Sale (badge)
+- Each card is a single rounded panel — no parent "Cluster Revenue Potential / Cluster Access" wrappers, no accordions. Section heading "Cluster Snapshot" sits above the 4 cards.
+- Keep section header style consistent with `market-potential.tsx`.
 
-## 4. View my Cluster Map (`/market-potential`)
+---
 
-Two new sections (replace existing content):
-- **Cluster Snapshot**: 2×2 matrix (SVG). X-axis = Access (avg of access score + ease-of-sale score). Y-axis = Potential (avg of revenue score + competitive strength). Plot dot per scored cluster, labeled.
-- **Cluster Potential**: list cards (descending overall score) showing 4 sub-scores + overall. If <2 scored clusters → alert "Map the potential for more clusters to rank them for comparison".
-- Backed by the new `clusterAssessments` slice. Only clusters with a completed assessment appear.
+## 2. Cluster Engagement Plan (`src/routes/plan/index.tsx`, `src/store/appStore.ts`, `src/lib/strategyContent.ts`, `src/lib/monthlyPlanReport.ts`)
 
-## 5. Cluster Engagement Plan (`/plan`)
+**Focus cluster — outside the roadmap, single select**
+- Move `FocusStep` out of the roadmap accordion to a card at the top of the page titled "Which cluster would you like to focus on this month?".
+- Sort: clusters whose computed `access` AND `revenue` H/M/L are both H first, then the rest by aggregate.
+- Change `monthlyFocusIds` semantics to single-select (replace toggle with a set-one action `setMonthlyFocus(id)`). Keep the array shape for back-compat but enforce length 1 in UI.
+- Roadmap below only renders once a focus cluster is chosen.
 
-- Step 1 "Focus": same UI, but sort options by aggregate cluster potential desc (fallback potential H/M/L when no score).
-- Step 2 "Design your connect strategy": replace `CONNECT_MODEL_OPTIONS` with 4 strategies — Brand-driven, Contractor-driven, Outreach-driven, D2C-driven. Per-strategy follow-up forms:
-  - Brand-driven: yes/no "Do you want to run local campaigns?" + (if yes) free-text campaign idea.
-  - Contractor-driven: yes/no "Do you already know contractors?" + repeatable contractor list (name/phone/area).
-  - Outreach-driven: yes/no "Do you have a touchpoint in the community?", yes/no "Considered contribution events?" + cluster-relevant event suggestions from `src/data/eventTopics.ts`.
-  - D2C-driven: yes/no "Do you want to directly reach end customers?" + channel checkboxes (WhatsApp, walk-in, retailer, etc.).
-- Step 3 "Value proposition" → **removed**. Roadmap becomes 3 steps: focus → connect strategy → action plan.
-- Step 4 "Action plan": dynamically generated from the connect strategy + per-strategy answers. Replace `getRoadmapVariants` with `generateActionPlan(clusterId, strategy, answers)`.
-- Generated PDF (`src/lib/monthlyPlanReport.ts`): mirror the new structure — verb-actionable headings ("Focus on these clusters", "Design the connect strategy", "Execute the action plan"), include per-cluster strategy + answers + action steps, add whitespace between sections.
+**Roadmap — 3 new stages**
+Replace current `STEPS` with:
+1. **Select Value Proposition** — 2-3 cluster-specific propositions from a new `getValuePropositions(clusterId)` in `strategyContent.ts`. Single-select radio.
+2. **Design Connect Strategy** — checkbox list of strategies, max 3. When checked, inline lightweight commitment inputs appear directly under the strategy row (Brand Awareness: # activities, target reach. Contractor: # meetings, # champions. Touchpoint: # visits, key influencers). No modal/dialog. Numbers only, 1-2 inputs each.
+3. **Build Commitment / Action Plan** — for each selected strategy show 3 crisp recommended actions (checkboxes); only user-checked actions land in the report.
 
-## 6. Store changes (`src/store/appStore.ts`)
+**Store changes**
+- Add: `valuePropositionByCluster: Record<string, string>`, `selectedStrategiesByCluster: Record<string, ConnectStrategy[]>` (≤3), `commitmentsByCluster: Record<string, Record<ConnectStrategy, Record<string, string|number>>>`, `selectedActionsByCluster: Record<string, Record<ConnectStrategy, string[]>>`.
+- Keep old `connectStrategyByCluster` / `strategyAnswersByCluster` for migration but stop reading in UI.
 
-- Add `clusterAssessments: Record<clusterId, ClusterAssessment>` where assessment holds: access capability answers, access rank (A/B/C), competitive answers, plus computed scores + total.
-- Add `connectStrategyByCluster: Record<clusterId, ConnectStrategy>` (Brand/Contractor/Outreach/D2C) replacing `connectModelByCluster` (keep old key for backwards persistence but unused).
-- Add `strategyAnswersByCluster` for free-text/contractor lists/event flags.
-- Remove `selectedProspectIds` usage from UI (keep type for store compatibility; default-select all).
-- Bump persist `name` to `sed.v6` so old broken state doesn't poison the new shape.
+**Report**
+- Rewrite `generateMonthlyEngagementPlanPdf` payload + body to print only: focus cluster, value proposition, each selected strategy with its commitments, and checked action items. No menus of unchosen options.
 
-## 7. New helpers (`src/lib/clusterScoring.ts`)
+---
 
-- `CLUSTER_REVENUE_PROFILE[clusterId]` → avg sq.ft band, avg revenue per prospect.
-- `CLUSTER_CYCLE[clusterId]` → cycle time + one-liner.
-- `getAccessQuestions(clusterId)`, `getCompetitiveQuestions(clusterId)` → cluster-tailored yes/no sets.
-- `scoreRevenue(totalRevenue) → 1–10` (using the bands you specified).
-- `scoreAccess(rank) → 1–10` (A=10, B=7, C=3).
-- `scoreCompetitive(yesCount, total) → 1–10`.
-- `scoreEaseOfSale(clusterId) → 1–10` (faster cycle = higher).
-- `aggregate(scores)` → mean (each 25%).
+## 3. Sales Enablers module (`src/routes/sales-enablement.tsx` + new sub-routes)
 
-## Out-of-scope clarifications
+**Enable navigation**
+- `BottomNav.tsx`: set `sales-enablement` `disabled: false`.
+- `index.tsx` home cards: set Sales Enablers `disabled: false`.
 
-- "Backend intelligence" is implemented as deterministic frontend tables/helpers (no real backend) — same approach as the existing roadmap content. I won't introduce a server.
-- Places API hard caps at ~60 per text query (3 pages × 20). I'll fetch all pages but can't exceed Google's cap.
-- "Disabled temporarily" for Sales Enablement / Handhold = card and nav item are visibly disabled, non-clickable, with "Coming soon" affordance. Easy to re-enable by flipping a `disabled` flag.
+**Stage data model** (new in store)
+```
+type SalesStage = "prospects" | "contacted" | "decision" | "closure" | "ongoing";
+prospectStages: Record<clusterId, Record<prospectId, SalesStage>>
+prospectActivity: Record<prospectId, { contactsAccessed?:bool; meetingsDone?:number; productDiscussion?:bool; valuePropShared?:bool; outcomes?: string[] }>
+```
+Actions: `setProspectStage`, `recordProspectActivity`, `markProspectComplete`, `markProspectNotInterested`. Default stage = `prospects`. Distribution seeded deterministically on first load.
 
-## Verification
+**Routes**
+- `src/routes/sales-enablement.tsx` — landing. Header: "Customer Management Funnel · Click a cluster to update a prospect's stage". Lists shortlisted clusters (from `assessments`) as cards.
+- `src/routes/sales-enablement.$clusterId.tsx` — funnel page titled "Cluster Management Funnel – {cluster}". SVG/CSS funnel with 5 decreasing-width blocks showing live counts per stage. Tapping a stage opens a Dialog listing the prospects currently in that stage (Name, Address, Region). Each row links to the prospect page.
+- `src/routes/sales-enablement.$clusterId.$prospectId.tsx` — prospect detail. Top: horizontal 5-step stage timeline highlighting current. Two cards:
+  - **Where are you?** — checklist of completed activities (click-in details inline).
+  - **What to do next?** — stage-specific recommended next-best-actions from a new `getNextActions(stage, clusterId)` table.
+  - Bottom action bar: textarea-backed "Record Key Discussion Outcomes", "Mark as Completed" (advances to next stage), "Customer Not Interested" (removes from funnel).
 
-After implementing I'll: build-check, open the preview, walk through `/map` → cluster card (new sub-sections fill in) → `/market-potential` (matrix + ranking) → `/plan` (new strategies → action plan → PDF). Capture screenshots if anything looks off.
+**Visual**: lightweight, no nested cards beyond the two main cards.
+
+---
+
+## 4. Navigation cleanup
+
+- `src/components/app/BottomNav.tsx`: remove the `handhold` item entirely; grid becomes `grid-cols-3`.
+- `src/routes/index.tsx`: remove the "Ongoing Customer Relationship" card.
+- Leave `src/routes/handhold.tsx` in place but unlinked (delete-safe; will remove if no other refs).
+
+---
+
+## Technical notes
+
+- All scoring stays deterministic frontend lookups; "backend intelligence" = the existing `INTEL` / `getClusterIntel` table extended with `retailerCount` and `accessHML`.
+- All new color usage stays in semantic tokens (`text-navy`, `text-critical`, etc.).
+- TanStack Router file naming: `sales-enablement.$clusterId.tsx`, `sales-enablement.$clusterId.$prospectId.tsx` under `src/routes/`.
+- Store key bumped (`sed.v6` → `sed.v7`) to avoid stale persisted shape conflicts.
+
+---
+
+## Open questions
+
+1. Funnel counts — should the initial distribution (20/17/12/8/3) be hardcoded per cluster for demo, or derived from each cluster's actual prospect count?
+2. For value propositions — do you want me to author cluster-specific copy for all 20 clusters, or use a generic 3-option fallback for clusters without bespoke content?
+3. Should the old `handhold` route file be deleted, or kept reachable by direct URL only?
