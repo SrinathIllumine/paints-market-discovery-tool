@@ -1,5 +1,7 @@
-// Cluster scoring — deterministic frontend lookups. All scores are 1–10 and
-// the aggregate is the simple mean of the four sub-scores (25% each).
+// Cluster scoring — fully backend-intelligence driven. All scores are 1–10 and
+// the aggregate is the simple mean of the four sub-scores. The same cluster
+// always renders the same H/M/L across pages because nothing in the scoring
+// path depends on user-entered assessment data anymore.
 
 import type { Cluster } from "@/data/clusters";
 
@@ -17,16 +19,14 @@ export const COMPETITIVE_BRANDS = [
 
 export type CompetitiveBrand = (typeof COMPETITIVE_BRANDS)[number];
 
+// Kept for back-compat with persisted data; the UI no longer collects any of
+// these fields. computeClusterScores ignores all of them.
 export type ClusterAssessment = {
-  // Kept for back-compat (no longer driven by UI)
-  accessAnswers: YesNo[];
-  accessRank: AccessRank | null;
-  competitiveAnswers: YesNo[];
-  // New: brand presence H/M/L
+  accessAnswers?: YesNo[];
+  accessRank?: AccessRank | null;
+  competitiveAnswers?: YesNo[];
   brandPresence?: Partial<Record<string, HML>>;
-  // New: 3 yes/no answers driving the Cluster Access score
   accessAnswers3?: (YesNo | undefined)[];
-  // Editable overrides
   cycleMonths?: number;
   cycleEase?: HML;
   prospectCountOverride?: number;
@@ -35,8 +35,7 @@ export type ClusterAssessment = {
   completedAt: number;
 };
 
-
-/* ─────────────────────────────────────────── revenue profile */
+/* ─────────────────────────── revenue profile */
 
 export type RevenueProfile = {
   sqftBand: string;
@@ -82,7 +81,7 @@ export function formatRupees(n: number): string {
   return RUPEE(n);
 }
 
-/* ─────────────────────────────────────────── ease of sale */
+/* ─────────────────────────── ease of sale */
 
 export type CycleProfile = {
   label: string;
@@ -119,71 +118,54 @@ export function getCycle(clusterId: string): CycleProfile {
   return { ...c, months: Math.max(0.5, Math.round((c.days / 30) * 10) / 10) };
 }
 
-/* ─────────────────────────────────────────── legacy capability questions (kept for back-compat with stored data) */
+/* ─────────────────────────── legacy stubs */
 
-export function getAccessQuestions(_clusterId: string): string[] {
-  return [];
-}
-export function getCompetitiveQuestions(_clusterId: string): string[] {
-  return [];
-}
+export function getAccessQuestions(_clusterId: string): string[] { return []; }
+export function getCompetitiveQuestions(_clusterId: string): string[] { return []; }
 
-/* ─────────────────────────────────────────── scoring */
+/* ─────────────────────────── scoring helpers */
 
-export function scoreRevenue(avgRevenuePerProspect: number): number {
-  if (avgRevenuePerProspect < 1_00_000) return 2;
-  if (avgRevenuePerProspect < 5_00_000) return 4;
-  if (avgRevenuePerProspect < 15_00_000) return 6;
-  if (avgRevenuePerProspect < 30_00_000) return 8;
-  return 10;
-}
-
-export function scoreAccess(rank: AccessRank | null): number {
-  if (rank === "A") return 10;
-  if (rank === "B") return 7;
-  if (rank === "C") return 3;
-  return 0;
-}
-
-const HML_SCORE: Record<HML, number> = { H: 10, M: 6, L: 2 };
+const HML_SCORE: Record<HML, number> = { H: 9, M: 6, L: 3 };
 
 export function scoreFromHML(v: HML | undefined): number {
   return v ? HML_SCORE[v] : 0;
 }
 
+export function scoreToHML(score: number): HML {
+  if (score >= 7) return "H";
+  if (score >= 4.5) return "M";
+  return "L";
+}
+
+export const HML_LABEL: Record<HML, string> = { H: "High", M: "Medium", L: "Low" };
+
+export function scoreRevenue(avgRevenuePerProspect: number): number {
+  if (avgRevenuePerProspect < 1_00_000) return 3;
+  if (avgRevenuePerProspect < 5_00_000) return 5;
+  if (avgRevenuePerProspect < 15_00_000) return 6;
+  if (avgRevenuePerProspect < 30_00_000) return 8;
+  return 10;
+}
+
+export function scoreEaseOfSale(clusterId: string): number {
+  const days = getCycle(clusterId).days;
+  if (days <= 14) return 10;
+  if (days <= 30) return 8;
+  if (days <= 60) return 6;
+  if (days <= 90) return 5;
+  if (days <= 120) return 4;
+  return 3;
+}
+
+// Legacy stubs retained for type imports
+export function scoreAccess(_rank: AccessRank | null): number { return 0; }
 export function cycleTimeToEaseHML(v: HML): HML {
   if (v === "H") return "L";
   if (v === "L") return "H";
   return "M";
 }
-
-/** Brand-presence competitive score.
- * - For competitors (non-JK): Low presence = strong for JK → L=10, M=6, H=2.
- * - For JK Maxx: High presence = strong for JK → H=10, M=6, L=2.
- * Returns 0 if nothing rated.
- */
-export function scoreCompetitiveBrands(presence: Partial<Record<string, HML>> | undefined): number {
-  if (!presence) return 0;
-  const vals: number[] = [];
-  for (const brand of COMPETITIVE_BRANDS) {
-    const v = presence[brand];
-    if (!v) continue;
-    if (brand === "JK Maxx") vals.push(HML_SCORE[v]);
-    else vals.push(({ L: 10, M: 6, H: 2 } as const)[v]);
-  }
-  if (vals.length === 0) return 0;
-  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
-}
-
-export function scoreEaseOfSale(clusterId: string, cycleMonthsOverride?: number): number {
-  const days = cycleMonthsOverride !== undefined ? cycleMonthsOverride * 30 : getCycle(clusterId).days;
-  if (days <= 14) return 10;
-  if (days <= 30) return 8;
-  if (days <= 60) return 6;
-  if (days <= 90) return 5;
-  if (days <= 120) return 3;
-  return 2;
-}
+export function scoreCompetitiveBrands(_p: Partial<Record<string, HML>> | undefined): number { return 0; }
+export function scoreAccessFromAnswers(_answers: (YesNo | undefined)[]): number { return 0; }
 
 export type ClusterScores = {
   revenue: number;
@@ -196,58 +178,33 @@ export type ClusterScores = {
 export function computeClusterScores(
   cluster: Cluster,
   prospectCount: number,
-  assessment: ClusterAssessment,
+  _assessment?: ClusterAssessment,
 ): ClusterScores {
-  const profile = getRevenueProfile(cluster.id);
-  void prospectCount;
-  const avg = assessment.avgRevenueOverride ?? profile.avgRevenuePerProspect;
-  const revenue = assessment.revenueRating ? scoreFromHML(assessment.revenueRating) : scoreRevenue(avg);
-  // Access from new 2-question form if present; else from legacy rank
-  const access = assessment.accessAnswers3 && assessment.accessAnswers3.some((a) => a !== undefined)
-    ? scoreAccessFromAnswers(assessment.accessAnswers3)
-    : scoreAccess(assessment.accessRank);
-  // Competitive & ease come from backend intel (HML → numeric)
   const intel = getClusterIntel(cluster.id, prospectCount);
-  const competitive = assessment.brandPresence && Object.keys(assessment.brandPresence).length > 0
-    ? scoreCompetitiveBrands(assessment.brandPresence)
-    : scoreFromHML(intel.competitiveHML);
-  const ease = assessment.cycleEase
-    ? scoreFromHML(cycleTimeToEaseHML(assessment.cycleEase))
-    : scoreFromHML(intel.easeHML);
-  // Aggregate uses all 4 sub-scores
+  const revenue = scoreFromHML(intel.revenueHML);
+  const competitive = scoreFromHML(intel.competitiveHML);
+  const access = scoreFromHML(intel.accessHML);
+  const ease = scoreFromHML(intel.easeHML);
   const aggregate = Number(((revenue + competitive + access + ease) / 4).toFixed(1));
   return { revenue, access, competitive, ease, aggregate };
 }
 
-export function scoreAccessFromAnswers(answers: (YesNo | undefined)[]): number {
-  const answered = answers.filter((a) => a !== undefined);
-  if (answered.length === 0) return 0;
-  const yes = answered.filter((a) => a === "Y").length;
-  const ratio = yes / answered.length;
-  if (ratio >= 0.99) return 10;
-  if (ratio >= 0.5) return 6;
-  return 2;
-}
-
-/* ─────────────────────────────────────────── access insights & contractors */
+/* ─────────────────────────── access insights & contractors */
 
 export type DominantContractor = { name: string; phone: string; area: string; brandPreference: string };
 
 const COMPETITIVE_INSIGHTS: Partial<Record<string, string[]>> = {
   schools: [
     "Asian Paints is the market leader in this cluster.",
-    "JK stands third in this cluster.",
-    "JK has unique products for specific applications in schools such as heat reduction, anti-fungal hygienic coatings, and weather-resilient exterior protection.",
+    "JK stands third in this cluster, behind Berger Paints.",
   ],
   hospitals: [
     "Asian Paints leads the healthcare segment in this cluster.",
-    "JK is among the top three brands in this cluster.",
-    "JK offers antimicrobial, washable finishes ideal for healthcare environments.",
+    "JK is among the top three brands, alongside Berger Paints and Dulux.",
   ],
   midc: [
-    "Asian Paints and Berger dominate industrial coatings in this cluster.",
+    "Asian Paints and Berger Paints dominate industrial coatings in this cluster.",
     "JK has a growing but moderate presence in industrial accounts here.",
-    "JK has industrial-grade durable coatings suited to factory shopfloors and tank farms.",
   ],
 };
 
@@ -258,7 +215,6 @@ export function getCompetitiveInsights(clusterId: string): string[] {
   return [
     `${intel.leadingCompetitor} is the market leader in this cluster.`,
     `JK has ${intel.jkPenetrationLabel} presence in this cluster.`,
-    "JK offers tailored product propositions well-suited to this cluster's applications.",
   ];
 }
 
@@ -282,66 +238,113 @@ export function getDominantContractors(_clusterId: string): DominantContractor[]
 }
 
 export type AccessQuestion = { id: string; question: string; kind?: "contractors" };
+export function getAccessQuestions3(_clusterId: string): AccessQuestion[] { return []; }
 
-export function getAccessQuestions3(_clusterId: string): AccessQuestion[] {
-  return [
-    { id: "contractors",  question: "There are 3–4 contractors dominating this cluster. Do you have a close relation with them?", kind: "contractors" },
-    { id: "stakeholders", question: "Do you have access to key stakeholders who can introduce you into the cluster?" },
-  ];
-}
-
-
-/** Convert a numeric 0–10 score to H/M/L. */
-export function scoreToHML(score: number): HML {
-  if (score >= 7) return "H";
-  if (score >= 4) return "M";
-  return "L";
-}
-
-export const HML_LABEL: Record<HML, string> = { H: "High", M: "Medium", L: "Low" };
-
-/* ─────────────────────────────────────────── cluster intelligence (backend signals) */
+/* ─────────────────────────── cluster intelligence (backend signals) */
 
 export type ClusterIntel = {
   revenueHML: HML;
   competitiveHML: HML;
   easeHML: HML;
+  accessHML: HML;
   contractorCount: number;
+  retailerCount: number;
   jkPresenceCount: number;
   totalProspectsObserved: number;
   leadingCompetitor: string;
-  jkPenetrationLabel: string; // e.g. "moderate", "low", "strong"
+  jkPenetrationLabel: string; // "moderate" | "low" | "strong"
 };
 
-const INTEL: Partial<Record<string, ClusterIntel>> = {
+const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
   schools: {
-    revenueHML: "H",
-    competitiveHML: "M",
-    easeHML: "M",
-    contractorCount: 6,
-    jkPresenceCount: 6,
-    totalProspectsObserved: 60,
-    leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "moderate",
+    competitiveHML: "M", accessHML: "M",
+    contractorCount: 5, retailerCount: 20,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
+  },
+  hospitals: {
+    competitiveHML: "M", accessHML: "L",
+    contractorCount: 4, retailerCount: 14,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
+  },
+  midc: {
+    competitiveHML: "L", accessHML: "M",
+    contractorCount: 7, retailerCount: 12,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
+  },
+  "mid-apartments": {
+    competitiveHML: "M", accessHML: "H",
+    contractorCount: 9, retailerCount: 28,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
+  },
+  "gated-community": {
+    competitiveHML: "L", accessHML: "M",
+    contractorCount: 6, retailerCount: 22,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
+  },
+  restaurants: {
+    competitiveHML: "H", accessHML: "H",
+    contractorCount: 8, retailerCount: 30,
+    leadingCompetitor: "Berger Paints", jkPenetrationLabel: "strong",
   },
 };
 
 export function getClusterIntel(clusterId: string, fallbackProspectCount: number): ClusterIntel {
-  const seeded = INTEL[clusterId];
-  if (seeded) return seeded;
-  // Derive a reasonable default from existing scoring tables
   const profile = getRevenueProfile(clusterId);
   const revenueHML = scoreToHML(scoreRevenue(profile.avgRevenuePerProspect));
   const easeHML = scoreToHML(scoreEaseOfSale(clusterId));
-  const jk = Math.max(2, Math.round(fallbackProspectCount * 0.1));
+  const seeded = INTEL_SEED[clusterId] ?? {};
+  const contractorCount = seeded.contractorCount ?? Math.max(3, Math.round(fallbackProspectCount * 0.12));
+  const retailerCount = seeded.retailerCount ?? Math.max(6, Math.round(fallbackProspectCount * 0.5));
   return {
-    revenueHML,
-    competitiveHML: "M",
-    easeHML,
-    contractorCount: Math.max(3, Math.round(fallbackProspectCount * 0.12)),
-    jkPresenceCount: jk,
-    totalProspectsObserved: fallbackProspectCount,
-    leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "moderate",
+    revenueHML: seeded.revenueHML ?? revenueHML,
+    competitiveHML: seeded.competitiveHML ?? "M",
+    easeHML: seeded.easeHML ?? easeHML,
+    accessHML: seeded.accessHML ?? "M",
+    contractorCount,
+    retailerCount,
+    jkPresenceCount: seeded.jkPresenceCount ?? Math.max(2, Math.round(fallbackProspectCount * 0.1)),
+    totalProspectsObserved: seeded.totalProspectsObserved ?? fallbackProspectCount,
+    leadingCompetitor: seeded.leadingCompetitor ?? "Asian Paints",
+    jkPenetrationLabel: seeded.jkPenetrationLabel ?? "moderate",
   };
+}
+
+/* ─────────────────────────── brand highlighting helper */
+
+import type { ReactNode } from "react";
+import { createElement, Fragment } from "react";
+
+const BRAND_PATTERNS = [
+  "Asian Paints",
+  "Berger Paints",
+  "Berger",
+  "Akzo Nobel (Dulux)",
+  "Dulux",
+  "Birla Opus",
+  "JK Maxx",
+  "JK Cement",
+  "JK",
+];
+
+/** Wrap known brand tokens in <strong>. */
+export function highlightBrands(text: string): ReactNode {
+  const pattern = new RegExp(
+    `(${BRAND_PATTERNS.map((b) => b.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`,
+    "g",
+  );
+  const parts = text.split(pattern);
+  return createElement(
+    Fragment,
+    null,
+    ...parts.map((part, i) => {
+      if (BRAND_PATTERNS.includes(part)) {
+        return createElement(
+          "strong",
+          { key: i, className: "font-semibold text-navy" },
+          part,
+        );
+      }
+      return part;
+    }),
+  );
 }
