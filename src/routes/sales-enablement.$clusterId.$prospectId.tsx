@@ -101,9 +101,9 @@ function ProspectDetailPage() {
     ],
   };
 
-  // History = all stages up to + including current
+  // History = strictly previous stages (do NOT show current stage's pending details here)
   const doneAcross: { stage: SalesStage; items: DoneItem[] }[] = SALES_STAGES
-    .slice(0, stageIdx + 1)
+    .slice(0, stageIdx)
     .map((s) => ({ stage: s, items: STAGE_DONE[s] }));
 
   // ── "what to do next" — checkboxes with optional click-ins ──────────────
