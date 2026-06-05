@@ -132,12 +132,13 @@ export function scoreFromHML(v: HML | undefined): number {
 }
 
 export function scoreToHML(score: number): HML {
-  if (score >= 7) return "H";
-  if (score >= 4.5) return "M";
+  // Binary classification — Medium has been retired. Scores >= 6 are High.
+  if (score >= 6) return "H";
   return "L";
 }
 
-export const HML_LABEL: Record<HML, string> = { H: "High", M: "Medium", L: "Low" };
+export const HML_LABEL: Record<HML, string> = { H: "High", M: "Low", L: "Low" };
+
 
 export function scoreRevenue(avgRevenuePerProspect: number): number {
   if (avgRevenuePerProspect < 1_00_000) return 3;
