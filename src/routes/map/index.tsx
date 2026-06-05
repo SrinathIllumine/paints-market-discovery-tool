@@ -19,8 +19,6 @@ export const Route = createFileRoute("/map/")({
 
 function ClusterPotentialScreen() {
   const navigate = useNavigate();
-  const _assessments = useAppStore((s) => s.assessments);
-  void _assessments;
 
   return (
     <AppShell
