@@ -389,57 +389,20 @@ function HMLTile({ label, hml }: { label: string; hml: HML }) {
   );
 }
 
-function SnapshotMatrix({
-  rows, highlightId,
-}: {
-  rows: { id: string; name: string; potential: number; access: number }[];
-  highlightId?: string;
-}) {
-  const W = 320, H = 320, pad = 40;
-  const innerW = W - pad * 2, innerH = H - pad * 2;
-  const xFor = (v: number) => pad + (v / 10) * innerW;
-  const yFor = (v: number) => H - pad - (v / 10) * innerH;
-
+function ParentCard({
+  title, hml, children,
+}: { title: string; hml: HML; children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto text-foreground">
-      <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto block h-auto w-full max-w-sm">
-        <rect x={pad} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.35} />
-        <rect x={pad + innerW / 2} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--critical)" fillOpacity={0.12} />
-        <rect x={pad} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.15} />
-        <rect x={pad + innerW / 2} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.55} />
-
-        <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
-        <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
-        <line x1={pad + innerW / 2} y1={pad} x2={pad + innerW / 2} y2={H - pad} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
-        <line x1={pad} y1={pad + innerH / 2} x2={W - pad} y2={pad + innerH / 2} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
-
-        <text x={W / 2} y={H - 8} fontSize="10" fill="currentColor" textAnchor="middle">Access →</text>
-        <text x={12} y={H / 2} fontSize="10" fill="currentColor" textAnchor="middle" transform={`rotate(-90 12 ${H / 2})`}>Potential →</text>
-
-        {rows.map((r) => {
-          const isMe = r.id === highlightId;
-          return (
-            <g key={r.id} opacity={isMe || !highlightId ? 1 : 0.25}>
-              <circle
-                cx={xFor(r.access)}
-                cy={yFor(r.potential)}
-                r={isMe ? 8 : 5}
-                fill={isMe ? "var(--critical)" : "currentColor"}
-                stroke="var(--background)"
-                strokeWidth={1.5}
-              />
-              {isMe && (
-                <text x={xFor(r.access) + 11} y={yFor(r.potential) + 4} fontSize="10" fill="currentColor" fontWeight="700">
-                  {r.name.length > 22 ? r.name.slice(0, 21) + "…" : r.name}
-                </text>
-              )}
-            </g>
-          );
-        })}
-      </svg>
+    <div className="rounded-2xl border border-border bg-card p-3 shadow-sm">
+      <div className="mb-2 flex items-center justify-between gap-3 px-1">
+        <h3 className="font-display text-xl leading-tight">{title}</h3>
+        <HMLBadge hml={hml} />
+      </div>
+      {children}
     </div>
   );
 }
+
 
 void CLUSTERS;
 void scoreFromHML;
