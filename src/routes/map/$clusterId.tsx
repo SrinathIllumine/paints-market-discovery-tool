@@ -332,29 +332,25 @@ function Section({
   );
 }
 
-function ParentCard({ title, hml, children }: { title: string; hml: HML; children: React.ReactNode }) {
+function CollapsibleSub({
+  value, title, hml, children,
+}: { value: string; title: string; hml: HML; children: React.ReactNode }) {
   return (
-    <section className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="font-display text-xl leading-tight">{title}</h2>
-        <HMLBadge hml={hml} />
-      </div>
-      <div className="space-y-3">{children}</div>
-    </section>
+    <AccordionItem
+      value={value}
+      className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+    >
+      <AccordionTrigger className="px-4 py-3 hover:no-underline">
+        <div className="flex w-full items-center justify-between gap-3 pr-2">
+          <span className="font-display text-lg leading-tight">{title}</span>
+          <HMLBadge hml={hml} />
+        </div>
+      </AccordionTrigger>
+      <AccordionContent className="px-4 pb-4 pt-1">{children}</AccordionContent>
+    </AccordionItem>
   );
 }
 
-function SubCard({ title, hml, children }: { title: string; hml: HML; children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-border bg-muted/30 p-3">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="font-display text-base leading-tight">{title}</h3>
-        <HMLBadge hml={hml} small />
-      </div>
-      {children}
-    </div>
-  );
-}
 
 function HMLBadge({ hml, small }: { hml: HML | null; small?: boolean }) {
   if (!hml) return null;
