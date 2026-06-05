@@ -132,12 +132,13 @@ export function scoreFromHML(v: HML | undefined): number {
 }
 
 export function scoreToHML(score: number): HML {
-  if (score >= 7) return "H";
-  if (score >= 4.5) return "M";
+  // Binary classification — Medium has been retired. Scores >= 6 are High.
+  if (score >= 6) return "H";
   return "L";
 }
 
-export const HML_LABEL: Record<HML, string> = { H: "High", M: "Medium", L: "Low" };
+export const HML_LABEL: Record<HML, string> = { H: "High", M: "Low", L: "Low" };
+
 
 export function scoreRevenue(avgRevenuePerProspect: number): number {
   if (avgRevenuePerProspect < 1_00_000) return 3;
@@ -161,9 +162,9 @@ export function scoreEaseOfSale(clusterId: string): number {
 export function scoreAccess(_rank: AccessRank | null): number { return 0; }
 export function cycleTimeToEaseHML(v: HML): HML {
   if (v === "H") return "L";
-  if (v === "L") return "H";
-  return "M";
+  return "H";
 }
+
 export function scoreCompetitiveBrands(_p: Partial<Record<string, HML>> | undefined): number { return 0; }
 export function scoreAccessFromAnswers(_answers: (YesNo | undefined)[]): number { return 0; }
 
@@ -277,73 +278,58 @@ export type ClusterIntel = {
 // Explicit per-cluster HML grid so the snapshot scatter is spread realistically
 // across all four quadrants of Potential x Access.
 const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
-  // High Potential · High Access
+  // High Potential · High Access (6)
   "mid-apartments": {
-    revenueHML: "H", competitiveHML: "H", accessHML: "H", easeHML: "M",
+    revenueHML: "H", competitiveHML: "H", accessHML: "H", easeHML: "H",
     contractorCount: 9, retailerCount: 28,
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
   },
   restaurants: {
-    revenueHML: "M", competitiveHML: "H", accessHML: "H", easeHML: "H",
+    revenueHML: "H", competitiveHML: "H", accessHML: "H", easeHML: "L",
     contractorCount: 8, retailerCount: 30,
     leadingCompetitor: "Berger Paints", jkPenetrationLabel: "strong",
   },
   "gated-community": {
-    revenueHML: "H", competitiveHML: "M", accessHML: "H", easeHML: "M",
+    revenueHML: "H", competitiveHML: "L", accessHML: "H", easeHML: "L",
     contractorCount: 6, retailerCount: 22,
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
   },
   redevelopment: {
-    revenueHML: "H", competitiveHML: "M", accessHML: "H", easeHML: "M",
+    revenueHML: "H", competitiveHML: "H", accessHML: "L", easeHML: "H",
     contractorCount: 7, retailerCount: 18,
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
   },
   jewellery: {
-    revenueHML: "M", competitiveHML: "H", accessHML: "M", easeHML: "H",
+    revenueHML: "H", competitiveHML: "L", accessHML: "H", easeHML: "H",
     contractorCount: 4, retailerCount: 10,
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
   },
-
-  // High Potential · Low Access
-  midc: {
-    revenueHML: "H", competitiveHML: "H", accessHML: "L", easeHML: "L",
-    contractorCount: 7, retailerCount: 12,
-    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
-  },
-  warehousing: {
-    revenueHML: "H", competitiveHML: "M", accessHML: "L", easeHML: "L",
-    contractorCount: 5, retailerCount: 10,
-    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
-  },
   hotels: {
-    revenueHML: "H", competitiveHML: "M", accessHML: "L", easeHML: "M",
+    revenueHML: "H", competitiveHML: "H", accessHML: "H", easeHML: "L",
     contractorCount: 5, retailerCount: 12,
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
   },
-  colleges: {
-    revenueHML: "H", competitiveHML: "M", accessHML: "L", easeHML: "L",
-    contractorCount: 4, retailerCount: 9,
-    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
-  },
-  hospitals: {
-    revenueHML: "H", competitiveHML: "M", accessHML: "L", easeHML: "M",
-    contractorCount: 4, retailerCount: 14,
+
+  // High Potential · Low Access (1 — schools alone)
+  schools: {
+    revenueHML: "H", competitiveHML: "L", accessHML: "L", easeHML: "L",
+    contractorCount: 5, retailerCount: 20,
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
   },
 
-  // Low Potential · High Access
+  // Low Potential · High Access (6)
   "paying-guest": {
     revenueHML: "L", competitiveHML: "L", accessHML: "H", easeHML: "H",
     contractorCount: 6, retailerCount: 18,
     leadingCompetitor: "Berger Paints", jkPenetrationLabel: "strong",
   },
   "bus-stand-market": {
-    revenueHML: "L", competitiveHML: "M", accessHML: "H", easeHML: "H",
+    revenueHML: "L", competitiveHML: "L", accessHML: "H", easeHML: "H",
     contractorCount: 5, retailerCount: 16,
     leadingCompetitor: "Berger Paints", jkPenetrationLabel: "strong",
   },
   "textile-garment": {
-    revenueHML: "L", competitiveHML: "M", accessHML: "H", easeHML: "H",
+    revenueHML: "L", competitiveHML: "L", accessHML: "H", easeHML: "L",
     contractorCount: 6, retailerCount: 20,
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
   },
@@ -353,38 +339,54 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
   },
   "petrol-pumps": {
-    revenueHML: "L", competitiveHML: "L", accessHML: "M", easeHML: "H",
+    revenueHML: "L", competitiveHML: "L", accessHML: "L", easeHML: "H",
     contractorCount: 3, retailerCount: 6,
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
   },
+  "clinics-nursing": {
+    revenueHML: "L", competitiveHML: "L", accessHML: "H", easeHML: "L",
+    contractorCount: 5, retailerCount: 14,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
+  },
 
-  // Low Potential · Low Access
+  // Low Potential · Low Access (7)
   religious: {
-    revenueHML: "L", competitiveHML: "L", accessHML: "L", easeHML: "M",
+    revenueHML: "L", competitiveHML: "L", accessHML: "L", easeHML: "L",
     contractorCount: 4, retailerCount: 10,
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
   },
   "marriage-halls": {
-    revenueHML: "L", competitiveHML: "M", accessHML: "L", easeHML: "M",
+    revenueHML: "L", competitiveHML: "L", accessHML: "L", easeHML: "L",
     contractorCount: 3, retailerCount: 8,
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
   },
   "auto-showrooms": {
-    revenueHML: "M", competitiveHML: "L", accessHML: "L", easeHML: "L",
+    revenueHML: "L", competitiveHML: "L", accessHML: "L", easeHML: "L",
     contractorCount: 3, retailerCount: 7,
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
   },
-  "clinics-nursing": {
-    revenueHML: "L", competitiveHML: "M", accessHML: "L", easeHML: "M",
-    contractorCount: 5, retailerCount: 14,
+  colleges: {
+    revenueHML: "L", competitiveHML: "L", accessHML: "L", easeHML: "L",
+    contractorCount: 4, retailerCount: 9,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
+  },
+  hospitals: {
+    revenueHML: "L", competitiveHML: "L", accessHML: "L", easeHML: "L",
+    contractorCount: 4, retailerCount: 14,
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
   },
-  schools: {
-    revenueHML: "M", competitiveHML: "L", accessHML: "L", easeHML: "M",
-    contractorCount: 5, retailerCount: 20,
-    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
+  midc: {
+    revenueHML: "L", competitiveHML: "L", accessHML: "L", easeHML: "L",
+    contractorCount: 7, retailerCount: 12,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
+  },
+  warehousing: {
+    revenueHML: "L", competitiveHML: "L", accessHML: "L", easeHML: "L",
+    contractorCount: 5, retailerCount: 10,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
   },
 };
+
 
 export function getClusterIntel(clusterId: string, fallbackProspectCount: number): ClusterIntel {
   const profile = getRevenueProfile(clusterId);

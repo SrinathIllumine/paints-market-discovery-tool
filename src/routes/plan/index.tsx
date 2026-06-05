@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { CLUSTERS, getCluster } from "@/data/clusters";
-import { computeClusterScores, HML_LABEL, type HML } from "@/lib/clusterScoring";
+import { computeClusterScores, type HML } from "@/lib/clusterScoring";
 import { useAppStore, type RoadmapStep } from "@/store/appStore";
 import { Button } from "@/components/ui/button";
 import {
@@ -91,15 +91,11 @@ function PlanScreen() {
 
   const BUCKETS: { potential: HML; access: HML; label: string; recommended?: boolean }[] = [
     { potential: "H", access: "H", label: "High Potential · High Access", recommended: true },
-    { potential: "H", access: "M", label: "High Potential · Medium Access" },
     { potential: "H", access: "L", label: "High Potential · Low Access" },
-    { potential: "M", access: "H", label: "Medium Potential · High Access" },
-    { potential: "M", access: "M", label: "Medium Potential · Medium Access" },
-    { potential: "M", access: "L", label: "Medium Potential · Low Access" },
     { potential: "L", access: "H", label: "Low Potential · High Access" },
-    { potential: "L", access: "M", label: "Low Potential · Medium Access" },
     { potential: "L", access: "L", label: "Low Potential · Low Access" },
   ];
+
 
   const focusClusterId = focusIds[0];
   const focusCluster = focusClusterId ? getCluster(focusClusterId) : undefined;
@@ -359,16 +355,14 @@ function PlanScreen() {
 }
 
 function LabelChip({ label, hml }: { label: string; hml: HML }) {
-  const cls =
-    hml === "H" ? "bg-green-100 text-green-800"
-    : hml === "M" ? "bg-orange-100 text-orange-800"
-    : "bg-red-100 text-red-800";
+  const cls = hml === "H" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
   return (
     <span className={cn("rounded-full px-2 py-0.5", cls)}>
-      {label}: {HML_LABEL[hml]}
+      {label}: {hml === "H" ? "High" : "Low"}
     </span>
   );
 }
+
 
 function BucketCard({
   label, recommended, defaultOpen, count, children,
