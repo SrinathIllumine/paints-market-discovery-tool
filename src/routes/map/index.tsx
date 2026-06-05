@@ -20,7 +20,6 @@ export const Route = createFileRoute("/map/")({
 function ClusterPotentialScreen() {
   const navigate = useNavigate();
   const assessments = useAppStore((s) => s.assessments);
-  const shortlistedIds = useAppStore((s) => s.plan.targetClusterIds);
 
   return (
     <AppShell

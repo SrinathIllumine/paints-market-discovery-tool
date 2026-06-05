@@ -2,16 +2,18 @@ import jsPDF from "jspdf";
 import { getCluster } from "@/data/clusters";
 import {
   CONNECT_STRATEGY_LABEL,
-  COMMITMENT_FIELDS,
   type ConnectStrategy,
+  type ContactEntry,
 } from "@/lib/strategyContent";
 
 type Args = {
   focusClusterId: string;
   valueProposition: string;
   strategies: ConnectStrategy[];
-  commitments: Partial<Record<ConnectStrategy, Record<string, string | number>>>;
+  strategyItems: Partial<Record<ConnectStrategy, string[]>>;
+  strategyContacts: Partial<Record<ConnectStrategy, ContactEntry[]>>;
   selectedActions: Partial<Record<ConnectStrategy, string[]>>;
+  customActions: Partial<Record<ConnectStrategy, string[]>>;
 };
 
 function normalisePdfText(text: string): string {
@@ -26,18 +28,13 @@ function normalisePdfText(text: string): string {
 }
 
 export function generateMonthlyEngagementPlanPdf({
-  focusClusterId,
-  valueProposition,
-  strategies,
-  commitments,
-  selectedActions,
+  focusClusterId, valueProposition, strategies, strategyItems, strategyContacts, selectedActions, customActions,
 }: Args) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 40;
   let y = margin;
 
-  // Header band
   doc.setFillColor(15, 23, 42);
   doc.rect(0, 0, pageWidth, 70, "F");
   doc.setTextColor(255, 255, 255);
@@ -48,8 +45,7 @@ export function generateMonthlyEngagementPlanPdf({
   doc.setFontSize(10);
   doc.text(
     `Generated ${new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}`,
-    margin,
-    54,
+    margin, 54,
   );
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
@@ -97,26 +93,26 @@ export function generateMonthlyEngagementPlanPdf({
   wrapped(valueProposition || "Not selected", 0);
   y += 6;
 
-  heading("Selected strategies & commitments");
+  heading("Selected strategies");
   if (strategies.length === 0) {
     wrapped("No strategies selected.", 0);
   } else {
     for (const s of strategies) {
       ensureSpace(40);
       wrapped(CONNECT_STRATEGY_LABEL[s], 0, true);
-      const cs = commitments[s] ?? {};
-      const fields = COMMITMENT_FIELDS[s];
-      const lines = fields
-        .map((f) => {
-          const v = cs[f.key];
-          return v === undefined || v === "" ? null : `- ${f.label}: ${v}`;
-        })
-        .filter((l): l is string => Boolean(l));
-      if (lines.length === 0) {
-        wrapped("- No commitments captured", 12);
-      } else {
-        for (const l of lines) wrapped(l, 12);
+      const items = strategyItems[s] ?? [];
+      if (items.length > 0) {
+        for (const it of items) wrapped(`- ${it}`, 12);
       }
+      const contacts = strategyContacts[s] ?? [];
+      if (contacts.length > 0) {
+        wrapped("Contacts:", 12, true);
+        for (const c of contacts) {
+          const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · ");
+          if (line) wrapped(`- ${line}`, 18);
+        }
+      }
+      if (items.length === 0 && contacts.length === 0) wrapped("- No items captured", 12);
       y += 4;
     }
   }
@@ -125,7 +121,7 @@ export function generateMonthlyEngagementPlanPdf({
   heading("Action plan");
   let any = false;
   for (const s of strategies) {
-    const actions = selectedActions[s] ?? [];
+    const actions = [...(selectedActions[s] ?? []), ...(customActions[s] ?? [])];
     if (actions.length === 0) continue;
     any = true;
     ensureSpace(30);
@@ -135,7 +131,6 @@ export function generateMonthlyEngagementPlanPdf({
   }
   if (!any) wrapped("No actions selected.", 0);
 
-  // Footer
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
