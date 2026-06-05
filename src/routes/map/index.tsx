@@ -20,7 +20,6 @@ export const Route = createFileRoute("/map/")({
 function ClusterPotentialScreen() {
   const navigate = useNavigate();
   const assessments = useAppStore((s) => s.assessments);
-  const shortlistedIds = useAppStore((s) => s.plan.targetClusterIds);
 
   return (
     <AppShell
@@ -34,15 +33,13 @@ function ClusterPotentialScreen() {
       }
     >
       <div className="max-h-[calc(100vh-260px)] overflow-y-auto px-5 py-6">
-        {shortlistedIds.length > 0 && (
-          <Link
-            to="/market-potential"
-            className="mb-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-critical text-base font-semibold text-critical-foreground shadow-lg shadow-critical/20"
-          >
-            View my Cluster Map ({shortlistedIds.length})
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        )}
+        <Link
+          to="/market-potential"
+          className="mb-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-critical text-base font-semibold text-critical-foreground shadow-lg shadow-critical/20"
+        >
+          View my Cluster Map
+          <ArrowRight className="h-4 w-4" />
+        </Link>
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
           {CLUSTERS.map((c) => {
             const scored = Boolean(assessments[c.id]);

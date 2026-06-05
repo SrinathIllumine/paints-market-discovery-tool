@@ -7,6 +7,8 @@ import {
   useAppStore,
   SALES_STAGES,
   SALES_STAGE_LABEL,
+  EMPTY_ACTIVITY,
+  EMPTY_PROSPECTS,
   type SalesStage,
 } from "@/store/appStore";
 import { getCluster } from "@/data/clusters";
@@ -59,13 +61,12 @@ function ProspectDetailPage() {
   const { clusterId, prospectId } = Route.useParams();
   const navigate = useNavigate();
   const cluster = getCluster(clusterId);
-  const prospect = useAppStore((s) =>
-    (s.clusters[clusterId]?.prospects ?? []).find((p) => p.id === prospectId),
-  );
+  const prospects = useAppStore((s) => s.clusters[clusterId]?.prospects ?? EMPTY_PROSPECTS);
+  const prospect = useMemo(() => prospects.find((p) => p.id === prospectId), [prospects, prospectId]);
   const currentStage = useAppStore(
     (s) => s.sales.prospectStages[clusterId]?.[prospectId] ?? "prospects",
   );
-  const activity = useAppStore((s) => s.sales.prospectActivity[prospectId] ?? {});
+  const activity = useAppStore((s) => s.sales.prospectActivity[prospectId] ?? EMPTY_ACTIVITY);
   const setStage = useAppStore((s) => s.setProspectStage);
   const recordActivity = useAppStore((s) => s.recordProspectActivity);
   const addOutcome = useAppStore((s) => s.addProspectOutcome);
@@ -121,7 +122,6 @@ function ProspectDetailPage() {
       }
     >
       <div className="space-y-4 px-5 py-5">
-        {/* Timeline */}
         <div className="rounded-2xl border border-border bg-card p-3 shadow-sm">
           <div className="flex items-center gap-1 overflow-x-auto">
             {SALES_STAGES.map((s, i) => {
@@ -133,10 +133,8 @@ function ProspectDetailPage() {
                     <div
                       className={cn(
                         "flex h-6 w-6 items-center justify-center rounded-full border-2 text-[10px] font-bold",
-                        active
-                          ? "border-critical bg-critical text-critical-foreground"
-                          : done
-                          ? "border-green-600 bg-green-600 text-white"
+                        active ? "border-critical bg-critical text-critical-foreground"
+                          : done ? "border-green-600 bg-green-600 text-white"
                           : "border-border bg-card text-muted-foreground",
                       )}
                     >
@@ -155,7 +153,6 @@ function ProspectDetailPage() {
           </div>
         </div>
 
-        {/* Where are you */}
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <h3 className="font-display text-lg">Where are you?</h3>
           <p className="mt-0.5 text-xs text-muted-foreground">Mark completed work below.</p>
@@ -197,7 +194,6 @@ function ProspectDetailPage() {
           )}
         </div>
 
-        {/* What to do next */}
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <h3 className="font-display text-lg">What to do next?</h3>
           <p className="mt-0.5 text-xs text-muted-foreground">
@@ -213,7 +209,6 @@ function ProspectDetailPage() {
           </ul>
         </div>
 
-        {/* Record outcomes */}
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <h3 className="font-display text-lg">Record key discussion outcomes</h3>
           <textarea
@@ -234,23 +229,20 @@ function ProspectDetailPage() {
           </Button>
         </div>
 
-        {/* Bottom actions */}
         <div className="grid grid-cols-2 gap-2">
           <Button
             onClick={handleAdvance}
             disabled={!nextStage}
             className="h-11 gap-1.5 bg-critical text-critical-foreground hover:bg-critical/90"
           >
-            <Check className="h-4 w-4" />
-            Mark as completed
+            <Check className="h-4 w-4" /> Mark as completed
           </Button>
           <Button
             variant="outline"
             onClick={handleNotInterested}
             className="h-11 gap-1.5 border-border text-muted-foreground hover:bg-muted/40"
           >
-            <X className="h-4 w-4" />
-            Not interested
+            <X className="h-4 w-4" /> Not interested
           </Button>
         </div>
       </div>

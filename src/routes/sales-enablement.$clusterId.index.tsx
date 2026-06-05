@@ -1,9 +1,16 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
-import { useAppStore, SALES_STAGES, SALES_STAGE_LABEL, type SalesStage } from "@/store/appStore";
+import {
+  useAppStore,
+  SALES_STAGES,
+  SALES_STAGE_LABEL,
+  EMPTY_PROSPECTS,
+  EMPTY_STAGE_MAP,
+  type SalesStage,
+} from "@/store/appStore";
 import { getCluster } from "@/data/clusters";
 import {
   Dialog,
@@ -18,23 +25,41 @@ export const Route = createFileRoute("/sales-enablement/$clusterId/")({
   component: ClusterFunnelPage,
 });
 
+// Visual proportions for a tapered funnel (top to bottom).
+const FUNNEL_WIDTHS: Record<SalesStage, number> = {
+  prospects: 100,
+  contacted: 86,
+  decision: 72,
+  closure: 58,
+  ongoing: 44,
+};
+
+const STAGE_THEME: Record<SalesStage, { bg: string; ring: string; pill: string; text: string }> = {
+  prospects: { bg: "from-navy to-navy/80",          ring: "ring-navy/40",          pill: "bg-white/15 text-white", text: "text-white" },
+  contacted: { bg: "from-navy/85 to-navy/65",       ring: "ring-navy/30",          pill: "bg-white/15 text-white", text: "text-white" },
+  decision:  { bg: "from-amber-500 to-amber-400",   ring: "ring-amber-300/40",     pill: "bg-white/25 text-white", text: "text-white" },
+  closure:   { bg: "from-critical to-critical/80",  ring: "ring-critical/30",      pill: "bg-white/20 text-white", text: "text-white" },
+  ongoing:   { bg: "from-green-600 to-green-500",   ring: "ring-green-400/40",     pill: "bg-white/25 text-white", text: "text-white" },
+};
+
 function ClusterFunnelPage() {
   const { clusterId } = Route.useParams();
   const cluster = getCluster(clusterId);
-  const navigate = useNavigate();
 
-  const prospects = useAppStore((s) => s.clusters[clusterId]?.prospects ?? []);
-  const stages = useAppStore((s) => s.sales.prospectStages[clusterId] ?? {});
+  const prospects = useAppStore((s) => s.clusters[clusterId]?.prospects ?? EMPTY_PROSPECTS);
+  const stages = useAppStore((s) => s.sales.prospectStages[clusterId] ?? EMPTY_STAGE_MAP);
   const activity = useAppStore((s) => s.sales.prospectActivity);
   const seed = useAppStore((s) => s.seedSalesStages);
 
   const [openStage, setOpenStage] = useState<SalesStage | null>(null);
 
+  // Seed only once per cluster — guarded both at store level and here.
+  const prospectIds = useMemo(() => prospects.map((p) => p.id), [prospects]);
   useEffect(() => {
-    if (prospects.length > 0) seed(clusterId, prospects.map((p) => p.id));
-  }, [clusterId, prospects, seed]);
+    if (prospectIds.length > 0) seed(clusterId, prospectIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clusterId, prospectIds.length]);
 
-  // Filter out "not interested" from counts.
   const visibleByStage = useMemo(() => {
     const out: Record<SalesStage, typeof prospects> = {
       prospects: [], contacted: [], decision: [], closure: [], ongoing: [],
@@ -55,22 +80,6 @@ function ClusterFunnelPage() {
     );
   }
 
-  const maxW = 320;
-  const widths: Record<SalesStage, number> = {
-    prospects: maxW,
-    contacted: Math.round(maxW * 0.85),
-    decision: Math.round(maxW * 0.7),
-    closure: Math.round(maxW * 0.55),
-    ongoing: Math.round(maxW * 0.4),
-  };
-  const colors: Record<SalesStage, string> = {
-    prospects: "bg-navy text-navy-foreground",
-    contacted: "bg-navy/85 text-navy-foreground",
-    decision: "bg-critical/80 text-critical-foreground",
-    closure: "bg-critical text-critical-foreground",
-    ongoing: "bg-green-600 text-white",
-  };
-
   return (
     <AppShell
       bottom={<BottomNav />}
@@ -78,35 +87,53 @@ function ClusterFunnelPage() {
         <StageHeader
           eyebrow="Customer Management Funnel"
           title={cluster.name}
-          subtitle="Tap a stage to move prospects forward."
+          subtitle="Tap a stage band to move prospects forward."
           backTo="/sales-enablement"
         />
       }
     >
-      <div className="space-y-4 px-5 py-5">
-        <div className="flex flex-col items-center gap-2">
-          {SALES_STAGES.map((s) => {
-            const count = visibleByStage[s].length;
-            return (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setOpenStage(s)}
-                className={cn(
-                  "flex items-center justify-between gap-3 rounded-lg px-4 py-3 shadow-sm transition-transform hover:scale-[1.02]",
-                  colors[s],
-                )}
-                style={{ width: widths[s] }}
-              >
-                <span className="text-sm font-semibold leading-tight">{SALES_STAGE_LABEL[s]}</span>
-                <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-bold">{count}</span>
-              </button>
-            );
-          })}
+      <div className="space-y-3 px-5 py-6">
+        <div className="rounded-3xl border border-border bg-gradient-to-b from-muted/40 to-card p-5 shadow-sm">
+          <div className="mx-auto flex max-w-md flex-col items-center gap-2">
+            {SALES_STAGES.map((s, i) => {
+              const widthPct = FUNNEL_WIDTHS[s];
+              const theme = STAGE_THEME[s];
+              const count = visibleByStage[s].length;
+              const nextW = i < SALES_STAGES.length - 1 ? FUNNEL_WIDTHS[SALES_STAGES[i + 1]] : widthPct - 6;
+              // Tapered trapezoid via clip-path: pinch in toward the next stage's width.
+              const insetPct = (widthPct - nextW) / 2;
+              const clip = `polygon(0 0, 100% 0, ${100 - (insetPct / widthPct) * 100}% 100%, ${(insetPct / widthPct) * 100}% 100%)`;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setOpenStage(s)}
+                  style={{ width: `${widthPct}%`, clipPath: clip }}
+                  className={cn(
+                    "group relative h-16 bg-gradient-to-b ring-1 transition-transform hover:-translate-y-0.5 hover:shadow-lg",
+                    theme.bg,
+                    theme.ring,
+                  )}
+                >
+                  <div className={cn("flex h-full items-center justify-center gap-3 px-4", theme.text)}>
+                    <span className="truncate text-sm font-semibold leading-tight drop-shadow">
+                      {SALES_STAGE_LABEL[s]}
+                    </span>
+                    <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-bold", theme.pill)}>
+                      {count}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            {prospects.length} total prospects in this cluster
+          </p>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground">
-          {prospects.length} total prospects in this cluster
+        <p className="text-center text-[11px] text-muted-foreground">
+          Tap any band to view and update prospects in that stage.
         </p>
       </div>
 
@@ -143,9 +170,6 @@ function ClusterFunnelPage() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* prevent unused-warning when this file is included in tree */}
-      <span hidden onClick={() => navigate({ to: "/sales-enablement" })} />
     </AppShell>
   );
 }

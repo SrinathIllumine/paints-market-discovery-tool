@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ClusterAssessment } from "@/lib/clusterScoring";
-import type { ConnectStrategy, StrategyAnswers } from "@/lib/strategyContent";
+import type { ConnectStrategy, ContactEntry, StrategyAnswers } from "@/lib/strategyContent";
 
 export type Prospect = {
   id: string;
@@ -55,15 +55,8 @@ export type ConnectModel = "L1" | "L2" | "L3";
 export type RoadmapStep = "value" | "connect" | "action";
 export type RoadmapCompletion = Record<RoadmapStep, boolean>;
 
-// Sales-enablement funnel
 export type SalesStage = "prospects" | "contacted" | "decision" | "closure" | "ongoing";
-export const SALES_STAGES: SalesStage[] = [
-  "prospects",
-  "contacted",
-  "decision",
-  "closure",
-  "ongoing",
-];
+export const SALES_STAGES: SalesStage[] = ["prospects", "contacted", "decision", "closure", "ongoing"];
 export const SALES_STAGE_LABEL: Record<SalesStage, string> = {
   prospects: "Prospects",
   contacted: "Contacted",
@@ -81,6 +74,11 @@ export type ProspectActivity = {
   notInterested?: boolean;
 };
 
+// Stable empty references so selectors don't return a new {} / [] per render.
+export const EMPTY_PROSPECTS: Prospect[] = [];
+export const EMPTY_ACTIVITY: ProspectActivity = {};
+export const EMPTY_STAGE_MAP: Record<string, SalesStage> = {};
+
 type State = {
   clusters: Record<string, ClusterState>;
   stakeholders: Record<string, Stakeholder[]>;
@@ -93,17 +91,23 @@ type State = {
     // legacy
     connectStrategyByCluster: Record<string, ConnectStrategy>;
     strategyAnswersByCluster: Record<string, StrategyAnswers>;
-    // new
+    // engagement plan
     valuePropositionByCluster: Record<string, string>;
     selectedStrategiesByCluster: Record<string, ConnectStrategy[]>;
-    commitmentsByCluster: Record<string, Partial<Record<ConnectStrategy, Record<string, string | number>>>>;
+    // per-strategy multi-select items (initiatives / event topics / channels)
+    strategyItemsByCluster: Record<string, Partial<Record<ConnectStrategy, string[]>>>;
+    // per-strategy contact tables (contractors / community)
+    strategyContactsByCluster: Record<string, Partial<Record<ConnectStrategy, ContactEntry[]>>>;
+    // selected actions (per strategy) for the action plan
     selectedActionsByCluster: Record<string, Partial<Record<ConnectStrategy, string[]>>>;
+    // user-added custom actions
+    customActionsByCluster: Record<string, Partial<Record<ConnectStrategy, string[]>>>;
     roadmapCompletion: RoadmapCompletion;
   };
   assessments: Record<string, ClusterAssessment>;
   sales: {
-    prospectStages: Record<string, Record<string, SalesStage>>; // clusterId → prospectId → stage
-    prospectActivity: Record<string, ProspectActivity>; // prospectId → activity
+    prospectStages: Record<string, Record<string, SalesStage>>;
+    prospectActivity: Record<string, ProspectActivity>;
     seededClusters: Record<string, boolean>;
   };
 };
@@ -127,8 +131,11 @@ type Actions = {
 
   setValueProposition: (clusterId: string, vp: string) => void;
   toggleSelectedStrategy: (clusterId: string, strategy: ConnectStrategy) => void;
-  setCommitment: (clusterId: string, strategy: ConnectStrategy, key: string, value: string | number) => void;
+  toggleStrategyItem: (clusterId: string, strategy: ConnectStrategy, item: string) => void;
+  setStrategyContacts: (clusterId: string, strategy: ConnectStrategy, contacts: ContactEntry[]) => void;
   toggleSelectedAction: (clusterId: string, strategy: ConnectStrategy, action: string) => void;
+  addCustomAction: (clusterId: string, strategy: ConnectStrategy, text: string) => void;
+  removeCustomAction: (clusterId: string, strategy: ConnectStrategy, text: string) => void;
 
   setRoadmapStep: (step: RoadmapStep, completed: boolean) => void;
   resetRoadmap: () => void;
@@ -136,7 +143,6 @@ type Actions = {
   setAssessment: (clusterId: string, assessment: ClusterAssessment) => void;
   clearAssessment: (clusterId: string) => void;
 
-  // sales enablement
   seedSalesStages: (clusterId: string, prospectIds: string[]) => void;
   setProspectStage: (clusterId: string, prospectId: string, stage: SalesStage) => void;
   recordProspectActivity: (prospectId: string, patch: Partial<ProspectActivity>) => void;
@@ -144,41 +150,22 @@ type Actions = {
   markProspectNotInterested: (prospectId: string) => void;
 };
 
-const emptyCluster = (): ClusterState => ({
-  jkShare: null,
-  prospects: [],
-  visited: false,
-});
+const emptyCluster = (): ClusterState => ({ jkShare: null, prospects: [], visited: false });
+const emptyReadiness = (): Readiness => ({ retailers: null, stock: null, painters: null });
+const emptyRoadmap = (): RoadmapCompletion => ({ value: false, connect: false, action: false });
 
-const emptyReadiness = (): Readiness => ({
-  retailers: null,
-  stock: null,
-  painters: null,
-});
-
-const emptyRoadmap = (): RoadmapCompletion => ({
-  value: false,
-  connect: false,
-  action: false,
-});
-
-// Deterministic distribution of prospects across the 5 funnel stages.
 function distributeStages(prospectIds: string[]): Record<string, SalesStage> {
   const n = prospectIds.length;
   if (n === 0) return {};
-  // Approx proportions [prospects, contacted, decision, closure, ongoing]
   const ratios = [0.4, 0.25, 0.18, 0.12, 0.05];
   const counts = ratios.map((r) => Math.max(0, Math.round(r * n)));
-  // Adjust last to balance rounding so total equals n.
   const diff = n - counts.reduce((a, b) => a + b, 0);
   counts[0] += diff;
   const out: Record<string, SalesStage> = {};
   const stages: SalesStage[] = ["prospects", "contacted", "decision", "closure", "ongoing"];
   let idx = 0;
   for (let s = 0; s < stages.length; s++) {
-    for (let i = 0; i < counts[s] && idx < n; i++, idx++) {
-      out[prospectIds[idx]] = stages[s];
-    }
+    for (let i = 0; i < counts[s] && idx < n; i++, idx++) out[prospectIds[idx]] = stages[s];
   }
   return out;
 }
@@ -199,21 +186,17 @@ export const useAppStore = create<State & Actions>()(
         strategyAnswersByCluster: {},
         valuePropositionByCluster: {},
         selectedStrategiesByCluster: {},
-        commitmentsByCluster: {},
+        strategyItemsByCluster: {},
+        strategyContactsByCluster: {},
         selectedActionsByCluster: {},
+        customActionsByCluster: {},
         roadmapCompletion: emptyRoadmap(),
       },
-      sales: {
-        prospectStages: {},
-        prospectActivity: {},
-        seededClusters: {},
-      },
+      sales: { prospectStages: {}, prospectActivity: {}, seededClusters: {} },
 
       ensureCluster: (clusterId) =>
         set((s) =>
-          s.clusters[clusterId]
-            ? s
-            : { clusters: { ...s.clusters, [clusterId]: emptyCluster() } },
+          s.clusters[clusterId] ? s : { clusters: { ...s.clusters, [clusterId]: emptyCluster() } },
         ),
 
       markVisited: (clusterId) =>
@@ -233,28 +216,17 @@ export const useAppStore = create<State & Actions>()(
       addProspect: (clusterId, p) =>
         set((s) => {
           const prev = s.clusters[clusterId] ?? emptyCluster();
-          return {
-            clusters: {
-              ...s.clusters,
-              [clusterId]: { ...prev, prospects: [...prev.prospects, p] },
-            },
-          };
+          return { clusters: { ...s.clusters, [clusterId]: { ...prev, prospects: [...prev.prospects, p] } } };
         }),
 
       addInsight: (text) =>
         set((state) => ({
           insights: [
             ...state.insights,
-            {
-              id: `ins-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-              text,
-              createdAt: Date.now(),
-            },
+            { id: `ins-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, text, createdAt: Date.now() },
           ],
         })),
-
-      removeInsight: (id) =>
-        set((state) => ({ insights: state.insights.filter((i) => i.id !== id) })),
+      removeInsight: (id) => set((state) => ({ insights: state.insights.filter((i) => i.id !== id) })),
 
       toggleTargetCluster: (clusterId) =>
         set((state) => {
@@ -273,20 +245,13 @@ export const useAppStore = create<State & Actions>()(
         set((state) => {
           if (state.plan.targetClusterIds.includes(clusterId)) return state;
           return {
-            plan: {
-              ...state.plan,
-              targetClusterIds: [...state.plan.targetClusterIds, clusterId],
-            },
+            plan: { ...state.plan, targetClusterIds: [...state.plan.targetClusterIds, clusterId] },
           };
         }),
 
       setMonthlyFocus: (clusterId) =>
         set((state) => ({
-          plan: {
-            ...state.plan,
-            monthlyFocusIds: [clusterId],
-            roadmapCompletion: emptyRoadmap(),
-          },
+          plan: { ...state.plan, monthlyFocusIds: [clusterId], roadmapCompletion: emptyRoadmap() },
         })),
 
       toggleMonthlyFocus: (clusterId) =>
@@ -302,10 +267,7 @@ export const useAppStore = create<State & Actions>()(
         set((state) => ({
           plan: {
             ...state.plan,
-            connectStrategyByCluster: {
-              ...state.plan.connectStrategyByCluster,
-              [clusterId]: strategy,
-            },
+            connectStrategyByCluster: { ...state.plan.connectStrategyByCluster, [clusterId]: strategy },
           },
         })),
 
@@ -315,10 +277,7 @@ export const useAppStore = create<State & Actions>()(
           return {
             plan: {
               ...state.plan,
-              strategyAnswersByCluster: {
-                ...state.plan.strategyAnswersByCluster,
-                [clusterId]: { ...prev, ...patch },
-              },
+              strategyAnswersByCluster: { ...state.plan.strategyAnswersByCluster, [clusterId]: { ...prev, ...patch } },
             },
           };
         }),
@@ -327,10 +286,7 @@ export const useAppStore = create<State & Actions>()(
         set((state) => ({
           plan: {
             ...state.plan,
-            valuePropositionByCluster: {
-              ...state.plan.valuePropositionByCluster,
-              [clusterId]: vp,
-            },
+            valuePropositionByCluster: { ...state.plan.valuePropositionByCluster, [clusterId]: vp },
           },
         })),
 
@@ -340,32 +296,41 @@ export const useAppStore = create<State & Actions>()(
           const has = prev.includes(strategy);
           let next: ConnectStrategy[];
           if (has) next = prev.filter((s) => s !== strategy);
-          else if (prev.length >= 3) next = prev; // enforce max 3
+          else if (prev.length >= 3) next = prev;
           else next = [...prev, strategy];
           return {
             plan: {
               ...state.plan,
-              selectedStrategiesByCluster: {
-                ...state.plan.selectedStrategiesByCluster,
-                [clusterId]: next,
+              selectedStrategiesByCluster: { ...state.plan.selectedStrategiesByCluster, [clusterId]: next },
+            },
+          };
+        }),
+
+      toggleStrategyItem: (clusterId, strategy, item) =>
+        set((state) => {
+          const cm = state.plan.strategyItemsByCluster[clusterId] ?? {};
+          const prev = cm[strategy] ?? [];
+          const next = prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item];
+          return {
+            plan: {
+              ...state.plan,
+              strategyItemsByCluster: {
+                ...state.plan.strategyItemsByCluster,
+                [clusterId]: { ...cm, [strategy]: next },
               },
             },
           };
         }),
 
-      setCommitment: (clusterId, strategy, key, value) =>
+      setStrategyContacts: (clusterId, strategy, contacts) =>
         set((state) => {
-          const clusterMap = state.plan.commitmentsByCluster[clusterId] ?? {};
-          const strat = clusterMap[strategy] ?? {};
+          const cm = state.plan.strategyContactsByCluster[clusterId] ?? {};
           return {
             plan: {
               ...state.plan,
-              commitmentsByCluster: {
-                ...state.plan.commitmentsByCluster,
-                [clusterId]: {
-                  ...clusterMap,
-                  [strategy]: { ...strat, [key]: value },
-                },
+              strategyContactsByCluster: {
+                ...state.plan.strategyContactsByCluster,
+                [clusterId]: { ...cm, [strategy]: contacts },
               },
             },
           };
@@ -373,19 +338,46 @@ export const useAppStore = create<State & Actions>()(
 
       toggleSelectedAction: (clusterId, strategy, action) =>
         set((state) => {
-          const clusterMap = state.plan.selectedActionsByCluster[clusterId] ?? {};
-          const prev = clusterMap[strategy] ?? [];
-          const has = prev.includes(action);
-          const next = has ? prev.filter((a) => a !== action) : [...prev, action];
+          const cm = state.plan.selectedActionsByCluster[clusterId] ?? {};
+          const prev = cm[strategy] ?? [];
+          const next = prev.includes(action) ? prev.filter((a) => a !== action) : [...prev, action];
           return {
             plan: {
               ...state.plan,
               selectedActionsByCluster: {
                 ...state.plan.selectedActionsByCluster,
-                [clusterId]: {
-                  ...clusterMap,
-                  [strategy]: next,
-                },
+                [clusterId]: { ...cm, [strategy]: next },
+              },
+            },
+          };
+        }),
+
+      addCustomAction: (clusterId, strategy, text) =>
+        set((state) => {
+          const cm = state.plan.customActionsByCluster[clusterId] ?? {};
+          const prev = cm[strategy] ?? [];
+          if (prev.includes(text)) return state;
+          return {
+            plan: {
+              ...state.plan,
+              customActionsByCluster: {
+                ...state.plan.customActionsByCluster,
+                [clusterId]: { ...cm, [strategy]: [...prev, text] },
+              },
+            },
+          };
+        }),
+
+      removeCustomAction: (clusterId, strategy, text) =>
+        set((state) => {
+          const cm = state.plan.customActionsByCluster[clusterId] ?? {};
+          const prev = cm[strategy] ?? [];
+          return {
+            plan: {
+              ...state.plan,
+              customActionsByCluster: {
+                ...state.plan.customActionsByCluster,
+                [clusterId]: { ...cm, [strategy]: prev.filter((a) => a !== text) },
               },
             },
           };
@@ -395,17 +387,11 @@ export const useAppStore = create<State & Actions>()(
         set((state) => ({
           plan: {
             ...state.plan,
-            roadmapCompletion: {
-              ...(state.plan.roadmapCompletion ?? emptyRoadmap()),
-              [step]: completed,
-            },
+            roadmapCompletion: { ...(state.plan.roadmapCompletion ?? emptyRoadmap()), [step]: completed },
           },
         })),
 
-      resetRoadmap: () =>
-        set((state) => ({
-          plan: { ...state.plan, roadmapCompletion: emptyRoadmap() },
-        })),
+      resetRoadmap: () => set((state) => ({ plan: { ...state.plan, roadmapCompletion: emptyRoadmap() } })),
 
       setAssessment: (clusterId, assessment) =>
         set((state) => ({
@@ -453,10 +439,7 @@ export const useAppStore = create<State & Actions>()(
             ...state.sales,
             prospectStages: {
               ...state.sales.prospectStages,
-              [clusterId]: {
-                ...(state.sales.prospectStages[clusterId] ?? {}),
-                [prospectId]: stage,
-              },
+              [clusterId]: { ...(state.sales.prospectStages[clusterId] ?? {}), [prospectId]: stage },
             },
           },
         })),
@@ -467,10 +450,7 @@ export const useAppStore = create<State & Actions>()(
           return {
             sales: {
               ...state.sales,
-              prospectActivity: {
-                ...state.sales.prospectActivity,
-                [prospectId]: { ...prev, ...patch },
-              },
+              prospectActivity: { ...state.sales.prospectActivity, [prospectId]: { ...prev, ...patch } },
             },
           };
         }),
@@ -482,10 +462,7 @@ export const useAppStore = create<State & Actions>()(
           return {
             sales: {
               ...state.sales,
-              prospectActivity: {
-                ...state.sales.prospectActivity,
-                [prospectId]: { ...prev, outcomes },
-              },
+              prospectActivity: { ...state.sales.prospectActivity, [prospectId]: { ...prev, outcomes } },
             },
           };
         }),
@@ -504,7 +481,7 @@ export const useAppStore = create<State & Actions>()(
           };
         }),
     }),
-    { name: "sed.v7" },
+    { name: "sed.v8" },
   ),
 );
 
