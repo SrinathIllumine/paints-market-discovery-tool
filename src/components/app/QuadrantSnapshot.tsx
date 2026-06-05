@@ -13,7 +13,7 @@ import {
   Label,
 } from "recharts";
 import { CLUSTERS } from "@/data/clusters";
-import { computeClusterScores } from "@/lib/clusterScoring";
+import { computeClusterScores, getRevenueProfile, getCycle } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
 
 type Point = {
@@ -25,11 +25,15 @@ type Point = {
 };
 
 // Deterministic jitter so overlapping clusters spread out a bit but stay stable.
-function jitter(seed: string, amp = 7): number {
+function jitter(seed: string, amp = 5): number {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
   const norm = ((Math.abs(h) % 1000) / 1000) * 2 - 1; // -1..1
   return norm * amp;
+}
+
+function clamp(v: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, v));
 }
 
 function wrapName(name: string, maxChars = 16): string[] {
@@ -63,11 +67,18 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     for (const c of CLUSTERS) {
       const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
       const sc = computeClusterScores(c, pc);
-      // Use rollup averages → 5 distinct anchor positions (3,4.5,6,7.5,9) → *10 → 30..90
-      const potential = (sc.revenue + sc.competitive) / 2;
-      const access = (sc.access + sc.ease) / 2;
-      const x = Math.max(4, Math.min(96, access * 10 + jitter(c.id + "x")));
-      const y = Math.max(4, Math.min(96, potential * 10 + jitter(c.id + "y")));
+      // Binary quadrant anchor + nuance from underlying revenue / cycle data
+      // so clusters spread realistically inside their quadrant.
+      const baseY = sc.potentialHML === "H" ? 72 : 28;
+      const baseX = sc.accessRollupHML === "H" ? 72 : 28;
+      const rev = getRevenueProfile(c.id).avgRevenuePerProspect;
+      const revNorm = clamp((Math.log10(Math.max(10_000, rev)) - 4.5) / 3.5, 0, 1); // ~0..1
+      const cycleDays = getCycle(c.id).days;
+      const cycNorm = clamp(cycleDays / 200, 0, 1);
+      const nuanceY = (revNorm - 0.5) * 28 + jitter(c.id + "y", 5);
+      const nuanceX = (0.5 - cycNorm) * 28 + jitter(c.id + "x", 5);
+      const y = clamp(baseY + nuanceY, 6, 94);
+      const x = clamp(baseX + nuanceX, 6, 94);
       const isHi = !highlightId || c.id === highlightId;
       const point: Point = { id: c.id, name: c.name, x, y, highlighted: isHi };
       if (isHi) hi.push(point);
@@ -75,6 +86,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     }
     return { highlighted: hi, dim: lo };
   }, [clusterStates, highlightId]);
+
 
   const renderLabel = (color: string, weight: number) => (props: any) => {
     const { x, y, payload } = props;
