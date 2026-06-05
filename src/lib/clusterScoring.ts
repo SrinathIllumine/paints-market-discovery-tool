@@ -274,36 +274,115 @@ export type ClusterIntel = {
   jkPenetrationLabel: string; // "moderate" | "low" | "strong"
 };
 
+// Explicit per-cluster HML grid so the snapshot scatter is spread realistically
+// across all four quadrants of Potential x Access.
 const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
-  schools: {
-    competitiveHML: "M", accessHML: "M",
-    contractorCount: 5, retailerCount: 20,
-    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
-  },
-  hospitals: {
-    competitiveHML: "M", accessHML: "L",
-    contractorCount: 4, retailerCount: 14,
-    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
-  },
-  midc: {
-    competitiveHML: "L", accessHML: "M",
-    contractorCount: 7, retailerCount: 12,
-    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
-  },
+  // High Potential · High Access
   "mid-apartments": {
-    competitiveHML: "M", accessHML: "H",
+    revenueHML: "H", competitiveHML: "H", accessHML: "H", easeHML: "M",
     contractorCount: 9, retailerCount: 28,
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
   },
+  restaurants: {
+    revenueHML: "M", competitiveHML: "H", accessHML: "H", easeHML: "H",
+    contractorCount: 8, retailerCount: 30,
+    leadingCompetitor: "Berger Paints", jkPenetrationLabel: "strong",
+  },
   "gated-community": {
-    competitiveHML: "L", accessHML: "M",
+    revenueHML: "H", competitiveHML: "M", accessHML: "H", easeHML: "M",
     contractorCount: 6, retailerCount: 22,
     leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
   },
-  restaurants: {
-    competitiveHML: "H", accessHML: "H",
-    contractorCount: 8, retailerCount: 30,
+  redevelopment: {
+    revenueHML: "H", competitiveHML: "M", accessHML: "H", easeHML: "M",
+    contractorCount: 7, retailerCount: 18,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
+  },
+  jewellery: {
+    revenueHML: "M", competitiveHML: "H", accessHML: "M", easeHML: "H",
+    contractorCount: 4, retailerCount: 10,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
+  },
+
+  // High Potential · Low Access
+  midc: {
+    revenueHML: "H", competitiveHML: "H", accessHML: "L", easeHML: "L",
+    contractorCount: 7, retailerCount: 12,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
+  },
+  warehousing: {
+    revenueHML: "H", competitiveHML: "M", accessHML: "L", easeHML: "L",
+    contractorCount: 5, retailerCount: 10,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
+  },
+  hotels: {
+    revenueHML: "H", competitiveHML: "M", accessHML: "L", easeHML: "M",
+    contractorCount: 5, retailerCount: 12,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
+  },
+  colleges: {
+    revenueHML: "H", competitiveHML: "M", accessHML: "L", easeHML: "L",
+    contractorCount: 4, retailerCount: 9,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
+  },
+  hospitals: {
+    revenueHML: "H", competitiveHML: "M", accessHML: "L", easeHML: "M",
+    contractorCount: 4, retailerCount: 14,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
+  },
+
+  // Low Potential · High Access
+  "paying-guest": {
+    revenueHML: "L", competitiveHML: "L", accessHML: "H", easeHML: "H",
+    contractorCount: 6, retailerCount: 18,
     leadingCompetitor: "Berger Paints", jkPenetrationLabel: "strong",
+  },
+  "bus-stand-market": {
+    revenueHML: "L", competitiveHML: "M", accessHML: "H", easeHML: "H",
+    contractorCount: 5, retailerCount: 16,
+    leadingCompetitor: "Berger Paints", jkPenetrationLabel: "strong",
+  },
+  "textile-garment": {
+    revenueHML: "L", competitiveHML: "M", accessHML: "H", easeHML: "H",
+    contractorCount: 6, retailerCount: 20,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
+  },
+  "highway-dhabas": {
+    revenueHML: "L", competitiveHML: "L", accessHML: "H", easeHML: "H",
+    contractorCount: 4, retailerCount: 8,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
+  },
+  "petrol-pumps": {
+    revenueHML: "L", competitiveHML: "L", accessHML: "M", easeHML: "H",
+    contractorCount: 3, retailerCount: 6,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
+  },
+
+  // Low Potential · Low Access
+  religious: {
+    revenueHML: "L", competitiveHML: "L", accessHML: "L", easeHML: "M",
+    contractorCount: 4, retailerCount: 10,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
+  },
+  "marriage-halls": {
+    revenueHML: "L", competitiveHML: "M", accessHML: "L", easeHML: "M",
+    contractorCount: 3, retailerCount: 8,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
+  },
+  "auto-showrooms": {
+    revenueHML: "M", competitiveHML: "L", accessHML: "L", easeHML: "L",
+    contractorCount: 3, retailerCount: 7,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "low",
+  },
+  "clinics-nursing": {
+    revenueHML: "L", competitiveHML: "M", accessHML: "L", easeHML: "M",
+    contractorCount: 5, retailerCount: 14,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
+  },
+  schools: {
+    revenueHML: "M", competitiveHML: "L", accessHML: "L", easeHML: "M",
+    contractorCount: 5, retailerCount: 20,
+    leadingCompetitor: "Asian Paints", jkPenetrationLabel: "moderate",
   },
 };
 
