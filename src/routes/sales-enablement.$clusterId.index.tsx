@@ -138,7 +138,7 @@ function ClusterFunnelPage() {
         </p>
       </div>
 
-      <Dialog open={openStage !== null} onOpenChange={(o) => !o && setOpenStage(null)}>
+      <Dialog open={openStage !== null} onOpenChange={(o) => { if (!o) { setOpenStage(null); setSearch(""); } }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
@@ -146,28 +146,40 @@ function ClusterFunnelPage() {
               {openStage ? visibleByStage[openStage].length : 0} prospects
             </DialogTitle>
           </DialogHeader>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search prospects in this stage…"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          />
           <div className="max-h-[60vh] space-y-2 overflow-y-auto">
             {openStage && visibleByStage[openStage].length === 0 && (
               <p className="text-sm text-muted-foreground">No prospects in this stage.</p>
             )}
             {openStage &&
-              visibleByStage[openStage].map((p) => (
-                <Link
-                  key={p.id}
-                  to="/sales-enablement/$clusterId/$prospectId"
-                  params={{ clusterId, prospectId: p.id }}
-                  onClick={() => setOpenStage(null)}
-                  className="flex items-start justify-between gap-3 rounded-lg border border-border bg-card p-3 hover:bg-muted/40"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{p.name}</p>
-                    {p.locality && (
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">{p.locality}</p>
-                    )}
-                  </div>
-                  <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
-                </Link>
-              ))}
+              visibleByStage[openStage]
+                .filter((p) => {
+                  const q = search.trim().toLowerCase();
+                  if (!q) return true;
+                  return p.name.toLowerCase().includes(q) || (p.locality ?? "").toLowerCase().includes(q);
+                })
+                .map((p) => (
+                  <Link
+                    key={p.id}
+                    to="/sales-enablement/$clusterId/$prospectId"
+                    params={{ clusterId, prospectId: p.id }}
+                    onClick={() => { setOpenStage(null); setSearch(""); }}
+                    className="flex items-start justify-between gap-3 rounded-lg border border-border bg-card p-3 hover:bg-muted/40"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">{p.name}</p>
+                      {p.locality && (
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{p.locality}</p>
+                      )}
+                    </div>
+                    <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                  </Link>
+                ))}
           </div>
         </DialogContent>
       </Dialog>
