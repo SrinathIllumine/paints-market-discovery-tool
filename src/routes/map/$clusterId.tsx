@@ -109,19 +109,6 @@ function ClusterDetailScreen() {
 
   const profile = getRevenueProfile(clusterId);
 
-  // Build snapshot rows for ALL clusters (this one highlighted, others greyed).
-  const snapshotRows = useMemo(() => {
-    return CLUSTERS.map((c) => {
-      const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
-      const sc = computeClusterScores(c, pc);
-      return {
-        id: c.id,
-        name: c.name,
-        potential: (sc.revenue + sc.competitive) / 2,
-        access: (sc.access + sc.ease) / 2,
-      };
-    });
-  }, [clusterStates]);
 
   if (!cluster) {
     return (
