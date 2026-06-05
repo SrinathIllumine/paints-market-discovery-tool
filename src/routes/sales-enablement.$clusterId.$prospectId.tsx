@@ -12,7 +12,14 @@ import {
   type SalesStage,
 } from "@/store/appStore";
 import { getCluster } from "@/data/clusters";
+import { getContractorSuggestions, type ContactEntry } from "@/lib/strategyContent";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -21,41 +28,13 @@ export const Route = createFileRoute("/sales-enablement/$clusterId/$prospectId")
   component: ProspectDetailPage,
 });
 
-const WHERE_ARE_YOU: { key: string; label: string }[] = [
-  { key: "contactsAccessed", label: "Contacts accessed" },
-  { key: "meetingsDone", label: "Meetings completed" },
-  { key: "productDiscussion", label: "Product discussions completed" },
-  { key: "valuePropShared", label: "Value proposition shared" },
-];
+type ClickIn =
+  | { kind: "list"; label: string; items: string[] }
+  | { kind: "text"; label: string; body: string }
+  | { kind: "contacts"; label: string; contacts: ContactEntry[] };
 
-const NEXT_ACTIONS: Record<SalesStage, string[]> = {
-  prospects: [
-    "Identify the decision maker and key contacts",
-    "Schedule an introductory site visit",
-    "Share the JK cluster proposition deck",
-  ],
-  contacted: [
-    "Conduct a product walkthrough on-site",
-    "Capture interior + exterior surface estimates",
-    "Send a written proposal within 7 days",
-  ],
-  decision: [
-    "Customized proposal to strengthen decision confidence",
-    "Special customized schemes to close the deal",
-    "Decision-maker engagement (committee / trust)",
-    "Product demonstration opportunity",
-  ],
-  closure: [
-    "Lock supply schedule with retailer",
-    "Confirm painter / contractor briefing",
-    "Plan post-handover quality audit",
-  ],
-  ongoing: [
-    "Set quarterly check-in cadence",
-    "Capture referral opportunities",
-    "Offer AMC / refresh proposal at the right cycle",
-  ],
-};
+type DoneItem = { label: string; clickIn?: ClickIn };
+type NextItem = { key: string; label: string; clickIn?: ClickIn };
 
 function ProspectDetailPage() {
   const { clusterId, prospectId } = Route.useParams();
@@ -73,10 +52,11 @@ function ProspectDetailPage() {
   const markNotInterested = useAppStore((s) => s.markProspectNotInterested);
 
   const [outcome, setOutcome] = useState("");
+  const [openClickIn, setOpenClickIn] = useState<ClickIn | null>(null);
+  const [openOutcomes, setOpenOutcomes] = useState(false);
 
   const stageIdx = useMemo(() => SALES_STAGES.indexOf(currentStage), [currentStage]);
   const nextStage = stageIdx < SALES_STAGES.length - 1 ? SALES_STAGES[stageIdx + 1] : null;
-  const actions = NEXT_ACTIONS[currentStage];
 
   if (!cluster || !prospect) {
     return (
@@ -85,6 +65,104 @@ function ProspectDetailPage() {
       </AppShell>
     );
   }
+
+  // ── derive "where are you" (done work) by current + previous stages ─────
+  const contactsClickIn: ClickIn = {
+    kind: "contacts",
+    label: "Decision-maker contacts",
+    contacts: getContractorSuggestions(clusterId),
+  };
+  const outcomesClickIn: ClickIn | undefined =
+    activity.outcomes && activity.outcomes.length > 0
+      ? { kind: "list", label: "Past discussion outcomes", items: activity.outcomes }
+      : undefined;
+
+  const STAGE_DONE: Record<SalesStage, DoneItem[]> = {
+    prospects: [
+      { label: "Prospect identified in cluster" },
+    ],
+    contacted: [
+      { label: "Decision-maker contacted", clickIn: contactsClickIn },
+      { label: "Intro meeting completed" },
+    ],
+    decision: [
+      { label: "Site walkthrough done" },
+      { label: "Product discussion shared", clickIn: outcomesClickIn },
+      { label: "Decision-maker engaged", clickIn: contactsClickIn },
+    ],
+    closure: [
+      { label: "Proposal accepted" },
+      { label: "Supply terms confirmed" },
+      { label: "Final discussion summary", clickIn: outcomesClickIn },
+    ],
+    ongoing: [
+      { label: "Project handed over" },
+      { label: "Quality audit scheduled" },
+    ],
+  };
+
+  // History = all stages up to + including current
+  const doneAcross: { stage: SalesStage; items: DoneItem[] }[] = SALES_STAGES
+    .slice(0, stageIdx + 1)
+    .map((s) => ({ stage: s, items: STAGE_DONE[s] }));
+
+  // ── "what to do next" — checkboxes with optional click-ins ──────────────
+  const proposalDeck: ClickIn = {
+    kind: "text",
+    label: "Customized proposal deck",
+    body: "12-slide deck: site context, recommended SKU mix, timeline, warranty, commercials, and references from similar clusters.",
+  };
+  const schemesClickIn: ClickIn = {
+    kind: "list",
+    label: "Special customized schemes",
+    items: [
+      "5% volume discount on first order",
+      "Free site supervision for first 30 days",
+      "Bundled exterior + interior package pricing",
+      "Painter loyalty enrollment for the crew",
+    ],
+  };
+  const pamphletsClickIn: ClickIn = {
+    kind: "list",
+    label: "Pamphlets",
+    items: [
+      `Cluster-specific awareness pamphlet for ${cluster.name}`,
+      "JK Maxx exteriors brochure (English + Marathi)",
+      "Warranty & finish guide brochure",
+    ],
+  };
+
+  const NEXT_BY_STAGE: Record<SalesStage, NextItem[]> = {
+    prospects: [
+      { key: "identifyDM", label: "Identify decision maker", clickIn: contactsClickIn },
+      { key: "introMeet", label: "Schedule intro meeting" },
+      { key: "sharePamphlet", label: "Share cluster pamphlet", clickIn: pamphletsClickIn },
+    ],
+    contacted: [
+      { key: "productWalk", label: "Product walkthrough on-site" },
+      { key: "captureScope", label: "Capture surface estimates" },
+      { key: "sendProposal", label: "Send proposal", clickIn: proposalDeck },
+    ],
+    decision: [
+      { key: "customDeck", label: "Customized proposal deck", clickIn: proposalDeck },
+      { key: "specialSchemes", label: "Special customized schemes", clickIn: schemesClickIn },
+      { key: "demoVisit", label: "Product demonstration visit" },
+      { key: "trustEngage", label: "Engage committee / trust", clickIn: contactsClickIn },
+    ],
+    closure: [
+      { key: "lockSupply", label: "Lock supply schedule" },
+      { key: "painterBrief", label: "Brief painter / contractor", clickIn: contactsClickIn },
+      { key: "qualityAudit", label: "Plan post-handover audit" },
+    ],
+    ongoing: [
+      { key: "qCheckIn", label: "Set quarterly check-in cadence" },
+      { key: "referrals", label: "Capture referral opportunities" },
+      { key: "amcOffer", label: "Offer AMC / refresh proposal" },
+    ],
+  };
+
+  const nextItems = NEXT_BY_STAGE[currentStage];
+  const checked = (activity as Record<string, unknown>) ?? {};
 
   const handleAdvance = () => {
     if (!nextStage) {
@@ -96,9 +174,11 @@ function ProspectDetailPage() {
   };
 
   const handleNotInterested = () => {
-    markNotInterested(prospectId);
-    toast.success("Marked as not interested");
-    navigate({ to: "/sales-enablement/$clusterId", params: { clusterId } });
+    markNotInterested(clusterId, prospectId);
+    toast.success(`${prospect.name} moved back to Prospects`, { duration: 2500 });
+    setTimeout(() => {
+      navigate({ to: "/sales-enablement/$clusterId", params: { clusterId } });
+    }, 400);
   };
 
   const handleSaveOutcome = () => {
@@ -122,6 +202,7 @@ function ProspectDetailPage() {
       }
     >
       <div className="space-y-4 px-5 py-5">
+        {/* Stage timeline */}
         <div className="rounded-2xl border border-border bg-card p-3 shadow-sm">
           <div className="flex items-center gap-1 overflow-x-auto">
             {SALES_STAGES.map((s, i) => {
@@ -153,80 +234,104 @@ function ProspectDetailPage() {
           </div>
         </div>
 
+        {/* Where are you */}
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <h3 className="font-display text-lg">Where are you?</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">Mark completed work below.</p>
-          <div className="mt-3 space-y-2">
-            {WHERE_ARE_YOU.map((it) => {
-              const v = (activity as Record<string, unknown>)[it.key];
-              const checked = Boolean(v);
-              return (
-                <label key={it.key} className="flex cursor-pointer items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() =>
-                      recordActivity(prospectId, {
-                        [it.key]: it.key === "meetingsDone" ? (checked ? 0 : 1) : !checked,
-                      } as Record<string, unknown>)
-                    }
-                    className="h-4 w-4 accent-critical"
-                  />
-                  <span>{it.label}</span>
-                </label>
-              );
-            })}
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Work completed across stages so far.
+          </p>
+          <div className="mt-3 space-y-3">
+            {doneAcross.map(({ stage, items }) => (
+              <div key={stage}>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {SALES_STAGE_LABEL[stage]}
+                </p>
+                <ul className="mt-1 space-y-1.5 text-sm">
+                  {items.map((it, i) => (
+                    <li key={i} className="flex flex-wrap items-center gap-2">
+                      <span className="flex items-start gap-2">
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-critical" />
+                        <span>{it.label}</span>
+                      </span>
+                      {it.clickIn && (
+                        <ClickInChip click={it.clickIn} onOpen={setOpenClickIn} />
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+            {outcomesClickIn && (
+              <button
+                type="button"
+                onClick={() => setOpenClickIn(outcomesClickIn)}
+                className="text-xs font-semibold text-navy underline-offset-2 hover:underline"
+              >
+                View all past outcomes →
+              </button>
+            )}
           </div>
-          {activity.outcomes && activity.outcomes.length > 0 && (
-            <div className="mt-3 rounded-lg border border-border bg-muted/30 p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Past discussion outcomes
-              </p>
-              <ul className="mt-1 space-y-1 text-xs">
-                {activity.outcomes.map((o, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="text-critical">•</span>
-                    <span>{o}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
 
+        {/* What to do next */}
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <h3 className="font-display text-lg">What to do next?</h3>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Next-best-actions for <b>{SALES_STAGE_LABEL[currentStage]}</b>.
+            Pick the next-best-actions for <b>{SALES_STAGE_LABEL[currentStage]}</b>.
           </p>
           <ul className="mt-3 space-y-2 text-sm">
-            {actions.map((a, i) => (
-              <li key={i} className="flex gap-2">
-                <span className="text-critical">•</span>
-                <span>{a}</span>
-              </li>
-            ))}
+            {nextItems.map((it) => {
+              const on = Boolean(checked[it.key]);
+              return (
+                <li key={it.key} className="flex flex-wrap items-center gap-2">
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={() =>
+                        recordActivity(prospectId, { [it.key]: !on } as Record<string, unknown>)
+                      }
+                      className="h-4 w-4 accent-critical"
+                    />
+                    <span className={cn(on && "line-through text-muted-foreground")}>{it.label}</span>
+                  </label>
+                  {it.clickIn && <ClickInChip click={it.clickIn} onOpen={setOpenClickIn} />}
+                </li>
+              );
+            })}
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <h3 className="font-display text-lg">Record key discussion outcomes</h3>
-          <textarea
-            value={outcome}
-            onChange={(e) => setOutcome(e.target.value)}
-            placeholder="e.g. Discussed exterior repaint scope, agreed to receive a proposal next week."
-            className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-            rows={3}
-          />
-          <Button
+        {/* Quick record outcome */}
+        <div className="rounded-2xl border border-border bg-card p-3 shadow-sm">
+          <button
             type="button"
-            size="sm"
-            onClick={handleSaveOutcome}
-            disabled={outcome.trim().length === 0}
-            className="mt-2 bg-navy text-navy-foreground hover:bg-navy/90"
+            onClick={() => setOpenOutcomes((v) => !v)}
+            className="flex w-full items-center justify-between gap-2 text-left text-sm font-semibold"
           >
-            Save outcome
-          </Button>
+            Record key discussion outcome
+            <span className="text-xs text-muted-foreground">{openOutcomes ? "Hide" : "Add"}</span>
+          </button>
+          {openOutcomes && (
+            <div className="mt-2">
+              <textarea
+                value={outcome}
+                onChange={(e) => setOutcome(e.target.value)}
+                placeholder="e.g. Discussed exterior repaint scope; proposal expected next week."
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                rows={3}
+              />
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSaveOutcome}
+                disabled={outcome.trim().length === 0}
+                className="mt-2 bg-navy text-navy-foreground hover:bg-navy/90"
+              >
+                Save outcome
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -246,6 +351,58 @@ function ProspectDetailPage() {
           </Button>
         </div>
       </div>
+
+      <ClickInDialog click={openClickIn} onClose={() => setOpenClickIn(null)} />
     </AppShell>
+  );
+}
+
+function ClickInChip({ click, onOpen }: { click: ClickIn; onOpen: (c: ClickIn) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(click)}
+      className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-navy hover:bg-muted/60"
+    >
+      {click.label}
+    </button>
+  );
+}
+
+function ClickInDialog({ click, onClose }: { click: ClickIn | null; onClose: () => void }) {
+  return (
+    <Dialog open={click !== null} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{click?.label ?? ""}</DialogTitle>
+        </DialogHeader>
+        <div className="max-h-[60vh] overflow-y-auto">
+          {click?.kind === "list" && (
+            <ul className="space-y-2 text-sm">
+              {click.items.map((it, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="text-critical">•</span>
+                  <span>{it}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {click?.kind === "text" && <p className="text-sm leading-relaxed">{click.body}</p>}
+          {click?.kind === "contacts" && (
+            <div className="space-y-2">
+              {click.contacts.map((c) => (
+                <div key={c.id} className="rounded border border-border bg-card p-2 text-xs">
+                  <p className="font-semibold">{c.name}</p>
+                  <p className="text-muted-foreground">{c.phone} · {c.area}</p>
+                  {c.brandPreference && (
+                    <p className="text-muted-foreground">Prefers: {c.brandPreference}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

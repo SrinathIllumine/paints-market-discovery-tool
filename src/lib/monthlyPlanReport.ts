@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import { getCluster } from "@/data/clusters";
 import {
   CONNECT_STRATEGY_LABEL,
+  getRecommendedActions,
   type ConnectStrategy,
   type ContactEntry,
 } from "@/lib/strategyContent";
@@ -121,15 +122,40 @@ export function generateMonthlyEngagementPlanPdf({
   heading("Action plan");
   let any = false;
   for (const s of strategies) {
-    const actions = [...(selectedActions[s] ?? []), ...(customActions[s] ?? [])];
-    if (actions.length === 0) continue;
+    const sel = selectedActions[s] ?? [];
+    const cust = customActions[s] ?? [];
+    if (sel.length === 0 && cust.length === 0) continue;
     any = true;
+    const recommended = getRecommendedActions(s, focusClusterId);
     ensureSpace(30);
     wrapped(CONNECT_STRATEGY_LABEL[s], 0, true);
-    actions.forEach((a, i) => wrapped(`${i + 1}. ${a}`, 12));
+    let idx = 1;
+    for (const a of sel) {
+      wrapped(`${idx}. ${a}`, 12);
+      const assets = recommended.find((r) => r.text === a)?.assets ?? [];
+      for (const asset of assets) {
+        wrapped(`- Resource: ${asset.label}`, 24);
+        if (asset.kind === "list" && asset.items) {
+          for (const it of asset.items) wrapped(`  - ${it}`, 30);
+        } else if (asset.kind === "text" || asset.kind === "deck") {
+          if (asset.body) wrapped(asset.body, 30);
+        } else if (asset.kind === "contacts" && asset.contacts) {
+          for (const c of asset.contacts) {
+            const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · ");
+            if (line) wrapped(`  - ${line}`, 30);
+          }
+        }
+      }
+      idx++;
+    }
+    for (const a of cust) {
+      wrapped(`${idx}. ${a} (custom)`, 12);
+      idx++;
+    }
     y += 4;
   }
   if (!any) wrapped("No actions selected.", 0);
+
 
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {

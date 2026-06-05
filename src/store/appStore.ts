@@ -147,7 +147,7 @@ type Actions = {
   setProspectStage: (clusterId: string, prospectId: string, stage: SalesStage) => void;
   recordProspectActivity: (prospectId: string, patch: Partial<ProspectActivity>) => void;
   addProspectOutcome: (prospectId: string, outcome: string) => void;
-  markProspectNotInterested: (prospectId: string) => void;
+  markProspectNotInterested: (clusterId: string, prospectId: string) => void;
 };
 
 const emptyCluster = (): ClusterState => ({ jkShare: null, prospects: [], visited: false });
@@ -467,15 +467,21 @@ export const useAppStore = create<State & Actions>()(
           };
         }),
 
-      markProspectNotInterested: (prospectId) =>
+      markProspectNotInterested: (clusterId, prospectId) =>
         set((state) => {
           const prev = state.sales.prospectActivity[prospectId] ?? {};
+          const stageMap = { ...(state.sales.prospectStages[clusterId] ?? {}) };
+          stageMap[prospectId] = "prospects";
           return {
             sales: {
               ...state.sales,
+              prospectStages: {
+                ...state.sales.prospectStages,
+                [clusterId]: stageMap,
+              },
               prospectActivity: {
                 ...state.sales.prospectActivity,
-                [prospectId]: { ...prev, notInterested: true },
+                [prospectId]: { ...prev, notInterested: false },
               },
             },
           };
