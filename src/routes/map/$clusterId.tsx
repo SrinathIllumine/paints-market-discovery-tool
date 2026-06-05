@@ -15,6 +15,7 @@ import { AddProspectSheet } from "@/components/maps/AddProspectSheet";
 import { CLUSTERS, getCluster, prospectPlural } from "@/data/clusters";
 import { PANVEL_CENTER } from "@/data/clusters";
 import { PANVEL_BOUNDARY } from "@/data/panvelBoundary";
+import { QuadrantSnapshot } from "@/components/app/QuadrantSnapshot";
 import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
