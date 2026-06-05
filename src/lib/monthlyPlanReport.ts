@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import { getCluster } from "@/data/clusters";
 import {
   CONNECT_STRATEGY_LABEL,
+  getRecommendedActions,
   type ConnectStrategy,
   type ContactEntry,
 } from "@/lib/strategyContent";
