@@ -52,6 +52,7 @@ function ClusterFunnelPage() {
   const seed = useAppStore((s) => s.seedSalesStages);
 
   const [openStage, setOpenStage] = useState<SalesStage | null>(null);
+  const [search, setSearch] = useState("");
 
   // Seed only once per cluster — guarded both at store level and here.
   const prospectIds = useMemo(() => prospects.map((p) => p.id), [prospects]);
