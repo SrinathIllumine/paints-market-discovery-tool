@@ -24,12 +24,34 @@ type Point = {
   highlighted: boolean;
 };
 
-// Stable small jitter per cluster id so overlapping points don't pile up.
-function jitter(seed: string): number {
+// Deterministic jitter so overlapping clusters spread out a bit but stay stable.
+function jitter(seed: string, amp = 7): number {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
-  // -6..+6
-  return ((Math.abs(h) % 1200) / 100) - 6;
+  const norm = ((Math.abs(h) % 1000) / 1000) * 2 - 1; // -1..1
+  return norm * amp;
+}
+
+function wrapName(name: string, maxChars = 16): string[] {
+  const words = name.replace(/\s*\/\s*/g, " / ").split(/\s+/);
+  const lines: string[] = [];
+  let cur = "";
+  for (const w of words) {
+    if (!cur) {
+      cur = w;
+    } else if ((cur + " " + w).length <= maxChars) {
+      cur += " " + w;
+    } else {
+      lines.push(cur);
+      cur = w;
+    }
+  }
+  if (cur) lines.push(cur);
+  if (lines.length > 3) {
+    const tail = lines.slice(2).join(" ");
+    return [lines[0], lines[1], tail.length > maxChars + 2 ? tail.slice(0, maxChars) + "…" : tail];
+  }
+  return lines;
 }
 
 export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
@@ -41,9 +63,11 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     for (const c of CLUSTERS) {
       const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
       const sc = computeClusterScores(c, pc);
-      // access 1-10 → 5-95 plus jitter so points spread; potential same.
-      const x = Math.max(2, Math.min(98, sc.access * 10 + jitter(c.id + "x")));
-      const y = Math.max(2, Math.min(98, sc.revenue * 10 + jitter(c.id + "y")));
+      // Use rollup averages → 5 distinct anchor positions (3,4.5,6,7.5,9) → *10 → 30..90
+      const potential = (sc.revenue + sc.competitive) / 2;
+      const access = (sc.access + sc.ease) / 2;
+      const x = Math.max(4, Math.min(96, access * 10 + jitter(c.id + "x")));
+      const y = Math.max(4, Math.min(96, potential * 10 + jitter(c.id + "y")));
       const isHi = !highlightId || c.id === highlightId;
       const point: Point = { id: c.id, name: c.name, x, y, highlighted: isHi };
       if (isHi) hi.push(point);
@@ -54,25 +78,35 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
 
   const renderLabel = (color: string, weight: number) => (props: any) => {
     const { x, y, payload } = props;
-    if (typeof x !== "number" || typeof y !== "number") return null;
+    if (typeof x !== "number" || typeof y !== "number" || !payload) return null;
+    const lines = wrapName(payload.name);
+    const placeRight = payload.x < 78;
+    const dx = placeRight ? 9 : -9;
+    const anchor = placeRight ? "start" : "end";
+    const startDy = -((lines.length - 1) * 11) / 2 + 3;
     return (
       <text
-        x={x + 7}
-        y={y + 3}
+        x={x + dx}
+        y={y}
         fill={color}
-        fontSize={10}
+        fontSize={9.5}
         fontWeight={weight}
+        textAnchor={anchor}
         style={{ pointerEvents: "none" }}
       >
-        {payload?.name}
+        {lines.map((l, i) => (
+          <tspan key={i} x={x + dx} dy={i === 0 ? startDy : 11}>
+            {l}
+          </tspan>
+        ))}
       </text>
     );
   };
 
   return (
-    <div className="h-[360px] w-full">
+    <div className="h-[420px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 12, right: 18, bottom: 28, left: 28 }}>
+        <ScatterChart margin={{ top: 16, right: 28, bottom: 32, left: 32 }}>
           <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
           <ReferenceArea
             x1={50}
@@ -96,7 +130,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
             <Label
               value="Access →"
               position="bottom"
-              offset={8}
+              offset={10}
               style={{ fill: "hsl(var(--muted-foreground))", fontSize: 11, fontWeight: 600, letterSpacing: 1 }}
             />
           </XAxis>
@@ -112,11 +146,11 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
               value="Potential →"
               angle={-90}
               position="left"
-              offset={10}
+              offset={14}
               style={{ fill: "hsl(var(--muted-foreground))", fontSize: 11, fontWeight: 600, letterSpacing: 1 }}
             />
           </YAxis>
-          <ZAxis range={[80, 80]} />
+          <ZAxis range={[70, 70]} />
           <Tooltip
             cursor={{ strokeDasharray: "3 3" }}
             content={({ active, payload }) => {
@@ -135,7 +169,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
               fill="hsl(var(--muted-foreground))"
               fillOpacity={0.35}
               shape="circle"
-              label={renderLabel("hsl(var(--muted-foreground) / 0.7)", 400) as any}
+              label={renderLabel("hsl(var(--muted-foreground) / 0.75)", 400) as any}
             />
           )}
           {highlighted.length > 0 && (
@@ -143,7 +177,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
               data={highlighted}
               fill="hsl(0 84% 55%)"
               shape="circle"
-              label={renderLabel("hsl(0 84% 40%)", 700) as any}
+              label={renderLabel("hsl(0 84% 35%)", 700) as any}
             />
           )}
         </ScatterChart>
