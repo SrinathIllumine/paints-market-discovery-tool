@@ -22,10 +22,18 @@ type Row = {
   clusterId: string;
   name: string;
   scores: ReturnType<typeof computeClusterScores>;
-  potential: number;
-  access: number;
-  visited: boolean;
 };
+
+// Reduce H/M/L to a 2-band axis for the 2x2 grid.
+type Band = "H" | "L";
+const bandOf = (h: HML): Band => (h === "H" ? "H" : "L");
+
+const QUADRANTS: { potential: Band; access: Band; title: string; tone: string; recommended?: boolean }[] = [
+  { potential: "H", access: "H", title: "High Potential · High Access", tone: "border-green-300 bg-green-50",   recommended: true },
+  { potential: "H", access: "L", title: "High Potential · Lower Access", tone: "border-amber-300 bg-amber-50" },
+  { potential: "L", access: "H", title: "Lower Potential · High Access", tone: "border-blue-300 bg-blue-50" },
+  { potential: "L", access: "L", title: "Lower Potential · Lower Access", tone: "border-border bg-muted/40" },
+];
 
 function ClusterMapPage() {
   const clusterStates = useAppStore((s) => s.clusters);
@@ -34,16 +42,19 @@ function ClusterMapPage() {
     return CLUSTERS.map((c) => {
       const prospectCount = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
       const scores = computeClusterScores(c, prospectCount);
-      return {
-        clusterId: c.id,
-        name: c.name,
-        scores,
-        potential: Number(((scores.revenue + scores.competitive) / 2).toFixed(1)),
-        access: Number(((scores.access + scores.ease) / 2).toFixed(1)),
-        visited: Boolean(clusterStates[c.id]?.visited),
-      } satisfies Row;
+      return { clusterId: c.id, name: c.name, scores };
     }).sort((a, b) => b.scores.aggregate - a.scores.aggregate);
   }, [clusterStates]);
+
+  const buckets = useMemo(() => {
+    const map = new Map<string, Row[]>();
+    for (const q of QUADRANTS) map.set(`${q.potential}-${q.access}`, []);
+    for (const r of rows) {
+      const key = `${bandOf(r.scores.potentialHML)}-${bandOf(r.scores.accessRollupHML)}`;
+      map.get(key)?.push(r);
+    }
+    return map;
+  }, [rows]);
 
   return (
     <AppShell
@@ -61,9 +72,36 @@ function ClusterMapPage() {
         <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <h2 className="font-display text-xl">Cluster Snapshot</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Cluster Access (access + ease of sale) vs Revenue Potential (revenue + competitive).
+            Each cluster placed by Revenue Potential vs Cluster Access.
           </p>
-          <SnapshotMatrix rows={rows} />
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {QUADRANTS.map((q) => {
+              const list = buckets.get(`${q.potential}-${q.access}`) ?? [];
+              return (
+                <div
+                  key={q.title}
+                  className={cn("flex min-h-[120px] flex-col rounded-xl border p-2.5", q.tone)}
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-foreground/70 leading-tight">
+                    {q.title}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {list.length === 0 && (
+                      <span className="text-[10px] italic text-muted-foreground">—</span>
+                    )}
+                    {list.map((r) => (
+                      <span
+                        key={r.clusterId}
+                        className="rounded-full border border-border bg-background/80 px-2 py-0.5 text-[10px] leading-snug text-foreground"
+                      >
+                        {r.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </section>
 
         <section className="space-y-2">
@@ -114,46 +152,6 @@ function HMLTile({ label, hml }: { label: string; hml: HML }) {
     <div className={cn("rounded-xl border p-2 text-center", cls)}>
       <p className="text-[10px] uppercase tracking-wider opacity-80">{label}</p>
       <p className="mt-0.5 font-display text-sm leading-tight">{HML_LABEL[hml]}</p>
-    </div>
-  );
-}
-
-function SnapshotMatrix({ rows }: { rows: Row[] }) {
-  const W = 340, H = 340, pad = 40;
-  const innerW = W - pad * 2, innerH = H - pad * 2;
-  const xFor = (v: number) => pad + (v / 10) * innerW;
-  const yFor = (v: number) => H - pad - (v / 10) * innerH;
-
-  return (
-    <div className="mt-3 overflow-x-auto text-foreground">
-      <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto block h-auto w-full max-w-md">
-        <rect x={pad} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.35} />
-        <rect x={pad + innerW / 2} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--critical)" fillOpacity={0.12} />
-        <rect x={pad} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.15} />
-        <rect x={pad + innerW / 2} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.55} />
-
-        <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
-        <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
-        <line x1={pad + innerW / 2} y1={pad} x2={pad + innerW / 2} y2={H - pad} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
-        <line x1={pad} y1={pad + innerH / 2} x2={W - pad} y2={pad + innerH / 2} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
-
-        <text x={W / 2} y={H - 8} fontSize="10" fill="currentColor" textAnchor="middle">Access →</text>
-        <text x={12} y={H / 2} fontSize="10" fill="currentColor" textAnchor="middle" transform={`rotate(-90 12 ${H / 2})`}>Potential →</text>
-
-        {rows.map((r) => (
-          <g key={r.clusterId}>
-            <circle
-              cx={xFor(r.access)}
-              cy={yFor(r.potential)}
-              r={r.visited ? 6 : 4}
-              fill={r.visited ? "var(--critical)" : "currentColor"}
-              fillOpacity={r.visited ? 1 : 0.55}
-              stroke="var(--background)"
-              strokeWidth={1.5}
-            />
-          </g>
-        ))}
-      </svg>
     </div>
   );
 }
