@@ -22,9 +22,8 @@ type Row = {
   clusterId: string;
   name: string;
   scores: ReturnType<typeof computeClusterScores>;
-  // axes for the snapshot
-  potential: number; // y-axis (avg of revenue + competitive)
-  access: number; // x-axis (avg of access + ease)
+  potential: number; // avg of revenue + competitive
+  access: number;    // avg of access + ease
 };
 
 function ClusterMapPage() {
@@ -32,12 +31,12 @@ function ClusterMapPage() {
   const clusterStates = useAppStore((s) => s.clusters);
 
   const rows: Row[] = useMemo(() => {
-    return Object.entries(assessments)
-      .map(([clusterId, assessment]) => {
+    return Object.keys(assessments)
+      .map((clusterId) => {
         const cluster = getCluster(clusterId);
         if (!cluster) return null;
         const prospectCount = clusterStates[clusterId]?.prospects.length ?? cluster.prospectCountEstimate;
-        const scores = computeClusterScores(cluster, prospectCount, assessment);
+        const scores = computeClusterScores(cluster, prospectCount);
         return {
           clusterId,
           name: cluster.name,
@@ -57,7 +56,7 @@ function ClusterMapPage() {
         <StageHeader
           eyebrow="My Cluster Map"
           title="Your mapped clusters"
-          subtitle="Snapshot and ranking based on the potential you've saved."
+          subtitle="Snapshot and ranking driven by backend cluster intelligence."
           backTo="/map"
         />
       }
@@ -65,14 +64,14 @@ function ClusterMapPage() {
       <div className="space-y-6 px-5 py-5">
         {rows.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
-            Map a cluster from the Cluster Potential page to see it here.
+            Visit a cluster from the Cluster Potential page to see it here.
           </div>
         ) : (
           <>
             {rows.length < 2 && (
               <div className="flex items-start gap-2 rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-900">
                 <Info className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>Map the potential for more clusters to rank them for comparison.</span>
+                <span>Visit more clusters to rank them for comparison.</span>
               </div>
             )}
 
@@ -137,43 +136,35 @@ function ScoreTile({ label, value }: { label: string; value: number }) {
 }
 
 function SnapshotMatrix({ rows }: { rows: Row[] }) {
-  // 2x2 SVG matrix. x = access (0-10), y = potential (0-10).
   const W = 320;
   const H = 320;
   const pad = 40;
   const innerW = W - pad * 2;
   const innerH = H - pad * 2;
-
   const xFor = (v: number) => pad + (v / 10) * innerW;
   const yFor = (v: number) => H - pad - (v / 10) * innerH;
 
   return (
     <div className="mt-3 overflow-x-auto text-foreground">
       <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto block h-auto w-full max-w-sm">
-        {/* quadrant backgrounds */}
         <rect x={pad} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.35} />
         <rect x={pad + innerW / 2} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--critical)" fillOpacity={0.12} />
         <rect x={pad} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.15} />
         <rect x={pad + innerW / 2} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.55} />
 
-        {/* axes */}
         <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
         <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
-        {/* mid lines */}
         <line x1={pad + innerW / 2} y1={pad} x2={pad + innerW / 2} y2={H - pad} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
         <line x1={pad} y1={pad + innerH / 2} x2={W - pad} y2={pad + innerH / 2} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
 
-        {/* quadrant labels */}
         <text x={pad + 6} y={pad + 14} fontSize="9" fill="currentColor" opacity="0.6">Low access · High potential</text>
         <text x={W - pad - 6} y={pad + 14} fontSize="9" fill="currentColor" opacity="0.7" textAnchor="end">High access · High potential</text>
         <text x={pad + 6} y={H - pad - 6} fontSize="9" fill="currentColor" opacity="0.5">Low access · Low potential</text>
         <text x={W - pad - 6} y={H - pad - 6} fontSize="9" fill="currentColor" opacity="0.6" textAnchor="end">High access · Low potential</text>
 
-        {/* axis titles */}
         <text x={W / 2} y={H - 8} fontSize="10" fill="currentColor" textAnchor="middle">Access →</text>
         <text x={12} y={H / 2} fontSize="10" fill="currentColor" textAnchor="middle" transform={`rotate(-90 12 ${H / 2})`}>Potential →</text>
 
-        {/* points */}
         {rows.map((r) => (
           <g key={r.clusterId}>
             <circle cx={xFor(r.access)} cy={yFor(r.potential)} r={6} fill="var(--critical)" stroke="var(--background)" strokeWidth={1.5} />

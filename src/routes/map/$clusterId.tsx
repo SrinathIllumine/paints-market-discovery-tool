@@ -19,39 +19,19 @@ import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, MapPin, BookmarkCheck } from "lucide-react";
-import { toast } from "sonner";
+import { Plus, Loader2, MapPin } from "lucide-react";
 import {
   computeClusterScores,
-  getCycle,
   getRevenueProfile,
   formatRupees,
-  scoreToHML,
-  scoreRevenue,
-  
-  scoreCompetitiveBrands,
-  scoreFromHML,
-  scoreAccessFromAnswers,
   getClusterIntel,
   getCompetitiveInsights,
   getEaseInsights,
-  getAccessQuestions3,
-  getDominantContractors,
-  COMPETITIVE_BRANDS,
+  highlightBrands,
   HML_LABEL,
-  type AccessRank,
-  type ClusterAssessment,
   type HML,
-  type YesNo,
 } from "@/lib/clusterScoring";
 import { cn } from "@/lib/utils";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
 
 export const Route = createFileRoute("/map/$clusterId")({
   component: ClusterDetailScreen,
@@ -68,6 +48,7 @@ export const Route = createFileRoute("/map/$clusterId")({
 
 function ClusterDetailScreen() {
   const { clusterId } = Route.useParams();
+  const navigate = useNavigate();
   const cluster = useMemo(() => getCluster(clusterId), [clusterId]);
 
   const state = useAppStore((s) => s.clusters[clusterId]);
@@ -87,7 +68,12 @@ function ClusterDetailScreen() {
   useEffect(() => {
     ensureCluster(clusterId);
     markVisited(clusterId);
-  }, [clusterId, ensureCluster, markVisited]);
+    // Auto-register an assessment so the cluster shows on My Cluster Map.
+    if (!existingAssessment) {
+      setAssessment(clusterId, { completedAt: Date.now() });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clusterId]);
 
   useEffect(() => {
     if (!cluster) return;
@@ -122,39 +108,7 @@ function ClusterDetailScreen() {
   const regions = useMemo(() => groupIntoRegions(prospects), [prospects]);
   const selectedAllIds = useMemo(() => prospects.map((p) => p.id), [prospects]);
 
-  // Card state seeded from store
   const profile = getRevenueProfile(clusterId);
-  const cycle = getCycle(clusterId);
-
-  const [accessRank, setAccessRank] = useState<AccessRank | null>(existingAssessment?.accessRank ?? null);
-  const [accessAnswers, setAccessAnswers] = useState<(YesNo | undefined)[]>(
-    (existingAssessment?.accessAnswers3 ?? [undefined, undefined]).slice(0, 2),
-  );
-  const [contractorsOpen, setContractorsOpen] = useState(false);
-  const [brandPresence, setBrandPresence] = useState<Partial<Record<string, HML>>>(
-    existingAssessment?.brandPresence ?? {},
-  );
-  const [cycleMonths, setCycleMonths] = useState<number>(
-    existingAssessment?.cycleMonths ?? cycle.months,
-  );
-  const [cycleEase, setCycleEase] = useState<HML | undefined>(existingAssessment?.cycleEase);
-  const [prospectCount, setProspectCount] = useState<number>(
-    existingAssessment?.prospectCountOverride ?? prospects.length,
-  );
-  const [avgRevenue, setAvgRevenue] = useState<number>(
-    existingAssessment?.avgRevenueOverride ?? profile.avgRevenuePerProspect,
-  );
-  const [revenueRating, setRevenueRating] = useState<HML | undefined>(existingAssessment?.revenueRating);
-  const [showSummary, setShowSummary] = useState<boolean>(Boolean(existingAssessment));
-
-
-  // Keep prospectCount synced if user hasn't overridden and places result lands later
-  useEffect(() => {
-    if (!existingAssessment?.prospectCountOverride && prospects.length > 0) {
-      setProspectCount(prospects.length);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prospects.length]);
 
   if (!cluster) {
     return (
@@ -165,66 +119,11 @@ function ClusterDetailScreen() {
   }
 
   const pluralCap = prospectPlural(clusterId);
-  const totalRevenue = avgRevenue * prospectCount;
-
-  // Benchmarks across all clusters
-  const revenueBenchmark = useMemo(() => {
-    const all = CLUSTERS.map((c) => getRevenueProfile(c.id).avgRevenuePerProspect);
-    return all.reduce((a, b) => a + b, 0) / all.length;
-  }, []);
-  const cycleBenchmarkDays = useMemo(() => {
-    const all = CLUSTERS.map((c) => getCycle(c.id).days);
-    return all.reduce((a, b) => a + b, 0) / all.length;
-  }, []);
-  const cycleBenchmarkMonths = Math.round((cycleBenchmarkDays / 30) * 10) / 10;
-
-  // Backend intelligence (Google Maps + internet sources) — drives static HML
-  const intel = useMemo(
-    () => getClusterIntel(clusterId, prospects.length || profile.avgRevenuePerProspect ? prospects.length : 0),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [clusterId, prospects.length],
-  );
-  const revenueHML: HML = intel.revenueHML;
-  const easeHML: HML = intel.easeHML;
-  const competitiveHML: HML = intel.competitiveHML;
-
-  // Combined HML badges for each accordion
-  const potentialCombinedHML: HML = scoreToHML(
-    (scoreFromHML(revenueHML) + scoreFromHML(competitiveHML)) / 2,
-  );
-  const answersTouched = accessAnswers.some((a) => a !== undefined);
-  const accessAnswerScore = answersTouched ? scoreAccessFromAnswers(accessAnswers) : scoreFromHML("H");
-  const accessCombinedHML: HML = scoreToHML((accessAnswerScore + scoreFromHML(easeHML)) / 2);
-
-  // Effective totals for revenue narrative — prefer backend-observed count if available
-  const observedCount = intel.totalProspectsObserved || prospectCount;
-  const observedTotalRevenue = profile.avgRevenuePerProspect * observedCount;
-
-  const provisionalAssessment: ClusterAssessment = {
-    accessAnswers: existingAssessment?.accessAnswers ?? [],
-    accessRank,
-    competitiveAnswers: existingAssessment?.competitiveAnswers ?? [],
-    brandPresence,
-    accessAnswers3: accessAnswers,
-    cycleMonths,
-    cycleEase,
-    prospectCountOverride: prospectCount,
-    avgRevenueOverride: avgRevenue,
-    revenueRating,
-    completedAt: Date.now(),
-  };
-  const scores = computeClusterScores(cluster, prospects.length, provisionalAssessment);
-
-
-  const canSave = true; // Backend-driven; user input optional
-
-  const hideSummaryOnEdit = () => setShowSummary(false);
-
-  const handleSave = () => {
-    setAssessment(clusterId, provisionalAssessment);
-    setShowSummary(true);
-    toast.success("Cluster potential estimated", { duration: 1800 });
-  };
+  const intel = getClusterIntel(clusterId, prospects.length);
+  const scores = computeClusterScores(cluster, prospects.length);
+  const observedCount = intel.totalProspectsObserved || prospects.length || cluster.prospectCountEstimate;
+  const totalRevenue = profile.avgRevenuePerProspect * observedCount;
+  const singular = pluralCap.toLowerCase().replace(/s$/, "");
 
   return (
     <AppShell
@@ -318,180 +217,76 @@ function ClusterDetailScreen() {
           )}
         </section>
 
-        {/* ──────────────── Cluster scoring sub-sections ──────────────── */}
-        <h2 className="px-1 pt-1 font-display text-2xl">Map the Cluster Potential</h2>
-        <Accordion type="single" collapsible defaultValue="revenue" className="space-y-3">
-          <AccordionItem value="revenue" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <span className="flex w-full items-center justify-between gap-3 pr-2">
-                <span className="font-display text-xl">Cluster Revenue Potential</span>
-                <HMLBadge hml={potentialCombinedHML} />
-              </span>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4 space-y-4">
-              <SubSection title="Revenue Potential" hml={revenueHML}>
-                {(() => {
-                  const singular = pluralCap.toLowerCase().replace(/s$/, "");
-                  return (
-                    <ul className="space-y-2 text-sm leading-relaxed">
-                      <NarrativeBullet>
-                        There are <b>{observedCount} {pluralCap.toLowerCase()}</b> present in this cluster.
-                      </NarrativeBullet>
-                      <NarrativeBullet>
-                        The national average revenue per {singular} is <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
-                      </NarrativeBullet>
-                      <NarrativeBullet>
-                        Total cluster revenue potential for {pluralCap.toLowerCase()} is{" "}
-                        <b className="text-critical">{formatRupees(observedTotalRevenue)}</b>.
-                      </NarrativeBullet>
-                    </ul>
-                  );
-                })()}
-              </SubSection>
-              <SubSection title="Competitive Strength" hml={competitiveHML}>
-                <ul className="space-y-2 text-sm leading-relaxed">
-                  {getCompetitiveInsights(clusterId).map((line: string, i: number) => (
-                    <NarrativeBullet key={i}>{line}</NarrativeBullet>
-                  ))}
-                </ul>
-              </SubSection>
-            </AccordionContent>
-          </AccordionItem>
+        {/* ──────────────── Cluster snapshot — flat 4-card layout ──────────────── */}
+        <section className="space-y-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="font-display text-2xl">Cluster Snapshot</h2>
+            <span className={cn("rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider", aggPill(scores.aggregate))}>
+              {scores.aggregate} / 10
+            </span>
+          </div>
 
-          {/* Cluster Access */}
-          <AccordionItem value="access" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <AccordionTrigger className="px-4 py-3 hover:no-underline">
-              <span className="flex w-full items-center justify-between gap-3 pr-2">
-                <span className="font-display text-xl">Cluster Access</span>
-                <HMLBadge hml={accessCombinedHML} />
-              </span>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4 space-y-4">
-              <SubSection title="Access" hml={scoreToHML(accessAnswerScore)}>
-                <div className="space-y-2">
-                  {getAccessQuestions3(clusterId).map((q, i) => {
-                    const v = accessAnswers[i];
-                    return (
-                      <div key={q.id} className="rounded-lg border border-border bg-card p-3">
-                        <p className="text-sm leading-snug">
-                          {q.question}
-                          {q.kind === "contractors" && (
-                            <>
-                              {" "}
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); setContractorsOpen(true); }}
-                                className="text-critical underline underline-offset-2 hover:no-underline"
-                              >
-                                Click here to see the list of contractors
-                              </button>
-                            </>
-                          )}
-                        </p>
-                        <div className="mt-2 flex gap-2">
-                          {(["Y", "N"] as const).map((opt) => (
-                            <button
-                              key={opt}
-                              type="button"
-                              onClick={() => {
-                                hideSummaryOnEdit();
-                                const next = [...accessAnswers];
-                                next[i] = opt;
-                                setAccessAnswers(next);
-                              }}
-                              className={cn(
-                                "h-8 min-w-[56px] rounded-md border px-3 text-xs font-semibold",
-                                v === opt
-                                  ? "border-critical bg-critical text-critical-foreground"
-                                  : "border-border bg-card text-muted-foreground hover:bg-muted/40",
-                              )}
-                            >
-                              {opt === "Y" ? "Yes" : "No"}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </SubSection>
-              <SubSection title="Ease of Sale" hml={easeHML}>
-                <ul className="space-y-2 text-sm leading-relaxed">
-                  {getEaseInsights(clusterId).map((line: string, i: number) => (
-                    <NarrativeBullet key={i}>{line}</NarrativeBullet>
-                  ))}
-                </ul>
-              </SubSection>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+          {/* 1. Revenue Potential */}
+          <FlatCard title="Revenue Potential" hml={intel.revenueHML}>
+            <ul className="space-y-2 text-sm leading-relaxed">
+              <Bullet>
+                There are <b>{observedCount} {pluralCap.toLowerCase()}</b> present in this cluster.
+              </Bullet>
+              <Bullet>
+                The national average revenue per {singular} is <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
+              </Bullet>
+              <Bullet>
+                Total cluster revenue potential is{" "}
+                <b className="text-critical">{formatRupees(totalRevenue)}</b>.
+              </Bullet>
+            </ul>
+          </FlatCard>
 
-        <Dialog open={contractorsOpen} onOpenChange={setContractorsOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Dominant contractors in this cluster</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-2">
-              {getDominantContractors(clusterId).map((c, i) => (
-                <div key={i} className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
-                  <p className="font-semibold">{c.name}</p>
-                  <dl className="mt-1 grid grid-cols-[110px_1fr] gap-y-1 text-xs">
-                    <dt className="text-muted-foreground">Phone</dt><dd>{c.phone}</dd>
-                    <dt className="text-muted-foreground">Area</dt><dd>{c.area}</dd>
-                    <dt className="text-muted-foreground">Brand Preference</dt><dd>{c.brandPreference}</dd>
-                  </dl>
-                </div>
+          {/* 2. Competitive Strength */}
+          <FlatCard title="Competitive Strength" hml={intel.competitiveHML}>
+            <ul className="space-y-2 text-sm leading-relaxed">
+              {getCompetitiveInsights(clusterId).slice(0, 2).map((line, i) => (
+                <Bullet key={i}>{highlightBrands(line)}</Bullet>
               ))}
-            </div>
-          </DialogContent>
-        </Dialog>
+            </ul>
+          </FlatCard>
 
+          {/* 3. Access — intelligence only, no questions */}
+          <FlatCard title="Access" hml={intel.accessHML}>
+            <ul className="space-y-2 text-sm leading-relaxed">
+              <Bullet>
+                There are <b>{intel.contractorCount}</b> contractors dominating this cluster.
+              </Bullet>
+              <Bullet>
+                There are <b>{intel.retailerCount}</b> retailers operating within this cluster.
+              </Bullet>
+            </ul>
+          </FlatCard>
+
+          {/* 4. Ease of Sale */}
+          <FlatCard title="Ease of Sale" hml={intel.easeHML}>
+            <ul className="space-y-2 text-sm leading-relaxed">
+              {getEaseInsights(clusterId).map((line, i) => (
+                <Bullet key={i}>{line}</Bullet>
+              ))}
+            </ul>
+          </FlatCard>
+
+          {/* Score tiles */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <ScoreTile label="Revenue" value={scores.revenue} />
+            <ScoreTile label="Competitive" value={scores.competitive} />
+            <ScoreTile label="Access" value={scores.access} />
+            <ScoreTile label="Ease of Sale" value={scores.ease} />
+          </div>
+        </section>
 
         <Button
-          onClick={handleSave}
-          disabled={!canSave}
+          onClick={() => navigate({ to: "/market-potential" })}
           className="h-12 w-full gap-2 bg-navy text-base font-semibold text-navy-foreground hover:bg-navy/90"
         >
-          <BookmarkCheck className="h-4 w-4" /> Estimate Cluster Potential
+          View my Cluster Map
         </Button>
-
-        {showSummary && (
-          <>
-            <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-              <h2 className="font-display text-xl">Total Cluster Mapped</h2>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Snapshot across all clusters — this cluster is highlighted.
-              </p>
-              <ClusterSnapshotMatrix highlightId={clusterId} />
-            </section>
-
-            <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="font-display text-xl leading-tight">{cluster.name}</h2>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Cluster Potential Score
-                  </p>
-                </div>
-                <span className={cn(
-                  "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider",
-                  scores.aggregate > 7 ? "bg-green-100 text-green-800"
-                  : scores.aggregate >= 5 ? "bg-orange-100 text-orange-800"
-                  : "bg-red-100 text-red-800",
-                )}>
-                  {scores.aggregate} / 10
-                </span>
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <ScoreTile label="Revenue" value={scores.revenue} />
-                <ScoreTile label="Competitive" value={scores.competitive} />
-                <ScoreTile label="Access" value={scores.access} />
-                <ScoreTile label="Ease of Sale" value={scores.ease} />
-              </div>
-
-            </section>
-          </>
-        )}
       </div>
 
       <AddProspectSheet
@@ -535,6 +330,18 @@ function Section({
   );
 }
 
+function FlatCard({ title, hml, children }: { title: string; hml: HML; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="font-display text-lg leading-tight">{title}</h3>
+        <HMLBadge hml={hml} />
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function HMLBadge({ hml }: { hml: HML | null }) {
   if (!hml) return null;
   const cls =
@@ -548,19 +355,7 @@ function HMLBadge({ hml }: { hml: HML | null }) {
   );
 }
 
-function SubSection({ title, hml, children }: { title: string; hml: HML; children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-border bg-muted/20 p-3">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="font-display text-base">{title}</h3>
-        <HMLBadge hml={hml} />
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function NarrativeBullet({ children }: { children: React.ReactNode }) {
+function Bullet({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex gap-2">
       <span className="mt-0.5 text-critical">•</span>
@@ -582,85 +377,10 @@ function ScoreTile({ label, value }: { label: string; value: number }) {
   );
 }
 
-function ClusterSnapshotMatrix({ highlightId }: { highlightId: string }) {
-  const assessments = useAppStore((s) => s.assessments);
-  const clusterStates = useAppStore((s) => s.clusters);
-  const navigate = useNavigate();
-
-  type Pt = { id: string; name: string; access: number; potential: number; current: boolean };
-  const points: Pt[] = useMemo(() => {
-    return Object.entries(assessments)
-      .map(([id, a]) => {
-        const c = getCluster(id);
-        if (!c) return null;
-        const count = clusterStates[id]?.prospects.length ?? c.prospectCountEstimate;
-        const s = computeClusterScores(c, count, a);
-        return {
-          id,
-          name: c.name,
-          access: (s.access + s.ease) / 2,
-          potential: (s.revenue + s.competitive) / 2,
-
-          current: id === highlightId,
-        } satisfies Pt;
-      })
-      .filter((p): p is Pt => Boolean(p));
-  }, [assessments, clusterStates, highlightId]);
-
-  const W = 320;
-  const H = 320;
-  const pad = 40;
-  const innerW = W - pad * 2;
-  const innerH = H - pad * 2;
-  const xFor = (v: number) => pad + (v / 10) * innerW;
-  const yFor = (v: number) => H - pad - (v / 10) * innerH;
-
-  return (
-    <div className="mt-3 overflow-x-auto text-foreground">
-      <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto block h-auto w-full max-w-sm">
-        <rect x={pad} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.35} />
-        <rect x={pad + innerW / 2} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--critical)" fillOpacity={0.12} />
-        <rect x={pad} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.15} />
-        <rect x={pad + innerW / 2} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.55} />
-        <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
-        <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
-        <line x1={pad + innerW / 2} y1={pad} x2={pad + innerW / 2} y2={H - pad} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
-        <line x1={pad} y1={pad + innerH / 2} x2={W - pad} y2={pad + innerH / 2} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
-
-        <text x={pad + 6} y={pad + 14} fontSize="9" fill="currentColor" opacity="0.6">Low access · High potential</text>
-        <text x={W - pad - 6} y={pad + 14} fontSize="9" fill="currentColor" opacity="0.7" textAnchor="end">High access · High potential</text>
-        <text x={pad + 6} y={H - pad - 6} fontSize="9" fill="currentColor" opacity="0.5">Low access · Low potential</text>
-        <text x={W - pad - 6} y={H - pad - 6} fontSize="9" fill="currentColor" opacity="0.6" textAnchor="end">High access · Low potential</text>
-        <text x={W / 2} y={H - 8} fontSize="10" fill="currentColor" textAnchor="middle">Access →</text>
-        <text x={12} y={H / 2} fontSize="10" fill="currentColor" textAnchor="middle" transform={`rotate(-90 12 ${H / 2})`}>Potential →</text>
-
-        {points.map((p) => {
-          const cx = xFor(p.access);
-          const cy = yFor(p.potential);
-          return (
-            <g key={p.id} className="cursor-pointer" onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: p.id } })}>
-              <circle
-                cx={cx}
-                cy={cy}
-                r={p.current ? 8 : 6}
-                fill={p.current ? "var(--critical)" : "currentColor"}
-                fillOpacity={p.current ? 1 : 0.25}
-                stroke={p.current ? "var(--background)" : "currentColor"}
-                strokeOpacity={p.current ? 1 : 0.4}
-                strokeWidth={p.current ? 2 : 1}
-              />
-              <text x={cx + 9} y={cy + 3} fontSize="9" fill="currentColor" opacity={p.current ? 1 : 0.4}>
-                {p.name.length > 20 ? p.name.slice(0, 19) + "…" : p.name}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-      <p className="mt-2 text-center text-xs text-muted-foreground">
-        {points.length} cluster{points.length === 1 ? "" : "s"} mapped so far
-      </p>
-    </div>
-  );
+function aggPill(value: number): string {
+  if (value > 7) return "bg-green-100 text-green-800";
+  if (value >= 5) return "bg-orange-100 text-orange-800";
+  return "bg-red-100 text-red-800";
 }
 
 void CLUSTERS;

@@ -1,9 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Map as MapIcon, Users, Lightbulb, HandHeart, ArrowRight, Lock } from "lucide-react";
+import { Map as MapIcon, Users, Lightbulb, ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { BottomNav } from "@/components/app/BottomNav";
 import { useAppStore } from "@/store/appStore";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -12,7 +11,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "A guided intelligence tool for JK Cement Demand Generators to map clusters, build cluster engagement plans, and track post-sale handholding.",
+          "A guided intelligence tool for JK Cement Demand Generators to map clusters, build cluster engagement plans, and progress prospects through the sales funnel.",
       },
     ],
   }),
@@ -23,9 +22,8 @@ type CardDef = {
   icon: typeof MapIcon;
   title: string;
   desc: string;
-  to: "/map" | "/plan" | "/sales-enablement" | "/handhold";
+  to: "/map" | "/plan" | "/sales-enablement";
   progress: string | null;
-  disabled?: boolean;
 };
 
 function IntroScreen() {
@@ -47,25 +45,16 @@ function IntroScreen() {
     {
       icon: Users,
       title: "Create Monthly Cluster Engagement Plan",
-      desc: "Select your cluster strategy, build engagement to create brand awareness in the market",
+      desc: "Select your focus cluster and co-create your value proposition, strategy and action plan.",
       to: "/plan",
       progress: planProgress,
     },
     {
       icon: Lightbulb,
       title: "Sales Enablers",
-      desc: "Get the enablers and best practices to follow during sales engagements.",
+      desc: "Move prospects through the customer management funnel and record progress.",
       to: "/sales-enablement",
       progress: null,
-      disabled: true,
-    },
-    {
-      icon: HandHeart,
-      title: "Ongoing Customer Relationship",
-      desc: "Maintain customer relationship post-sales",
-      to: "/handhold",
-      progress: null,
-      disabled: true,
     },
   ];
 
@@ -80,64 +69,27 @@ function IntroScreen() {
       </div>
 
       <div className="space-y-3 px-5 py-5">
-        {props.map(({ icon: Icon, title, desc, to, progress, disabled }) => {
-          const body = (
-            <>
-              <div
-                className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-                  disabled
-                    ? "bg-muted text-muted-foreground"
-                    : "bg-critical/10 text-critical",
-                )}
-              >
-                <Icon className="h-5 w-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-display text-lg leading-tight">{title}</h3>
-                  {disabled && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      <Lock className="h-2.5 w-2.5" /> Coming soon
-                    </span>
-                  )}
-                </div>
-                <p className="mt-0.5 text-sm text-muted-foreground">{desc}</p>
-              </div>
-              {!disabled && (
-                <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
-              )}
-              {progress && (
-                <span className="absolute bottom-2 right-3 text-[11px] font-semibold text-critical">
-                  {progress}
-                </span>
-              )}
-            </>
-          );
-
-          if (disabled) {
-            return (
-              <div
-                key={title}
-                aria-disabled="true"
-                title="Coming soon"
-                className="relative flex cursor-not-allowed items-start gap-3 rounded-2xl border border-dashed border-border bg-card/60 p-4 pb-7 text-left opacity-70 shadow-sm"
-              >
-                {body}
-              </div>
-            );
-          }
-
-          return (
-            <Link
-              key={title}
-              to={to}
-              className="relative flex items-start gap-3 rounded-2xl border border-border bg-card p-4 pb-7 text-left shadow-sm transition-colors hover:bg-muted/40"
-            >
-              {body}
-            </Link>
-          );
-        })}
+        {props.map(({ icon: Icon, title, desc, to, progress }) => (
+          <Link
+            key={title}
+            to={to}
+            className="relative flex items-start gap-3 rounded-2xl border border-border bg-card p-4 pb-7 text-left shadow-sm transition-colors hover:bg-muted/40"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-critical/10 text-critical">
+              <Icon className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-display text-lg leading-tight">{title}</h3>
+              <p className="mt-0.5 text-sm text-muted-foreground">{desc}</p>
+            </div>
+            <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+            {progress && (
+              <span className="absolute bottom-2 right-3 text-[11px] font-semibold text-critical">
+                {progress}
+              </span>
+            )}
+          </Link>
+        ))}
       </div>
     </AppShell>
   );

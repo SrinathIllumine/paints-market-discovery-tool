@@ -1,8 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { AppShell } from "@/components/app/AppShell";
-import { StageHeader } from "@/components/app/StageHeader";
-import { BottomNav } from "@/components/app/BottomNav";
-import { Lightbulb } from "lucide-react";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/sales-enablement")({
   head: () => ({
@@ -10,37 +6,9 @@ export const Route = createFileRoute("/sales-enablement")({
       { title: "Sales Enablers" },
       {
         name: "description",
-        content: "Get the enablers and best practices to follow during sales engagements.",
+        content: "Move your prospects through the customer management funnel.",
       },
     ],
   }),
-  component: SalesEnablementScreen,
+  component: () => <Outlet />,
 });
-
-function SalesEnablementScreen() {
-  return (
-    <AppShell
-      bottom={<BottomNav />}
-      header={
-        <StageHeader
-          eyebrow="Sales Enablers"
-          title="Sales Enablers"
-          subtitle="Get the enablers and best practices to follow during sales engagements."
-        />
-      }
-    >
-      <div className="px-5 py-10">
-        <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <Lightbulb className="h-6 w-6" />
-          </div>
-          <p className="font-display text-xl">Coming soon</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            We're putting together the enablers and best practices for your sales engagements.
-            This section is temporarily disabled.
-          </p>
-        </div>
-      </div>
-    </AppShell>
-  );
-}

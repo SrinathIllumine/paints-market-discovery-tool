@@ -1,19 +1,17 @@
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { getCluster } from "@/data/clusters";
 import {
   CONNECT_STRATEGY_LABEL,
-  generateActionPlan,
-  getLocalCampaignSuggestions,
-  type ActionLink,
+  COMMITMENT_FIELDS,
   type ConnectStrategy,
-  type StrategyAnswers,
 } from "@/lib/strategyContent";
 
 type Args = {
-  focusClusterIds: string[];
-  strategyByCluster: Record<string, ConnectStrategy>;
-  answersByCluster: Record<string, StrategyAnswers>;
+  focusClusterId: string;
+  valueProposition: string;
+  strategies: ConnectStrategy[];
+  commitments: Partial<Record<ConnectStrategy, Record<string, string | number>>>;
+  selectedActions: Partial<Record<ConnectStrategy, string[]>>;
 };
 
 function normalisePdfText(text: string): string {
@@ -27,25 +25,12 @@ function normalisePdfText(text: string): string {
     .replace(/…/g, "...");
 }
 
-function slugify(text: string): string {
-  return normalisePdfText(text)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "") || "resource";
-}
-
-function actionLinkReference(link: ActionLink): string {
-  if (link.kind === "deck") {
-    const filename = link.deckTitle ?? "JK-placeholder-deck.pptx";
-    return `${link.label}: https://example.com/decks/${filename}`;
-  }
-  return `${link.label}: https://example.com/resources/${slugify(link.label)}`;
-}
-
 export function generateMonthlyEngagementPlanPdf({
-  focusClusterIds,
-  strategyByCluster,
-  answersByCluster,
+  focusClusterId,
+  valueProposition,
+  strategies,
+  commitments,
+  selectedActions,
 }: Args) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -74,17 +59,13 @@ export function generateMonthlyEngagementPlanPdf({
   doc.setTextColor(15, 23, 42);
   y = 110;
 
-  let sectionIndex = 0;
+  const ensureSpace = (h: number) => {
+    if (y + h > 780) { doc.addPage(); y = margin; }
+  };
+
   const heading = (text: string) => {
-    if (y > 760) { doc.addPage(); y = margin; }
-    if (sectionIndex > 0) {
-      y += 18;
-      doc.setDrawColor(180);
-      doc.setLineWidth(0.75);
-      doc.line(margin, y - 6, pageWidth - margin, y - 6);
-      y += 22;
-    }
-    sectionIndex++;
+    ensureSpace(40);
+    y += 6;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.text(text, margin, y);
@@ -94,10 +75,6 @@ export function generateMonthlyEngagementPlanPdf({
     y += 16;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-  };
-
-  const ensureSpace = (h: number) => {
-    if (y + h > 780) { doc.addPage(); y = margin; }
   };
 
   const wrapped = (text: string, indent = 0, bold = false) => {
@@ -110,122 +87,55 @@ export function generateMonthlyEngagementPlanPdf({
     doc.setFont("helvetica", "normal");
   };
 
-  /* ===== Focus clusters selected for engagement ===== */
-  heading("Focus on these clusters");
-  if (focusClusterIds.length === 0) {
-    doc.setTextColor(120);
-    doc.text("No clusters selected for this month.", margin, y);
-    doc.setTextColor(15, 23, 42);
-    y += 20;
+  const cluster = getCluster(focusClusterId);
+
+  heading("Focus cluster");
+  wrapped(cluster?.name ?? focusClusterId, 0, true);
+  y += 6;
+
+  heading("Value proposition");
+  wrapped(valueProposition || "Not selected", 0);
+  y += 6;
+
+  heading("Selected strategies & commitments");
+  if (strategies.length === 0) {
+    wrapped("No strategies selected.", 0);
   } else {
-    autoTable(doc, {
-      startY: y,
-      head: [["Cluster", "Connect strategy"]],
-      body: focusClusterIds.map((id) => {
-        const c = getCluster(id);
-        const s = strategyByCluster[id];
-        return [c?.name ?? id, s ? CONNECT_STRATEGY_LABEL[s] : "-"];
-      }),
-      headStyles: { fillColor: [15, 23, 42] },
-      margin: { left: margin, right: margin },
-      styles: { fontSize: 10, cellPadding: 6 },
-    });
-    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 16;
-  }
-
-  /* ===== Per-cluster cards ===== */
-  heading("Design the connect strategy & execute the action plan");
-
-  for (const clusterId of focusClusterIds) {
-    const cluster = getCluster(clusterId);
-    if (!cluster) continue;
-    const strategy = strategyByCluster[clusterId];
-    const answers = answersByCluster[clusterId] ?? {};
-
-    ensureSpace(80);
-    y += 6;
-    doc.setFontSize(12);
-    wrapped(cluster.name, 0, true);
-    doc.setFontSize(10);
-    if (!strategy) {
-      doc.setTextColor(120);
-      wrapped("No connect strategy selected for this cluster.", 0);
-      doc.setTextColor(15, 23, 42);
-      y += 4;
-      continue;
-    }
-
-    wrapped(`Connect strategy: ${CONNECT_STRATEGY_LABEL[strategy]}`, 0, true);
-    y += 2;
-
-    /* Strategy inputs */
-    const inputs: string[] = [];
-    if (strategy === "BRAND") {
-      if (answers.runLocalCampaigns) inputs.push(`Run local campaigns: ${answers.runLocalCampaigns === "Y" ? "Yes" : "No"}`);
-      const sel = answers.selectedCampaigns ?? [];
-      const suggestions = getLocalCampaignSuggestions(clusterId);
-      if (sel.length > 0) {
-        inputs.push(`Selected campaigns:`);
-        sel.forEach((s) => inputs.push(`   – ${s}`));
-      } else if (answers.runLocalCampaigns === "Y") {
-        inputs.push(`Suggested campaigns (none picked yet):`);
-        suggestions.slice(0, 3).forEach((s) => inputs.push(`   – ${s}`));
+    for (const s of strategies) {
+      ensureSpace(40);
+      wrapped(CONNECT_STRATEGY_LABEL[s], 0, true);
+      const cs = commitments[s] ?? {};
+      const fields = COMMITMENT_FIELDS[s];
+      const lines = fields
+        .map((f) => {
+          const v = cs[f.key];
+          return v === undefined || v === "" ? null : `- ${f.label}: ${v}`;
+        })
+        .filter((l): l is string => Boolean(l));
+      if (lines.length === 0) {
+        wrapped("- No commitments captured", 12);
+      } else {
+        for (const l of lines) wrapped(l, 12);
       }
-    }
-    if (strategy === "CONTRACTOR") {
-      if (answers.knowsContractors) inputs.push(`Already knows contractors: ${answers.knowsContractors === "Y" ? "Yes" : "No"}`);
-      const cts = answers.contractors ?? [];
-      if (cts.length > 0) {
-        inputs.push("Contractors on file:");
-        cts.forEach((c) =>
-          inputs.push(`   – ${c.name || "Unnamed"}${c.phone ? ` · ${c.phone}` : ""}${c.area ? ` · ${c.area}` : ""}`),
-        );
-      }
-    }
-    if (strategy === "OUTREACH") {
-      if (answers.hasCommunityTouchpoint) inputs.push(`Community touchpoint: ${answers.hasCommunityTouchpoint === "Y" ? "Yes" : "No"}`);
-      const cc = answers.communityContacts ?? [];
-      if (cc.length > 0) {
-        inputs.push("Community contacts:");
-        cc.forEach((c) =>
-          inputs.push(`   – ${c.name || "Unnamed"}${c.phone ? ` · ${c.phone}` : ""}${c.area ? ` · ${c.area}` : ""}`),
-        );
-      }
-      if (answers.consideredContributionEvents) inputs.push(`Considered contribution events: ${answers.consideredContributionEvents === "Y" ? "Yes" : "No"}`);
-      const ts = answers.selectedEventTopics ?? [];
-      if (ts.length > 0) {
-        inputs.push("Selected events:");
-        ts.forEach((t) => inputs.push(`   – ${t}`));
-      }
-    }
-    if (strategy === "D2C") {
-      if (answers.wantsDirectReach) inputs.push(`Direct end-customer reach: ${answers.wantsDirectReach === "Y" ? "Yes" : "No"}`);
-      const ch = answers.d2cChannels ?? [];
-      if (ch.length > 0) {
-        inputs.push("Channels:");
-        ch.forEach((c) => inputs.push(`   – ${c}`));
-      }
-    }
-    if (inputs.length > 0) {
-      wrapped("Inputs captured:", 0, true);
-      inputs.forEach((f) => wrapped(`• ${f}`, 12));
       y += 4;
     }
-
-    wrapped("Action plan:", 0, true);
-    const steps = generateActionPlan(clusterId, strategy, answers);
-    steps.forEach((s, i) => {
-      wrapped(`${i + 1}. ${s.text}`, 12);
-      if (s.link) {
-        doc.setTextColor(180, 38, 38);
-        wrapped(actionLinkReference(s.link), 24);
-        doc.setTextColor(15, 23, 42);
-      }
-    });
-    y += 10;
   }
+  y += 6;
 
-  /* Footer */
+  heading("Action plan");
+  let any = false;
+  for (const s of strategies) {
+    const actions = selectedActions[s] ?? [];
+    if (actions.length === 0) continue;
+    any = true;
+    ensureSpace(30);
+    wrapped(CONNECT_STRATEGY_LABEL[s], 0, true);
+    actions.forEach((a, i) => wrapped(`${i + 1}. ${a}`, 12));
+    y += 4;
+  }
+  if (!any) wrapped("No actions selected.", 0);
+
+  // Footer
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
