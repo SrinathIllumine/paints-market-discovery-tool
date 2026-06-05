@@ -217,52 +217,62 @@ function ClusterDetailScreen() {
           )}
         </section>
 
-        {/* 4 collapsible sub-sections, Revenue Potential opens by default */}
-        <Accordion type="multiple" defaultValue={["revenue"]} className="space-y-2">
-          <CollapsibleSub value="revenue" title="Revenue Potential" hml={intel.revenueHML}>
-            <ul className="space-y-2 text-sm leading-relaxed">
-              <Bullet>
-                There are <b>{observedCount} {pluralCap.toLowerCase()}</b> present in this cluster.
-              </Bullet>
-              <Bullet>
-                The national average revenue per {singular} is <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
-              </Bullet>
-              <Bullet>
-                Total cluster revenue potential is{" "}
-                <b className="text-critical">{formatRupees(totalRevenue)}</b>.
-              </Bullet>
-            </ul>
-          </CollapsibleSub>
+        {/* Cluster Potential Mapping — two parent cards each holding two collapsible subsections */}
+        <section className="space-y-3">
+          <h2 className="font-display text-2xl">Cluster Potential Mapping</h2>
 
-          <CollapsibleSub value="competitive" title="Competitive Strength" hml={intel.competitiveHML}>
-            <ul className="space-y-2 text-sm leading-relaxed">
-              {getCompetitiveInsights(clusterId).slice(0, 2).map((line, i) => (
-                <Bullet key={i}>{highlightBrands(line)}</Bullet>
-              ))}
-            </ul>
-          </CollapsibleSub>
+          <ParentCard title="Cluster Revenue Potential" hml={scores.potentialHML}>
+            <Accordion type="multiple" defaultValue={["revenue"]} className="space-y-2">
+              <CollapsibleSub value="revenue" title="Revenue Potential" hml={intel.revenueHML}>
+                <ul className="space-y-2 text-sm leading-relaxed">
+                  <Bullet>
+                    There are <b>{observedCount} {pluralCap.toLowerCase()}</b> present in this cluster.
+                  </Bullet>
+                  <Bullet>
+                    The national average revenue per {singular} is <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
+                  </Bullet>
+                  <Bullet>
+                    Total cluster revenue potential is{" "}
+                    <b className="text-critical">{formatRupees(totalRevenue)}</b>.
+                  </Bullet>
+                </ul>
+              </CollapsibleSub>
 
-          <CollapsibleSub value="access" title="Access" hml={intel.accessHML}>
-            <ul className="space-y-2 text-sm leading-relaxed">
-              <Bullet>
-                There are <b>{intel.contractorCount}</b> contractors dominating this cluster.
-              </Bullet>
-              <Bullet>
-                There are <b>{intel.retailerCount}</b> retailers operating within this cluster.
-              </Bullet>
-            </ul>
-          </CollapsibleSub>
+              <CollapsibleSub value="competitive" title="Competitive Strength" hml={intel.competitiveHML}>
+                <ul className="space-y-2 text-sm leading-relaxed">
+                  {getCompetitiveInsights(clusterId).slice(0, 2).map((line, i) => (
+                    <Bullet key={i}>{highlightBrands(line)}</Bullet>
+                  ))}
+                </ul>
+              </CollapsibleSub>
+            </Accordion>
+          </ParentCard>
 
-          <CollapsibleSub value="ease" title="Ease of Sale" hml={intel.easeHML}>
-            <ul className="space-y-2 text-sm leading-relaxed">
-              {getEaseInsights(clusterId).map((line, i) => (
-                <Bullet key={i}>{line}</Bullet>
-              ))}
-            </ul>
-          </CollapsibleSub>
-        </Accordion>
+          <ParentCard title="Cluster Access" hml={scores.accessRollupHML}>
+            <Accordion type="multiple" defaultValue={[]} className="space-y-2">
+              <CollapsibleSub value="access" title="Access" hml={intel.accessHML}>
+                <ul className="space-y-2 text-sm leading-relaxed">
+                  <Bullet>
+                    There are <b>{intel.contractorCount}</b> contractors dominating this cluster.
+                  </Bullet>
+                  <Bullet>
+                    There are <b>{intel.retailerCount}</b> retailers operating within this cluster.
+                  </Bullet>
+                </ul>
+              </CollapsibleSub>
 
-        {/* Cluster snapshot + scoring tiles — moved below the 4 sections */}
+              <CollapsibleSub value="ease" title="Ease of Sale" hml={intel.easeHML}>
+                <ul className="space-y-2 text-sm leading-relaxed">
+                  {getEaseInsights(clusterId).map((line, i) => (
+                    <Bullet key={i}>{line}</Bullet>
+                  ))}
+                </ul>
+              </CollapsibleSub>
+            </Accordion>
+          </ParentCard>
+        </section>
+
+        {/* Snapshot + scoring tiles */}
         <section className="space-y-3">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="font-display text-2xl">Cluster Snapshot</h2>
@@ -272,7 +282,7 @@ function ClusterDetailScreen() {
             <p className="mb-2 text-xs text-muted-foreground">
               Position of <b>{cluster.name}</b> against all other clusters.
             </p>
-            <SnapshotMatrix rows={snapshotRows} highlightId={cluster.id} />
+            <QuadrantSnapshot highlightId={cluster.id} />
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <HMLTile label="Revenue" hml={scores.revenueHML} />
@@ -281,6 +291,7 @@ function ClusterDetailScreen() {
             <HMLTile label="Ease of Sale" hml={scores.easeHML} />
           </div>
         </section>
+
 
       </div>
 
