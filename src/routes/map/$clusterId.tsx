@@ -15,6 +15,7 @@ import { AddProspectSheet } from "@/components/maps/AddProspectSheet";
 import { CLUSTERS, getCluster, prospectPlural } from "@/data/clusters";
 import { PANVEL_CENTER } from "@/data/clusters";
 import { PANVEL_BOUNDARY } from "@/data/panvelBoundary";
+import { QuadrantSnapshot } from "@/components/app/QuadrantSnapshot";
 import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
@@ -59,7 +60,6 @@ function ClusterDetailScreen() {
   const addProspect = useAppStore((s) => s.addProspect);
   const existingAssessment = useAppStore((s) => s.assessments[clusterId]);
   const setAssessment = useAppStore((s) => s.setAssessment);
-  const clusterStates = useAppStore((s) => s.clusters);
 
   const callPlaces = useServerFn(searchPlacesForCluster);
   const [loading, setLoading] = useState(false);
@@ -109,19 +109,6 @@ function ClusterDetailScreen() {
 
   const profile = getRevenueProfile(clusterId);
 
-  // Build snapshot rows for ALL clusters (this one highlighted, others greyed).
-  const snapshotRows = useMemo(() => {
-    return CLUSTERS.map((c) => {
-      const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
-      const sc = computeClusterScores(c, pc);
-      return {
-        id: c.id,
-        name: c.name,
-        potential: (sc.revenue + sc.competitive) / 2,
-        access: (sc.access + sc.ease) / 2,
-      };
-    });
-  }, [clusterStates]);
 
   if (!cluster) {
     return (
@@ -230,52 +217,62 @@ function ClusterDetailScreen() {
           )}
         </section>
 
-        {/* 4 collapsible sub-sections, Revenue Potential opens by default */}
-        <Accordion type="multiple" defaultValue={["revenue"]} className="space-y-2">
-          <CollapsibleSub value="revenue" title="Revenue Potential" hml={intel.revenueHML}>
-            <ul className="space-y-2 text-sm leading-relaxed">
-              <Bullet>
-                There are <b>{observedCount} {pluralCap.toLowerCase()}</b> present in this cluster.
-              </Bullet>
-              <Bullet>
-                The national average revenue per {singular} is <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
-              </Bullet>
-              <Bullet>
-                Total cluster revenue potential is{" "}
-                <b className="text-critical">{formatRupees(totalRevenue)}</b>.
-              </Bullet>
-            </ul>
-          </CollapsibleSub>
+        {/* Cluster Potential Mapping — two parent cards each holding two collapsible subsections */}
+        <section className="space-y-3">
+          <h2 className="font-display text-2xl">Cluster Potential Mapping</h2>
 
-          <CollapsibleSub value="competitive" title="Competitive Strength" hml={intel.competitiveHML}>
-            <ul className="space-y-2 text-sm leading-relaxed">
-              {getCompetitiveInsights(clusterId).slice(0, 2).map((line, i) => (
-                <Bullet key={i}>{highlightBrands(line)}</Bullet>
-              ))}
-            </ul>
-          </CollapsibleSub>
+          <ParentCard title="Cluster Revenue Potential" hml={scores.potentialHML}>
+            <Accordion type="multiple" defaultValue={["revenue"]} className="space-y-2">
+              <CollapsibleSub value="revenue" title="Revenue Potential" hml={intel.revenueHML}>
+                <ul className="space-y-2 text-sm leading-relaxed">
+                  <Bullet>
+                    There are <b>{observedCount} {pluralCap.toLowerCase()}</b> present in this cluster.
+                  </Bullet>
+                  <Bullet>
+                    The national average revenue per {singular} is <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
+                  </Bullet>
+                  <Bullet>
+                    Total cluster revenue potential is{" "}
+                    <b className="text-critical">{formatRupees(totalRevenue)}</b>.
+                  </Bullet>
+                </ul>
+              </CollapsibleSub>
 
-          <CollapsibleSub value="access" title="Access" hml={intel.accessHML}>
-            <ul className="space-y-2 text-sm leading-relaxed">
-              <Bullet>
-                There are <b>{intel.contractorCount}</b> contractors dominating this cluster.
-              </Bullet>
-              <Bullet>
-                There are <b>{intel.retailerCount}</b> retailers operating within this cluster.
-              </Bullet>
-            </ul>
-          </CollapsibleSub>
+              <CollapsibleSub value="competitive" title="Competitive Strength" hml={intel.competitiveHML}>
+                <ul className="space-y-2 text-sm leading-relaxed">
+                  {getCompetitiveInsights(clusterId).slice(0, 2).map((line, i) => (
+                    <Bullet key={i}>{highlightBrands(line)}</Bullet>
+                  ))}
+                </ul>
+              </CollapsibleSub>
+            </Accordion>
+          </ParentCard>
 
-          <CollapsibleSub value="ease" title="Ease of Sale" hml={intel.easeHML}>
-            <ul className="space-y-2 text-sm leading-relaxed">
-              {getEaseInsights(clusterId).map((line, i) => (
-                <Bullet key={i}>{line}</Bullet>
-              ))}
-            </ul>
-          </CollapsibleSub>
-        </Accordion>
+          <ParentCard title="Cluster Access" hml={scores.accessRollupHML}>
+            <Accordion type="multiple" defaultValue={[]} className="space-y-2">
+              <CollapsibleSub value="access" title="Access" hml={intel.accessHML}>
+                <ul className="space-y-2 text-sm leading-relaxed">
+                  <Bullet>
+                    There are <b>{intel.contractorCount}</b> contractors dominating this cluster.
+                  </Bullet>
+                  <Bullet>
+                    There are <b>{intel.retailerCount}</b> retailers operating within this cluster.
+                  </Bullet>
+                </ul>
+              </CollapsibleSub>
 
-        {/* Cluster snapshot + scoring tiles — moved below the 4 sections */}
+              <CollapsibleSub value="ease" title="Ease of Sale" hml={intel.easeHML}>
+                <ul className="space-y-2 text-sm leading-relaxed">
+                  {getEaseInsights(clusterId).map((line, i) => (
+                    <Bullet key={i}>{line}</Bullet>
+                  ))}
+                </ul>
+              </CollapsibleSub>
+            </Accordion>
+          </ParentCard>
+        </section>
+
+        {/* Snapshot + scoring tiles */}
         <section className="space-y-3">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="font-display text-2xl">Cluster Snapshot</h2>
@@ -285,7 +282,7 @@ function ClusterDetailScreen() {
             <p className="mb-2 text-xs text-muted-foreground">
               Position of <b>{cluster.name}</b> against all other clusters.
             </p>
-            <SnapshotMatrix rows={snapshotRows} highlightId={cluster.id} />
+            <QuadrantSnapshot highlightId={cluster.id} />
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <HMLTile label="Revenue" hml={scores.revenueHML} />
@@ -294,6 +291,7 @@ function ClusterDetailScreen() {
             <HMLTile label="Ease of Sale" hml={scores.easeHML} />
           </div>
         </section>
+
 
       </div>
 
@@ -391,57 +389,20 @@ function HMLTile({ label, hml }: { label: string; hml: HML }) {
   );
 }
 
-function SnapshotMatrix({
-  rows, highlightId,
-}: {
-  rows: { id: string; name: string; potential: number; access: number }[];
-  highlightId?: string;
-}) {
-  const W = 320, H = 320, pad = 40;
-  const innerW = W - pad * 2, innerH = H - pad * 2;
-  const xFor = (v: number) => pad + (v / 10) * innerW;
-  const yFor = (v: number) => H - pad - (v / 10) * innerH;
-
+function ParentCard({
+  title, hml, children,
+}: { title: string; hml: HML; children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto text-foreground">
-      <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto block h-auto w-full max-w-sm">
-        <rect x={pad} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.35} />
-        <rect x={pad + innerW / 2} y={pad} width={innerW / 2} height={innerH / 2} fill="var(--critical)" fillOpacity={0.12} />
-        <rect x={pad} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.15} />
-        <rect x={pad + innerW / 2} y={pad + innerH / 2} width={innerW / 2} height={innerH / 2} fill="var(--muted)" fillOpacity={0.55} />
-
-        <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
-        <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="currentColor" strokeOpacity="0.4" />
-        <line x1={pad + innerW / 2} y1={pad} x2={pad + innerW / 2} y2={H - pad} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
-        <line x1={pad} y1={pad + innerH / 2} x2={W - pad} y2={pad + innerH / 2} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 3" />
-
-        <text x={W / 2} y={H - 8} fontSize="10" fill="currentColor" textAnchor="middle">Access →</text>
-        <text x={12} y={H / 2} fontSize="10" fill="currentColor" textAnchor="middle" transform={`rotate(-90 12 ${H / 2})`}>Potential →</text>
-
-        {rows.map((r) => {
-          const isMe = r.id === highlightId;
-          return (
-            <g key={r.id} opacity={isMe || !highlightId ? 1 : 0.25}>
-              <circle
-                cx={xFor(r.access)}
-                cy={yFor(r.potential)}
-                r={isMe ? 8 : 5}
-                fill={isMe ? "var(--critical)" : "currentColor"}
-                stroke="var(--background)"
-                strokeWidth={1.5}
-              />
-              {isMe && (
-                <text x={xFor(r.access) + 11} y={yFor(r.potential) + 4} fontSize="10" fill="currentColor" fontWeight="700">
-                  {r.name.length > 22 ? r.name.slice(0, 21) + "…" : r.name}
-                </text>
-              )}
-            </g>
-          );
-        })}
-      </svg>
+    <div className="rounded-2xl border border-border bg-card p-3 shadow-sm">
+      <div className="mb-2 flex items-center justify-between gap-3 px-1">
+        <h3 className="font-display text-xl leading-tight">{title}</h3>
+        <HMLBadge hml={hml} />
+      </div>
+      {children}
     </div>
   );
 }
+
 
 void CLUSTERS;
 void scoreFromHML;

@@ -101,9 +101,9 @@ function ProspectDetailPage() {
     ],
   };
 
-  // History = all stages up to + including current
+  // History = strictly previous stages (do NOT show current stage's pending details here)
   const doneAcross: { stage: SalesStage; items: DoneItem[] }[] = SALES_STAGES
-    .slice(0, stageIdx + 1)
+    .slice(0, stageIdx)
     .map((s) => ({ stage: s, items: STAGE_DONE[s] }));
 
   // ── "what to do next" — checkboxes with optional click-ins ──────────────
@@ -241,6 +241,9 @@ function ProspectDetailPage() {
             Work completed across stages so far.
           </p>
           <div className="mt-3 space-y-3">
+            {doneAcross.length === 0 && (
+              <p className="text-sm text-muted-foreground">No prior stages completed yet.</p>
+            )}
             {doneAcross.map(({ stage, items }) => (
               <div key={stage}>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
