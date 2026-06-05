@@ -467,15 +467,21 @@ export const useAppStore = create<State & Actions>()(
           };
         }),
 
-      markProspectNotInterested: (prospectId) =>
+      markProspectNotInterested: (clusterId, prospectId) =>
         set((state) => {
           const prev = state.sales.prospectActivity[prospectId] ?? {};
+          const stageMap = { ...(state.sales.prospectStages[clusterId] ?? {}) };
+          stageMap[prospectId] = "prospects";
           return {
             sales: {
               ...state.sales,
+              prospectStages: {
+                ...state.sales.prospectStages,
+                [clusterId]: stageMap,
+              },
               prospectActivity: {
                 ...state.sales.prospectActivity,
-                [prospectId]: { ...prev, notInterested: true },
+                [prospectId]: { ...prev, notInterested: false },
               },
             },
           };
