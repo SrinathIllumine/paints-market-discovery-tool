@@ -162,9 +162,9 @@ export function scoreEaseOfSale(clusterId: string): number {
 export function scoreAccess(_rank: AccessRank | null): number { return 0; }
 export function cycleTimeToEaseHML(v: HML): HML {
   if (v === "H") return "L";
-  if (v === "L") return "H";
-  return "M";
+  return "H";
 }
+
 export function scoreCompetitiveBrands(_p: Partial<Record<string, HML>> | undefined): number { return 0; }
 export function scoreAccessFromAnswers(_answers: (YesNo | undefined)[]): number { return 0; }
 
