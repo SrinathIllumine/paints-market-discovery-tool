@@ -1,21 +1,22 @@
 // Engagement-plan connect strategies, cluster-specific value propositions,
-// commitments per strategy and recommended actions.
+// per-strategy initiatives, contact tables and recommended actions with assets.
 
-import { prospectPlural } from "@/data/clusters";
+import { getTopics } from "@/data/eventTopics";
+import { getDominantContractors } from "@/lib/clusterScoring";
 
 export type ConnectStrategy = "BRAND" | "CONTRACTOR" | "OUTREACH" | "D2C";
 
 export const CONNECT_STRATEGY_LABEL: Record<ConnectStrategy, string> = {
   BRAND: "Brand Awareness",
   CONTRACTOR: "Contractor Engagement",
-  OUTREACH: "Touchpoint Contact",
+  OUTREACH: "Outreach-Driven",
   D2C: "Direct Sales",
 };
 
 export const CONNECT_STRATEGY_OPTIONS: { key: ConnectStrategy; label: string; description: string }[] = [
   { key: "BRAND",      label: "Brand Awareness",      description: "Build awareness through local campaigns and visibility plays." },
   { key: "CONTRACTOR", label: "Contractor Engagement", description: "Activate the contractor network operating in this cluster." },
-  { key: "OUTREACH",   label: "Touchpoint Contact",   description: "Use community touchpoints to build trust and warm leads." },
+  { key: "OUTREACH",   label: "Outreach-Driven",      description: "Use community touchpoints and contribution events to build trust." },
   { key: "D2C",        label: "Direct Sales",         description: "Reach end customers directly via retailer, walk-in and digital channels." },
 ];
 
@@ -29,7 +30,6 @@ export type ContactEntry = {
 
 export type ContractorContact = ContactEntry;
 
-// Legacy answers shape (kept for type-import compatibility)
 export type StrategyAnswers = {
   runLocalCampaigns?: "Y" | "N";
   selectedCampaigns?: string[];
@@ -43,7 +43,12 @@ export type StrategyAnswers = {
   d2cChannels?: string[];
 };
 
-export const D2C_CHANNELS = ["Retailer counter", "WhatsApp", "Walk-in / site visits", "Local digital ads"];
+export const D2C_CHANNELS = [
+  "Retailer counter activation",
+  "WhatsApp + walk-in pilot",
+  "Local digital ads",
+  "Site-visit demo campaign",
+];
 
 /* ─────────────────────────── value propositions */
 
@@ -80,61 +85,165 @@ export function getValuePropositions(clusterId: string): string[] {
   );
 }
 
-/* ─────────────────────────── commitments per strategy */
+/* ─────────────────────────── brand awareness initiatives */
 
-export type CommitmentField = {
-  key: string;
+const BRAND_INITIATIVES: Record<string, string[]> = {
+  schools: [
+    "Child-safe paint awareness drive at PTA meet",
+    "Vacation repaint offer poster at school gates",
+    "Painter loyalty meet for school annual maintenance",
+    "Branding banners at PTA / annual day events",
+  ],
+  hospitals: [
+    "Hygienic-paint awareness session for admin teams",
+    "Branding banners at hospital reception",
+    "Painter & contractor meet for healthcare projects",
+    "Trust-board awareness mailer + offer",
+  ],
+  midc: [
+    "Industrial coating awareness session at MIDC association",
+    "Branding boards at MIDC entry gates",
+    "Painter / contractor meet for industrial coatings",
+    "Plant-engineer mailer with case studies",
+  ],
+};
+
+export function getBrandInitiatives(clusterId: string): string[] {
+  return (
+    BRAND_INITIATIVES[clusterId] ?? [
+      "Local visibility refresh near high-footfall spots",
+      "Cluster-specific WhatsApp offer broadcast",
+      "Association meet sponsorship banner",
+      "Painter loyalty drive in this cluster",
+    ]
+  );
+}
+
+/* ─────────────────────────── contribution event suggestions */
+
+export function getContributionEvents(clusterId: string): string[] {
+  // Use the awareness topics from eventTopics if present, else generic.
+  const awareness = getTopics(clusterId, "Awareness");
+  const workshops = getTopics(clusterId, "Workshop");
+  const out = [...awareness, ...workshops].slice(0, 4);
+  if (out.length >= 3) return out;
+  return [
+    "Sponsor an association meet in this cluster",
+    "Free product session with key influencers",
+    "Contribution drive aligned to a local festival",
+    "Painter / contractor felicitation event",
+  ];
+}
+
+/* ─────────────────────────── direct sales initiatives */
+
+const D2C_INITIATIVES: Record<string, string[]> = {
+  schools: [
+    "Repaint scheme tied to summer vacation window",
+    "Trustee-direct proposal with bundled exteriors",
+    "Painter+supply package for the school's regular crew",
+  ],
+  hospitals: [
+    "Phased ward-wise repaint proposal",
+    "AMC tie-up with hospital maintenance",
+    "Direct proposal to trust board with hygiene SKU mix",
+  ],
+};
+
+export function getD2cInitiatives(clusterId: string): string[] {
+  return (
+    D2C_INITIATIVES[clusterId] ?? [
+      "Activate retailer counters with shade cards and demo cans",
+      "Run a 2-week WhatsApp + walk-in pilot",
+      "Direct proposal to top 5 owners in this cluster",
+      "Refresh-offer postcards in the cluster catchment",
+    ]
+  );
+}
+
+/* ─────────────────────────── contractor pool re-export */
+
+export function getContractorSuggestions(clusterId: string): ContactEntry[] {
+  return getDominantContractors(clusterId).map((c, i) => ({
+    id: `seed-${clusterId}-${i}`,
+    name: c.name,
+    phone: c.phone,
+    area: c.area,
+    brandPreference: c.brandPreference,
+  }));
+}
+
+/* ─────────────────────────── recommended actions per strategy + assets */
+
+export type ActionAssetKind = "list" | "text" | "contacts" | "deck";
+export type ActionAsset = {
   label: string;
-  type: "number" | "text";
-  placeholder?: string;
+  kind: ActionAssetKind;
+  items?: string[];
+  contacts?: ContactEntry[];
+  body?: string;
+};
+export type ActionItem = {
+  text: string;
+  assets?: ActionAsset[];
 };
 
-export const COMMITMENT_FIELDS: Record<ConnectStrategy, CommitmentField[]> = {
-  BRAND: [
-    { key: "activities", label: "Number of awareness activities", type: "number", placeholder: "e.g. 4" },
-    { key: "reach", label: "Target reach (people)", type: "number", placeholder: "e.g. 2000" },
-  ],
-  CONTRACTOR: [
-    { key: "meetings", label: "Number of contractor meetings", type: "number", placeholder: "e.g. 8" },
-    { key: "champions", label: "Contractor champions to activate", type: "number", placeholder: "e.g. 2" },
-  ],
-  OUTREACH: [
-    { key: "visits", label: "Number of visits planned", type: "number", placeholder: "e.g. 6" },
-    { key: "influencers", label: "Key influencers to approach", type: "text", placeholder: "e.g. RWA chair, trustee" },
-  ],
-  D2C: [
-    { key: "retailers", label: "Number of retailers to activate", type: "number", placeholder: "e.g. 5" },
-    { key: "campaigns", label: "Direct campaigns planned", type: "number", placeholder: "e.g. 2" },
-  ],
-};
+function pamphletAsset(clusterId: string): ActionAsset {
+  return {
+    label: "View pamphlets",
+    kind: "list",
+    items: [
+      `Cluster-specific awareness pamphlet for ${clusterId}`,
+      "JK Maxx exteriors brochure (English + Marathi)",
+      "Warranty & finish guide brochure",
+    ],
+  };
+}
 
-/* ─────────────────────────── recommended actions per strategy */
+function deckAsset(): ActionAsset {
+  return {
+    label: "View customized proposal deck",
+    kind: "deck",
+    body:
+      "12-slide deck: site context, recommended SKU mix, timeline, warranty, commercials, and references from similar clusters.",
+  };
+}
 
-const ACTIONS: Record<ConnectStrategy, string[]> = {
-  BRAND: [
-    "Install visibility boards at high-footfall spots",
-    "Run a local awareness activity in the cluster",
-    "Conduct a retailer engagement event",
-  ],
-  CONTRACTOR: [
-    "Meet top 10 contractors in this cluster",
-    "Conduct a technical product session",
-    "Activate the contractor referral network",
-  ],
-  OUTREACH: [
-    "Identify a community touchpoint and warm intro",
-    "Host a contribution event with key influencers",
-    "Follow up within 7 days with a tailored proposal",
-  ],
-  D2C: [
-    "Activate retailer counters with shade cards and demo cans",
-    "Run a 2-week WhatsApp + walk-in pilot",
-    "Capture customer feedback and refine the pitch",
-  ],
-};
+function contactsAsset(clusterId: string): ActionAsset {
+  return {
+    label: "View contacts list",
+    kind: "contacts",
+    contacts: getContractorSuggestions(clusterId),
+  };
+}
 
-export function getRecommendedActions(strategy: ConnectStrategy, _clusterId: string): string[] {
-  return ACTIONS[strategy];
+export function getRecommendedActions(strategy: ConnectStrategy, clusterId: string): ActionItem[] {
+  switch (strategy) {
+    case "BRAND":
+      return [
+        { text: "Install visibility boards at high-footfall spots", assets: [pamphletAsset(clusterId)] },
+        { text: "Run a local awareness activity in the cluster", assets: [pamphletAsset(clusterId)] },
+        { text: "Conduct a retailer engagement event", assets: [pamphletAsset(clusterId)] },
+      ];
+    case "CONTRACTOR":
+      return [
+        { text: "Meet top contractors in this cluster", assets: [contactsAsset(clusterId)] },
+        { text: "Conduct a technical product session", assets: [deckAsset()] },
+        { text: "Activate the contractor referral network", assets: [contactsAsset(clusterId)] },
+      ];
+    case "OUTREACH":
+      return [
+        { text: "Identify a community touchpoint and warm intro", assets: [contactsAsset(clusterId)] },
+        { text: "Host a contribution event with key influencers", assets: [deckAsset()] },
+        { text: "Follow up within 7 days with a tailored proposal", assets: [deckAsset()] },
+      ];
+    case "D2C":
+      return [
+        { text: "Activate retailer counters with shade cards and demo cans", assets: [pamphletAsset(clusterId)] },
+        { text: "Run a 2-week WhatsApp + walk-in pilot", assets: [pamphletAsset(clusterId)] },
+        { text: "Send a customized proposal to top owners", assets: [deckAsset()] },
+      ];
+  }
 }
 
 /* ─────────────────────────── legacy stubs (kept for back-compat) */
@@ -150,15 +259,8 @@ export type ActionLink = {
 };
 export type ActionStep = { text: string; link?: ActionLink };
 
-const LOCAL_CAMPAIGNS: Record<string, string[]> = {
-  schools: ["Child-safe paint awareness drive", "PTA branding via banners", "Vacation repaint offer poster"],
-};
 export function getLocalCampaignSuggestions(clusterId: string): string[] {
-  return LOCAL_CAMPAIGNS[clusterId] ?? [
-    "Local visibility refresh near high-footfall spots",
-    "Cluster-specific WhatsApp offer broadcast",
-    "Association meet sponsorship banner",
-  ];
+  return getBrandInitiatives(clusterId);
 }
 
 export function generateActionPlan(
@@ -166,7 +268,11 @@ export function generateActionPlan(
   strategy: ConnectStrategy,
   _answers: StrategyAnswers,
 ): ActionStep[] {
-  void prospectPlural;
-  void clusterId;
-  return getRecommendedActions(strategy, clusterId).map((text) => ({ text }));
+  return getRecommendedActions(strategy, clusterId).map((a) => ({ text: a.text }));
 }
+
+// Commitment fields are no longer rendered, kept for type imports.
+export type CommitmentField = { key: string; label: string; type: "number" | "text"; placeholder?: string };
+export const COMMITMENT_FIELDS: Record<ConnectStrategy, CommitmentField[]> = {
+  BRAND: [], CONTRACTOR: [], OUTREACH: [], D2C: [],
+};
