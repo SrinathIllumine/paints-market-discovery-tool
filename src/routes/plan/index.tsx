@@ -8,7 +8,7 @@ import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/plan/")({
   head: () => ({
