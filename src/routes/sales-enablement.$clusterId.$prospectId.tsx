@@ -329,22 +329,31 @@ function ProspectDetailPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            onClick={handleAdvance}
-            disabled={!nextStage}
-            className="h-11 gap-1.5 bg-critical text-critical-foreground hover:bg-critical/90"
-          >
-            <Check className="h-4 w-4" /> Mark as completed
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleNotInterested}
-            className="h-11 gap-1.5 border-border text-muted-foreground hover:bg-muted/40"
-          >
-            <X className="h-4 w-4" /> Not interested
-          </Button>
-        </div>
+        {(() => {
+          const singular = prospectSingular(clusterId);
+          const advanceLabel = nextStage
+            ? `Move to ${SALES_STAGE_LABEL[nextStage]}`
+            : "Engagement complete";
+          const removeLabel = `Remove ${singular.toLowerCase()} from the list`;
+          return (
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                onClick={handleAdvance}
+                disabled={!nextStage}
+                className="h-11 gap-1.5 bg-critical text-critical-foreground hover:bg-critical/90"
+              >
+                <Check className="h-4 w-4" /> {advanceLabel}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleNotInterested}
+                className="h-11 gap-1.5 border-border text-muted-foreground hover:bg-muted/40"
+              >
+                <X className="h-4 w-4" /> {removeLabel}
+              </Button>
+            </div>
+          );
+        })()}
       </div>
 
       <ClickInDialog click={openClickIn} onClose={() => setOpenClickIn(null)} />
