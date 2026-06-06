@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SalesEnablementIndexRouteImport } from './routes/sales-enablement.index'
 import { Route as PlanIndexRouteImport } from './routes/plan/index'
 import { Route as MapIndexRouteImport } from './routes/map/index'
+import { Route as PlanClusterIdRouteImport } from './routes/plan/$clusterId'
 import { Route as MapClusterIdRouteImport } from './routes/map/$clusterId'
 import { Route as SalesEnablementClusterIdIndexRouteImport } from './routes/sales-enablement.$clusterId.index'
 import { Route as SalesEnablementClusterIdProspectIdRouteImport } from './routes/sales-enablement.$clusterId.$prospectId'
@@ -49,6 +50,11 @@ const MapIndexRoute = MapIndexRouteImport.update({
   path: '/map/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlanClusterIdRoute = PlanClusterIdRouteImport.update({
+  id: '/plan/$clusterId',
+  path: '/plan/$clusterId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MapClusterIdRoute = MapClusterIdRouteImport.update({
   id: '/map/$clusterId',
   path: '/map/$clusterId',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/market-potential': typeof MarketPotentialRoute
   '/sales-enablement': typeof SalesEnablementRouteWithChildren
   '/map/$clusterId': typeof MapClusterIdRoute
+  '/plan/$clusterId': typeof PlanClusterIdRoute
   '/map/': typeof MapIndexRoute
   '/plan/': typeof PlanIndexRoute
   '/sales-enablement/': typeof SalesEnablementIndexRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/market-potential': typeof MarketPotentialRoute
   '/map/$clusterId': typeof MapClusterIdRoute
+  '/plan/$clusterId': typeof PlanClusterIdRoute
   '/map': typeof MapIndexRoute
   '/plan': typeof PlanIndexRoute
   '/sales-enablement': typeof SalesEnablementIndexRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/market-potential': typeof MarketPotentialRoute
   '/sales-enablement': typeof SalesEnablementRouteWithChildren
   '/map/$clusterId': typeof MapClusterIdRoute
+  '/plan/$clusterId': typeof PlanClusterIdRoute
   '/map/': typeof MapIndexRoute
   '/plan/': typeof PlanIndexRoute
   '/sales-enablement/': typeof SalesEnablementIndexRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/market-potential'
     | '/sales-enablement'
     | '/map/$clusterId'
+    | '/plan/$clusterId'
     | '/map/'
     | '/plan/'
     | '/sales-enablement/'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/market-potential'
     | '/map/$clusterId'
+    | '/plan/$clusterId'
     | '/map'
     | '/plan'
     | '/sales-enablement'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/market-potential'
     | '/sales-enablement'
     | '/map/$clusterId'
+    | '/plan/$clusterId'
     | '/map/'
     | '/plan/'
     | '/sales-enablement/'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   MarketPotentialRoute: typeof MarketPotentialRoute
   SalesEnablementRoute: typeof SalesEnablementRouteWithChildren
   MapClusterIdRoute: typeof MapClusterIdRoute
+  PlanClusterIdRoute: typeof PlanClusterIdRoute
   MapIndexRoute: typeof MapIndexRoute
   PlanIndexRoute: typeof PlanIndexRoute
 }
@@ -188,6 +201,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/plan/$clusterId': {
+      id: '/plan/$clusterId'
+      path: '/plan/$clusterId'
+      fullPath: '/plan/$clusterId'
+      preLoaderRoute: typeof PlanClusterIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/map/$clusterId': {
       id: '/map/$clusterId'
       path: '/map/$clusterId'
@@ -234,9 +254,20 @@ const rootRouteChildren: RootRouteChildren = {
   MarketPotentialRoute: MarketPotentialRoute,
   SalesEnablementRoute: SalesEnablementRouteWithChildren,
   MapClusterIdRoute: MapClusterIdRoute,
+  PlanClusterIdRoute: PlanClusterIdRoute,
   MapIndexRoute: MapIndexRoute,
   PlanIndexRoute: PlanIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
