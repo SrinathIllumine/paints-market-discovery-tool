@@ -11,7 +11,8 @@ import {
   EMPTY_PROSPECTS,
   type SalesStage,
 } from "@/store/appStore";
-import { getCluster } from "@/data/clusters";
+import { getCluster, prospectSingular } from "@/data/clusters";
+import { CONNECT_STRATEGY_LABEL, type ConnectStrategy } from "@/lib/strategyContent";
 import { getContractorSuggestions, type ContactEntry } from "@/lib/strategyContent";
 import { Button } from "@/components/ui/button";
 import {
