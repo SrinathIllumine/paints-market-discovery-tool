@@ -13,7 +13,7 @@ import {
   Label,
 } from "recharts";
 import { CLUSTERS } from "@/data/clusters";
-import { computeClusterScores, getRevenueProfile, getCycle } from "@/lib/clusterScoring";
+import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
 
 type Point = {
@@ -24,16 +24,17 @@ type Point = {
   highlighted: boolean;
 };
 
-// Deterministic jitter so overlapping clusters spread out a bit but stay stable.
-function jitter(seed: string, amp = 5): number {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
-  const norm = ((Math.abs(h) % 1000) / 1000) * 2 - 1; // -1..1
-  return norm * amp;
-}
-
 function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
+}
+
+// Deterministic micro-jitter to break up identical-score overlaps without
+// changing which quadrant a cluster sits in.
+function jitter(seed: string, amp = 2): number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
+  const norm = ((Math.abs(h) % 1000) / 1000) * 2 - 1;
+  return norm * amp;
 }
 
 function wrapName(name: string, maxChars = 16): string[] {
@@ -41,14 +42,9 @@ function wrapName(name: string, maxChars = 16): string[] {
   const lines: string[] = [];
   let cur = "";
   for (const w of words) {
-    if (!cur) {
-      cur = w;
-    } else if ((cur + " " + w).length <= maxChars) {
-      cur += " " + w;
-    } else {
-      lines.push(cur);
-      cur = w;
-    }
+    if (!cur) cur = w;
+    else if ((cur + " " + w).length <= maxChars) cur += " " + w;
+    else { lines.push(cur); cur = w; }
   }
   if (cur) lines.push(cur);
   if (lines.length > 3) {
@@ -67,18 +63,9 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     for (const c of CLUSTERS) {
       const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
       const sc = computeClusterScores(c, pc);
-      // Binary quadrant anchor + nuance from underlying revenue / cycle data
-      // so clusters spread realistically inside their quadrant.
-      const baseY = sc.potentialHML === "H" ? 72 : 28;
-      const baseX = sc.accessRollupHML === "H" ? 72 : 28;
-      const rev = getRevenueProfile(c.id).avgRevenuePerProspect;
-      const revNorm = clamp((Math.log10(Math.max(10_000, rev)) - 4.5) / 3.5, 0, 1); // ~0..1
-      const cycleDays = getCycle(c.id).days;
-      const cycNorm = clamp(cycleDays / 200, 0, 1);
-      const nuanceY = (revNorm - 0.5) * 28 + jitter(c.id + "y", 5);
-      const nuanceX = (0.5 - cycNorm) * 28 + jitter(c.id + "x", 5);
-      const y = clamp(baseY + nuanceY, 6, 94);
-      const x = clamp(baseX + nuanceX, 6, 94);
+      // Direct mapping: score × 10 places each cluster precisely on the chart.
+      const x = clamp(sc.accessRollupScore * 10 + jitter(c.id + "x", 2.5), 4, 96);
+      const y = clamp(sc.potentialScore * 10 + jitter(c.id + "y", 2.5), 4, 96);
       const isHi = !highlightId || c.id === highlightId;
       const point: Point = { id: c.id, name: c.name, x, y, highlighted: isHi };
       if (isHi) hi.push(point);
@@ -86,7 +73,6 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     }
     return { highlighted: hi, dim: lo };
   }, [clusterStates, highlightId]);
-
 
   const renderLabel = (color: string, weight: number) => (props: any) => {
     const { x, y, payload } = props;
@@ -97,74 +83,52 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     const anchor = placeRight ? "start" : "end";
     const startDy = -((lines.length - 1) * 11) / 2 + 3;
     return (
-      <text
-        x={x + dx}
-        y={y}
-        fill={color}
-        fontSize={9.5}
-        fontWeight={weight}
-        textAnchor={anchor}
-        style={{ pointerEvents: "none" }}
-      >
+      <text x={x + dx} y={y} fill={color} fontSize={9.5} fontWeight={weight}
+        textAnchor={anchor} style={{ pointerEvents: "none" }}>
         {lines.map((l, i) => (
-          <tspan key={i} x={x + dx} dy={i === 0 ? startDy : 11}>
-            {l}
-          </tspan>
+          <tspan key={i} x={x + dx} dy={i === 0 ? startDy : 11}>{l}</tspan>
         ))}
       </text>
     );
   };
 
+  // Quadrant titles rendered on top of each quadrant region.
+  const quadrantLabel = (cx: number, cy: number, line1: string, line2: string) => (
+    <text
+      x={`${cx}%`}
+      y={cy}
+      textAnchor="middle"
+      fontSize={10}
+      fontWeight={700}
+      fill="hsl(var(--muted-foreground))"
+      style={{ pointerEvents: "none", letterSpacing: 0.5 }}
+    >
+      <tspan x={`${cx}%`} dy={0}>{line1}</tspan>
+      <tspan x={`${cx}%`} dy={12}>{line2}</tspan>
+    </text>
+  );
+
   return (
-    <div className="h-[420px] w-full">
+    <div className="h-[440px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 16, right: 28, bottom: 32, left: 32 }}>
+        <ScatterChart margin={{ top: 40, right: 28, bottom: 32, left: 32 }}>
           <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
-          <ReferenceArea
-            x1={50}
-            x2={100}
-            y1={50}
-            y2={100}
-            fill="hsl(0 84% 60%)"
-            fillOpacity={0.1}
-            stroke="none"
-          />
-          <ReferenceLine x={50} stroke="hsl(var(--border))" />
-          <ReferenceLine y={50} stroke="hsl(var(--border))" />
-          <XAxis
-            type="number"
-            dataKey="x"
-            domain={[0, 100]}
-            tick={false}
-            tickLine={false}
-            axisLine={{ stroke: "hsl(var(--border))" }}
-          >
-            <Label
-              value="Access →"
-              position="bottom"
-              offset={10}
-              style={{ fill: "hsl(var(--muted-foreground))", fontSize: 11, fontWeight: 600, letterSpacing: 1 }}
-            />
+          <ReferenceArea x1={50} x2={100} y1={50} y2={100}
+            fill="hsl(0 84% 60%)" fillOpacity={0.10} stroke="none" />
+          <ReferenceLine x={50} stroke="hsl(var(--border))" strokeWidth={1.5} />
+          <ReferenceLine y={50} stroke="hsl(var(--border))" strokeWidth={1.5} />
+          <XAxis type="number" dataKey="x" domain={[0, 100]} tick={false} tickLine={false}
+            axisLine={{ stroke: "hsl(var(--border))" }}>
+            <Label value="Access →" position="bottom" offset={10}
+              style={{ fill: "hsl(var(--muted-foreground))", fontSize: 11, fontWeight: 600, letterSpacing: 1 }} />
           </XAxis>
-          <YAxis
-            type="number"
-            dataKey="y"
-            domain={[0, 100]}
-            tick={false}
-            tickLine={false}
-            axisLine={{ stroke: "hsl(var(--border))" }}
-          >
-            <Label
-              value="Potential →"
-              angle={-90}
-              position="left"
-              offset={14}
-              style={{ fill: "hsl(var(--muted-foreground))", fontSize: 11, fontWeight: 600, letterSpacing: 1 }}
-            />
+          <YAxis type="number" dataKey="y" domain={[0, 100]} tick={false} tickLine={false}
+            axisLine={{ stroke: "hsl(var(--border))" }}>
+            <Label value="Potential →" angle={-90} position="left" offset={14}
+              style={{ fill: "hsl(var(--muted-foreground))", fontSize: 11, fontWeight: 600, letterSpacing: 1 }} />
           </YAxis>
           <ZAxis range={[70, 70]} />
-          <Tooltip
-            cursor={{ strokeDasharray: "3 3" }}
+          <Tooltip cursor={{ strokeDasharray: "3 3" }}
             content={({ active, payload }) => {
               if (!active || !payload || payload.length === 0) return null;
               const p = payload[0].payload as Point;
@@ -173,24 +137,19 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
                   {p.name}
                 </div>
               );
-            }}
-          />
+            }} />
+          {/* Quadrant titles */}
+          {quadrantLabel(28, 18, "Low Potential", "High Access")}
+          {quadrantLabel(78, 18, "High Potential", "High Access")}
+          {quadrantLabel(28, 230, "Low Potential", "Low Access")}
+          {quadrantLabel(78, 230, "High Potential", "Low Access")}
           {dim.length > 0 && (
-            <Scatter
-              data={dim}
-              fill="hsl(var(--muted-foreground))"
-              fillOpacity={0.35}
-              shape="circle"
-              label={renderLabel("hsl(var(--muted-foreground) / 0.75)", 400) as any}
-            />
+            <Scatter data={dim} fill="hsl(var(--muted-foreground))" fillOpacity={0.35}
+              shape="circle" label={renderLabel("hsl(var(--muted-foreground) / 0.75)", 400) as any} />
           )}
           {highlighted.length > 0 && (
-            <Scatter
-              data={highlighted}
-              fill="hsl(0 84% 55%)"
-              shape="circle"
-              label={renderLabel("hsl(0 84% 35%)", 700) as any}
-            />
+            <Scatter data={highlighted} fill="hsl(0 84% 55%)" shape="circle"
+              label={renderLabel("hsl(0 84% 35%)", 700) as any} />
           )}
         </ScatterChart>
       </ResponsiveContainer>
