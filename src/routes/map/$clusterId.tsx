@@ -386,6 +386,22 @@ function HMLTile({ label, hml }: { label: string; hml: HML }) {
   );
 }
 
+function ScoreTile({ label, score }: { label: string; score: number }) {
+  const hi = score >= 6;
+  const cls = hi
+    ? "border-green-300 bg-green-50 text-green-800"
+    : "border-red-300 bg-red-50 text-red-800";
+  return (
+    <div className={cn("rounded-xl border p-2 text-center", cls)}>
+      <p className="text-[10px] uppercase tracking-wider opacity-80">{label}</p>
+      <p className="mt-0.5 font-display text-base leading-tight">
+        <span className="font-bold">{score}</span>
+        <span className="text-xs opacity-70">/10</span>
+      </p>
+    </div>
+  );
+}
+
 function ParentCard({
   title, hml, children,
 }: { title: string; hml: HML; children: React.ReactNode }) {
