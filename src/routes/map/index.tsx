@@ -31,7 +31,7 @@ function ClusterPotentialScreen() {
         />
       }
     >
-      <div className="max-h-[calc(100vh-260px)] overflow-y-auto px-5 py-6">
+      <div className="max-h-[calc(100vh-260px)] overflow-y-auto px-6 py-8">
         <Link
           to="/market-potential"
           className="mb-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-critical text-base font-semibold text-critical-foreground shadow-lg shadow-critical/20"
