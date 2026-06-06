@@ -44,7 +44,7 @@ export const Route = createFileRoute("/plan/")({
 const STEPS: { id: RoadmapStep; title: string }[] = [
   { id: "value", title: "Select your value proposition" },
   { id: "connect", title: "Design your connect strategy" },
-  { id: "action", title: "Build your action plan" },
+  { id: "action", title: "Prioritize your action plan" },
 ];
 
 const STAGE_HEADING_CLS = "font-display text-lg leading-tight";
@@ -139,12 +139,12 @@ function PlanScreen() {
       header={
         <StageHeader
           eyebrow="Stage 2 of 4"
-          title="Create Monthly Cluster Engagement Plan"
+          title="Engagement Plan & Cluster Prioritization"
           subtitle="June 2026"
         />
       }
     >
-      <div className="space-y-5 px-5 py-5">
+      <div className="space-y-8 px-6 py-8">
         {/* Cluster focus picker — bucketed, searchable, collapses on select */}
         <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <button
@@ -154,7 +154,7 @@ function PlanScreen() {
           >
             <div className="min-w-0">
               <h2 className={STAGE_HEADING_CLS}>
-                Which cluster would you like to focus on this month?
+                Prioritize Clusters for the Month
               </h2>
               {focusCluster && !clusterPickerOpen && (
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -237,7 +237,7 @@ function PlanScreen() {
             <div className="mb-1 flex items-center gap-2">
               <Map className="h-4 w-4 text-critical" />
               <h2 className="text-base font-bold uppercase tracking-wider text-muted-foreground">
-                Co-create your plan
+                Curate your Engagement Plan
               </h2>
             </div>
 

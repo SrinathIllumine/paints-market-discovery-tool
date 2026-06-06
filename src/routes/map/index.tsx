@@ -25,13 +25,13 @@ function ClusterPotentialScreen() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="Stage 1 of 4 · Market Potential"
+          eyebrow="Stage 1 of 4 · Analyze Market Potential"
           title="Clusters in Panvel"
           subtitle="Tap a bubble to open the cluster card and map its potential."
         />
       }
     >
-      <div className="max-h-[calc(100vh-260px)] overflow-y-auto px-5 py-6">
+      <div className="max-h-[calc(100vh-260px)] overflow-y-auto px-6 py-8">
         <Link
           to="/market-potential"
           className="mb-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-critical text-base font-semibold text-critical-foreground shadow-lg shadow-critical/20"

@@ -45,13 +45,13 @@ function ClusterMapPage() {
       header={
         <StageHeader
           eyebrow="My Cluster Map"
-          title="All clusters"
+          title="Analyze Market Potential"
           subtitle="Snapshot driven by backend cluster intelligence."
           backTo="/map"
         />
       }
     >
-      <div className="space-y-6 px-5 py-5">
+      <div className="space-y-8 px-6 py-8">
         <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <h2 className="font-display text-xl">Cluster Snapshot</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">

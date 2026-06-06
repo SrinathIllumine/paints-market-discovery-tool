@@ -14,9 +14,7 @@ function SalesEnablementLanding() {
   const monthlyFocus = useAppStore((s) => s.plan.monthlyFocusIds);
   const targets = useAppStore((s) => s.plan.targetClusterIds);
   // Prefer the cluster chosen in the monthly plan; fall back to other mapped clusters.
-  const shortlisted = monthlyFocus.length > 0
-    ? Array.from(new Set([...monthlyFocus, ...targets]))
-    : targets;
+  const shortlisted = monthlyFocus;
 
   return (
     <AppShell
@@ -29,7 +27,7 @@ function SalesEnablementLanding() {
         />
       }
     >
-      <div className="space-y-3 px-5 py-5">
+      <div className="space-y-6 px-6 py-8">
         {shortlisted.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
             No cluster selected yet. Create a monthly plan or visit a cluster from the Cluster Potential page first.

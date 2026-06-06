@@ -201,7 +201,7 @@ function ProspectDetailPage() {
         />
       }
     >
-      <div className="space-y-4 px-5 py-5">
+      <div className="space-y-6 px-6 py-8">
         {/* Stage timeline */}
         <div className="rounded-2xl border border-border bg-card p-3 shadow-sm">
           <div className="flex items-center gap-1 overflow-x-auto">
@@ -236,7 +236,7 @@ function ProspectDetailPage() {
 
         {/* Where are you */}
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <h3 className="font-display text-lg">Where are you?</h3>
+          <h3 className="font-display text-lg">Where is the prospect currently?</h3>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Work completed across stages so far.
           </p>

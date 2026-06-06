@@ -137,7 +137,7 @@ function ClusterDetailScreen() {
         />
       }
     >
-      <div className="space-y-5 px-5 py-5">
+      <div className="space-y-8 px-6 py-8">
         {/* Map */}
         <Section
           title="Geo View"

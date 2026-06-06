@@ -93,7 +93,7 @@ function ClusterFunnelPage() {
         />
       }
     >
-      <div className="space-y-3 px-5 py-6">
+      <div className="space-y-8 px-6 py-8">
         <div className="rounded-3xl border border-border bg-gradient-to-b from-muted/40 to-card p-5 shadow-sm">
           <div className="mx-auto flex max-w-md flex-col items-center gap-2">
             {SALES_STAGES.map((s, i) => {
