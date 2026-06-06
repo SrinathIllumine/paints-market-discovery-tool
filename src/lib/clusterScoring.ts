@@ -437,17 +437,15 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
 
 
 export function getClusterIntel(clusterId: string, fallbackProspectCount: number): ClusterIntel {
-  const profile = getRevenueProfile(clusterId);
-  const revenueHML = scoreToHML(scoreRevenue(profile.avgRevenuePerProspect));
-  const easeHML = scoreToHML(scoreEaseOfSale(clusterId));
   const seeded = INTEL_SEED[clusterId] ?? {};
+  const s = getClusterScoreTuple(clusterId);
   const contractorCount = seeded.contractorCount ?? Math.max(3, Math.round(fallbackProspectCount * 0.12));
   const retailerCount = seeded.retailerCount ?? Math.max(6, Math.round(fallbackProspectCount * 0.5));
   return {
-    revenueHML: seeded.revenueHML ?? revenueHML,
-    competitiveHML: seeded.competitiveHML ?? "M",
-    easeHML: seeded.easeHML ?? easeHML,
-    accessHML: seeded.accessHML ?? "M",
+    revenueHML: scoreToHML(s.revenue),
+    competitiveHML: scoreToHML(s.competitive),
+    easeHML: scoreToHML(s.ease),
+    accessHML: scoreToHML(s.access),
     contractorCount,
     retailerCount,
     jkPresenceCount: seeded.jkPresenceCount ?? Math.max(2, Math.round(fallbackProspectCount * 0.1)),
