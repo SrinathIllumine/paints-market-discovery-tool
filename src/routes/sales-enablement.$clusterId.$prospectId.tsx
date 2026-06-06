@@ -11,8 +11,8 @@ import {
   EMPTY_PROSPECTS,
   type SalesStage,
 } from "@/store/appStore";
-import { getCluster } from "@/data/clusters";
-import { getContractorSuggestions, type ContactEntry } from "@/lib/strategyContent";
+import { getCluster, prospectSingular } from "@/data/clusters";
+import { getContractorSuggestions, CONNECT_STRATEGY_LABEL, type ContactEntry, type ConnectStrategy } from "@/lib/strategyContent";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -50,6 +50,7 @@ function ProspectDetailPage() {
   const recordActivity = useAppStore((s) => s.recordProspectActivity);
   const addOutcome = useAppStore((s) => s.addProspectOutcome);
   const markNotInterested = useAppStore((s) => s.markProspectNotInterested);
+  const selectedStrategies = useAppStore((s) => s.plan.selectedStrategiesByCluster);
 
   const [outcome, setOutcome] = useState("");
   const [openClickIn, setOpenClickIn] = useState<ClickIn | null>(null);
@@ -235,46 +236,37 @@ function ProspectDetailPage() {
         </div>
 
         {/* Where are you */}
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <h3 className="font-display text-lg">Where is the prospect currently?</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Work completed across stages so far.
-          </p>
-          <div className="mt-3 space-y-3">
-            {doneAcross.length === 0 && (
-              <p className="text-sm text-muted-foreground">No prior stages completed yet.</p>
-            )}
-            {doneAcross.map(({ stage, items }) => (
-              <div key={stage}>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {SALES_STAGE_LABEL[stage]}
+        {(() => {
+          const STATUS: Record<SalesStage, string> = {
+            prospects: "Newly identified — not yet contacted.",
+            contacted: "Decision-maker contacted; intro discussion done.",
+            decision: "In Solution Proposal stage — customer is awaiting presentation.",
+            closure: "Commercials accepted; finalising supply and execution.",
+            ongoing: "Project handed over; in continuous relationship.",
+          };
+          const chosenStrategy = selectedStrategies[clusterId]?.[0] as ConnectStrategy | undefined;
+          return (
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <h3 className="font-display text-lg">Where is the prospect currently?</h3>
+              <p className="mt-2 text-sm">{STATUS[currentStage]}</p>
+              {chosenStrategy && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Connect strategy chosen:{" "}
+                  <b className="text-foreground">{CONNECT_STRATEGY_LABEL[chosenStrategy]}</b>
                 </p>
-                <ul className="mt-1 space-y-1.5 text-sm">
-                  {items.map((it, i) => (
-                    <li key={i} className="flex flex-wrap items-center gap-2">
-                      <span className="flex items-start gap-2">
-                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-critical" />
-                        <span>{it.label}</span>
-                      </span>
-                      {it.clickIn && (
-                        <ClickInChip click={it.clickIn} onOpen={setOpenClickIn} />
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-            {outcomesClickIn && (
-              <button
-                type="button"
-                onClick={() => setOpenClickIn(outcomesClickIn)}
-                className="text-xs font-semibold text-navy underline-offset-2 hover:underline"
-              >
-                View all past outcomes →
-              </button>
-            )}
-          </div>
-        </div>
+              )}
+              {outcomesClickIn && (
+                <button
+                  type="button"
+                  onClick={() => setOpenClickIn(outcomesClickIn)}
+                  className="mt-2 text-xs font-semibold text-navy underline-offset-2 hover:underline"
+                >
+                  View past discussion outcomes →
+                </button>
+              )}
+            </div>
+          );
+        })()}
 
         {/* What to do next */}
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">

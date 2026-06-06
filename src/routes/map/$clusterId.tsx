@@ -274,10 +274,7 @@ function ClusterDetailScreen() {
 
         {/* Snapshot + scoring tiles */}
         <section className="space-y-3">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="font-display text-2xl">Cluster Snapshot</h2>
-            <HMLBadge hml={scores.aggregateHML} />
-          </div>
+          <h2 className="font-display text-2xl">Cluster Snapshot</h2>
           <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
             <p className="mb-2 text-xs text-muted-foreground">
               Position of <b>{cluster.name}</b> against all other clusters.
@@ -285,10 +282,10 @@ function ClusterDetailScreen() {
             <QuadrantSnapshot highlightId={cluster.id} />
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <HMLTile label="Revenue" hml={scores.revenueHML} />
-            <HMLTile label="Competitive" hml={scores.competitiveHML} />
-            <HMLTile label="Access" hml={scores.accessHML} />
-            <HMLTile label="Ease of Sale" hml={scores.easeHML} />
+            <ScoreTile label="Revenue" score={scores.revenue} />
+            <ScoreTile label="Competitive" score={scores.competitive} />
+            <ScoreTile label="Access" score={scores.access} />
+            <ScoreTile label="Ease of Sale" score={scores.ease} />
           </div>
         </section>
 
@@ -385,6 +382,22 @@ function HMLTile({ label, hml }: { label: string; hml: HML }) {
     <div className={cn("rounded-xl border p-2 text-center", cls)}>
       <p className="text-[10px] uppercase tracking-wider opacity-80">{label}</p>
       <p className="mt-0.5 font-display text-sm leading-tight">{HML_LABEL[hml]}</p>
+    </div>
+  );
+}
+
+function ScoreTile({ label, score }: { label: string; score: number }) {
+  const hi = score >= 6;
+  const cls = hi
+    ? "border-green-300 bg-green-50 text-green-800"
+    : "border-red-300 bg-red-50 text-red-800";
+  return (
+    <div className={cn("rounded-xl border p-2 text-center", cls)}>
+      <p className="text-[10px] uppercase tracking-wider opacity-80">{label}</p>
+      <p className="mt-0.5 font-display text-base leading-tight">
+        <span className="font-bold">{score}</span>
+        <span className="text-xs opacity-70">/10</span>
+      </p>
     </div>
   );
 }

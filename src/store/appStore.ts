@@ -60,7 +60,7 @@ export const SALES_STAGES: SalesStage[] = ["prospects", "contacted", "decision",
 export const SALES_STAGE_LABEL: Record<SalesStage, string> = {
   prospects: "Prospects",
   contacted: "Contacted",
-  decision: "Decision Pending",
+  decision: "Solution Proposal",
   closure: "Sales Closure",
   ongoing: "Continuous Ongoing Relationship",
 };
