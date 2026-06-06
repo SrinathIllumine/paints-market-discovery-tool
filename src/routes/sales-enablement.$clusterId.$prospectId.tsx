@@ -288,7 +288,7 @@ function ProspectDetailPage() {
                       }
                       className="h-4 w-4 accent-critical"
                     />
-                    <span className={cn(on && "line-through text-muted-foreground")}>{it.label}</span>
+                    <span>{it.label}</span>
                   </label>
                   {it.clickIn && <ClickInChip click={it.clickIn} onOpen={setOpenClickIn} />}
                 </li>
