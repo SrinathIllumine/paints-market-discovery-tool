@@ -78,15 +78,12 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     const { x, y, payload } = props;
     if (typeof x !== "number" || typeof y !== "number" || !payload) return null;
     const lines = wrapName(payload.name);
-    const placeRight = payload.x < 78;
-    const dx = placeRight ? 9 : -9;
-    const anchor = placeRight ? "start" : "end";
-    const startDy = -((lines.length - 1) * 11) / 2 + 3;
+    // Place label BELOW the dot, like the reference chart.
     return (
-      <text x={x + dx} y={y} fill={color} fontSize={9.5} fontWeight={weight}
-        textAnchor={anchor} style={{ pointerEvents: "none" }}>
+      <text x={x} y={y} fill={color} fontSize={10} fontWeight={weight}
+        textAnchor="middle" style={{ pointerEvents: "none" }}>
         {lines.map((l, i) => (
-          <tspan key={i} x={x + dx} dy={i === 0 ? startDy : 11}>{l}</tspan>
+          <tspan key={i} x={x} dy={i === 0 ? 14 : 11}>{l}</tspan>
         ))}
       </text>
     );
