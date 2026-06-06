@@ -50,6 +50,7 @@ function ProspectDetailPage() {
   const recordActivity = useAppStore((s) => s.recordProspectActivity);
   const addOutcome = useAppStore((s) => s.addProspectOutcome);
   const markNotInterested = useAppStore((s) => s.markProspectNotInterested);
+  const selectedStrategies = useAppStore((s) => s.plan.selectedStrategiesByCluster);
 
   const [outcome, setOutcome] = useState("");
   const [openClickIn, setOpenClickIn] = useState<ClickIn | null>(null);
