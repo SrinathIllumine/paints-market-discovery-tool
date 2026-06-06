@@ -131,13 +131,22 @@ export function scoreFromHML(v: HML | undefined): number {
   return v ? HML_SCORE[v] : 0;
 }
 
+// Binary classification for sub-scores: revenue, competitive, access, ease are
+// strictly High or Low (no medium).
 export function scoreToHML(score: number): HML {
-  // Binary classification — Medium has been retired. Scores >= 6 are High.
   if (score >= 6) return "H";
   return "L";
 }
 
-export const HML_LABEL: Record<HML, string> = { H: "High", M: "Low", L: "Low" };
+// 3-tier classification used ONLY for the two rollup labels
+// (Cluster Revenue Potential and Cluster Access).
+export function scoreToHMLRollup(score: number): HML {
+  if (score >= 7) return "H";
+  if (score >= 4) return "M";
+  return "L";
+}
+
+export const HML_LABEL: Record<HML, string> = { H: "High", M: "Medium", L: "Low" };
 
 
 export function scoreRevenue(avgRevenuePerProspect: number): number {
@@ -168,43 +177,82 @@ export function cycleTimeToEaseHML(v: HML): HML {
 export function scoreCompetitiveBrands(_p: Partial<Record<string, HML>> | undefined): number { return 0; }
 export function scoreAccessFromAnswers(_answers: (YesNo | undefined)[]): number { return 0; }
 
+// Precise per-cluster sub-scores (1-10). Drives both the HML badges and the
+// quadrant snapshot positioning. Tuned so the 20 clusters spread roughly
+// 5/5/5/5 across the four quadrants of Potential × Access.
+export type ScoreTuple = { revenue: number; competitive: number; access: number; ease: number };
+const SCORE_SEED: Record<string, ScoreTuple> = {
+  // High Potential · High Access (5)
+  "mid-apartments":   { revenue: 9, competitive: 8, access: 8, ease: 7 },
+  redevelopment:      { revenue: 9, competitive: 9, access: 6, ease: 8 },
+  restaurants:        { revenue: 6, competitive: 7, access: 9, ease: 9 },
+  hotels:             { revenue: 8, competitive: 7, access: 7, ease: 6 },
+  jewellery:          { revenue: 7, competitive: 6, access: 8, ease: 8 },
+
+  // High Potential · Low Access (5)
+  "gated-community":  { revenue: 9, competitive: 7, access: 5, ease: 3 },
+  schools:            { revenue: 7, competitive: 6, access: 4, ease: 4 },
+  hospitals:          { revenue: 8, competitive: 7, access: 4, ease: 4 },
+  midc:               { revenue: 10, competitive: 8, access: 3, ease: 2 },
+  colleges:           { revenue: 7, competitive: 5, access: 3, ease: 3 },
+
+  // Low Potential · High Access (5)
+  "paying-guest":     { revenue: 3, competitive: 4, access: 9, ease: 10 },
+  "bus-stand-market": { revenue: 2, competitive: 3, access: 9, ease: 9 },
+  "highway-dhabas":   { revenue: 3, competitive: 3, access: 8, ease: 9 },
+  "textile-garment":  { revenue: 4, competitive: 4, access: 8, ease: 8 },
+  "clinics-nursing":  { revenue: 4, competitive: 5, access: 7, ease: 7 },
+
+  // Low Potential · Low Access (5)
+  religious:          { revenue: 4, competitive: 3, access: 3, ease: 5 },
+  "marriage-halls":   { revenue: 5, competitive: 4, access: 4, ease: 4 },
+  "auto-showrooms":   { revenue: 5, competitive: 4, access: 4, ease: 4 },
+  "petrol-pumps":     { revenue: 3, competitive: 3, access: 4, ease: 5 },
+  warehousing:        { revenue: 5, competitive: 4, access: 4, ease: 3 },
+};
+
+const DEFAULT_SCORES: ScoreTuple = { revenue: 5, competitive: 5, access: 5, ease: 5 };
+
+export function getClusterScoreTuple(clusterId: string): ScoreTuple {
+  return SCORE_SEED[clusterId] ?? DEFAULT_SCORES;
+}
+
 export type ClusterScores = {
   revenue: number;
   access: number;
   competitive: number;
   ease: number;
+  potentialScore: number;     // avg(revenue, competitive)
+  accessRollupScore: number;  // avg(access, ease)
   aggregate: number;
-  // HML rollups
-  revenueHML: HML;
-  competitiveHML: HML;
-  accessHML: HML;
-  easeHML: HML;
-  potentialHML: HML;   // avg of revenue + competitive
-  accessRollupHML: HML; // avg of access + ease
-  aggregateHML: HML;
+  revenueHML: HML;       // binary
+  competitiveHML: HML;   // binary
+  accessHML: HML;        // binary
+  easeHML: HML;          // binary
+  potentialHML: HML;     // 3-tier rollup
+  accessRollupHML: HML;  // 3-tier rollup
+  aggregateHML: HML;     // legacy
 };
 
 export function computeClusterScores(
   cluster: Cluster,
-  prospectCount: number,
+  _prospectCount: number,
   _assessment?: ClusterAssessment,
 ): ClusterScores {
-  const intel = getClusterIntel(cluster.id, prospectCount);
-  const revenue = scoreFromHML(intel.revenueHML);
-  const competitive = scoreFromHML(intel.competitiveHML);
-  const access = scoreFromHML(intel.accessHML);
-  const ease = scoreFromHML(intel.easeHML);
+  const t = getClusterScoreTuple(cluster.id);
+  const { revenue, competitive, access, ease } = t;
+  const potentialScore = Number(((revenue + competitive) / 2).toFixed(1));
+  const accessRollupScore = Number(((access + ease) / 2).toFixed(1));
   const aggregate = Number(((revenue + competitive + access + ease) / 4).toFixed(1));
-  const potentialScore = (revenue + competitive) / 2;
-  const accessRollupScore = (access + ease) / 2;
   return {
-    revenue, access, competitive, ease, aggregate,
-    revenueHML: intel.revenueHML,
-    competitiveHML: intel.competitiveHML,
-    accessHML: intel.accessHML,
-    easeHML: intel.easeHML,
-    potentialHML: scoreToHML(potentialScore),
-    accessRollupHML: scoreToHML(accessRollupScore),
+    revenue, access, competitive, ease,
+    potentialScore, accessRollupScore, aggregate,
+    revenueHML: scoreToHML(revenue),
+    competitiveHML: scoreToHML(competitive),
+    accessHML: scoreToHML(access),
+    easeHML: scoreToHML(ease),
+    potentialHML: scoreToHMLRollup(potentialScore),
+    accessRollupHML: scoreToHMLRollup(accessRollupScore),
     aggregateHML: scoreToHML(aggregate),
   };
 }
