@@ -27,6 +27,8 @@ function PlanScreen() {
   const clusterStates = useAppStore((s) => s.clusters);
   const [picked, setPicked] = useState<string | null>(focusIds[0] ?? null);
   const [search, setSearch] = useState("");
+  const [recOpen, setRecOpen] = useState(true);
+  const [othersOpen, setOthersOpen] = useState(false);
 
   const scored = useMemo(() => {
     return CLUSTERS.map((c) => {
