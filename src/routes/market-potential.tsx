@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
@@ -8,7 +8,7 @@ import { CLUSTERS } from "@/data/clusters";
 import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
 import { cn } from "@/lib/utils";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Search } from "lucide-react";
 
 export const Route = createFileRoute("/market-potential")({
   head: () => ({
@@ -23,6 +23,7 @@ export const Route = createFileRoute("/market-potential")({
 function ClusterMapPage() {
   const navigate = useNavigate();
   const clusterStates = useAppStore((s) => s.clusters);
+  const [search, setSearch] = useState("");
 
   const scored = useMemo(() => {
     return CLUSTERS.map((c) => {
@@ -30,13 +31,11 @@ function ClusterMapPage() {
       const sc = computeClusterScores(c, pc);
       return { c, sc };
     }).sort((a, b) => {
-      // Sort by potential desc, then access desc.
       if (b.sc.potentialScore !== a.sc.potentialScore) return b.sc.potentialScore - a.sc.potentialScore;
       return b.sc.accessRollupScore - a.sc.accessRollupScore;
     });
   }, [clusterStates]);
 
-  // Top High-Potential · High-Access clusters get the Recommended tag.
   const recommendedIds = useMemo(() => {
     return new Set(
       scored
@@ -45,6 +44,15 @@ function ClusterMapPage() {
         .map(({ c }) => c.id),
     );
   }, [scored]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return scored;
+    return scored.filter(({ c }) => c.name.toLowerCase().includes(q));
+  }, [scored, search]);
+
+  const recommended = filtered.filter(({ c }) => recommendedIds.has(c.id));
+  const others = filtered.filter(({ c }) => !recommendedIds.has(c.id));
 
   return (
     <AppShell
@@ -73,54 +81,109 @@ function ClusterMapPage() {
           <div>
             <h2 className="font-display text-xl">All Clusters by Score</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Sorted by potential, then access. Tap a cluster to open its card.
+              Recommended first, then others — sorted by potential and access.
             </p>
           </div>
-          <div className="space-y-2">
-            {scored.map(({ c, sc }) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
-                className="group flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-card p-3 text-left shadow-sm transition-colors hover:bg-muted/40"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-semibold">{c.name}</p>
-                    {recommendedIds.has(c.id) && (
-                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-green-800">
-                        Recommended
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                    <ScoreChip label="Revenue" score={sc.revenue} />
-                    <ScoreChip label="Competitive" score={sc.competitive} />
-                    <ScoreChip label="Access" score={sc.access} />
-                    <ScoreChip label="Ease" score={sc.ease} />
-                  </div>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-              </button>
-            ))}
+
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search clusters…"
+              className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm"
+            />
           </div>
+
+          {recommended.length > 0 && (
+            <div>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
+                Recommended for You
+              </p>
+              <div className="space-y-2">
+                {recommended.map(({ c, sc }) => (
+                  <ClusterRow
+                    key={c.id}
+                    name={c.name}
+                    recommended
+                    scores={sc}
+                    onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {others.length > 0 && (
+            <div>
+              <p className="mb-2 mt-4 text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
+                All Other Clusters
+              </p>
+              <div className="space-y-2">
+                {others.map(({ c, sc }) => (
+                  <ClusterRow
+                    key={c.id}
+                    name={c.name}
+                    scores={sc}
+                    onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {filtered.length === 0 && (
+            <p className="text-sm text-muted-foreground">No clusters match "{search}".</p>
+          )}
         </section>
       </div>
     </AppShell>
   );
 }
 
-function ScoreChip({ label, score }: { label: string; score: number }) {
-  const hi = score >= 6;
-  const cls = hi ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+function ClusterRow({
+  name, recommended, scores, onClick,
+}: {
+  name: string;
+  recommended?: boolean;
+  scores: { revenue: number; competitive: number; access: number; ease: number };
+  onClick: () => void;
+}) {
   return (
-    <span
-      className={cn(
-        "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-        cls,
-      )}
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-card p-3 text-left shadow-sm transition-colors hover:bg-muted/40"
     >
-      {label}: {score}/10
-    </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="truncate text-sm font-semibold">{name}</p>
+          {recommended && (
+            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-green-800">
+              Recommended
+            </span>
+          )}
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+          <ScoreSubCard label="Revenue" score={scores.revenue} />
+          <ScoreSubCard label="Competitive" score={scores.competitive} />
+          <ScoreSubCard label="Access" score={scores.access} />
+          <ScoreSubCard label="Ease" score={scores.ease} />
+        </div>
+      </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+    </button>
+  );
+}
+
+function ScoreSubCard({ label, score }: { label: string; score: number }) {
+  const hi = score >= 6;
+  const tone = hi ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50";
+  const textTone = hi ? "text-green-800" : "text-red-800";
+  return (
+    <div className={cn("rounded-md border px-2 py-1.5", tone)}>
+      <p className={cn("text-[9px] font-semibold uppercase tracking-wider", textTone)}>{label}</p>
+      <p className={cn("text-xs font-bold", textTone)}>{score}/10</p>
+    </div>
   );
 }

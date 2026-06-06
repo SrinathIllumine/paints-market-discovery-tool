@@ -135,30 +135,30 @@ function ProspectDetailPage() {
 
   const NEXT_BY_STAGE: Record<SalesStage, NextItem[]> = {
     prospects: [
-      { key: "identifyDM", label: "Identify decision maker", clickIn: contactsClickIn },
-      { key: "introMeet", label: "Schedule intro meeting" },
-      { key: "sharePamphlet", label: "Share cluster pamphlet", clickIn: pamphletsClickIn },
+      { key: "identifyDM", label: "Identify the decision maker for this account", clickIn: contactsClickIn },
+      { key: "introMeet", label: "Schedule an intro meeting on-site" },
+      { key: "sharePamphlet", label: "Share the cluster awareness pamphlet", clickIn: pamphletsClickIn },
     ],
     contacted: [
-      { key: "productWalk", label: "Product walkthrough on-site" },
-      { key: "captureScope", label: "Capture surface estimates" },
-      { key: "sendProposal", label: "Send proposal", clickIn: proposalDeck },
+      { key: "productWalk", label: "Conduct a product walkthrough on-site" },
+      { key: "captureScope", label: "Capture surface estimates and scope" },
+      { key: "sendProposal", label: "Send across the customized proposal", clickIn: proposalDeck },
     ],
     decision: [
-      { key: "customDeck", label: "Customized proposal deck", clickIn: proposalDeck },
-      { key: "specialSchemes", label: "Special customized schemes", clickIn: schemesClickIn },
-      { key: "demoVisit", label: "Product demonstration visit" },
-      { key: "trustEngage", label: "Engage committee / trust", clickIn: contactsClickIn },
+      { key: "customDeck", label: "Use this customized proposal deck", clickIn: proposalDeck },
+      { key: "specialSchemes", label: "Access these special customized schemes for ideas", clickIn: schemesClickIn },
+      { key: "demoVisit", label: "Arrange a product demonstration visit" },
+      { key: "trustEngage", label: "Engage with the committee / trust", clickIn: contactsClickIn },
     ],
     closure: [
-      { key: "lockSupply", label: "Lock supply schedule" },
-      { key: "painterBrief", label: "Brief painter / contractor", clickIn: contactsClickIn },
-      { key: "qualityAudit", label: "Plan post-handover audit" },
+      { key: "lockSupply", label: "Lock the supply schedule with the customer" },
+      { key: "painterBrief", label: "Brief the painter / contractor on-site", clickIn: contactsClickIn },
+      { key: "qualityAudit", label: "Plan the post-handover quality audit" },
     ],
     ongoing: [
-      { key: "qCheckIn", label: "Set quarterly check-in cadence" },
-      { key: "referrals", label: "Capture referral opportunities" },
-      { key: "amcOffer", label: "Offer AMC / refresh proposal" },
+      { key: "qCheckIn", label: "Set up a quarterly check-in cadence" },
+      { key: "referrals", label: "Capture referral opportunities from the account" },
+      { key: "amcOffer", label: "Offer an AMC / refresh proposal" },
     ],
   };
 
@@ -288,7 +288,7 @@ function ProspectDetailPage() {
                       }
                       className="h-4 w-4 accent-critical"
                     />
-                    <span className={cn(on && "line-through text-muted-foreground")}>{it.label}</span>
+                    <span>{it.label}</span>
                   </label>
                   {it.clickIn && <ClickInChip click={it.clickIn} onOpen={setOpenClickIn} />}
                 </li>
@@ -329,22 +329,31 @@ function ProspectDetailPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            onClick={handleAdvance}
-            disabled={!nextStage}
-            className="h-11 gap-1.5 bg-critical text-critical-foreground hover:bg-critical/90"
-          >
-            <Check className="h-4 w-4" /> Mark as completed
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleNotInterested}
-            className="h-11 gap-1.5 border-border text-muted-foreground hover:bg-muted/40"
-          >
-            <X className="h-4 w-4" /> Not interested
-          </Button>
-        </div>
+        {(() => {
+          const singular = prospectSingular(clusterId);
+          const advanceLabel = nextStage
+            ? `Move to ${SALES_STAGE_LABEL[nextStage]}`
+            : "Engagement complete";
+          const removeLabel = `Remove ${singular.toLowerCase()} from the list`;
+          return (
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                onClick={handleAdvance}
+                disabled={!nextStage}
+                className="h-11 gap-1.5 bg-critical text-critical-foreground hover:bg-critical/90"
+              >
+                <Check className="h-4 w-4" /> {advanceLabel}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleNotInterested}
+                className="h-11 gap-1.5 border-border text-muted-foreground hover:bg-muted/40"
+              >
+                <X className="h-4 w-4" /> {removeLabel}
+              </Button>
+            </div>
+          );
+        })()}
       </div>
 
       <ClickInDialog click={openClickIn} onClose={() => setOpenClickIn(null)} />
