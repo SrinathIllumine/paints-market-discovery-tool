@@ -235,11 +235,37 @@ function ProspectDetailPage() {
         </div>
 
         {/* Where are you */}
-        <WhereYouAre
-          clusterId={clusterId}
-          currentStage={currentStage}
-          onOpenClickIn={setOpenClickIn}
-        />
+        {(() => {
+          const STATUS: Record<SalesStage, string> = {
+            prospects: "Newly identified — not yet contacted.",
+            contacted: "Decision-maker contacted; intro discussion done.",
+            decision: "In Solution Proposal stage — customer is awaiting presentation.",
+            closure: "Commercials accepted; finalising supply and execution.",
+            ongoing: "Project handed over; in continuous relationship.",
+          };
+          const chosenStrategy = selectedStrategies[clusterId]?.[0] as ConnectStrategy | undefined;
+          return (
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <h3 className="font-display text-lg">Where is the prospect currently?</h3>
+              <p className="mt-2 text-sm">{STATUS[currentStage]}</p>
+              {chosenStrategy && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Connect strategy chosen:{" "}
+                  <b className="text-foreground">{CONNECT_STRATEGY_LABEL[chosenStrategy]}</b>
+                </p>
+              )}
+              {outcomesClickIn && (
+                <button
+                  type="button"
+                  onClick={() => setOpenClickIn(outcomesClickIn)}
+                  className="mt-2 text-xs font-semibold text-navy underline-offset-2 hover:underline"
+                >
+                  View past discussion outcomes →
+                </button>
+              )}
+            </div>
+          );
+        })()}
 
         {/* What to do next */}
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
