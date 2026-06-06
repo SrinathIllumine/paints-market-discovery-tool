@@ -109,19 +109,19 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     <div className="h-[480px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 40, right: 28, bottom: 32, left: 32 }}>
-          <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="2 4" strokeOpacity={0.9} />
+          <CartesianGrid stroke="#000000" strokeDasharray="3 4" strokeOpacity={0.5} />
           <ReferenceArea x1={50} x2={100} y1={50} y2={100}
             fill="hsl(0 84% 60%)" fillOpacity={0.10} stroke="none" />
           {/* Bold partition lines splitting the 4 quadrants */}
-          <ReferenceLine x={50} stroke="hsl(var(--foreground))" strokeWidth={2} />
-          <ReferenceLine y={50} stroke="hsl(var(--foreground))" strokeWidth={2} />
+          <ReferenceLine x={50} stroke="#000000" strokeWidth={2} />
+          <ReferenceLine y={50} stroke="#000000" strokeWidth={2} />
           <XAxis type="number" dataKey="x" domain={[0, 100]} tick={false} tickLine={false}
-            axisLine={{ stroke: "hsl(var(--foreground))", strokeWidth: 1.5 }}>
+            axisLine={{ stroke: "#000000", strokeWidth: 2 }}>
             <Label value="Access →" position="bottom" offset={10}
-              style={{ fill: "hsl(var(--muted-foreground))", fontSize: 12, fontWeight: 600, letterSpacing: 1 }} />
+              style={{ fill: "#000000", fontSize: 12, fontWeight: 600, letterSpacing: 1 }} />
           </XAxis>
           <YAxis type="number" dataKey="y" domain={[0, 100]} tick={false} tickLine={false}
-            axisLine={{ stroke: "hsl(var(--foreground))", strokeWidth: 1.5 }}>
+            axisLine={{ stroke: "#000000", strokeWidth: 2 }}>
             <Label value="Potential →" angle={-90} position="left" offset={14}
               style={{ fill: "hsl(var(--muted-foreground))", fontSize: 12, fontWeight: 600, letterSpacing: 1 }} />
           </YAxis>
