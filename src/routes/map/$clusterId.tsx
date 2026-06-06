@@ -274,10 +274,7 @@ function ClusterDetailScreen() {
 
         {/* Snapshot + scoring tiles */}
         <section className="space-y-3">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="font-display text-2xl">Cluster Snapshot</h2>
-            <HMLBadge hml={scores.aggregateHML} />
-          </div>
+          <h2 className="font-display text-2xl">Cluster Snapshot</h2>
           <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
             <p className="mb-2 text-xs text-muted-foreground">
               Position of <b>{cluster.name}</b> against all other clusters.
@@ -285,10 +282,10 @@ function ClusterDetailScreen() {
             <QuadrantSnapshot highlightId={cluster.id} />
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <HMLTile label="Revenue" hml={scores.revenueHML} />
-            <HMLTile label="Competitive" hml={scores.competitiveHML} />
-            <HMLTile label="Access" hml={scores.accessHML} />
-            <HMLTile label="Ease of Sale" hml={scores.easeHML} />
+            <ScoreTile label="Revenue" score={scores.revenue} />
+            <ScoreTile label="Competitive" score={scores.competitive} />
+            <ScoreTile label="Access" score={scores.access} />
+            <ScoreTile label="Ease of Sale" score={scores.ease} />
           </div>
         </section>
 
