@@ -138,11 +138,11 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
                 </div>
               );
             }} />
-          {/* Quadrant titles */}
-          {quadrantLabel(28, 18, "Low Potential", "High Access")}
-          {quadrantLabel(78, 18, "High Potential", "High Access")}
-          {quadrantLabel(28, 230, "Low Potential", "Low Access")}
-          {quadrantLabel(78, 230, "High Potential", "Low Access")}
+          {/* Quadrant titles — placed near the top of each quadrant region */}
+          {quadrantLabel(27, 55, "HIGH POTENTIAL", "LOW ACCESS")}
+          {quadrantLabel(77, 55, "HIGH POTENTIAL", "HIGH ACCESS")}
+          {quadrantLabel(27, 258, "LOW POTENTIAL", "LOW ACCESS")}
+          {quadrantLabel(77, 258, "LOW POTENTIAL", "HIGH ACCESS")}
           {dim.length > 0 && (
             <Scatter data={dim} fill="hsl(var(--muted-foreground))" fillOpacity={0.35}
               shape="circle" label={renderLabel("hsl(var(--muted-foreground) / 0.75)", 400) as any} />
