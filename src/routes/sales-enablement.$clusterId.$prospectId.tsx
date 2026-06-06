@@ -145,10 +145,10 @@ function ProspectDetailPage() {
       { key: "sendProposal", label: "Send across the customized proposal", clickIn: proposalDeck },
     ],
     decision: [
-      { key: "customDeck", label: "Use this customized proposal deck", clickIn: proposalDeck },
+      { key: "customDeck", label: "You can use this customized proposal deck", clickIn: proposalDeck },
       { key: "specialSchemes", label: "Access these special customized schemes for ideas", clickIn: schemesClickIn },
       { key: "demoVisit", label: "Arrange a product demonstration visit" },
-      { key: "trustEngage", label: "Engage with the committee / trust", clickIn: contactsClickIn },
+      { key: "trustEngage", label: "You can engage with the committee / trust", clickIn: contactsClickIn },
     ],
     closure: [
       { key: "lockSupply", label: "Lock the supply schedule with the customer" },
