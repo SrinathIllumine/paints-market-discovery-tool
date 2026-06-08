@@ -61,12 +61,25 @@ function IntroScreen() {
   return (
     <AppShell bottom={<BottomNav />}>
       <div className="bg-navy px-5 pb-7 pt-8 text-navy-foreground md:rounded-t-3xl">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60">
-          JK Cement · Demand Generator
-        </p>
-        <h1 className="mt-2 font-display text-3xl leading-tight">Demand Discovery Tool</h1>
-        <p className="mt-2 text-sm text-white/75">Welcome Sunil Kumar</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60">
+              JK Cement · Demand Generator
+            </p>
+            <h1 className="mt-2 font-display text-3xl leading-tight">Demand Discovery Tool</h1>
+            <p className="mt-2 text-sm text-white/75">Welcome Sunil Kumar</p>
+          </div>
+          <Link
+            to="/dashboard"
+            aria-label="Open my dashboard"
+            title="My Dashboard"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-critical text-sm font-semibold text-white shadow-md ring-2 ring-white/20 transition-transform hover:scale-105"
+          >
+            SK
+          </Link>
+        </div>
       </div>
+
 
       <div className="space-y-3 px-5 py-5">
         {props.map(({ icon: Icon, title, desc, to, progress }) => (
