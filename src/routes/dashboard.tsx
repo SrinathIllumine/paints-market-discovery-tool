@@ -368,7 +368,7 @@ function DashboardPage() {
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <Stat label="Connected" value={networkOpen.connected} />
-                <Stat label="Available" value={networkOpen.available} />
+                <Stat label="AVAILABLE CONNECTS" value={networkOpen.available} />
                 <Stat label="Coverage" value={`${networkOpen.pct}%`} />
                 <Stat label={prospectPlural(networkOpen.clusterId)} value={getCluster(networkOpen.clusterId)?.prospectCountEstimate ?? "—"} />
               </div>
