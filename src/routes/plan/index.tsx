@@ -169,16 +169,16 @@ function ClusterRow({
   scores: { revenue: number; competitive: number; access: number; ease: number };
   onClick: () => void;
 }) {
+  const navigate = useNavigate();
+  const setMonthlyFocus = useAppStore((s) => s.setMonthlyFocus);
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <div
       className={cn(
         "flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition-colors",
         active ? "border-critical bg-critical/5" : "border-border bg-card hover:bg-muted/40",
       )}
     >
-      <div className="min-w-0 flex-1">
+      <button type="button" onClick={onClick} className="min-w-0 flex-1 text-left">
         <div className="flex flex-wrap items-center gap-2">
           <p className="truncate text-sm font-semibold">{name}</p>
           {recommended && (
@@ -193,12 +193,30 @@ function ClusterRow({
           <ScoreChip label="Access" score={scores.access} />
           <ScoreChip label="Ease" score={scores.ease} />
         </div>
-      </div>
+      </button>
+      {active && (
+        <Button
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            // Find cluster id via name lookup is fragile; use onClick already set id.
+            // We rely on the parent having set picked; navigate using name->id map.
+            const cluster = CLUSTERS.find((c) => c.name === name);
+            if (cluster) {
+              setMonthlyFocus(cluster.id);
+              navigate({ to: "/plan/$clusterId", params: { clusterId: cluster.id } });
+            }
+          }}
+          className="shrink-0 gap-1 bg-navy text-navy-foreground hover:bg-navy/90"
+        >
+          Plan <ChevronRight className="h-4 w-4" />
+        </Button>
+      )}
       <div className={cn(
         "h-5 w-5 shrink-0 rounded-full border-2",
         active ? "border-critical bg-critical" : "border-border",
       )} />
-    </button>
+    </div>
   );
 }
 

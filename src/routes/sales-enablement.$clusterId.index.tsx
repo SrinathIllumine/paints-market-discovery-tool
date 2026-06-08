@@ -53,6 +53,7 @@ function ClusterFunnelPage() {
 
   const [openStage, setOpenStage] = useState<SalesStage | null>(null);
   const [search, setSearch] = useState("");
+  const [funnelSearch, setFunnelSearch] = useState("");
 
   // Seed only once per cluster — guarded both at store level and here.
   const prospectIds = useMemo(() => prospects.map((p) => p.id), [prospects]);
@@ -65,13 +66,15 @@ function ClusterFunnelPage() {
     const out: Record<SalesStage, typeof prospects> = {
       prospects: [], contacted: [], decision: [], closure: [], ongoing: [],
     };
+    const q = funnelSearch.trim().toLowerCase();
     for (const p of prospects) {
       if (activity[p.id]?.notInterested) continue;
+      if (q && !(p.name.toLowerCase().includes(q) || (p.locality ?? "").toLowerCase().includes(q))) continue;
       const st = stages[p.id] ?? "prospects";
       out[st].push(p);
     }
     return out;
-  }, [prospects, stages, activity]);
+  }, [prospects, stages, activity, funnelSearch]);
 
   if (!cluster) {
     return (
@@ -94,6 +97,12 @@ function ClusterFunnelPage() {
       }
     >
       <div className="space-y-8 px-6 py-8">
+        <input
+          value={funnelSearch}
+          onChange={(e) => setFunnelSearch(e.target.value)}
+          placeholder="Search prospects to filter the funnel…"
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+        />
         <div className="rounded-3xl border border-border bg-gradient-to-b from-muted/40 to-card p-5 shadow-sm">
           <div className="mx-auto flex max-w-md flex-col items-center gap-2">
             {SALES_STAGES.map((s, i) => {
@@ -129,7 +138,9 @@ function ClusterFunnelPage() {
             })}
           </div>
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            {prospects.length} total prospects in this cluster
+            {funnelSearch.trim()
+              ? `${Object.values(visibleByStage).reduce((n, arr) => n + arr.length, 0)} of ${prospects.length} prospects match "${funnelSearch.trim()}"`
+              : `${prospects.length} total prospects in this cluster`}
           </p>
         </div>
 
