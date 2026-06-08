@@ -109,7 +109,13 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     <div className="h-[480px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 40, right: 28, bottom: 32, left: 32 }}>
-          <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="2 4" strokeOpacity={1} />
+          <CartesianGrid
+            stroke="hsl(var(--foreground))"
+            strokeOpacity={0.25}
+            strokeWidth={1}
+            horizontalPoints={undefined as any}
+            verticalPoints={undefined as any}
+          />
           <ReferenceArea x1={50} x2={100} y1={50} y2={100}
             fill="hsl(0 84% 60%)" fillOpacity={0.10} stroke="none" />
           {/* Bold partition lines splitting the 4 quadrants */}
