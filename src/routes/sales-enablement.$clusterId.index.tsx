@@ -53,6 +53,7 @@ function ClusterFunnelPage() {
 
   const [openStage, setOpenStage] = useState<SalesStage | null>(null);
   const [search, setSearch] = useState("");
+  const [funnelSearch, setFunnelSearch] = useState("");
 
   // Seed only once per cluster — guarded both at store level and here.
   const prospectIds = useMemo(() => prospects.map((p) => p.id), [prospects]);
@@ -65,13 +66,15 @@ function ClusterFunnelPage() {
     const out: Record<SalesStage, typeof prospects> = {
       prospects: [], contacted: [], decision: [], closure: [], ongoing: [],
     };
+    const q = funnelSearch.trim().toLowerCase();
     for (const p of prospects) {
       if (activity[p.id]?.notInterested) continue;
+      if (q && !(p.name.toLowerCase().includes(q) || (p.locality ?? "").toLowerCase().includes(q))) continue;
       const st = stages[p.id] ?? "prospects";
       out[st].push(p);
     }
     return out;
-  }, [prospects, stages, activity]);
+  }, [prospects, stages, activity, funnelSearch]);
 
   if (!cluster) {
     return (
