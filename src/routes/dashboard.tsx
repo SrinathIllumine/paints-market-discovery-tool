@@ -203,7 +203,7 @@ function DashboardPage() {
             onClick={() => setPastOpen(true)}
             className="mt-1 flex w-full items-center justify-between rounded-xl border border-dashed border-border bg-muted/30 px-3 py-2 text-left text-xs font-medium text-navy hover:bg-muted/50"
           >
-            <span>Click here to view past events & initiatives</span>
+            <span>Click here to view my past events & initiatives</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
         </SectionCard>
