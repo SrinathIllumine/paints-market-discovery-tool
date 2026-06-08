@@ -232,7 +232,7 @@ function DashboardPage() {
                       <div className="flex items-center justify-between gap-2">
                         <span className="truncate text-sm font-medium">{a.name}</span>
                         <span className="shrink-0 rounded-full bg-critical/10 px-1.5 py-0.5 text-[10px] font-semibold text-critical">
-                          {a.days}d stuck
+                          Last visited: {a.days}d
                         </span>
                       </div>
                       <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
