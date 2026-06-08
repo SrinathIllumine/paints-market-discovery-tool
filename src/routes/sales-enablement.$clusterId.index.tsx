@@ -138,7 +138,9 @@ function ClusterFunnelPage() {
             })}
           </div>
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            {prospects.length} total prospects in this cluster
+            {funnelSearch.trim()
+              ? `${Object.values(visibleByStage).reduce((n, arr) => n + arr.length, 0)} of ${prospects.length} prospects match "${funnelSearch.trim()}"`
+              : `${prospects.length} total prospects in this cluster`}
           </p>
         </div>
 
