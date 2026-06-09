@@ -70,6 +70,9 @@ function PlanClusterScreen() {
   const setStrategyContacts  = useAppStore((s) => s.setStrategyContacts);
   const selectedActions      = useAppStore((s) => s.plan.selectedActionsByCluster);
   const toggleSelectedAction = useAppStore((s) => s.toggleSelectedAction);
+  const customActions        = useAppStore((s) => s.plan.customActionsByCluster);
+  const addCustomAction      = useAppStore((s) => s.addCustomAction);
+  const removeCustomAction   = useAppStore((s) => s.removeCustomAction);
   const eventEstimates       = useAppStore((s) => s.plan.eventEstimatesByCluster);
   const setEventEstimate     = useAppStore((s) => s.setEventEstimate);
 
