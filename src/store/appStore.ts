@@ -79,6 +79,9 @@ export const EMPTY_PROSPECTS: Prospect[] = [];
 export const EMPTY_ACTIVITY: ProspectActivity = {};
 export const EMPTY_STAGE_MAP: Record<string, SalesStage> = {};
 
+export type EventEstimate = { participants?: number; contractors?: number };
+export type PastEventFeedback = { attended?: number; leads?: number; challenges?: string };
+
 type State = {
   clusters: Record<string, ClusterState>;
   stakeholders: Record<string, Stakeholder[]>;
@@ -102,6 +105,10 @@ type State = {
     selectedActionsByCluster: Record<string, Partial<Record<ConnectStrategy, string[]>>>;
     // user-added custom actions
     customActionsByCluster: Record<string, Partial<Record<ConnectStrategy, string[]>>>;
+    // estimates for each contribution event id (used in Stage 4 popup)
+    eventEstimatesByCluster: Record<string, Record<string, EventEstimate>>;
+    // past-roadmap feedback per cluster + event id
+    pastEventFeedbackByCluster: Record<string, Record<string, PastEventFeedback>>;
     roadmapCompletion: RoadmapCompletion;
   };
   assessments: Record<string, ClusterAssessment>;
