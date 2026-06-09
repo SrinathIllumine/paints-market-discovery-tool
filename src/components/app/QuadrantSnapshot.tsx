@@ -101,7 +101,7 @@ export function QuadrantSnapshot({ highlightId: _highlightId }: { highlightId?: 
   return (
     <div className="h-[480px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 40, right: 40, bottom: 60, left: 60 }}>
+        <ScatterChart margin={{ top: 40, right: 120, bottom: 60, left: 20 }}>
           <CartesianGrid horizontal={false} vertical={false} />
           <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill="#f1f5f9" fillOpacity={1} />
           <ReferenceLine x={50} stroke="#64748b" strokeWidth={1.5} />
