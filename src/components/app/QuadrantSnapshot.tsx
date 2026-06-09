@@ -61,18 +61,22 @@ export function QuadrantSnapshot({ highlightId: _highlightId }: { highlightId?: 
   const renderBubble = (props: any) => {
     const { cx, cy, payload } = props;
     if (typeof cx !== "number" || typeof cy !== "number" || !payload) return <g />;
+    const onRight = payload.x > 50;
+    const label =
+      payload.name.length > 20 ? payload.name.slice(0, 19) + "…" : payload.name;
     return (
       <g>
         <circle cx={cx} cy={cy} r={8} fill="hsl(var(--primary))" fillOpacity={0.85} />
         {payload.showLabel && (
           <text
-            x={cx + 12}
+            x={onRight ? cx - 12 : cx + 12}
             y={cy + 4}
-            fontSize={11}
+            fontSize={10}
+            textAnchor={onRight ? "end" : "start"}
             fill="hsl(var(--foreground))"
             style={{ pointerEvents: "none" }}
           >
-            {payload.name}
+            {label}
           </text>
         )}
       </g>
