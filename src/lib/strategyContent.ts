@@ -4,21 +4,41 @@
 import { getTopics } from "@/data/eventTopics";
 import { getDominantContractors } from "@/lib/clusterScoring";
 
-export type ConnectStrategy = "BRAND" | "CONTRACTOR" | "OUTREACH" | "D2C";
+export type ConnectStrategy = "BRAND" | "CONTRACTOR" | "OUTREACH" | "D2C" | "RETAILER" | "INFLUENCER";
 
 export const CONNECT_STRATEGY_LABEL: Record<ConnectStrategy, string> = {
   BRAND: "Brand Awareness",
-  CONTRACTOR: "Contractor Engagement",
+  CONTRACTOR: "Contractor-driven",
   OUTREACH: "Outreach-Driven",
-  D2C: "Direct Sales",
+  D2C: "Direct-sales driven",
+  RETAILER: "Retailer-driven",
+  INFLUENCER: "Influencer-driven",
 };
 
 export const CONNECT_STRATEGY_OPTIONS: { key: ConnectStrategy; label: string; description: string }[] = [
-  { key: "BRAND",      label: "Brand Awareness",      description: "Build awareness through local campaigns and visibility plays." },
-  { key: "CONTRACTOR", label: "Contractor Engagement", description: "Activate the contractor network operating in this cluster." },
-  { key: "OUTREACH",   label: "Outreach-Driven",      description: "Use community touchpoints and contribution events to build trust." },
-  { key: "D2C",        label: "Direct Sales",         description: "Reach end customers directly via retailer, walk-in and digital channels." },
+  { key: "CONTRACTOR", label: "Contractor-driven",   description: "Activate the contractor network operating in this cluster." },
+  { key: "D2C",        label: "Direct-sales driven", description: "Reach end customers directly via walk-ins, demos and digital channels." },
+  { key: "RETAILER",   label: "Retailer-driven",     description: "Drive sell-out via local retail counters, shade cards and visibility." },
+  { key: "INFLUENCER", label: "Influencer-driven",   description: "Engage site supervisors, interior designers and architects who steer decisions." },
 ];
+
+export type MarketEngagementCategory = "Knowledge" | "Service" | "Social";
+export type MarketEngagementOption = {
+  id: string;
+  category: MarketEngagementCategory;
+  label: string;
+  description: string;
+};
+
+export const MARKET_ENGAGEMENT_OPTIONS: MarketEngagementOption[] = [
+  { id: "tech-workshop", category: "Knowledge", label: "Technical workshop for painters & contractors", description: "Surface-prep, application & finish know-how with live demo." },
+  { id: "spec-clinic",   category: "Knowledge", label: "Specification clinic for architects / engineers", description: "Help specifiers pick the right SKU mix for the cluster's brief." },
+  { id: "site-advisory", category: "Service",   label: "Free on-site advisory & shade consultation", description: "Walk the site, recommend system, leave a written estimate." },
+  { id: "demo-drive",    category: "Service",   label: "Product demo & sampling drive",              description: "Hands-on demo at retailer counters, sites or association meets." },
+  { id: "community-csr", category: "Social",    label: "Community contribution event (school / NGO repaint)", description: "Sponsor a visible local cause with branded contribution." },
+  { id: "festival-spon", category: "Social",    label: "Festival / association sponsorship",         description: "Partner with a local festival or trade body for visibility." },
+];
+
 
 export type ContactEntry = {
   id: string;
