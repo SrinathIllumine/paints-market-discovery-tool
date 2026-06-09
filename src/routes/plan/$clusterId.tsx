@@ -24,6 +24,7 @@ import {
   getValuePropositions,
   getD2cInitiatives,
   getRecommendedActions,
+  type ActionAsset,
   type ConnectStrategy,
   type ContactEntry,
   type MarketEngagementCategory,
@@ -70,6 +71,9 @@ function PlanClusterScreen() {
   const setStrategyContacts  = useAppStore((s) => s.setStrategyContacts);
   const selectedActions      = useAppStore((s) => s.plan.selectedActionsByCluster);
   const toggleSelectedAction = useAppStore((s) => s.toggleSelectedAction);
+  const customActions        = useAppStore((s) => s.plan.customActionsByCluster);
+  const addCustomAction      = useAppStore((s) => s.addCustomAction);
+  const removeCustomAction   = useAppStore((s) => s.removeCustomAction);
   const eventEstimates       = useAppStore((s) => s.plan.eventEstimatesByCluster);
   const setEventEstimate     = useAppStore((s) => s.setEventEstimate);
 
@@ -103,7 +107,9 @@ function PlanClusterScreen() {
       strategyItems: strategyItems[clusterId] ?? {},
       strategyContacts: strategyContacts[clusterId] ?? {},
       selectedActions: selectedActions[clusterId] ?? {},
-      customActions: {},
+      customActions: customActions[clusterId] ?? {},
+      marketSelected,
+      eventEstimates: eventEstimates[clusterId] ?? {},
     });
     setConfirmOpen(false);
   };
@@ -184,8 +190,12 @@ function PlanClusterScreen() {
                         marketSelected={marketSelected}
                         customerStrategies={customerStrategies}
                         selectedActions={selectedActions[clusterId] ?? {}}
+                        customActions={customActions[clusterId] ?? {}}
+                        contactsByStrategy={strategyContacts[clusterId] ?? {}}
                         eventEstimates={eventEstimates[clusterId] ?? {}}
                         onToggleAction={(s, a) => toggleSelectedAction(clusterId, s, a)}
+                        onAddCustom={(s, t) => addCustomAction(clusterId, s, t)}
+                        onRemoveCustom={(s, t) => removeCustomAction(clusterId, s, t)}
                         onOpenEstimate={(eventId) => setEstimateEventId(eventId)}
                       />
                     )}
@@ -347,6 +357,17 @@ function MarketStep({
   onToggleItem: (item: string) => void;
   onContactsChange: (list: ContactEntry[]) => void;
 }) {
+  const grouped: Record<MarketEngagementCategory, typeof MARKET_ENGAGEMENT_OPTIONS> = {
+    Knowledge: MARKET_ENGAGEMENT_OPTIONS.filter((o) => o.category === "Knowledge"),
+    Service:   MARKET_ENGAGEMENT_OPTIONS.filter((o) => o.category === "Service"),
+    Social:    MARKET_ENGAGEMENT_OPTIONS.filter((o) => o.category === "Social"),
+  };
+  const SUB_LABEL: Record<MarketEngagementCategory, string> = {
+    Knowledge: "Knowledge contribution",
+    Service:   "Service contribution",
+    Social:    "Social contribution",
+  };
+
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
@@ -354,38 +375,42 @@ function MarketStep({
         service and social contributions.
       </p>
 
-      <div className="space-y-2">
-        {MARKET_ENGAGEMENT_OPTIONS.map((opt) => {
-          const active = selected.includes(opt.id);
-          return (
-            <label
-              key={opt.id}
-              className={cn(
-                "flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm",
-                active ? "border-critical bg-critical/5" : "border-border bg-card",
-              )}
-            >
-              <input
-                type="checkbox"
-                checked={active}
-                onChange={() => onToggleItem(opt.id)}
-                className="mt-0.5 h-4 w-4 accent-critical"
-              />
-              <span className="min-w-0 flex-1 leading-snug">
-                <span className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold">{opt.label}</span>
-                  <span className={cn(
-                    "rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider",
-                    CATEGORY_TONE[opt.category],
-                  )}>
-                    {opt.category}
-                  </span>
-                </span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">{opt.description}</span>
-              </span>
-            </label>
-          );
-        })}
+      <div className="space-y-4">
+        {(Object.keys(grouped) as MarketEngagementCategory[]).map((cat) => (
+          <div key={cat} className="space-y-2">
+            <h4 className={cn(
+              "rounded-md border px-2 py-1 text-[11px] font-semibold uppercase tracking-wider",
+              CATEGORY_TONE[cat],
+            )}>
+              {SUB_LABEL[cat]}
+            </h4>
+            <div className="space-y-2">
+              {grouped[cat].map((opt) => {
+                const active = selected.includes(opt.id);
+                return (
+                  <label
+                    key={opt.id}
+                    className={cn(
+                      "flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm",
+                      active ? "border-critical bg-critical/5" : "border-border bg-card",
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={active}
+                      onChange={() => onToggleItem(opt.id)}
+                      className="mt-0.5 h-4 w-4 accent-critical"
+                    />
+                    <span className="min-w-0 flex-1 leading-snug">
+                      <span className="font-semibold">{opt.label}</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">{opt.description}</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       <ContactTable
@@ -463,17 +488,34 @@ function StrategyDetails({
   contacts: ContactEntry[];
   onContactsChange: (list: ContactEntry[]) => void;
 }) {
+  const strategyItems = useAppStore((s) => s.plan.strategyItemsByCluster);
+  const toggleStrategyItem = useAppStore((s) => s.toggleStrategyItem);
+
   if (strategy === "D2C") {
     const suggestions = getD2cInitiatives(clusterId);
+    const selectedD2c = strategyItems[clusterId]?.["D2C"] ?? [];
     return (
       <div className="space-y-1.5">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           SUGGESTED DIRECT-SALES STRATEGIES
         </p>
-        <ul className="list-disc space-y-1 pl-5 text-xs marker:text-critical">
-          {suggestions.map((s, i) => (
-            <li key={i}>{s}</li>
-          ))}
+        <ul className="space-y-1">
+          {suggestions.map((s, i) => {
+            const active = selectedD2c.includes(s);
+            return (
+              <li key={i}>
+                <label className="flex cursor-pointer items-start gap-2 rounded-md border border-border bg-card px-2 py-1.5 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={active}
+                    onChange={() => toggleStrategyItem(clusterId, "D2C", s)}
+                    className="mt-0.5 h-3.5 w-3.5 accent-critical"
+                  />
+                  <span className="leading-snug">{s}</span>
+                </label>
+              </li>
+            );
+          })}
         </ul>
       </div>
     );
@@ -506,18 +548,25 @@ function StrategyDetails({
 /* ---------------- Stage 4: action plan ---------------- */
 
 function ActionStep({
-  clusterId, marketSelected, customerStrategies, selectedActions, eventEstimates,
-  onToggleAction, onOpenEstimate,
+  clusterId, marketSelected, customerStrategies, selectedActions, customActions,
+  contactsByStrategy, eventEstimates,
+  onToggleAction, onAddCustom, onRemoveCustom, onOpenEstimate,
 }: {
   clusterId: string;
   marketSelected: string[];
   customerStrategies: ConnectStrategy[];
   selectedActions: Partial<Record<ConnectStrategy, string[]>>;
+  customActions: Partial<Record<ConnectStrategy, string[]>>;
+  contactsByStrategy: Partial<Record<ConnectStrategy, ContactEntry[]>>;
   eventEstimates: Record<string, { participants?: number; contractors?: number }>;
   onToggleAction: (s: ConnectStrategy, a: string) => void;
+  onAddCustom: (s: ConnectStrategy, a: string) => void;
+  onRemoveCustom: (s: ConnectStrategy, a: string) => void;
   onOpenEstimate: (eventId: string) => void;
 }) {
   const chosenEvents = MARKET_ENGAGEMENT_OPTIONS.filter((m) => marketSelected.includes(m.id));
+  const [assetDlg, setAssetDlg] = useState<{ title: string; asset: ActionAsset; userContacts?: ContactEntry[] } | null>(null);
+  const [draftByStrategy, setDraftByStrategy] = useState<Partial<Record<ConnectStrategy, string>>>({});
 
   return (
     <div className="space-y-5">
@@ -583,6 +632,9 @@ function ActionStep({
             {customerStrategies.map((s) => {
               const actions = getRecommendedActions(s, clusterId);
               const chosen = selectedActions[s] ?? [];
+              const customs = customActions[s] ?? [];
+              const draft = draftByStrategy[s] ?? "";
+              const userContacts = contactsByStrategy[s] ?? [];
               return (
                 <div key={s} className="rounded-lg border border-border bg-background p-3">
                   <p className="mb-1.5 text-sm font-semibold">{CONNECT_STRATEGY_LABEL[s]}</p>
@@ -590,8 +642,8 @@ function ActionStep({
                     {actions.map((a) => {
                       const on = chosen.includes(a.text);
                       return (
-                        <li key={a.text}>
-                          <label className="flex cursor-pointer items-start gap-2 text-sm">
+                        <li key={a.text} className="flex items-start justify-between gap-2">
+                          <label className="flex flex-1 cursor-pointer items-start gap-2 text-sm">
                             <input
                               type="checkbox"
                               checked={on}
@@ -600,19 +652,128 @@ function ActionStep({
                             />
                             <span className="leading-snug">{a.text}</span>
                           </label>
+                          {(a.assets ?? []).map((asset, ai) => (
+                            <button
+                              key={ai}
+                              type="button"
+                              onClick={() => setAssetDlg({
+                                title: a.text,
+                                asset,
+                                userContacts: asset.kind === "contacts" ? userContacts : undefined,
+                              })}
+                              className="shrink-0 rounded border border-border bg-card px-2 py-0.5 text-[10px] font-semibold text-navy hover:bg-muted/40"
+                            >
+                              {asset.kind === "contacts" ? "View contacts" :
+                                asset.kind === "deck" ? "View PPT" : "View pamphlets"}
+                            </button>
+                          ))}
                         </li>
                       );
                     })}
+                    {customs.map((c, i) => (
+                      <li key={`cust-${i}`} className="flex items-start justify-between gap-2 text-sm">
+                        <span className="flex items-start gap-2">
+                          <span className="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded border border-critical bg-critical/10 text-[10px] text-critical">+</span>
+                          <span className="leading-snug">{c}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onRemoveCustom(s, c)}
+                          className="rounded p-1 text-muted-foreground hover:bg-muted/40"
+                          aria-label="Remove"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    ))}
                   </ul>
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <input
+                      value={draft}
+                      onChange={(e) => setDraftByStrategy((d) => ({ ...d, [s]: e.target.value }))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          const t = draft.trim();
+                          if (t) { onAddCustom(s, t); setDraftByStrategy((d) => ({ ...d, [s]: "" })); }
+                        }
+                      }}
+                      placeholder="Add your own action…"
+                      className="flex-1 rounded border border-border bg-background px-2 py-1 text-xs"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const t = draft.trim();
+                        if (t) { onAddCustom(s, t); setDraftByStrategy((d) => ({ ...d, [s]: "" })); }
+                      }}
+                      className="h-7 gap-1 text-xs"
+                    >
+                      <Plus className="h-3 w-3" /> Add
+                    </Button>
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
       </section>
+
+      <Dialog open={assetDlg !== null} onOpenChange={(o) => !o && setAssetDlg(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{assetDlg?.asset.label ?? "Resources"}</DialogTitle>
+            {assetDlg && <DialogDescription>{assetDlg.title}</DialogDescription>}
+          </DialogHeader>
+          {assetDlg && (
+            <div className="space-y-2 text-sm">
+              {assetDlg.asset.kind === "list" && (
+                <ul className="list-disc space-y-1 pl-5 text-sm marker:text-critical">
+                  {(assetDlg.asset.items ?? []).map((it: string, i: number) => (
+                    <li key={i} className="flex items-center justify-between gap-2">
+                      <span>{it}</span>
+                      <a href="#" onClick={(e) => e.preventDefault()} className="text-[11px] font-semibold text-navy underline">Download</a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {assetDlg.asset.kind === "deck" && (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">{assetDlg.asset.body}</p>
+                  <a href="#" onClick={(e) => e.preventDefault()} className="inline-flex items-center gap-1 rounded border border-border bg-card px-3 py-1.5 text-xs font-semibold text-navy hover:bg-muted/40">
+                    Open deck.pptx
+                  </a>
+                </div>
+              )}
+              {assetDlg.asset.kind === "contacts" && (
+                <>
+                  {(assetDlg.userContacts && assetDlg.userContacts.length > 0
+                    ? assetDlg.userContacts
+                    : assetDlg.asset.contacts ?? []
+                  ).map((c: ContactEntry) => (
+                    <div key={c.id} className="rounded-md border border-border bg-background p-2 text-xs">
+                      <div className="font-semibold">{c.name || "—"}</div>
+                      <div className="text-muted-foreground">
+                        {[c.phone, c.area, c.role, c.brandPreference].filter(Boolean).join(" · ") || "—"}
+                      </div>
+                    </div>
+                  ))}
+                  {((assetDlg.userContacts?.length ?? 0) === 0 && (assetDlg.asset.contacts?.length ?? 0) === 0) && (
+                    <p className="text-xs text-muted-foreground">No contacts added yet.</p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setAssetDlg(null)} variant="outline">Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
 
 /* ---------------- shared: contacts table ---------------- */
 

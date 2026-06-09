@@ -5,7 +5,8 @@ import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { CLUSTERS } from "@/data/clusters";
 import { useAppStore } from "@/store/appStore";
-import { ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/plan/past-roadmap")({
@@ -69,6 +70,10 @@ function PastRoadmapPage() {
         {clusterList.map((c) => {
           const events = PAST_BY_CLUSTER[c.id] ?? [];
           const isOpen = openCluster === c.id;
+          const savedCount = events.filter((e) => {
+            const fb = feedbackAll[c.id]?.[e.id];
+            return fb && (fb.attended != null || fb.leads != null || (fb.challenges && fb.challenges.length > 0));
+          }).length;
           return (
             <section key={c.id} className="rounded-2xl border border-border bg-card">
               <button
@@ -78,6 +83,11 @@ function PastRoadmapPage() {
               >
                 <span className="font-display text-base">{c.name}</span>
                 <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {savedCount > 0 && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                      <Check className="h-3 w-3" /> {savedCount} saved
+                    </span>
+                  )}
                   {events.length} events
                   <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
                 </span>
@@ -87,6 +97,7 @@ function PastRoadmapPage() {
                 <div className="space-y-3 border-t border-border p-4">
                   {events.map((e) => {
                     const fb = feedbackAll[c.id]?.[e.id] ?? {};
+                    const hasData = fb.attended != null || fb.leads != null || (fb.challenges && fb.challenges.length > 0);
                     return (
                       <div key={e.id} className="rounded-lg border border-border bg-background p-3">
                         <div className="flex items-start justify-between gap-2">
@@ -94,6 +105,11 @@ function PastRoadmapPage() {
                             <p className="text-sm font-medium leading-tight">{e.name}</p>
                             <p className="mt-0.5 text-[11px] text-muted-foreground">{e.date}</p>
                           </div>
+                          {hasData && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                              <Check className="h-3 w-3" /> Saved
+                            </span>
+                          )}
                         </div>
                         <div className="mt-2 grid grid-cols-2 gap-2">
                           <NumField
@@ -119,6 +135,21 @@ function PastRoadmapPage() {
                             className="mt-1 w-full rounded border border-border bg-background px-2 py-1.5 text-sm"
                           />
                         </label>
+                        <div className="mt-2 flex justify-end">
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              setFeedback(c.id, e.id, {
+                                attended: fb.attended,
+                                leads: fb.leads,
+                                challenges: fb.challenges ?? "",
+                              })
+                            }
+                            className="h-8 gap-1 bg-navy text-xs text-navy-foreground hover:bg-navy/90"
+                          >
+                            <Check className="h-3.5 w-3.5" /> Save
+                          </Button>
+                        </div>
                       </div>
                     );
                   })}
