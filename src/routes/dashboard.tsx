@@ -1,43 +1,48 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronRight, Home, AlertCircle, TrendingUp, Users } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Home,
+  ArrowUpRight,
+  TrendingUp,
+  Trophy,
+  AlertTriangle,
+  Layers,
+  Target,
+  Percent,
+  Wallet,
+  ArrowUpDown,
+} from "lucide-react";
+import {
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { AppShell } from "@/components/app/AppShell";
 import { BottomNav } from "@/components/app/BottomNav";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { CLUSTERS, getCluster, prospectPlural } from "@/data/clusters";
-import { getClusterIntel } from "@/lib/clusterScoring";
-import { useAppStore, SALES_STAGE_LABEL, type SalesStage } from "@/store/appStore";
+import { CLUSTERS, getCluster } from "@/data/clusters";
+import { getClusterIntel, getRevenueProfile, formatRupees } from "@/lib/clusterScoring";
+import { useAppStore, type SalesStage } from "@/store/appStore";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "My Dashboard — Demand Discovery Tool" },
-      { name: "description", content: "Demand Generator dashboard with profile, market engagement and customer engagement insights." },
+      { title: "My Dashboard — Market Discovery Tool" },
+      { name: "description", content: "Demand Generator dashboard with KPIs, conversion trends and cluster intelligence." },
     ],
   }),
   component: DashboardPage,
 });
 
-/* ----------------------------- Mock data ----------------------------- */
-// Month label for current month
-const MONTH_LABEL = new Date().toLocaleString("en-US", { month: "long", year: "numeric" });
+/* ----------------------------- Mock past events ----------------------------- */
 
 type EventRow = { name: string; clusterId: string; region: string; date: string; outcome?: string };
-
-const CONTRIBUTION_EVENTS_THIS_MONTH: EventRow[] = [
-  { name: "Site engineer workshop on premium finishing", clusterId: "mid-apartments", region: "Kharghar", date: "12 Jun" },
-  { name: "Free paint audit drive", clusterId: "redevelopment", region: "Old Panvel", date: "18 Jun" },
-  { name: "Contractor meet — finishing schedules", clusterId: "gated-community", region: "Kamothe", date: "24 Jun" },
-];
-
-const BRAND_INITIATIVES_THIS_MONTH: EventRow[] = [
-  { name: "Waterproofing pre-monsoon awareness", clusterId: "mid-apartments", region: "New Panvel", date: "08 Jun" },
-  { name: "Designer wallpaper showcase", clusterId: "gated-community", region: "Kharghar", date: "15 Jun" },
-  { name: "Healthy-home low-VOC drive", clusterId: "redevelopment", region: "Kalamboli", date: "22 Jun" },
-];
 
 const PAST_EVENTS: EventRow[] = [
   { name: "Painter loyalty meet", clusterId: "mid-apartments", region: "Kharghar", date: "14 May", outcome: "32 painters attended, 18 leads" },
@@ -47,112 +52,122 @@ const PAST_EVENTS: EventRow[] = [
   { name: "Industrial coatings roadshow", clusterId: "midc", region: "Taloja MIDC", date: "28 Mar", outcome: "12 units visited, 5 quotations" },
 ];
 
+/* ----------------------------- MoM conversions ----------------------------- */
+
+const MOM_CONVERSIONS = [
+  { month: "Jan", conversions: 4 },
+  { month: "Feb", conversions: 6 },
+  { month: "Mar", conversions: 5 },
+  { month: "Apr", conversions: 9 },
+  { month: "May", conversions: 8 },
+  { month: "Jun", conversions: 12 },
+];
+
 /* ----------------------------- Helpers ----------------------------- */
 
-function clusterName(id: string): string {
-  return getCluster(id)?.name ?? id;
-}
-
-const STAGE_PRIORITY: Record<SalesStage, number> = {
-  decision: 4,
-  closure: 5,
-  contacted: 3,
-  ongoing: 2,
-  prospects: 1,
+const MATRIX_LABEL: Record<string, string> = {
+  HH: "High Potential · High Access",
+  HL: "High Potential · Low Access",
+  LH: "Low Potential · High Access",
+  LL: "Low Potential · Low Access",
+};
+const MATRIX_TONE: Record<string, string> = {
+  HH: "bg-emerald-100 text-emerald-800",
+  HL: "bg-amber-100 text-amber-800",
+  LH: "bg-sky-100 text-sky-800",
+  LL: "bg-muted text-muted-foreground",
 };
 
-function stuckDaysFor(prospectId: string): number {
-  // deterministic pseudo-stuck days from id
-  let h = 0;
-  for (let i = 0; i < prospectId.length; i++) h = (h * 31 + prospectId.charCodeAt(i)) >>> 0;
-  return 5 + (h % 18); // 5..22 days
+type Row = {
+  id: string;
+  name: string;
+  matrixKey: string;
+  prospects: number;
+  penetrationPct: number;
+  engagedPct: number;
+  conversions: number;
+  isTarget: boolean;
+};
+
+function buildRow(clusterId: string, stages: Record<string, SalesStage> | undefined, isTarget: boolean): Row {
+  const c = getCluster(clusterId)!;
+  const intel = getClusterIntel(clusterId, c.prospectCountEstimate);
+  const total = c.prospectCountEstimate;
+  const stageVals = Object.values(stages ?? {});
+  const engaged = stageVals.filter((s) => s !== "prospects").length;
+  const conversions = stageVals.filter((s) => s === "ongoing" || s === "closure").length;
+  const penetrationBase = intel.jkPenetrationLabel === "strong" ? 32 : intel.jkPenetrationLabel === "moderate" ? 18 : 8;
+  const penetrationPct = Math.min(100, penetrationBase + Math.round((conversions / Math.max(1, total)) * 60));
+  const engagedPct = Math.round((engaged / Math.max(1, total)) * 100);
+  const matrixKey = `${intel.revenueHML === "H" || intel.competitiveHML === "H" ? "H" : "L"}${intel.accessHML === "H" || intel.easeHML === "H" ? "H" : "L"}`;
+  return { id: clusterId, name: c.name, matrixKey, prospects: total, penetrationPct, engagedPct, conversions, isTarget };
 }
 
-function reasonFor(stage: SalesStage, days: number, name: string): string {
-  switch (stage) {
-    case "decision":
-      return `${name} has been at proposal stage for ${days} days — this is the right time to push for a quote.`;
-    case "closure":
-      return `${name} is in sales closure for ${days} days — a single follow-up can move it to win.`;
-    case "contacted":
-      return `${name} was contacted ${days} days ago — re-engage before the lead cools off.`;
-    case "ongoing":
-      return `${name} has been ongoing for ${days} days — upsell premium SKUs now.`;
-    default:
-      return `${name} was added ${days} days ago — make the first call today.`;
-  }
-}
+type SortKey = "name" | "matrix" | "prospects" | "penetration";
 
 /* ----------------------------- Page ----------------------------- */
 
 function DashboardPage() {
   const stagesAll = useAppStore((s) => s.sales.prospectStages);
-  const clustersState = useAppStore((s) => s.clusters);
   const targetClusterIds = useAppStore((s) => s.plan.targetClusterIds);
-  const stakeholders = useAppStore((s) => s.stakeholders);
-  const strategyContacts = useAppStore((s) => s.plan.strategyContactsByCluster);
 
-  // attention list
-  const attention = useMemo(() => {
-    const rows: { prospectId: string; name: string; clusterId: string; stage: SalesStage; days: number; reason: string }[] = [];
-    for (const [clusterId, stageMap] of Object.entries(stagesAll)) {
-      const prospects = clustersState[clusterId]?.prospects ?? [];
-      for (const [pid, stage] of Object.entries(stageMap)) {
-        if (stage === "prospects") continue;
-        const p = prospects.find((x) => x.id === pid);
-        if (!p) continue;
-        const days = stuckDaysFor(pid);
-        rows.push({ prospectId: pid, name: p.name, clusterId, stage, days, reason: reasonFor(stage, days, p.name) });
-      }
-    }
-    rows.sort((a, b) => {
-      const sp = STAGE_PRIORITY[b.stage] - STAGE_PRIORITY[a.stage];
-      if (sp !== 0) return sp;
-      return b.days - a.days;
+  const rows = useMemo(() => {
+    return CLUSTERS.map((c) => buildRow(c.id, stagesAll[c.id], targetClusterIds.includes(c.id)));
+  }, [stagesAll, targetClusterIds]);
+
+  // KPI values
+  const kpi = useMemo(() => {
+    const totalRevenue = CLUSTERS.reduce((sum, c) => sum + c.prospectCountEstimate * getRevenueProfile(c.id).avgRevenuePerProspect, 0);
+    const totalClusters = CLUSTERS.length;
+    const activeClusters = new Set<string>(targetClusterIds);
+    for (const r of rows) if (r.conversions > 0 || r.engagedPct > 0) activeClusters.add(r.id);
+
+    const activeRows = rows.filter((r) => activeClusters.has(r.id));
+    const totalEngaged = activeRows.reduce((s, r) => s + Math.round((r.engagedPct / 100) * r.prospects), 0);
+    const totalConversions = activeRows.reduce((s, r) => s + r.conversions, 0);
+    const conversionRate = totalEngaged > 0 ? Math.round((totalConversions / totalEngaged) * 100) : 0;
+
+    const top = [...activeRows].sort(
+      (a, b) => (b.penetrationPct + b.conversions * 3) - (a.penetrationPct + a.conversions * 3),
+    )[0];
+
+    // Attention: high potential clusters with weak penetration
+    const attention = [...rows]
+      .filter((r) => r.matrixKey.startsWith("H"))
+      .sort((a, b) => a.penetrationPct - b.penetrationPct)[0];
+
+    return {
+      totalRevenue,
+      totalClusters,
+      activeClusters: activeClusters.size,
+      conversionRate,
+      top,
+      attention,
+    };
+  }, [rows, targetClusterIds]);
+
+  const [sortKey, setSortKey] = useState<SortKey>("penetration");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const sortedRows = useMemo(() => {
+    const arr = [...rows];
+    arr.sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "name") cmp = a.name.localeCompare(b.name);
+      else if (sortKey === "matrix") cmp = a.matrixKey.localeCompare(b.matrixKey);
+      else if (sortKey === "prospects") cmp = a.prospects - b.prospects;
+      else cmp = a.penetrationPct - b.penetrationPct;
+      return sortDir === "asc" ? cmp : -cmp;
     });
-    return rows.slice(0, 6);
-  }, [stagesAll, clustersState]);
+    return arr;
+  }, [rows, sortKey, sortDir]);
 
-  // untapped opportunity — high potential, low jk penetration, not in targets
-  const untapped = useMemo(() => {
-    const candidates = CLUSTERS.map((c) => {
-      const intel = getClusterIntel(c.id, c.prospectCountEstimate);
-      return { cluster: c, intel };
-    })
-      .filter(
-        (x) =>
-          x.intel.revenueHML === "H" &&
-          x.intel.jkPenetrationLabel !== "strong" &&
-          !targetClusterIds.includes(x.cluster.id),
-      )
-      .sort((a, b) => {
-        const pen = (l: string) => (l === "low" ? 2 : l === "moderate" ? 1 : 0);
-        return pen(b.intel.jkPenetrationLabel) - pen(a.intel.jkPenetrationLabel);
-      });
-    return candidates.slice(0, 3);
-  }, [targetClusterIds]);
+  const toggleSort = (k: SortKey) => {
+    if (sortKey === k) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else { setSortKey(k); setSortDir(k === "name" ? "asc" : "desc"); }
+  };
 
-  // network strength per target cluster
-  const network = useMemo(() => {
-    const list = (targetClusterIds.length ? targetClusterIds : CLUSTERS.slice(0, 4).map((c) => c.id)).slice(0, 6);
-    return list.map((cid) => {
-      const c = getCluster(cid);
-      const intel = getClusterIntel(cid, c?.prospectCountEstimate ?? 20);
-      const stakeholderCount = stakeholders[cid]?.length ?? 0;
-      const contractorContacts = Object.values(strategyContacts[cid] ?? {}).reduce(
-        (sum, arr) => sum + (arr?.length ?? 0),
-        0,
-      );
-      const connected = stakeholderCount + contractorContacts;
-      const available = intel.contractorCount + intel.retailerCount;
-      const pct = Math.min(100, Math.round((connected / Math.max(1, available)) * 100));
-      return { clusterId: cid, name: c?.name ?? cid, connected, available, pct };
-    });
-  }, [targetClusterIds, stakeholders, strategyContacts]);
-
-  const [pastOpen, setPastOpen] = useState(false);
-  const [reasonOpen, setReasonOpen] = useState<{ name: string; reason: string } | null>(null);
-  const [networkOpen, setNetworkOpen] = useState<(typeof network)[number] | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   return (
     <AppShell bottom={<BottomNav />}>
@@ -165,17 +180,13 @@ function DashboardPage() {
             </p>
             <h1 className="mt-1 font-display text-2xl leading-tight">My Dashboard</h1>
           </div>
-          <Link
-            to="/"
-            aria-label="Home"
-            className="rounded-full p-1.5 text-navy-foreground/80 hover:bg-white/10"
-          >
+          <Link to="/" aria-label="Home" className="rounded-full p-1.5 text-navy-foreground/80 hover:bg-white/10">
             <Home className="h-5 w-5" />
           </Link>
         </div>
       </header>
 
-      <div className="space-y-3 px-5 py-5">
+      <div className="space-y-5 px-5 py-5">
         {/* Profile card */}
         <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <div className="flex items-center gap-4">
@@ -190,149 +201,178 @@ function DashboardPage() {
           </div>
         </section>
 
-        {/* My Market Engagement */}
-        <SectionCard title="My Market Engagement" defaultOpen>
-          <CollapsibleSub title={`Contribution events · ${MONTH_LABEL}`} count={CONTRIBUTION_EVENTS_THIS_MONTH.length}>
-            <EventList rows={CONTRIBUTION_EVENTS_THIS_MONTH} />
-          </CollapsibleSub>
-          <CollapsibleSub title={`Brand awareness initiatives · ${MONTH_LABEL}`} count={BRAND_INITIATIVES_THIS_MONTH.length}>
-            <EventList rows={BRAND_INITIATIVES_THIS_MONTH} />
-          </CollapsibleSub>
+        {/* KPI Section */}
+        <section>
+          <h2 className="mb-2 font-display text-base">Performance at a glance</h2>
+          <div className="grid grid-cols-2 gap-2">
+            <KpiCard
+              icon={<Wallet className="h-4 w-4" />}
+              label="Market Revenue Potential"
+              value={formatRupees(kpi.totalRevenue)}
+              hint="Aggregated across all clusters"
+              tone="navy"
+            />
+            <KpiCard
+              icon={<Layers className="h-4 w-4" />}
+              label="Total Clusters"
+              value={kpi.totalClusters}
+              hint="Available to you"
+              tone="neutral"
+            />
+            <KpiCard
+              icon={<Target className="h-4 w-4" />}
+              label="Active Clusters"
+              value={kpi.activeClusters}
+              hint="Where you've engaged"
+              tone="emerald"
+            />
+            <KpiCard
+              icon={<Percent className="h-4 w-4" />}
+              label="Conversion Rate"
+              value={`${kpi.conversionRate}%`}
+              hint="Converted / engaged"
+              tone={kpi.conversionRate >= 30 ? "emerald" : kpi.conversionRate >= 15 ? "amber" : "critical"}
+            />
+            <KpiCard
+              icon={<Trophy className="h-4 w-4" />}
+              label="Top Performing Cluster"
+              value={kpi.top ? truncate(kpi.top.name, 22) : "—"}
+              hint={kpi.top ? `${kpi.top.penetrationPct}% penetration` : "Start engaging"}
+              tone="emerald"
+              href={kpi.top ? `/plan/${kpi.top.id}` : undefined}
+            />
+            <KpiCard
+              icon={<AlertTriangle className="h-4 w-4" />}
+              label="Cluster Needing Attention"
+              value={kpi.attention ? truncate(kpi.attention.name, 22) : "—"}
+              hint={kpi.attention ? `Only ${kpi.attention.penetrationPct}% penetration` : "All clusters healthy"}
+              tone="critical"
+              href={kpi.attention ? `/plan/${kpi.attention.id}` : undefined}
+            />
+          </div>
+        </section>
+
+        {/* MoM Conversion Chart */}
+        <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <h2 className="font-display text-base leading-tight">Conversions · Month on Month</h2>
+              <p className="text-[11px] text-muted-foreground">Trend of converted prospects across all clusters</p>
+            </div>
+            <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+              <TrendingUp className="h-3 w-3" /> +50% MoM
+            </span>
+          </div>
+          <div className="h-44">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={MOM_CONVERSIONS} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))" }}
+                  cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
+                />
+                <Bar dataKey="conversions" fill="hsl(var(--navy))" radius={[6, 6, 0, 0]} barSize={22} />
+                <Line type="monotone" dataKey="conversions" stroke="hsl(var(--critical))" strokeWidth={2} dot={{ r: 3 }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        {/* Cluster Summary Table */}
+        <section className="rounded-2xl border border-border bg-card shadow-sm">
+          <div className="flex items-center justify-between px-4 pb-2 pt-4">
+            <div>
+              <h2 className="font-display text-base leading-tight">Cluster Summary</h2>
+              <p className="text-[11px] text-muted-foreground">Sortable view of all clusters in your market</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <Th onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir}>Cluster</Th>
+                  <Th onClick={() => toggleSort("matrix")} active={sortKey === "matrix"} dir={sortDir}>Matrix</Th>
+                  <Th onClick={() => toggleSort("prospects")} active={sortKey === "prospects"} dir={sortDir} className="text-right">Prospects</Th>
+                  <Th onClick={() => toggleSort("penetration")} active={sortKey === "penetration"} dir={sortDir} className="text-right">Penetration</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedRows.map((r) => (
+                  <tr key={r.id} className="border-t border-border">
+                    <td className="px-3 py-2">
+                      <Link to="/plan/$clusterId" params={{ clusterId: r.id }} className="font-medium text-navy hover:underline">
+                        {r.name}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-semibold", MATRIX_TONE[r.matrixKey])}>
+                        {r.matrixKey}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">{r.prospects}</td>
+                    <td className="px-3 py-2 text-right">
+                      <span className={cn(
+                        "tabular-nums font-semibold",
+                        r.penetrationPct >= 30 ? "text-emerald-700" : r.penetrationPct >= 15 ? "text-amber-700" : "text-critical",
+                      )}>
+                        {r.penetrationPct}%
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-2 text-[11px] text-muted-foreground">
+            <div className="flex flex-wrap gap-2">
+              <Legend tone="bg-emerald-500" label="≥30%" />
+              <Legend tone="bg-amber-500" label="15–29%" />
+              <Legend tone="bg-critical" label="<15%" />
+            </div>
+            <span>{rows.length} clusters</span>
+          </div>
+        </section>
+
+        {/* Quick links */}
+        <section className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <button
             type="button"
-            onClick={() => setPastOpen(true)}
-            className="mt-1 flex w-full items-center justify-between rounded-xl border border-dashed border-border bg-muted/30 px-3 py-2 text-left text-xs font-medium text-navy hover:bg-muted/50"
+            onClick={() => setHistoryOpen(true)}
+            className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-sm transition-colors hover:bg-muted/40"
           >
-            <span>Click here to view my past events & initiatives</span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <p className="font-display text-sm leading-tight">View Engagement History</p>
+              <p className="text-[11px] text-muted-foreground">Past contribution events &amp; outcomes</p>
+            </div>
+            <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
           </button>
-        </SectionCard>
-
-        {/* My Customer Engagement */}
-        <SectionCard title="My Customer Engagement" defaultOpen>
-          {/* Who needs my attention */}
-          <CollapsibleSub
-            title="Who needs my attention today?"
-            icon={<AlertCircle className="h-4 w-4 text-critical" />}
-            count={attention.length}
+          <Link
+            to="/network"
+            className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-sm transition-colors hover:bg-muted/40"
           >
-            {attention.length === 0 ? (
-              <p className="px-3 py-2 text-xs text-muted-foreground">
-                No prospects need attention right now.
-              </p>
-            ) : (
-              <ul className="space-y-1.5">
-                {attention.map((a) => (
-                  <li key={a.prospectId}>
-                    <button
-                      type="button"
-                      onClick={() => setReasonOpen({ name: a.name, reason: a.reason })}
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-left hover:bg-muted/40"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate text-sm font-medium">{a.name}</span>
-                        <span className="shrink-0 rounded-full bg-critical/10 px-1.5 py-0.5 text-[10px] font-semibold text-critical">
-                          Last visited: {a.days}d
-                        </span>
-                      </div>
-                      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                        {clusterName(a.clusterId)} · {SALES_STAGE_LABEL[a.stage]}
-                      </p>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CollapsibleSub>
-
-          {/* Untapped opportunity */}
-          <CollapsibleSub
-            title="Where is my biggest untapped opportunity?"
-            icon={<TrendingUp className="h-4 w-4 text-critical" />}
-            count={untapped.length}
-          >
-            {untapped.length === 0 ? (
-              <p className="px-3 py-2 text-xs text-muted-foreground">
-                You've already engaged with all high-potential clusters.
-              </p>
-            ) : (
-              <ul className="space-y-1.5">
-                {untapped.map(({ cluster, intel }) => (
-                  <li
-                    key={cluster.id}
-                    className="rounded-lg border border-border bg-background px-3 py-2"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-medium">{cluster.name}</span>
-                      <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
-                        High potential
-                      </span>
-                    </div>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      JK penetration: <span className="font-medium capitalize">{intel.jkPenetrationLabel}</span> · Leader: {intel.leadingCompetitor}
-                    </p>
-                    <Link
-                      to="/plan/$clusterId"
-                      params={{ clusterId: cluster.id }}
-                      className="mt-1 inline-block text-[11px] font-semibold text-critical hover:underline"
-                    >
-                      Plan engagement →
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CollapsibleSub>
-
-          {/* Network strength */}
-          <CollapsibleSub
-            title="How strong is my network in each cluster?"
-            icon={<Users className="h-4 w-4 text-critical" />}
-            count={network.length}
-          >
-            <ul className="space-y-1.5">
-              {network.map((n) => (
-                <li key={n.clusterId}>
-                  <button
-                    type="button"
-                    onClick={() => setNetworkOpen(n)}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-left hover:bg-muted/40"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-medium">{n.name}</span>
-                      <span className="shrink-0 text-[11px] font-semibold text-muted-foreground">
-                        {n.connected}/{n.available}
-                      </span>
-                    </div>
-                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className={cn(
-                          "h-full rounded-full",
-                          n.pct >= 60 ? "bg-emerald-500" : n.pct >= 30 ? "bg-amber-500" : "bg-critical",
-                        )}
-                        style={{ width: `${Math.max(4, n.pct)}%` }}
-                      />
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </CollapsibleSub>
-        </SectionCard>
+            <div>
+              <p className="font-display text-sm leading-tight">View My Network</p>
+              <p className="text-[11px] text-muted-foreground">Contractors, stakeholders, influencers, retailers</p>
+            </div>
+            <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+        </section>
       </div>
 
       {/* Past events popup */}
-      <Dialog open={pastOpen} onOpenChange={setPastOpen}>
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
         <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Past events & initiatives</DialogTitle>
+            <DialogTitle>Engagement history</DialogTitle>
           </DialogHeader>
           <ul className="space-y-2">
             {PAST_EVENTS.map((e, i) => (
               <li key={i} className="rounded-lg border border-border bg-background p-3">
                 <p className="text-sm font-medium leading-tight">{e.name}</p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  {clusterName(e.clusterId)} · {e.region} · {e.date}
+                  {getCluster(e.clusterId)?.name ?? e.clusterId} · {e.region} · {e.date}
                 </p>
                 {e.outcome && (
                   <p className="mt-1 text-xs text-navy">
@@ -344,124 +384,76 @@ function DashboardPage() {
           </ul>
         </DialogContent>
       </Dialog>
-
-      {/* Reason popup */}
-      <Dialog open={!!reasonOpen} onOpenChange={(o) => !o && setReasonOpen(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{reasonOpen?.name}</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">{reasonOpen?.reason}</p>
-        </DialogContent>
-      </Dialog>
-
-      {/* Network detail popup */}
-      <Dialog open={!!networkOpen} onOpenChange={(o) => !o && setNetworkOpen(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{networkOpen?.name}</DialogTitle>
-          </DialogHeader>
-          {networkOpen && (
-            <div className="space-y-2 text-sm">
-              <p className="text-muted-foreground">
-                Network strength in this cluster across contractors, retailers and key stakeholders.
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <Stat label="Connected" value={networkOpen.connected} />
-                <Stat label="AVAILABLE CONNECTS" value={networkOpen.available} />
-                <Stat label="Coverage" value={`${networkOpen.pct}%`} />
-                <Stat label={prospectPlural(networkOpen.clusterId)} value={getCluster(networkOpen.clusterId)?.prospectCountEstimate ?? "—"} />
-              </div>
-              <Button asChild className="mt-2 w-full" variant="secondary">
-                <Link to="/plan/$clusterId" params={{ clusterId: networkOpen.clusterId }}>
-                  Open cluster engagement plan
-                </Link>
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </AppShell>
   );
 }
 
 /* ----------------------------- Sub-components ----------------------------- */
 
-function SectionCard({
-  title,
-  defaultOpen = true,
-  children,
+const TONE_CLASS: Record<string, { icon: string; ring: string }> = {
+  navy: { icon: "bg-navy/10 text-navy", ring: "ring-navy/10" },
+  neutral: { icon: "bg-muted text-muted-foreground", ring: "ring-border" },
+  emerald: { icon: "bg-emerald-100 text-emerald-700", ring: "ring-emerald-100" },
+  amber: { icon: "bg-amber-100 text-amber-700", ring: "ring-amber-100" },
+  critical: { icon: "bg-critical/10 text-critical", ring: "ring-critical/10" },
+};
+
+function KpiCard({
+  icon, label, value, hint, tone = "neutral", href,
 }: {
-  title: string;
-  defaultOpen?: boolean;
-  children: ReactNode;
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  hint?: string;
+  tone?: keyof typeof TONE_CLASS;
+  href?: string;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <Collapsible open={open} onOpenChange={setOpen} className="rounded-2xl border border-border bg-card shadow-sm">
-      <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3 text-left">
-        <h2 className="font-display text-base">{title}</h2>
-        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="space-y-2 px-4 pb-4">{children}</CollapsibleContent>
-    </Collapsible>
-  );
-}
-
-function CollapsibleSub({
-  title,
-  icon,
-  count,
-  children,
-}: {
-  title: string;
-  icon?: ReactNode;
-  count?: number;
-  children: ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <Collapsible open={open} onOpenChange={setOpen} className="rounded-xl border border-border bg-background">
-      <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2 text-left">
-        <span className="flex items-center gap-2 text-sm font-medium">
-          {icon}
-          {title}
-          {typeof count === "number" && (
-            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
-              {count}
-            </span>
-          )}
-        </span>
-        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="px-3 pb-3">{children}</CollapsibleContent>
-    </Collapsible>
-  );
-}
-
-function EventList({ rows }: { rows: EventRow[] }) {
-  if (rows.length === 0) {
-    return <p className="px-1 py-2 text-xs text-muted-foreground">Nothing planned yet.</p>;
-  }
-  return (
-    <ul className="space-y-1.5">
-      {rows.map((r, i) => (
-        <li key={i} className="rounded-lg border border-border bg-background px-3 py-2">
-          <p className="text-sm font-medium leading-tight">{r.name}</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            {clusterName(r.clusterId)} · {r.region} · {r.date}
-          </p>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-lg border border-border bg-background px-3 py-2">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-0.5 text-sm font-semibold">{value}</p>
+  const t = TONE_CLASS[tone];
+  const inner = (
+    <div className={cn(
+      "h-full rounded-2xl border border-border bg-card p-3 shadow-sm transition-colors",
+      href && "hover:bg-muted/40",
+    )}>
+      <div className="flex items-start justify-between gap-2">
+        <span className={cn("flex h-7 w-7 items-center justify-center rounded-full", t.icon)}>{icon}</span>
+        {href && <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />}
+      </div>
+      <p className="mt-2 text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="mt-0.5 font-display text-base leading-tight">{value}</p>
+      {hint && <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{hint}</p>}
     </div>
   );
+  if (href) return <Link to={href} className="block">{inner}</Link>;
+  return inner;
+}
+
+function Th({
+  children, onClick, active, dir, className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  active: boolean;
+  dir: "asc" | "desc";
+  className?: string;
+}) {
+  return (
+    <th className={cn("px-3 py-2 font-semibold", className)}>
+      <button type="button" onClick={onClick} className="inline-flex items-center gap-1 hover:text-foreground">
+        {children}
+        <ArrowUpDown className={cn("h-3 w-3", active ? "text-navy" : "text-muted-foreground/50", active && dir === "asc" && "rotate-180")} />
+      </button>
+    </th>
+  );
+}
+
+function Legend({ tone, label }: { tone: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className={cn("h-2 w-2 rounded-full", tone)} /> {label}
+    </span>
+  );
+}
+
+function truncate(s: string, n: number) {
+  return s.length > n ? s.slice(0, n - 1) + "…" : s;
 }
