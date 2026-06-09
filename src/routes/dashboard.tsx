@@ -266,15 +266,15 @@ function DashboardPage() {
           <div className="h-44">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={MOM_CONVERSIONS} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip
-                  contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))" }}
-                  cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
+                  contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid var(--border)" }}
+                  cursor={{ fill: "var(--muted)" }}
                 />
-                <Bar dataKey="conversions" fill="hsl(var(--navy))" radius={[6, 6, 0, 0]} barSize={22} />
-                <Line type="monotone" dataKey="conversions" stroke="hsl(var(--critical))" strokeWidth={2} dot={{ r: 3 }} />
+                <Bar dataKey="conversions" fill="var(--navy)" radius={[6, 6, 0, 0]} barSize={22} />
+                <Line type="monotone" dataKey="conversions" stroke="var(--critical)" strokeWidth={2} dot={{ r: 3 }} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
