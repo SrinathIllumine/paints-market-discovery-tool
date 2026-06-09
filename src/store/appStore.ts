@@ -294,10 +294,9 @@ export const useAppStore = create<State & Actions>()(
         set((state) => {
           const prev = state.plan.selectedStrategiesByCluster[clusterId] ?? [];
           const has = prev.includes(strategy);
-          let next: ConnectStrategy[];
-          if (has) next = prev.filter((s) => s !== strategy);
-          else if (prev.length >= 3) next = prev;
-          else next = [...prev, strategy];
+          const next: ConnectStrategy[] = has
+            ? prev.filter((s) => s !== strategy)
+            : [...prev, strategy];
           return {
             plan: {
               ...state.plan,
