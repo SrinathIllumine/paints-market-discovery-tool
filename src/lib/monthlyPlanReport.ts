@@ -2,10 +2,13 @@ import jsPDF from "jspdf";
 import { getCluster } from "@/data/clusters";
 import {
   CONNECT_STRATEGY_LABEL,
+  MARKET_ENGAGEMENT_OPTIONS,
   getRecommendedActions,
   type ConnectStrategy,
   type ContactEntry,
 } from "@/lib/strategyContent";
+
+type EventEstimate = { participants?: number; contractors?: number };
 
 type Args = {
   focusClusterId: string;
@@ -15,6 +18,8 @@ type Args = {
   strategyContacts: Partial<Record<ConnectStrategy, ContactEntry[]>>;
   selectedActions: Partial<Record<ConnectStrategy, string[]>>;
   customActions: Partial<Record<ConnectStrategy, string[]>>;
+  marketSelected?: string[];
+  eventEstimates?: Record<string, EventEstimate>;
 };
 
 function normalisePdfText(text: string): string {
@@ -29,7 +34,8 @@ function normalisePdfText(text: string): string {
 }
 
 export function generateMonthlyEngagementPlanPdf({
-  focusClusterId, valueProposition, strategies, strategyItems, strategyContacts, selectedActions, customActions,
+  focusClusterId, valueProposition, strategies, strategyItems, strategyContacts,
+  selectedActions, customActions, marketSelected = [], eventEstimates = {},
 }: Args) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -90,72 +96,87 @@ export function generateMonthlyEngagementPlanPdf({
   wrapped(cluster?.name ?? focusClusterId, 0, true);
   y += 6;
 
-  heading("Value proposition");
-  wrapped(valueProposition || "Not selected", 0);
-  y += 6;
+  // Value proposition — only show if selected
+  if (valueProposition && valueProposition.trim()) {
+    heading("Value proposition");
+    wrapped(valueProposition, 0);
+    y += 6;
+  }
 
-  heading("Selected strategies");
-  if (strategies.length === 0) {
-    wrapped("No strategies selected.", 0);
-  } else {
+  // Market engagement events — only if user picked any
+  const chosenEvents = MARKET_ENGAGEMENT_OPTIONS.filter((m) => marketSelected.includes(m.id));
+  if (chosenEvents.length > 0) {
+    heading("Market engagement events");
+    for (const ev of chosenEvents) {
+      wrapped(`- ${ev.label}  [${ev.category}]`, 0, true);
+      const est = eventEstimates[ev.id];
+      if (est && (est.participants != null || est.contractors != null)) {
+        wrapped(
+          `Estimate - Participants: ${est.participants ?? "-"}, Contractors: ${est.contractors ?? "-"}`,
+          12,
+        );
+      }
+    }
+    y += 6;
+  }
+
+  // Customer engagement strategies — only if any selected
+  if (strategies.length > 0) {
+    heading("Customer engagement strategies");
     for (const s of strategies) {
+      const items = strategyItems[s] ?? [];
+      const contacts = strategyContacts[s] ?? [];
+      if (items.length === 0 && contacts.length === 0) {
+        wrapped(CONNECT_STRATEGY_LABEL[s], 0, true);
+        wrapped("(no sub-items captured)", 12);
+        y += 4;
+        continue;
+      }
       ensureSpace(40);
       wrapped(CONNECT_STRATEGY_LABEL[s], 0, true);
-      const items = strategyItems[s] ?? [];
-      if (items.length > 0) {
-        for (const it of items) wrapped(`- ${it}`, 12);
-      }
-      const contacts = strategyContacts[s] ?? [];
+      for (const it of items) wrapped(`- ${it}`, 12);
       if (contacts.length > 0) {
         wrapped("Contacts:", 12, true);
         for (const c of contacts) {
-          const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · ");
+          const line = [c.name, c.phone, c.area, c.role, c.brandPreference].filter(Boolean).join(" - ");
           if (line) wrapped(`- ${line}`, 18);
         }
       }
-      if (items.length === 0 && contacts.length === 0) wrapped("- No items captured", 12);
+      y += 4;
+    }
+    y += 6;
+  }
+
+  // Action plan — only render strategies that have selected/custom actions
+  const actionStrategies = strategies.filter((s) => {
+    const sel = selectedActions[s] ?? [];
+    const cust = customActions[s] ?? [];
+    return sel.length > 0 || cust.length > 0;
+  });
+  if (actionStrategies.length > 0) {
+    heading("Action plan");
+    for (const s of actionStrategies) {
+      const sel = selectedActions[s] ?? [];
+      const cust = customActions[s] ?? [];
+      const recommended = getRecommendedActions(s, focusClusterId);
+      ensureSpace(30);
+      wrapped(CONNECT_STRATEGY_LABEL[s], 0, true);
+      let idx = 1;
+      for (const a of sel) {
+        wrapped(`${idx}. ${a}`, 12);
+        const assets = recommended.find((r) => r.text === a)?.assets ?? [];
+        for (const asset of assets) {
+          wrapped(`- Resource: ${asset.label}`, 24);
+        }
+        idx++;
+      }
+      for (const a of cust) {
+        wrapped(`${idx}. ${a} (added by you)`, 12);
+        idx++;
+      }
       y += 4;
     }
   }
-  y += 6;
-
-  heading("Action plan");
-  let any = false;
-  for (const s of strategies) {
-    const sel = selectedActions[s] ?? [];
-    const cust = customActions[s] ?? [];
-    if (sel.length === 0 && cust.length === 0) continue;
-    any = true;
-    const recommended = getRecommendedActions(s, focusClusterId);
-    ensureSpace(30);
-    wrapped(CONNECT_STRATEGY_LABEL[s], 0, true);
-    let idx = 1;
-    for (const a of sel) {
-      wrapped(`${idx}. ${a}`, 12);
-      const assets = recommended.find((r) => r.text === a)?.assets ?? [];
-      for (const asset of assets) {
-        wrapped(`- Resource: ${asset.label}`, 24);
-        if (asset.kind === "list" && asset.items) {
-          for (const it of asset.items) wrapped(`  - ${it}`, 30);
-        } else if (asset.kind === "text" || asset.kind === "deck") {
-          if (asset.body) wrapped(asset.body, 30);
-        } else if (asset.kind === "contacts" && asset.contacts) {
-          for (const c of asset.contacts) {
-            const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · ");
-            if (line) wrapped(`  - ${line}`, 30);
-          }
-        }
-      }
-      idx++;
-    }
-    for (const a of cust) {
-      wrapped(`${idx}. ${a} (custom)`, 12);
-      idx++;
-    }
-    y += 4;
-  }
-  if (!any) wrapped("No actions selected.", 0);
-
 
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
