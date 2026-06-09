@@ -116,7 +116,7 @@ function PlanClusterScreen() {
           <h2 className="font-display text-xl leading-tight">
             Selected Cluster: <span className="text-critical">{cluster.name}</span>
           </h2>
-          <p className="text-sm text-muted-foreground">Roadmap for the cluster</p>
+          <p className="text-sm text-muted-foreground">Roadmap for the cluster - Design with your ASM</p>
         </div>
 
         <div className="space-y-3">
