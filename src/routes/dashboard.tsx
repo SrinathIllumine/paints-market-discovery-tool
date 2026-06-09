@@ -317,13 +317,13 @@ function DashboardPage() {
         <section className="rounded-2xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between px-4 pb-2 pt-4">
             <div>
-              <h2 className="font-display text-base leading-tight">Cluster Summary</h2>
-              <p className="text-[11px] text-muted-foreground">Sortable view of all clusters in your market</p>
+              <h2 className="font-display text-lg leading-tight">Cluster Summary</h2>
+              <p className="text-xs text-muted-foreground">Sortable view of all clusters in your market</p>
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+            <table className="w-full text-left text-sm">
+              <thead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <Th onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir}>Cluster</Th>
                   <Th onClick={() => toggleSort("matrix")} active={sortKey === "matrix"} dir={sortDir}>Matrix</Th>
@@ -339,10 +339,8 @@ function DashboardPage() {
                         {r.name}
                       </Link>
                     </td>
-                    <td className="px-3 py-2">
-                      <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-semibold", MATRIX_TONE[r.matrixKey])}>
-                        {r.matrixKey}
-                      </span>
+                    <td className="px-3 py-2 text-xs text-foreground">
+                      {MATRIX_LABEL[r.matrixKey] ?? r.matrixKey}
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">{r.prospects}</td>
                     <td className="px-3 py-2 text-right">
