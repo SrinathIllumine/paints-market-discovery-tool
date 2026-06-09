@@ -107,7 +107,9 @@ function PlanClusterScreen() {
       strategyItems: strategyItems[clusterId] ?? {},
       strategyContacts: strategyContacts[clusterId] ?? {},
       selectedActions: selectedActions[clusterId] ?? {},
-      customActions: {},
+      customActions: customActions[clusterId] ?? {},
+      marketSelected,
+      eventEstimates: eventEstimates[clusterId] ?? {},
     });
     setConfirmOpen(false);
   };
