@@ -305,5 +305,5 @@ export function generateActionPlan(
 // Commitment fields are no longer rendered, kept for type imports.
 export type CommitmentField = { key: string; label: string; type: "number" | "text"; placeholder?: string };
 export const COMMITMENT_FIELDS: Record<ConnectStrategy, CommitmentField[]> = {
-  BRAND: [], CONTRACTOR: [], OUTREACH: [], D2C: [],
+  BRAND: [], CONTRACTOR: [], OUTREACH: [], D2C: [], RETAILER: [], INFLUENCER: [],
 };
