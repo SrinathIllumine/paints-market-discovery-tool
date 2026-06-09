@@ -74,10 +74,11 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     return { highlighted: hi, dim: lo };
   }, [clusterStates, highlightId]);
 
-  const renderLabel = (color: string, weight: number) => (props: any) => {
+  const renderLabel = (color: string, weight: number, onlyHpHa = false) => (props: any) => {
     const { x, y, payload } = props;
     if (typeof x !== "number" || typeof y !== "number" || !payload) return null;
-    const lines = wrapName(payload.name);
+    if (onlyHpHa && !(payload.x >= 50 && payload.y >= 50)) return null;
+    const lines = wrapName(payload.name, 14);
     // Place label BELOW the dot, like the reference chart.
     return (
       <text x={x} y={y} fill={color} fontSize={10} fontWeight={weight}
@@ -88,6 +89,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
       </text>
     );
   };
+
 
   // Quadrant titles rendered on top of each quadrant region.
   const quadrantLabel = (cx: number, cy: number, line1: string, line2: string) => (
