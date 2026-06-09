@@ -24,6 +24,7 @@ import {
   getValuePropositions,
   getD2cInitiatives,
   getRecommendedActions,
+  type ActionAsset,
   type ConnectStrategy,
   type ContactEntry,
   type MarketEngagementCategory,
