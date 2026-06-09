@@ -57,22 +57,27 @@ function wrapName(name: string, maxChars = 16): string[] {
 export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
   const clusterStates = useAppStore((s) => s.clusters);
 
-  const { highlighted, dim } = useMemo(() => {
+  const { highlighted, dim, labelIds } = useMemo(() => {
     const hi: Point[] = [];
     const lo: Point[] = [];
+    const scored: { id: string; potential: number }[] = [];
     for (const c of CLUSTERS) {
       const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
       const sc = computeClusterScores(c, pc);
-      // Direct mapping: score × 10 places each cluster precisely on the chart.
       const x = clamp(sc.accessRollupScore * 10 + jitter(c.id + "x", 2.5), 4, 96);
       const y = clamp(sc.potentialScore * 10 + jitter(c.id + "y", 2.5), 4, 96);
       const isHi = !highlightId || c.id === highlightId;
       const point: Point = { id: c.id, name: c.name, x, y, highlighted: isHi };
       if (isHi) hi.push(point);
       else lo.push(point);
+      scored.push({ id: c.id, potential: sc.potentialScore });
     }
-    return { highlighted: hi, dim: lo };
+    const topIds = new Set(
+      scored.sort((a, b) => b.potential - a.potential).slice(0, 6).map((s) => s.id),
+    );
+    return { highlighted: hi, dim: lo, labelIds: topIds };
   }, [clusterStates, highlightId]);
+
 
   const renderLabel = (color: string, weight: number) => (props: any) => {
     const { x, y, payload } = props;
