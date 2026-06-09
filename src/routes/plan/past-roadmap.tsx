@@ -5,7 +5,8 @@ import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { CLUSTERS } from "@/data/clusters";
 import { useAppStore } from "@/store/appStore";
-import { ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/plan/past-roadmap")({
