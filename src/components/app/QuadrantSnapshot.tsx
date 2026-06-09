@@ -82,8 +82,8 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
   const renderLabel = (color: string, weight: number) => (props: any) => {
     const { x, y, payload } = props;
     if (typeof x !== "number" || typeof y !== "number" || !payload) return null;
+    if (!labelIds.has(payload.id)) return null;
     const lines = wrapName(payload.name);
-    // Place label BELOW the dot, like the reference chart.
     return (
       <text x={x} y={y} fill={color} fontSize={10} fontWeight={weight}
         textAnchor="middle" style={{ pointerEvents: "none" }}>
@@ -93,6 +93,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
       </text>
     );
   };
+
 
   // Quadrant titles rendered on top of each quadrant region.
   const quadrantLabel = (cx: number, cy: number, line1: string, line2: string) => (
