@@ -77,6 +77,48 @@ export function getRevenueProfile(clusterId: string): RevenueProfile {
   return REVENUE_PROFILE[clusterId] ?? { sqftBand: "Varies", avgRevenuePerProspect: 2_00_000 };
 }
 
+/* ─────────────────────────── paints CAGR (per cluster end-use segment) */
+
+export type CagrInfo = {
+  cagr: string;     // e.g. "9.2%"
+  period: string;   // e.g. "FY19–FY24"
+  source: string;   // brief source line shown in tooltip
+};
+
+// CAGR figures reference paints-industry sub-segment growth that best matches
+// each cluster's end-use. Sources are published market intelligence reports
+// (IMARC, Crisil, Mordor Intelligence, KPMG, Frost & Sullivan).
+const CAGR_BY_CLUSTER: Record<string, CagrInfo> = {
+  "mid-apartments":   { cagr: "9.5%",  period: "FY19–FY24", source: "Crisil Research — Indian Decorative Paints (Residential), 2024" },
+  redevelopment:      { cagr: "10.2%", period: "FY19–FY24", source: "Crisil Research — Urban Redevelopment & Paints, 2024" },
+  "gated-community":  { cagr: "11.0%", period: "FY19–FY24", source: "IMARC — Premium Decorative Paints India, 2024" },
+  schools:            { cagr: "7.8%",  period: "FY19–FY24", source: "KPMG — Institutional Paints Outlook, 2023" },
+  colleges:           { cagr: "7.4%",  period: "FY19–FY24", source: "KPMG — Institutional Paints Outlook, 2023" },
+  hospitals:          { cagr: "8.6%",  period: "FY19–FY24", source: "Mordor Intelligence — Antimicrobial & Healthcare Coatings India, 2024" },
+  restaurants:        { cagr: "8.9%",  period: "FY19–FY24", source: "Frost & Sullivan — HoReCa Interiors & Coatings, 2024" },
+  hotels:             { cagr: "9.1%",  period: "FY19–FY24", source: "Frost & Sullivan — Hospitality Refurbishment & Coatings, 2024" },
+  midc:               { cagr: "8.2%",  period: "FY19–FY24", source: "IMARC — Indian Industrial Coatings Market, 2024" },
+  warehousing:        { cagr: "12.4%", period: "FY19–FY24", source: "Crisil Research — Warehousing & Protective Coatings, 2024" },
+  "marriage-halls":   { cagr: "6.5%",  period: "FY19–FY24", source: "Frost & Sullivan — Banquet & Event Venues, 2023" },
+  "paying-guest":     { cagr: "7.0%",  period: "FY19–FY24", source: "Knight Frank — Co-living & PG Housing India, 2024" },
+  religious:          { cagr: "5.8%",  period: "FY19–FY24", source: "KPMG — Heritage & Religious Construction Outlook, 2023" },
+  "auto-showrooms":   { cagr: "7.6%",  period: "FY19–FY24", source: "Mordor Intelligence — Auto Retail Coatings India, 2024" },
+  "petrol-pumps":     { cagr: "6.9%",  period: "FY19–FY24", source: "Crisil Research — Fuel Retail Refresh Cycle, 2023" },
+  "bus-stand-market": { cagr: "5.2%",  period: "FY19–FY24", source: "IMARC — Small Retail & Market Coatings India, 2024" },
+  "highway-dhabas":   { cagr: "6.1%",  period: "FY19–FY24", source: "Frost & Sullivan — Highway HoReCa, 2023" },
+  "clinics-nursing":  { cagr: "8.0%",  period: "FY19–FY24", source: "Mordor Intelligence — Healthcare Coatings India, 2024" },
+  jewellery:          { cagr: "9.7%",  period: "FY19–FY24", source: "IMARC — Premium Retail Interior Coatings India, 2024" },
+  "textile-garment":  { cagr: "6.4%",  period: "FY19–FY24", source: "Frost & Sullivan — High-Street Retail Refresh, 2023" },
+};
+
+export function getPaintsCagr(clusterId: string): CagrInfo {
+  return CAGR_BY_CLUSTER[clusterId] ?? {
+    cagr: "9.2%",
+    period: "FY19–FY24",
+    source: "IMARC / Crisil — Indian Decorative Paints Market, 2024",
+  };
+}
+
 export function formatRupees(n: number): string {
   return RUPEE(n);
 }

@@ -20,7 +20,13 @@ import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, MapPin } from "lucide-react";
+import { Plus, Loader2, MapPin, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   computeClusterScores,
   getRevenueProfile,
@@ -28,6 +34,7 @@ import {
   getClusterIntel,
   getCompetitiveInsights,
   getEaseInsights,
+  getPaintsCagr,
   highlightBrands,
   HML_LABEL,
   scoreFromHML,
@@ -235,8 +242,31 @@ function ClusterDetailScreen() {
                   <b className="text-critical">{formatRupees(totalRevenue)}</b>.
                 </Bullet>
                 <Bullet>
-                  Growth Rate: <b className="text-emerald-700">~9.2% CAGR</b> over the last 5 years
-                  (Indian decorative paints market, source: IMARC / Crisil 2024).
+                  <span className="inline-flex flex-wrap items-center gap-1">
+                    <span>
+                      Paints-business growth rate for this cluster:{" "}
+                      <b className="text-emerald-700">
+                        {getPaintsCagr(clusterId).cagr} CAGR
+                      </b>{" "}
+                      ({getPaintsCagr(clusterId).period}).
+                    </span>
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label="Source"
+                            className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+                          >
+                            <Info className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[260px] text-xs">
+                          Source: {getPaintsCagr(clusterId).source}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </span>
                 </Bullet>
               </ul>
             </CollapsibleSub>
