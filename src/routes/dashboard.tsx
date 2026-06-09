@@ -54,7 +54,7 @@ const PAST_EVENTS: EventRow[] = [
 
 /* ----------------------------- MoM conversions ----------------------------- */
 
-const MOM_CONVERSIONS = [
+const MOM_CONVERSIONS_ALL = [
   { month: "Jan", conversions: 4 },
   { month: "Feb", conversions: 6 },
   { month: "Mar", conversions: 5 },
@@ -62,6 +62,16 @@ const MOM_CONVERSIONS = [
   { month: "May", conversions: 8 },
   { month: "Jun", conversions: 12 },
 ];
+
+// Deterministic per-cluster variation so each cluster has its own trend.
+function getClusterConversions(clusterId: string) {
+  let h = 0;
+  for (const ch of clusterId) h = (h * 31 + ch.charCodeAt(0)) % 97;
+  return MOM_CONVERSIONS_ALL.map((m, i) => ({
+    month: m.month,
+    conversions: Math.max(0, Math.round(m.conversions * (0.4 + ((h + i * 7) % 13) / 10))),
+  }));
+}
 
 /* ----------------------------- Helpers ----------------------------- */
 
