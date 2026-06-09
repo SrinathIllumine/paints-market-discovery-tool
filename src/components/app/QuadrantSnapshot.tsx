@@ -61,18 +61,22 @@ export function QuadrantSnapshot({ highlightId: _highlightId }: { highlightId?: 
   const renderBubble = (props: any) => {
     const { cx, cy, payload } = props;
     if (typeof cx !== "number" || typeof cy !== "number" || !payload) return <g />;
+    const onRight = payload.x > 50;
+    const label =
+      payload.name.length > 20 ? payload.name.slice(0, 19) + "…" : payload.name;
     return (
       <g>
         <circle cx={cx} cy={cy} r={8} fill="hsl(var(--primary))" fillOpacity={0.85} />
         {payload.showLabel && (
           <text
-            x={cx + 12}
+            x={onRight ? cx - 12 : cx + 12}
             y={cy + 4}
-            fontSize={11}
+            fontSize={10}
+            textAnchor={onRight ? "end" : "start"}
             fill="hsl(var(--foreground))"
             style={{ pointerEvents: "none" }}
           >
-            {payload.name}
+            {label}
           </text>
         )}
       </g>
@@ -97,7 +101,7 @@ export function QuadrantSnapshot({ highlightId: _highlightId }: { highlightId?: 
   return (
     <div className="h-[480px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 40, right: 40, bottom: 60, left: 60 }}>
+        <ScatterChart margin={{ top: 40, right: 120, bottom: 60, left: 20 }}>
           <CartesianGrid horizontal={false} vertical={false} />
           <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill="#f1f5f9" fillOpacity={1} />
           <ReferenceLine x={50} stroke="#64748b" strokeWidth={1.5} />
@@ -124,6 +128,7 @@ export function QuadrantSnapshot({ highlightId: _highlightId }: { highlightId?: 
             dataKey="y"
             domain={[0, 100]}
             allowDataOverflow
+            width={20}
             ticks={[0, 25, 50, 75, 100]}
             tick={false}
             tickLine={false}
