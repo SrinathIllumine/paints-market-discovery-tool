@@ -57,28 +57,33 @@ function wrapName(name: string, maxChars = 16): string[] {
 export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
   const clusterStates = useAppStore((s) => s.clusters);
 
-  const { highlighted, dim } = useMemo(() => {
+  const { highlighted, dim, labelIds } = useMemo(() => {
     const hi: Point[] = [];
     const lo: Point[] = [];
+    const scored: { id: string; potential: number }[] = [];
     for (const c of CLUSTERS) {
       const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
       const sc = computeClusterScores(c, pc);
-      // Direct mapping: score × 10 places each cluster precisely on the chart.
       const x = clamp(sc.accessRollupScore * 10 + jitter(c.id + "x", 2.5), 4, 96);
       const y = clamp(sc.potentialScore * 10 + jitter(c.id + "y", 2.5), 4, 96);
       const isHi = !highlightId || c.id === highlightId;
       const point: Point = { id: c.id, name: c.name, x, y, highlighted: isHi };
       if (isHi) hi.push(point);
       else lo.push(point);
+      scored.push({ id: c.id, potential: sc.potentialScore });
     }
-    return { highlighted: hi, dim: lo };
+    const topIds = new Set(
+      scored.sort((a, b) => b.potential - a.potential).slice(0, 6).map((s) => s.id),
+    );
+    return { highlighted: hi, dim: lo, labelIds: topIds };
   }, [clusterStates, highlightId]);
+
 
   const renderLabel = (color: string, weight: number) => (props: any) => {
     const { x, y, payload } = props;
     if (typeof x !== "number" || typeof y !== "number" || !payload) return null;
+    if (!labelIds.has(payload.id)) return null;
     const lines = wrapName(payload.name);
-    // Place label BELOW the dot, like the reference chart.
     return (
       <text x={x} y={y} fill={color} fontSize={10} fontWeight={weight}
         textAnchor="middle" style={{ pointerEvents: "none" }}>
@@ -88,6 +93,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
       </text>
     );
   };
+
 
   // Quadrant titles rendered on top of each quadrant region.
   const quadrantLabel = (cx: number, cy: number, line1: string, line2: string) => (
@@ -108,19 +114,17 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
   return (
     <div className="h-[480px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 40, right: 28, bottom: 32, left: 32 }}>
+        <ScatterChart margin={{ top: 40, right: 32, bottom: 32, left: 32 }}>
           <CartesianGrid
             stroke="hsl(var(--foreground))"
-            strokeOpacity={0.25}
+            strokeOpacity={0.15}
             strokeWidth={1}
-            horizontalPoints={undefined as any}
-            verticalPoints={undefined as any}
           />
           <ReferenceArea x1={50} x2={100} y1={50} y2={100}
-            fill="hsl(0 84% 60%)" fillOpacity={0.10} stroke="none" />
-          {/* Bold partition lines splitting the 4 quadrants */}
-          <ReferenceLine x={50} stroke="hsl(var(--foreground))" strokeWidth={2} />
-          <ReferenceLine y={50} stroke="hsl(var(--foreground))" strokeWidth={2} />
+            fill="hsl(var(--primary))" fillOpacity={0.07} stroke="none" />
+          {/* Center reference lines */}
+          <ReferenceLine x={50} stroke="#94a3b8" strokeWidth={1.5} />
+          <ReferenceLine y={50} stroke="#94a3b8" strokeWidth={1.5} />
           <XAxis type="number" dataKey="x" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]}
             tick={false} tickLine={false}
             axisLine={{ stroke: "hsl(var(--foreground))", strokeWidth: 1.5 }}>
@@ -144,21 +148,21 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
                 </div>
               );
             }} />
-          {/* Quadrant titles — placed near the top of each quadrant region */}
           {quadrantLabel(27, 55, "HIGH POTENTIAL", "LOW ACCESS")}
           {quadrantLabel(77, 55, "HIGH POTENTIAL", "HIGH ACCESS")}
           {quadrantLabel(27, 258, "LOW POTENTIAL", "LOW ACCESS")}
           {quadrantLabel(77, 258, "LOW POTENTIAL", "HIGH ACCESS")}
           {dim.length > 0 && (
-            <Scatter data={dim} fill="hsl(0 0% 65%)" fillOpacity={0.55}
-              shape="circle" label={renderLabel("hsl(var(--muted-foreground))", 500) as any} />
+            <Scatter data={dim} fill="hsl(var(--primary))" fillOpacity={0.85}
+              shape="circle" label={renderLabel("hsl(var(--foreground))", 500) as any} />
           )}
           {highlighted.length > 0 && (
-            <Scatter data={highlighted} fill="hsl(0 84% 55%)" shape="circle"
-              label={renderLabel("hsl(0 70% 30%)", 700) as any} />
+            <Scatter data={highlighted} fill="hsl(var(--primary))" shape="circle"
+              label={renderLabel("hsl(var(--foreground))", 700) as any} />
           )}
         </ScatterChart>
       </ResponsiveContainer>
+
     </div>
   );
 }
