@@ -153,12 +153,13 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
           {quadrantLabel(77, 258, "LOW POTENTIAL", "HIGH ACCESS")}
           {dim.length > 0 && (
             <Scatter data={dim} fill="hsl(0 0% 65%)" fillOpacity={0.55}
-              shape="circle" label={renderLabel("hsl(var(--muted-foreground))", 500) as any} />
+              shape="circle" label={renderLabel("hsl(var(--muted-foreground))", 600, !highlightId) as any} />
           )}
           {highlighted.length > 0 && (
             <Scatter data={highlighted} fill="hsl(0 84% 55%)" shape="circle"
-              label={renderLabel("hsl(0 70% 30%)", 700) as any} />
+              label={renderLabel("hsl(0 70% 30%)", 700, false) as any} />
           )}
+
         </ScatterChart>
       </ResponsiveContainer>
     </div>
