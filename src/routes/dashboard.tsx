@@ -52,25 +52,19 @@ const PAST_EVENTS: EventRow[] = [
   { name: "Industrial coatings roadshow", clusterId: "midc", region: "Taloja MIDC", date: "28 Mar", outcome: "12 units visited, 5 quotations" },
 ];
 
-/* ----------------------------- MoM conversions ----------------------------- */
+/* ----------------------------- MoM conversions (derived from rows) ----------------------------- */
 
-const MOM_CONVERSIONS_ALL = [
-  { month: "Jan", conversions: 4 },
-  { month: "Feb", conversions: 6 },
-  { month: "Mar", conversions: 5 },
-  { month: "Apr", conversions: 9 },
-  { month: "May", conversions: 8 },
-  { month: "Jun", conversions: 12 },
-];
-
-// Deterministic per-cluster variation so each cluster has its own trend.
-function getClusterConversions(clusterId: string) {
+// Build a 6-month trend whose last month equals `latest`. Deterministic per id.
+function buildTrend(id: string, latest: number) {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
   let h = 0;
-  for (const ch of clusterId) h = (h * 31 + ch.charCodeAt(0)) % 97;
-  return MOM_CONVERSIONS_ALL.map((m, i) => ({
-    month: m.month,
-    conversions: Math.max(0, Math.round(m.conversions * (0.4 + ((h + i * 7) % 13) / 10))),
-  }));
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) % 97;
+  const base = Math.max(0, latest);
+  return months.map((m, i) => {
+    if (i === months.length - 1) return { month: m, conversions: base };
+    const factor = 0.35 + ((h + i * 11) % 40) / 100;
+    return { month: m, conversions: Math.max(0, Math.round(base * factor)) };
+  });
 }
 
 /* ----------------------------- Helpers ----------------------------- */
