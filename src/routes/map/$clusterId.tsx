@@ -234,6 +234,10 @@ function ClusterDetailScreen() {
                   Total cluster revenue potential is{" "}
                   <b className="text-critical">{formatRupees(totalRevenue)}</b>.
                 </Bullet>
+                <Bullet>
+                  Growth Rate: <b className="text-emerald-700">~9.2% CAGR</b> over the last 5 years
+                  (Indian decorative paints market, source: IMARC / Crisil 2024).
+                </Bullet>
               </ul>
             </CollapsibleSub>
 
