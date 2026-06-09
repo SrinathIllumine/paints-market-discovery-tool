@@ -335,7 +335,7 @@ function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {sortedRows.map((r) => (
+                {pagedRows.map((r) => (
                   <tr key={r.id} className="border-t border-border">
                     <td className="px-3 py-2">
                       <Link to="/plan/$clusterId" params={{ clusterId: r.id }} className="font-medium text-navy hover:underline">
@@ -365,7 +365,25 @@ function DashboardPage() {
               <Legend tone="bg-amber-500" label="15–29%" />
               <Legend tone="bg-critical" label="<15%" />
             </div>
-            <span>{rows.length} clusters</span>
+            <div className="flex items-center gap-2">
+              <span>Page {pageSafe} of {totalPages} · {rows.length} clusters</span>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={pageSafe <= 1}
+                className="rounded border border-border px-2 py-0.5 text-[11px] disabled:opacity-40"
+              >
+                Prev
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={pageSafe >= totalPages}
+                className="rounded border border-border px-2 py-0.5 text-[11px] disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </section>
 
