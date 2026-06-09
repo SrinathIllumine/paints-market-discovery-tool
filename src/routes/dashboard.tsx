@@ -264,18 +264,35 @@ function DashboardPage() {
 
         {/* MoM Conversion Chart */}
         <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
             <div>
-              <h2 className="font-display text-base leading-tight">Conversions · Month on Month</h2>
-              <p className="text-[11px] text-muted-foreground">Trend of converted prospects across all clusters</p>
+              <h2 className="font-display text-lg leading-tight">Conversions · Month on Month</h2>
+              <p className="text-xs text-muted-foreground">
+                {chartClusterId === "all"
+                  ? "Trend of converted prospects across all clusters"
+                  : `Trend for ${getCluster(chartClusterId)?.name ?? chartClusterId}`}
+              </p>
             </div>
-            <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
-              <TrendingUp className="h-3 w-3" /> +50% MoM
-            </span>
+            <div className="flex items-center gap-2">
+              <select
+                value={chartClusterId}
+                onChange={(e) => setChartClusterId(e.target.value)}
+                className="rounded border border-border bg-background px-2 py-1 text-xs"
+                aria-label="Filter conversions by cluster"
+              >
+                <option value="all">All clusters</option>
+                {CLUSTERS.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+              <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                <TrendingUp className="h-3 w-3" /> MoM
+              </span>
+            </div>
           </div>
           <div className="h-44">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={MOM_CONVERSIONS} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+              <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -289,6 +306,7 @@ function DashboardPage() {
             </ResponsiveContainer>
           </div>
         </section>
+
 
         {/* Cluster Summary Table */}
         <section className="rounded-2xl border border-border bg-card shadow-sm">
