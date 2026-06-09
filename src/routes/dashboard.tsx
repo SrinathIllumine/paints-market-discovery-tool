@@ -218,7 +218,7 @@ function DashboardPage() {
 
         {/* KPI Section */}
         <section>
-          <h2 className="mb-2 font-display text-base">Performance at a glance</h2>
+          <h2 className="mb-2 font-display text-lg leading-tight">Performance at a glance</h2>
           <div className="grid grid-cols-2 gap-2">
             <KpiCard
               icon={<Wallet className="h-4 w-4" />}
