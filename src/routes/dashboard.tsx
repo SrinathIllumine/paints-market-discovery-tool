@@ -178,6 +178,11 @@ function DashboardPage() {
   };
 
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [chartClusterId, setChartClusterId] = useState<string>("all");
+  const chartData = useMemo(
+    () => (chartClusterId === "all" ? MOM_CONVERSIONS_ALL : getClusterConversions(chartClusterId)),
+    [chartClusterId],
+  );
 
   return (
     <AppShell bottom={<BottomNav />}>
