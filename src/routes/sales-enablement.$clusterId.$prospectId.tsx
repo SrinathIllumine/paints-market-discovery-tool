@@ -270,7 +270,7 @@ function ProspectDetailPage() {
 
         {/* What to do next */}
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <h3 className="font-display text-lg">What you can do next?</h3>
+          <h3 className="font-display text-lg">How to move to the next stage?</h3>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Pick the next-best-actions for <b>{SALES_STAGE_LABEL[currentStage]}</b>.
           </p>
