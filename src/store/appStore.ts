@@ -143,6 +143,8 @@ type Actions = {
   toggleSelectedAction: (clusterId: string, strategy: ConnectStrategy, action: string) => void;
   addCustomAction: (clusterId: string, strategy: ConnectStrategy, text: string) => void;
   removeCustomAction: (clusterId: string, strategy: ConnectStrategy, text: string) => void;
+  setEventEstimate: (clusterId: string, eventId: string, patch: Partial<EventEstimate>) => void;
+  setPastEventFeedback: (clusterId: string, eventId: string, patch: Partial<PastEventFeedback>) => void;
 
   setRoadmapStep: (step: RoadmapStep, completed: boolean) => void;
   resetRoadmap: () => void;
