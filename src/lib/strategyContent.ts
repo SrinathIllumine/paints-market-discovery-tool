@@ -263,8 +263,19 @@ export function getRecommendedActions(strategy: ConnectStrategy, clusterId: stri
         { text: "Run a 2-week WhatsApp + walk-in pilot", assets: [pamphletAsset(clusterId)] },
         { text: "Send a customized proposal to top owners", assets: [deckAsset()] },
       ];
+    case "RETAILER":
+      return [
+        { text: "Activate retailer counters with shade cards and demo cans", assets: [pamphletAsset(clusterId)] },
+        { text: "Run a retailer engagement event", assets: [pamphletAsset(clusterId)] },
+      ];
+    case "INFLUENCER":
+      return [
+        { text: "Meet site supervisors / interior designers / architects active in this cluster", assets: [contactsAsset(clusterId)] },
+        { text: "Share a specification kit and follow up within 7 days", assets: [deckAsset()] },
+      ];
   }
 }
+
 
 /* ─────────────────────────── legacy stubs (kept for back-compat) */
 
