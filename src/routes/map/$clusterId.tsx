@@ -20,7 +20,13 @@ import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, MapPin } from "lucide-react";
+import { Plus, Loader2, MapPin, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   computeClusterScores,
   getRevenueProfile,
@@ -28,6 +34,7 @@ import {
   getClusterIntel,
   getCompetitiveInsights,
   getEaseInsights,
+  getPaintsCagr,
   highlightBrands,
   HML_LABEL,
   scoreFromHML,
