@@ -729,7 +729,7 @@ function ActionStep({
             <div className="space-y-2 text-sm">
               {assetDlg.asset.kind === "list" && (
                 <ul className="list-disc space-y-1 pl-5 text-sm marker:text-critical">
-                  {(assetDlg.asset.items ?? []).map((it, i) => (
+                  {(assetDlg.asset.items ?? []).map((it: string, i: number) => (
                     <li key={i} className="flex items-center justify-between gap-2">
                       <span>{it}</span>
                       <a href="#" onClick={(e) => e.preventDefault()} className="text-[11px] font-semibold text-navy underline">Download</a>
