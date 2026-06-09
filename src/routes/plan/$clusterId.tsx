@@ -750,7 +750,7 @@ function ActionStep({
                   {(assetDlg.userContacts && assetDlg.userContacts.length > 0
                     ? assetDlg.userContacts
                     : assetDlg.asset.contacts ?? []
-                  ).map((c) => (
+                  ).map((c: ContactEntry) => (
                     <div key={c.id} className="rounded-md border border-border bg-background p-2 text-xs">
                       <div className="font-semibold">{c.name || "—"}</div>
                       <div className="text-muted-foreground">
