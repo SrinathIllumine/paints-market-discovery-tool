@@ -158,12 +158,8 @@ function ClusterRow({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="truncate text-sm font-semibold">{name}</p>
-          {recommended && (
-            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-green-800">
-              Recommended
-            </span>
-          )}
         </div>
+
         <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
           <ScoreSubCard label="Revenue" score={scores.revenue} />
           <ScoreSubCard label="Competitive" score={scores.competitive} />
