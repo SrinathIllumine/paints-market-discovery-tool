@@ -188,7 +188,7 @@ function ClusterRow({
     >
       <button type="button" onClick={onClick} className="min-w-0 flex-1 text-left">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="truncate text-sm font-semibold">{name}</p>
+          <p className="truncate text-sm font-medium">{name}</p>
         </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-1">
@@ -227,8 +227,8 @@ function ClusterRow({
 function ScoreChip({ label, score }: { label: string; score: number }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[10px] font-medium text-foreground/80">
-      <span className="uppercase tracking-wider opacity-70">{label}</span>
-      <span className="font-semibold text-foreground">{score}<span className="text-foreground/50">/10</span></span>
+      <span className="uppercase tracking-wider">{label}</span>
+      <span>{score}<span>/10</span></span>
     </span>
   );
 }
