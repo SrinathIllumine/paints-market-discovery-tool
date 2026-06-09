@@ -470,9 +470,9 @@ function StrategyDetails({
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           SUGGESTED DIRECT-SALES STRATEGIES
         </p>
-        <ul className="space-y-1 text-xs">
+        <ul className="list-disc space-y-1 pl-5 text-xs marker:text-critical">
           {suggestions.map((s, i) => (
-            <li key={i} className="flex gap-2"><span className="text-critical">•</span><span>{s}</span></li>
+            <li key={i}>{s}</li>
           ))}
         </ul>
       </div>
@@ -667,7 +667,7 @@ function ContactTable({
             <div className="flex items-center gap-1">
               <Input
                 value={c.brandPreference ?? ""}
-                placeholder="Notes"
+                placeholder="Brand Preference"
                 onChange={(v) => update(i, { brandPreference: v })}
               />
               <button

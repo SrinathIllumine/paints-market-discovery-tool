@@ -54,7 +54,7 @@ const PAST_EVENTS: EventRow[] = [
 
 /* ----------------------------- MoM conversions ----------------------------- */
 
-const MOM_CONVERSIONS = [
+const MOM_CONVERSIONS_ALL = [
   { month: "Jan", conversions: 4 },
   { month: "Feb", conversions: 6 },
   { month: "Mar", conversions: 5 },
@@ -62,6 +62,16 @@ const MOM_CONVERSIONS = [
   { month: "May", conversions: 8 },
   { month: "Jun", conversions: 12 },
 ];
+
+// Deterministic per-cluster variation so each cluster has its own trend.
+function getClusterConversions(clusterId: string) {
+  let h = 0;
+  for (const ch of clusterId) h = (h * 31 + ch.charCodeAt(0)) % 97;
+  return MOM_CONVERSIONS_ALL.map((m, i) => ({
+    month: m.month,
+    conversions: Math.max(0, Math.round(m.conversions * (0.4 + ((h + i * 7) % 13) / 10))),
+  }));
+}
 
 /* ----------------------------- Helpers ----------------------------- */
 
@@ -168,6 +178,11 @@ function DashboardPage() {
   };
 
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [chartClusterId, setChartClusterId] = useState<string>("all");
+  const chartData = useMemo(
+    () => (chartClusterId === "all" ? MOM_CONVERSIONS_ALL : getClusterConversions(chartClusterId)),
+    [chartClusterId],
+  );
 
   return (
     <AppShell bottom={<BottomNav />}>
@@ -203,7 +218,7 @@ function DashboardPage() {
 
         {/* KPI Section */}
         <section>
-          <h2 className="mb-2 font-display text-base">Performance at a glance</h2>
+          <h2 className="mb-2 font-display text-lg leading-tight">Performance at a glance</h2>
           <div className="grid grid-cols-2 gap-2">
             <KpiCard
               icon={<Wallet className="h-4 w-4" />}
@@ -254,18 +269,35 @@ function DashboardPage() {
 
         {/* MoM Conversion Chart */}
         <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
             <div>
-              <h2 className="font-display text-base leading-tight">Conversions · Month on Month</h2>
-              <p className="text-[11px] text-muted-foreground">Trend of converted prospects across all clusters</p>
+              <h2 className="font-display text-lg leading-tight">Conversions · Month on Month</h2>
+              <p className="text-xs text-muted-foreground">
+                {chartClusterId === "all"
+                  ? "Trend of converted prospects across all clusters"
+                  : `Trend for ${getCluster(chartClusterId)?.name ?? chartClusterId}`}
+              </p>
             </div>
-            <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
-              <TrendingUp className="h-3 w-3" /> +50% MoM
-            </span>
+            <div className="flex items-center gap-2">
+              <select
+                value={chartClusterId}
+                onChange={(e) => setChartClusterId(e.target.value)}
+                className="rounded border border-border bg-background px-2 py-1 text-xs"
+                aria-label="Filter conversions by cluster"
+              >
+                <option value="all">All clusters</option>
+                {CLUSTERS.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+              <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                <TrendingUp className="h-3 w-3" /> MoM
+              </span>
+            </div>
           </div>
           <div className="h-44">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={MOM_CONVERSIONS} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+              <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -280,17 +312,18 @@ function DashboardPage() {
           </div>
         </section>
 
+
         {/* Cluster Summary Table */}
         <section className="rounded-2xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between px-4 pb-2 pt-4">
             <div>
-              <h2 className="font-display text-base leading-tight">Cluster Summary</h2>
-              <p className="text-[11px] text-muted-foreground">Sortable view of all clusters in your market</p>
+              <h2 className="font-display text-lg leading-tight">Cluster Summary</h2>
+              <p className="text-xs text-muted-foreground">Sortable view of all clusters in your market</p>
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+            <table className="w-full text-left text-sm">
+              <thead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <Th onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir}>Cluster</Th>
                   <Th onClick={() => toggleSort("matrix")} active={sortKey === "matrix"} dir={sortDir}>Matrix</Th>
@@ -306,10 +339,8 @@ function DashboardPage() {
                         {r.name}
                       </Link>
                     </td>
-                    <td className="px-3 py-2">
-                      <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-semibold", MATRIX_TONE[r.matrixKey])}>
-                        {r.matrixKey}
-                      </span>
+                    <td className="px-3 py-2 text-xs text-foreground">
+                      {MATRIX_LABEL[r.matrixKey] ?? r.matrixKey}
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">{r.prospects}</td>
                     <td className="px-3 py-2 text-right">

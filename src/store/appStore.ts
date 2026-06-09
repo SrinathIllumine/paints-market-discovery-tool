@@ -527,7 +527,7 @@ export const useAppStore = create<State & Actions>()(
           };
         }),
     }),
-    { name: "sed.v8" },
+    { name: "sed.v9" },
   ),
 );
 
