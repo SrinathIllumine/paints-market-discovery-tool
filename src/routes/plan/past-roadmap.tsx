@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
-import { CLUSTERS, getCluster } from "@/data/clusters";
+import { CLUSTERS } from "@/data/clusters";
 import { useAppStore } from "@/store/appStore";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -155,6 +155,3 @@ function NumField({
     </label>
   );
 }
-
-// Suppress unused import warning when getCluster is not used; reference here.
-void getCluster;
