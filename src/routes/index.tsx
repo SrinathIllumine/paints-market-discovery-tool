@@ -7,7 +7,7 @@ import { useAppStore } from "@/store/appStore";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Demand Discovery Tool" },
+      { title: "Market Discovery Tool" },
       {
         name: "description",
         content:
@@ -66,7 +66,7 @@ function IntroScreen() {
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60">
               JK Cement · Demand Generator
             </p>
-            <h1 className="mt-2 font-display text-3xl leading-tight">Demand Discovery Tool</h1>
+            <h1 className="mt-2 font-display text-3xl leading-tight">Market Discovery Tool</h1>
             <p className="mt-2 text-sm text-white/75">Welcome Sunil Kumar</p>
           </div>
           <Link
