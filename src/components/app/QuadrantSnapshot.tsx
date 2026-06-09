@@ -128,6 +128,7 @@ export function QuadrantSnapshot({ highlightId: _highlightId }: { highlightId?: 
             dataKey="y"
             domain={[0, 100]}
             allowDataOverflow
+            width={20}
             ticks={[0, 25, 50, 75, 100]}
             tick={false}
             tickLine={false}
