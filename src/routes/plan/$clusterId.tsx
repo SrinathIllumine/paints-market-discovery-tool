@@ -545,18 +545,25 @@ function StrategyDetails({
 /* ---------------- Stage 4: action plan ---------------- */
 
 function ActionStep({
-  clusterId, marketSelected, customerStrategies, selectedActions, eventEstimates,
-  onToggleAction, onOpenEstimate,
+  clusterId, marketSelected, customerStrategies, selectedActions, customActions,
+  contactsByStrategy, eventEstimates,
+  onToggleAction, onAddCustom, onRemoveCustom, onOpenEstimate,
 }: {
   clusterId: string;
   marketSelected: string[];
   customerStrategies: ConnectStrategy[];
   selectedActions: Partial<Record<ConnectStrategy, string[]>>;
+  customActions: Partial<Record<ConnectStrategy, string[]>>;
+  contactsByStrategy: Partial<Record<ConnectStrategy, ContactEntry[]>>;
   eventEstimates: Record<string, { participants?: number; contractors?: number }>;
   onToggleAction: (s: ConnectStrategy, a: string) => void;
+  onAddCustom: (s: ConnectStrategy, a: string) => void;
+  onRemoveCustom: (s: ConnectStrategy, a: string) => void;
   onOpenEstimate: (eventId: string) => void;
 }) {
   const chosenEvents = MARKET_ENGAGEMENT_OPTIONS.filter((m) => marketSelected.includes(m.id));
+  const [assetDlg, setAssetDlg] = useState<{ title: string; asset: ActionAsset; userContacts?: ContactEntry[] } | null>(null);
+  const [draftByStrategy, setDraftByStrategy] = useState<Partial<Record<ConnectStrategy, string>>>({});
 
   return (
     <div className="space-y-5">
@@ -622,6 +629,9 @@ function ActionStep({
             {customerStrategies.map((s) => {
               const actions = getRecommendedActions(s, clusterId);
               const chosen = selectedActions[s] ?? [];
+              const customs = customActions[s] ?? [];
+              const draft = draftByStrategy[s] ?? "";
+              const userContacts = contactsByStrategy[s] ?? [];
               return (
                 <div key={s} className="rounded-lg border border-border bg-background p-3">
                   <p className="mb-1.5 text-sm font-semibold">{CONNECT_STRATEGY_LABEL[s]}</p>
@@ -629,8 +639,8 @@ function ActionStep({
                     {actions.map((a) => {
                       const on = chosen.includes(a.text);
                       return (
-                        <li key={a.text}>
-                          <label className="flex cursor-pointer items-start gap-2 text-sm">
+                        <li key={a.text} className="flex items-start justify-between gap-2">
+                          <label className="flex flex-1 cursor-pointer items-start gap-2 text-sm">
                             <input
                               type="checkbox"
                               checked={on}
@@ -639,19 +649,128 @@ function ActionStep({
                             />
                             <span className="leading-snug">{a.text}</span>
                           </label>
+                          {(a.assets ?? []).map((asset, ai) => (
+                            <button
+                              key={ai}
+                              type="button"
+                              onClick={() => setAssetDlg({
+                                title: a.text,
+                                asset,
+                                userContacts: asset.kind === "contacts" ? userContacts : undefined,
+                              })}
+                              className="shrink-0 rounded border border-border bg-card px-2 py-0.5 text-[10px] font-semibold text-navy hover:bg-muted/40"
+                            >
+                              {asset.kind === "contacts" ? "View contacts" :
+                                asset.kind === "deck" ? "View PPT" : "View pamphlets"}
+                            </button>
+                          ))}
                         </li>
                       );
                     })}
+                    {customs.map((c, i) => (
+                      <li key={`cust-${i}`} className="flex items-start justify-between gap-2 text-sm">
+                        <span className="flex items-start gap-2">
+                          <span className="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded border border-critical bg-critical/10 text-[10px] text-critical">+</span>
+                          <span className="leading-snug">{c}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onRemoveCustom(s, c)}
+                          className="rounded p-1 text-muted-foreground hover:bg-muted/40"
+                          aria-label="Remove"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    ))}
                   </ul>
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <input
+                      value={draft}
+                      onChange={(e) => setDraftByStrategy((d) => ({ ...d, [s]: e.target.value }))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          const t = draft.trim();
+                          if (t) { onAddCustom(s, t); setDraftByStrategy((d) => ({ ...d, [s]: "" })); }
+                        }
+                      }}
+                      placeholder="Add your own action…"
+                      className="flex-1 rounded border border-border bg-background px-2 py-1 text-xs"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const t = draft.trim();
+                        if (t) { onAddCustom(s, t); setDraftByStrategy((d) => ({ ...d, [s]: "" })); }
+                      }}
+                      className="h-7 gap-1 text-xs"
+                    >
+                      <Plus className="h-3 w-3" /> Add
+                    </Button>
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
       </section>
+
+      <Dialog open={assetDlg !== null} onOpenChange={(o) => !o && setAssetDlg(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{assetDlg?.asset.label ?? "Resources"}</DialogTitle>
+            {assetDlg && <DialogDescription>{assetDlg.title}</DialogDescription>}
+          </DialogHeader>
+          {assetDlg && (
+            <div className="space-y-2 text-sm">
+              {assetDlg.asset.kind === "list" && (
+                <ul className="list-disc space-y-1 pl-5 text-sm marker:text-critical">
+                  {(assetDlg.asset.items ?? []).map((it, i) => (
+                    <li key={i} className="flex items-center justify-between gap-2">
+                      <span>{it}</span>
+                      <a href="#" onClick={(e) => e.preventDefault()} className="text-[11px] font-semibold text-navy underline">Download</a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {assetDlg.asset.kind === "deck" && (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">{assetDlg.asset.body}</p>
+                  <a href="#" onClick={(e) => e.preventDefault()} className="inline-flex items-center gap-1 rounded border border-border bg-card px-3 py-1.5 text-xs font-semibold text-navy hover:bg-muted/40">
+                    Open deck.pptx
+                  </a>
+                </div>
+              )}
+              {assetDlg.asset.kind === "contacts" && (
+                <>
+                  {(assetDlg.userContacts && assetDlg.userContacts.length > 0
+                    ? assetDlg.userContacts
+                    : assetDlg.asset.contacts ?? []
+                  ).map((c) => (
+                    <div key={c.id} className="rounded-md border border-border bg-background p-2 text-xs">
+                      <div className="font-semibold">{c.name || "—"}</div>
+                      <div className="text-muted-foreground">
+                        {[c.phone, c.area, c.role, c.brandPreference].filter(Boolean).join(" · ") || "—"}
+                      </div>
+                    </div>
+                  ))}
+                  {((assetDlg.userContacts?.length ?? 0) === 0 && (assetDlg.asset.contacts?.length ?? 0) === 0) && (
+                    <p className="text-xs text-muted-foreground">No contacts added yet.</p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setAssetDlg(null)} variant="outline">Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
 
 /* ---------------- shared: contacts table ---------------- */
 
