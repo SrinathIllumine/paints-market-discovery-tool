@@ -173,10 +173,19 @@ function DashboardPage() {
 
   const [historyOpen, setHistoryOpen] = useState(false);
   const [chartClusterId, setChartClusterId] = useState<string>("all");
-  const chartData = useMemo(
-    () => (chartClusterId === "all" ? MOM_CONVERSIONS_ALL : getClusterConversions(chartClusterId)),
-    [chartClusterId],
-  );
+  const totalConversions = useMemo(() => rows.reduce((s, r) => s + r.conversions, 0), [rows]);
+  const chartData = useMemo(() => {
+    if (chartClusterId === "all") return buildTrend("all", totalConversions);
+    const row = rows.find((r) => r.id === chartClusterId);
+    return buildTrend(chartClusterId, row?.conversions ?? 0);
+  }, [chartClusterId, totalConversions, rows]);
+
+  // Pagination — 5 rows per page
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
+  const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize));
+  const pageSafe = Math.min(page, totalPages);
+  const pagedRows = sortedRows.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
 
   return (
     <AppShell bottom={<BottomNav />}>
