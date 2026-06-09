@@ -393,6 +393,36 @@ export const useAppStore = create<State & Actions>()(
           };
         }),
 
+      setEventEstimate: (clusterId, eventId, patch) =>
+        set((state) => {
+          const cm = state.plan.eventEstimatesByCluster[clusterId] ?? {};
+          const prev = cm[eventId] ?? {};
+          return {
+            plan: {
+              ...state.plan,
+              eventEstimatesByCluster: {
+                ...state.plan.eventEstimatesByCluster,
+                [clusterId]: { ...cm, [eventId]: { ...prev, ...patch } },
+              },
+            },
+          };
+        }),
+
+      setPastEventFeedback: (clusterId, eventId, patch) =>
+        set((state) => {
+          const cm = state.plan.pastEventFeedbackByCluster[clusterId] ?? {};
+          const prev = cm[eventId] ?? {};
+          return {
+            plan: {
+              ...state.plan,
+              pastEventFeedbackByCluster: {
+                ...state.plan.pastEventFeedbackByCluster,
+                [clusterId]: { ...cm, [eventId]: { ...prev, ...patch } },
+              },
+            },
+          };
+        }),
+
       setRoadmapStep: (step, completed) =>
         set((state) => ({
           plan: {
