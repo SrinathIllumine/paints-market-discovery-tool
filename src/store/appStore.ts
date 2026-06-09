@@ -197,6 +197,8 @@ export const useAppStore = create<State & Actions>()(
         strategyContactsByCluster: {},
         selectedActionsByCluster: {},
         customActionsByCluster: {},
+        eventEstimatesByCluster: {},
+        pastEventFeedbackByCluster: {},
         roadmapCompletion: emptyRoadmap(),
       },
       sales: { prospectStages: {}, prospectActivity: {}, seededClusters: {} },
