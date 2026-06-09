@@ -46,6 +46,7 @@ export type ContactEntry = {
   phone?: string;
   area?: string;
   brandPreference?: string;
+  role?: string;
 };
 
 export type ContractorContact = ContactEntry;

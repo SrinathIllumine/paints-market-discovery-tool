@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SalesEnablementIndexRouteImport } from './routes/sales-enablement.index'
 import { Route as PlanIndexRouteImport } from './routes/plan/index'
 import { Route as MapIndexRouteImport } from './routes/map/index'
+import { Route as PlanPastRoadmapRouteImport } from './routes/plan/past-roadmap'
 import { Route as PlanClusterIdRouteImport } from './routes/plan/$clusterId'
 import { Route as MapClusterIdRouteImport } from './routes/map/$clusterId'
 import { Route as SalesEnablementClusterIdIndexRouteImport } from './routes/sales-enablement.$clusterId.index'
@@ -56,6 +57,11 @@ const MapIndexRoute = MapIndexRouteImport.update({
   path: '/map/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlanPastRoadmapRoute = PlanPastRoadmapRouteImport.update({
+  id: '/plan/past-roadmap',
+  path: '/plan/past-roadmap',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlanClusterIdRoute = PlanClusterIdRouteImport.update({
   id: '/plan/$clusterId',
   path: '/plan/$clusterId',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/sales-enablement': typeof SalesEnablementRouteWithChildren
   '/map/$clusterId': typeof MapClusterIdRoute
   '/plan/$clusterId': typeof PlanClusterIdRoute
+  '/plan/past-roadmap': typeof PlanPastRoadmapRoute
   '/map/': typeof MapIndexRoute
   '/plan/': typeof PlanIndexRoute
   '/sales-enablement/': typeof SalesEnablementIndexRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/market-potential': typeof MarketPotentialRoute
   '/map/$clusterId': typeof MapClusterIdRoute
   '/plan/$clusterId': typeof PlanClusterIdRoute
+  '/plan/past-roadmap': typeof PlanPastRoadmapRoute
   '/map': typeof MapIndexRoute
   '/plan': typeof PlanIndexRoute
   '/sales-enablement': typeof SalesEnablementIndexRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/sales-enablement': typeof SalesEnablementRouteWithChildren
   '/map/$clusterId': typeof MapClusterIdRoute
   '/plan/$clusterId': typeof PlanClusterIdRoute
+  '/plan/past-roadmap': typeof PlanPastRoadmapRoute
   '/map/': typeof MapIndexRoute
   '/plan/': typeof PlanIndexRoute
   '/sales-enablement/': typeof SalesEnablementIndexRoute
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/sales-enablement'
     | '/map/$clusterId'
     | '/plan/$clusterId'
+    | '/plan/past-roadmap'
     | '/map/'
     | '/plan/'
     | '/sales-enablement/'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/market-potential'
     | '/map/$clusterId'
     | '/plan/$clusterId'
+    | '/plan/past-roadmap'
     | '/map'
     | '/plan'
     | '/sales-enablement'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/sales-enablement'
     | '/map/$clusterId'
     | '/plan/$clusterId'
+    | '/plan/past-roadmap'
     | '/map/'
     | '/plan/'
     | '/sales-enablement/'
@@ -166,6 +178,7 @@ export interface RootRouteChildren {
   SalesEnablementRoute: typeof SalesEnablementRouteWithChildren
   MapClusterIdRoute: typeof MapClusterIdRoute
   PlanClusterIdRoute: typeof PlanClusterIdRoute
+  PlanPastRoadmapRoute: typeof PlanPastRoadmapRoute
   MapIndexRoute: typeof MapIndexRoute
   PlanIndexRoute: typeof PlanIndexRoute
 }
@@ -219,6 +232,13 @@ declare module '@tanstack/react-router' {
       path: '/map'
       fullPath: '/map/'
       preLoaderRoute: typeof MapIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plan/past-roadmap': {
+      id: '/plan/past-roadmap'
+      path: '/plan/past-roadmap'
+      fullPath: '/plan/past-roadmap'
+      preLoaderRoute: typeof PlanPastRoadmapRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/plan/$clusterId': {
@@ -276,6 +296,7 @@ const rootRouteChildren: RootRouteChildren = {
   SalesEnablementRoute: SalesEnablementRouteWithChildren,
   MapClusterIdRoute: MapClusterIdRoute,
   PlanClusterIdRoute: PlanClusterIdRoute,
+  PlanPastRoadmapRoute: PlanPastRoadmapRoute,
   MapIndexRoute: MapIndexRoute,
   PlanIndexRoute: PlanIndexRoute,
 }

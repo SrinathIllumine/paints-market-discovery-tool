@@ -79,6 +79,9 @@ export const EMPTY_PROSPECTS: Prospect[] = [];
 export const EMPTY_ACTIVITY: ProspectActivity = {};
 export const EMPTY_STAGE_MAP: Record<string, SalesStage> = {};
 
+export type EventEstimate = { participants?: number; contractors?: number };
+export type PastEventFeedback = { attended?: number; leads?: number; challenges?: string };
+
 type State = {
   clusters: Record<string, ClusterState>;
   stakeholders: Record<string, Stakeholder[]>;
@@ -102,6 +105,10 @@ type State = {
     selectedActionsByCluster: Record<string, Partial<Record<ConnectStrategy, string[]>>>;
     // user-added custom actions
     customActionsByCluster: Record<string, Partial<Record<ConnectStrategy, string[]>>>;
+    // estimates for each contribution event id (used in Stage 4 popup)
+    eventEstimatesByCluster: Record<string, Record<string, EventEstimate>>;
+    // past-roadmap feedback per cluster + event id
+    pastEventFeedbackByCluster: Record<string, Record<string, PastEventFeedback>>;
     roadmapCompletion: RoadmapCompletion;
   };
   assessments: Record<string, ClusterAssessment>;
@@ -136,6 +143,8 @@ type Actions = {
   toggleSelectedAction: (clusterId: string, strategy: ConnectStrategy, action: string) => void;
   addCustomAction: (clusterId: string, strategy: ConnectStrategy, text: string) => void;
   removeCustomAction: (clusterId: string, strategy: ConnectStrategy, text: string) => void;
+  setEventEstimate: (clusterId: string, eventId: string, patch: Partial<EventEstimate>) => void;
+  setPastEventFeedback: (clusterId: string, eventId: string, patch: Partial<PastEventFeedback>) => void;
 
   setRoadmapStep: (step: RoadmapStep, completed: boolean) => void;
   resetRoadmap: () => void;
@@ -190,6 +199,8 @@ export const useAppStore = create<State & Actions>()(
         strategyContactsByCluster: {},
         selectedActionsByCluster: {},
         customActionsByCluster: {},
+        eventEstimatesByCluster: {},
+        pastEventFeedbackByCluster: {},
         roadmapCompletion: emptyRoadmap(),
       },
       sales: { prospectStages: {}, prospectActivity: {}, seededClusters: {} },
@@ -294,10 +305,9 @@ export const useAppStore = create<State & Actions>()(
         set((state) => {
           const prev = state.plan.selectedStrategiesByCluster[clusterId] ?? [];
           const has = prev.includes(strategy);
-          let next: ConnectStrategy[];
-          if (has) next = prev.filter((s) => s !== strategy);
-          else if (prev.length >= 3) next = prev;
-          else next = [...prev, strategy];
+          const next: ConnectStrategy[] = has
+            ? prev.filter((s) => s !== strategy)
+            : [...prev, strategy];
           return {
             plan: {
               ...state.plan,
@@ -378,6 +388,36 @@ export const useAppStore = create<State & Actions>()(
               customActionsByCluster: {
                 ...state.plan.customActionsByCluster,
                 [clusterId]: { ...cm, [strategy]: prev.filter((a) => a !== text) },
+              },
+            },
+          };
+        }),
+
+      setEventEstimate: (clusterId, eventId, patch) =>
+        set((state) => {
+          const cm = state.plan.eventEstimatesByCluster[clusterId] ?? {};
+          const prev = cm[eventId] ?? {};
+          return {
+            plan: {
+              ...state.plan,
+              eventEstimatesByCluster: {
+                ...state.plan.eventEstimatesByCluster,
+                [clusterId]: { ...cm, [eventId]: { ...prev, ...patch } },
+              },
+            },
+          };
+        }),
+
+      setPastEventFeedback: (clusterId, eventId, patch) =>
+        set((state) => {
+          const cm = state.plan.pastEventFeedbackByCluster[clusterId] ?? {};
+          const prev = cm[eventId] ?? {};
+          return {
+            plan: {
+              ...state.plan,
+              pastEventFeedbackByCluster: {
+                ...state.plan.pastEventFeedbackByCluster,
+                [clusterId]: { ...cm, [eventId]: { ...prev, ...patch } },
               },
             },
           };

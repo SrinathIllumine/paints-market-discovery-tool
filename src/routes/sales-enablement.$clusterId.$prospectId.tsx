@@ -159,6 +159,8 @@ function ProspectDetailPage() {
       { key: "qCheckIn", label: "Set up a quarterly check-in cadence" },
       { key: "referrals", label: "Capture referral opportunities from the account" },
       { key: "amcOffer", label: "Offer an AMC / refresh proposal" },
+      { key: "felicitateContractors", label: `Felicitate top contractors involved in ${prospect.name}`, clickIn: contactsClickIn },
+      { key: "prospectTestimonial", label: `Capture a testimonial / case study from ${prospect.name}` },
     ],
   };
 
@@ -244,16 +246,22 @@ function ProspectDetailPage() {
             closure: "Commercials accepted; finalising supply and execution.",
             ongoing: "Project handed over; in continuous relationship.",
           };
-          const chosenStrategy = selectedStrategies[clusterId]?.[0] as ConnectStrategy | undefined;
+          const chosenStrategies = (selectedStrategies[clusterId] ?? []) as ConnectStrategy[];
           return (
             <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
               <h3 className="font-display text-lg">Where is the prospect currently?</h3>
               <p className="mt-2 text-sm">{STATUS[currentStage]}</p>
-              {chosenStrategy && (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Connect strategy chosen:{" "}
-                  <b className="text-foreground">{CONNECT_STRATEGY_LABEL[chosenStrategy]}</b>
-                </p>
+              {chosenStrategies.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground">Connect strategies chosen:</p>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {chosenStrategies.map((s) => (
+                      <span key={s} className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground">
+                        {CONNECT_STRATEGY_LABEL[s]}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
               {outcomesClickIn && (
                 <button
