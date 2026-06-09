@@ -184,8 +184,12 @@ function PlanClusterScreen() {
                         marketSelected={marketSelected}
                         customerStrategies={customerStrategies}
                         selectedActions={selectedActions[clusterId] ?? {}}
+                        customActions={customActions[clusterId] ?? {}}
+                        contactsByStrategy={strategyContacts[clusterId] ?? {}}
                         eventEstimates={eventEstimates[clusterId] ?? {}}
                         onToggleAction={(s, a) => toggleSelectedAction(clusterId, s, a)}
+                        onAddCustom={(s, t) => addCustomAction(clusterId, s, t)}
+                        onRemoveCustom={(s, t) => removeCustomAction(clusterId, s, t)}
                         onOpenEstimate={(eventId) => setEstimateEventId(eventId)}
                       />
                     )}
