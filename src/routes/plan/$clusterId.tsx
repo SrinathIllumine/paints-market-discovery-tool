@@ -485,17 +485,34 @@ function StrategyDetails({
   contacts: ContactEntry[];
   onContactsChange: (list: ContactEntry[]) => void;
 }) {
+  const strategyItems = useAppStore((s) => s.plan.strategyItemsByCluster);
+  const toggleStrategyItem = useAppStore((s) => s.toggleStrategyItem);
+
   if (strategy === "D2C") {
     const suggestions = getD2cInitiatives(clusterId);
+    const selectedD2c = strategyItems[clusterId]?.["D2C"] ?? [];
     return (
       <div className="space-y-1.5">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           SUGGESTED DIRECT-SALES STRATEGIES
         </p>
-        <ul className="list-disc space-y-1 pl-5 text-xs marker:text-critical">
-          {suggestions.map((s, i) => (
-            <li key={i}>{s}</li>
-          ))}
+        <ul className="space-y-1">
+          {suggestions.map((s, i) => {
+            const active = selectedD2c.includes(s);
+            return (
+              <li key={i}>
+                <label className="flex cursor-pointer items-start gap-2 rounded-md border border-border bg-card px-2 py-1.5 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={active}
+                    onChange={() => toggleStrategyItem(clusterId, "D2C", s)}
+                    className="mt-0.5 h-3.5 w-3.5 accent-critical"
+                  />
+                  <span className="leading-snug">{s}</span>
+                </label>
+              </li>
+            );
+          })}
         </ul>
       </div>
     );
