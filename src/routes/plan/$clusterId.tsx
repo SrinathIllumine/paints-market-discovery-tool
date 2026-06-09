@@ -347,6 +347,17 @@ function MarketStep({
   onToggleItem: (item: string) => void;
   onContactsChange: (list: ContactEntry[]) => void;
 }) {
+  const grouped: Record<MarketEngagementCategory, typeof MARKET_ENGAGEMENT_OPTIONS> = {
+    Knowledge: MARKET_ENGAGEMENT_OPTIONS.filter((o) => o.category === "Knowledge"),
+    Service:   MARKET_ENGAGEMENT_OPTIONS.filter((o) => o.category === "Service"),
+    Social:    MARKET_ENGAGEMENT_OPTIONS.filter((o) => o.category === "Social"),
+  };
+  const SUB_LABEL: Record<MarketEngagementCategory, string> = {
+    Knowledge: "Knowledge contribution",
+    Service:   "Service contribution",
+    Social:    "Social contribution",
+  };
+
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
@@ -354,38 +365,42 @@ function MarketStep({
         service and social contributions.
       </p>
 
-      <div className="space-y-2">
-        {MARKET_ENGAGEMENT_OPTIONS.map((opt) => {
-          const active = selected.includes(opt.id);
-          return (
-            <label
-              key={opt.id}
-              className={cn(
-                "flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm",
-                active ? "border-critical bg-critical/5" : "border-border bg-card",
-              )}
-            >
-              <input
-                type="checkbox"
-                checked={active}
-                onChange={() => onToggleItem(opt.id)}
-                className="mt-0.5 h-4 w-4 accent-critical"
-              />
-              <span className="min-w-0 flex-1 leading-snug">
-                <span className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold">{opt.label}</span>
-                  <span className={cn(
-                    "rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider",
-                    CATEGORY_TONE[opt.category],
-                  )}>
-                    {opt.category}
-                  </span>
-                </span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">{opt.description}</span>
-              </span>
-            </label>
-          );
-        })}
+      <div className="space-y-4">
+        {(Object.keys(grouped) as MarketEngagementCategory[]).map((cat) => (
+          <div key={cat} className="space-y-2">
+            <h4 className={cn(
+              "rounded-md border px-2 py-1 text-[11px] font-semibold uppercase tracking-wider",
+              CATEGORY_TONE[cat],
+            )}>
+              {SUB_LABEL[cat]}
+            </h4>
+            <div className="space-y-2">
+              {grouped[cat].map((opt) => {
+                const active = selected.includes(opt.id);
+                return (
+                  <label
+                    key={opt.id}
+                    className={cn(
+                      "flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm",
+                      active ? "border-critical bg-critical/5" : "border-border bg-card",
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={active}
+                      onChange={() => onToggleItem(opt.id)}
+                      className="mt-0.5 h-4 w-4 accent-critical"
+                    />
+                    <span className="min-w-0 flex-1 leading-snug">
+                      <span className="font-semibold">{opt.label}</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">{opt.description}</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       <ContactTable
