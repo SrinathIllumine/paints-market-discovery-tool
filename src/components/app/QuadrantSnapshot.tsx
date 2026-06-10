@@ -73,9 +73,8 @@ function QuadrantLabels({ xAxisMap, yAxisMap }: any) {
   const left = xAxis.x;
   const right = xAxis.x + xAxis.width;
   const top = yAxis.y;
-  const bottom = yAxis.y + yAxis.height;
   const midX = (left + right) / 2;
-  const midY = (top + bottom) / 2;
+  const midY = yAxis.y + yAxis.height / 2;
 
   const items = [
     { cx: (left + midX) / 2, cy: top + 18, l1: "HIGH POTENTIAL", l2: "LOW ACCESS" },
@@ -168,8 +167,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
           <XAxis
             type="number"
             dataKey="x"
-            domain={[0, 100]}
-            ticks={[0, 25, 50, 75, 100]}
+            domain={[-5, 105]}
             tick={false}
             tickLine={false}
             axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5 }}
@@ -187,17 +185,17 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
           <YAxis
             type="number"
             dataKey="y"
-            domain={[0, 100]}
-            ticks={[0, 25, 50, 75, 100]}
+            domain={[-5, 105]}
             tick={false}
             tickLine={false}
+            width={20}
             axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5 }}
           >
             <Label
               value="Potential →"
               angle={-90}
-              position="left"
-              offset={2}
+              position="insideLeft"
+              offset={10}
               fill={COLOR_LABEL_MUTED}
               fontSize={12}
               fontWeight={600}
