@@ -28,6 +28,7 @@ import {
   type ConnectStrategy,
   type ContactEntry,
   type MarketEngagementCategory,
+  type MarketEngagementOption,
 } from "@/lib/strategyContent";
 
 export const Route = createFileRoute("/plan/$clusterId")({
