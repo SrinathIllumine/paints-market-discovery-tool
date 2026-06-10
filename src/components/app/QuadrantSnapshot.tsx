@@ -47,23 +47,7 @@ function jitter(seed: string, amp = 2): number {
 }
 
 function wrapName(name: string, maxChars = 12): string[] {
-  const words = name.replace(/\s*\/\s*/g, " / ").split(/\s+/);
-  const lines: string[] = [];
-  let cur = "";
-  for (const w of words) {
-    if (!cur) cur = w;
-    else if ((cur + " " + w).length <= maxChars) cur += " " + w;
-    else {
-      lines.push(cur);
-      cur = w;
-    }
-  }
-  if (cur) lines.push(cur);
-  if (lines.length > 3) {
-    const tail = lines.slice(2).join(" ");
-    return [lines[0], lines[1], tail.length > maxChars + 2 ? tail.slice(0, maxChars) + "…" : tail];
-  }
-  return lines;
+  return [name]; // ← replace entire function body with this
 }
 
 function isRequired(name: string) {
