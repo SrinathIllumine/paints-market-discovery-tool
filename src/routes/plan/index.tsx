@@ -70,8 +70,8 @@ function PlanScreen() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="Stage 2 of 4"
-          title="Pick your Cluster for the Month"
+          eyebrow="STAGE 2 OF 3"
+          title="Select your Cluster for the Month"
           subtitle="June 2026"
         />
       }
