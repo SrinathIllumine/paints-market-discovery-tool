@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/plan/past-roadmap")({
   head: () => ({
     meta: [
-      { title: "Review Past Roadmap" },
+      { title: "Review Past Market Engagements" },
       { name: "description", content: "Review past contribution events planned across clusters." },
     ],
   }),
