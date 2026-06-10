@@ -165,13 +165,13 @@ function ClusterMapPage() {
 }
 
 function ClusterRow({
-  name, recommended, scores, onClick, onPlan,
+  name, recommended, scores, onClick,
 }: {
   name: string;
   recommended?: boolean;
   scores: { revenue: number; competitive: number; access: number; ease: number };
   onClick: () => void;
-  onPlan: () => void;
+  onPlan?: () => void;
 }) {
   void recommended;
   return (
@@ -195,16 +195,10 @@ function ClusterRow({
         </div>
         <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
       </button>
-      <Button
-        size="sm"
-        onClick={onPlan}
-        className="h-8 w-full gap-1.5 bg-navy text-xs font-semibold text-navy-foreground hover:bg-navy/90"
-      >
-        Create Engagement Plan for this Cluster <ChevronRight className="h-3.5 w-3.5" />
-      </Button>
     </div>
   );
 }
+
 
 function ScoreSubCard({ label, score }: { label: string; score: number }) {
   const hi = score >= 6;
