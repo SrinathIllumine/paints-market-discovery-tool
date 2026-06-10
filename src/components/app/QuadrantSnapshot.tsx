@@ -31,8 +31,11 @@ const COLOR_LABEL_MUTED = "#6b7280";
 const COLOR_DOT_DIM = "#a1a1aa";
 const COLOR_DOT_HI = "#ef4444";
 const COLOR_LABEL_HI = "#991b1b";
-const COLOR_LABEL_DIM = "#6b7280";
+const COLOR_LABEL_DIM = "#52525b";
 const COLOR_QUADRANT_HI = "rgba(239,68,68,0.10)";
+
+// Cluster names that must always appear
+const REQUIRED_NAMES = ["schools", "mid-size apartment"];
 
 function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
@@ -45,7 +48,7 @@ function jitter(seed: string, amp = 2): number {
   return norm * amp;
 }
 
-function wrapName(name: string, maxChars = 16): string[] {
+function wrapName(name: string, maxChars = 14): string[] {
   const words = name.replace(/\s*\/\s*/g, " / ").split(/\s+/);
   const lines: string[] = [];
   let cur = "";
@@ -65,6 +68,83 @@ function wrapName(name: string, maxChars = 16): string[] {
   return lines;
 }
 
+function isRequired(name: string) {
+  const n = name.toLowerCase();
+  return REQUIRED_NAMES.some((r) => n.includes(r));
+}
+
+/** Pick exactly 2 points per quadrant, always keeping required clusters. */
+function pickEight(allPoints: Point[]): Point[] {
+  const quadrant = (p: Point) => {
+    const qx = p.x >= 50 ? 1 : 0;
+    const qy = p.y >= 50 ? 1 : 0;
+    return qy * 2 + qx; // 0=BL 1=BR 2=TL 3=TR
+  };
+
+  const buckets: Point[][] = [[], [], [], []];
+  for (const p of allPoints) buckets[quadrant(p)].push(p);
+
+  const chosen: Point[] = [];
+  const chosenIds = new Set<string>();
+
+  // First pass: lock in required clusters
+  for (const p of allPoints) {
+    if (isRequired(p.name)) {
+      chosen.push(p);
+      chosenIds.add(p.id);
+    }
+  }
+
+  // Second pass: fill each quadrant up to 2
+  for (let q = 0; q < 4; q++) {
+    const inQ = chosen.filter((p) => quadrant(p) === q);
+    const remaining = buckets[q].filter((p) => !chosenIds.has(p.id));
+    let need = 2 - inQ.length;
+    for (const p of remaining) {
+      if (need <= 0) break;
+      chosen.push(p);
+      chosenIds.add(p.id);
+      need--;
+    }
+  }
+
+  return chosen;
+}
+
+// ── Above-dot label renderer ──────────────────────────────────────────────────
+function renderAboveLabel(color: string, weight: number) {
+  return (props: any) => {
+    const { x, y, payload } = props;
+    if (typeof x !== "number" || typeof y !== "number" || !payload) return null;
+    const lines = wrapName(payload.name, 14);
+    // Total height of label block (11px per line) so we lift the whole thing above the dot
+    const lineHeight = 11;
+    const totalH = lines.length * lineHeight;
+    const dotRadius = 6;
+    const gap = 4;
+    const baseY = y - dotRadius - gap - totalH;
+
+    return (
+      <text
+        x={x}
+        y={baseY}
+        fill={color}
+        fontSize={9}
+        fontWeight={weight}
+        textAnchor="middle"
+        style={{ pointerEvents: "none" }}
+      >
+        {lines.map((l, i) => (
+          <tspan key={i} x={x} dy={i === 0 ? 0 : lineHeight}>
+            {l}
+          </tspan>
+        ))}
+      </text>
+    );
+  };
+}
+
+// ── Axis Low / High labels ────────────────────────────────────────────────────
 function AxisLabels({ xAxisMap, yAxisMap }: any) {
   const xAxis = Object.values(xAxisMap ?? {})[0] as any;
   const yAxis = Object.values(yAxisMap ?? {})[0] as any;
@@ -77,19 +157,16 @@ function AxisLabels({ xAxisMap, yAxisMap }: any) {
   const midX = (left + right) / 2;
   const midY = (top + bottom) / 2;
 
-  // X axis Low/High: centred within each half, just below axis line
   const xLowCx = (left + midX) / 2;
   const xHighCx = (midX + right) / 2;
   const xLabelY = bottom + 16;
 
-  // Y axis Low/High: centred within each half, just left of axis line
   const yLowCy = (midY + bottom) / 2;
   const yHighCy = (top + midY) / 2;
   const yLabelX = left - 6;
 
   return (
     <>
-      {/* X axis — Low (left half centre) and High (right half centre) */}
       <text
         x={xLowCx}
         y={xLabelY}
@@ -112,8 +189,6 @@ function AxisLabels({ xAxisMap, yAxisMap }: any) {
       >
         High
       </text>
-
-      {/* Y axis — Low (bottom half centre) and High (top half centre), rotated */}
       <text
         x={yLabelX}
         y={yLowCy}
@@ -142,50 +217,28 @@ function AxisLabels({ xAxisMap, yAxisMap }: any) {
   );
 }
 
+// ── Main component ────────────────────────────────────────────────────────────
 export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
   const clusterStates = useAppStore((s) => s.clusters);
 
   const { highlighted, dim } = useMemo(() => {
-    const hi: Point[] = [];
-    const lo: Point[] = [];
-    for (const c of CLUSTERS) {
+    // Build all points
+    const all: Point[] = CLUSTERS.map((c) => {
       const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
       const sc = computeClusterScores(c, pc);
       const x = clamp(sc.accessRollupScore * 10 + jitter(c.id + "x", 2.5), 4, 96);
       const y = clamp(sc.potentialScore * 10 + jitter(c.id + "y", 2.5), 4, 96);
-      const isHi = !highlightId || c.id === highlightId;
-      const point: Point = { id: c.id, name: c.name, x, y, highlighted: isHi };
-      if (isHi) hi.push(point);
-      else lo.push(point);
-    }
-    return { highlighted: hi, dim: lo };
-  }, [clusterStates, highlightId]);
+      return { id: c.id, name: c.name, x, y, highlighted: !highlightId || c.id === highlightId };
+    });
 
-  const renderLabel =
-    (color: string, weight: number, onlyTopRight = false) =>
-    (props: any) => {
-      const { x, y, payload } = props;
-      if (typeof x !== "number" || typeof y !== "number" || !payload) return null;
-      if (onlyTopRight && !(payload.x >= 50 && payload.y >= 50)) return null;
-      const lines = wrapName(payload.name, 14);
-      return (
-        <text
-          x={x}
-          y={y}
-          fill={color}
-          fontSize={10}
-          fontWeight={weight}
-          textAnchor="middle"
-          style={{ pointerEvents: "none" }}
-        >
-          {lines.map((l, i) => (
-            <tspan key={i} x={x} dy={i === 0 ? 14 : 11}>
-              {l}
-            </tspan>
-          ))}
-        </text>
-      );
+    // Limit to 8, 2 per quadrant
+    const eight = pickEight(all);
+
+    return {
+      highlighted: eight.filter((p) => p.highlighted),
+      dim: eight.filter((p) => !p.highlighted),
     };
+  }, [clusterStates, highlightId]);
 
   return (
     <div className="h-[480px] w-full">
@@ -222,7 +275,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
             domain={[-5, 105]}
             tick={false}
             tickLine={false}
-            width={40}
+            width={20}
             axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5 }}
           >
             <Label
@@ -238,17 +291,18 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
 
           <ZAxis range={[80, 80]} />
 
+          {/* No tooltip needed — names always visible */}
           <Tooltip
             cursor={{ strokeDasharray: "3 3" }}
             content={({ active, payload }) => {
-              if (!active || !payload || payload.length === 0) return null;
+              if (!active || !payload?.length) return null;
               const p = payload[0].payload as Point;
               return (
                 <div
                   style={{
                     borderRadius: 6,
                     border: "0.5px solid rgba(0,0,0,0.1)",
-                    background: "#ffffff",
+                    background: "#fff",
                     color: "#111827",
                     padding: "4px 8px",
                     fontSize: 11,
@@ -261,16 +315,15 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
             }}
           />
 
-          {/* Low/High axis labels only — no quadrant title labels */}
           <Customized component={AxisLabels} />
 
           {dim.length > 0 && (
             <Scatter
               data={dim}
               fill={COLOR_DOT_DIM}
-              fillOpacity={0.55}
+              fillOpacity={0.7}
               shape="circle"
-              label={renderLabel(COLOR_LABEL_DIM, 600, true) as any}
+              label={renderAboveLabel(COLOR_LABEL_DIM, 600) as any}
             />
           )}
 
@@ -279,7 +332,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
               data={highlighted}
               fill={COLOR_DOT_HI}
               shape="circle"
-              label={renderLabel(COLOR_LABEL_HI, 700, false) as any}
+              label={renderAboveLabel(COLOR_LABEL_HI, 700) as any}
             />
           )}
         </ScatterChart>
