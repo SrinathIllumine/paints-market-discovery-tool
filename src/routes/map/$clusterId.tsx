@@ -81,34 +81,69 @@ function ClusterDetailScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clusterId]);
 
+  const hasProspects = (state?.prospects.length ?? 0) > 0;
   useEffect(() => {
     if (!cluster) return;
-    if (!state || state.prospects.length > 0) return;
+    if (hasProspects) return;
+    if (loading) return;
+
+    // Divide Panvel area into a 4x4 grid of overlapping sub-regions and run
+    // parallel Places searches. Google text-search caps results at ~60 per
+    // query, so a single 25km query misses most prospects in dense clusters.
+    const GRID = 4;
+    const STEP = 0.045; // ~5 km
+    const RADIUS_M = 6000;
+    const centers: Array<{ lat: number; lng: number }> = [];
+    const offset = (GRID - 1) / 2;
+    for (let i = 0; i < GRID; i++) {
+      for (let j = 0; j < GRID; j++) {
+        centers.push({
+          lat: PANVEL_CENTER.lat + (i - offset) * STEP,
+          lng: PANVEL_CENTER.lng + (j - offset) * STEP,
+        });
+      }
+    }
+
     setLoading(true);
-    callPlaces({
-      data: {
-        textQuery: cluster.placesQuery,
-        lat: PANVEL_CENTER.lat,
-        lng: PANVEL_CENTER.lng,
-        radiusMeters: 25000,
-      },
-    })
-      .then((res) => {
-        const mapped: Prospect[] = res.places.map((p) => ({
-          id: p.id,
-          name: p.name,
-          lat: p.lat,
-          lng: p.lng,
-          placeId: p.id,
-          locality: p.formattedAddress,
-          source: "places",
-        }));
+    Promise.all(
+      centers.map((c) =>
+        callPlaces({
+          data: {
+            textQuery: cluster.placesQuery,
+            lat: c.lat,
+            lng: c.lng,
+            radiusMeters: RADIUS_M,
+          },
+        }).catch((e) => {
+          console.error("Places sub-region failed", c, e);
+          return { places: [] as Awaited<ReturnType<typeof callPlaces>>["places"] };
+        }),
+      ),
+    )
+      .then((results) => {
+        const seen = new Set<string>();
+        const mapped: Prospect[] = [];
+        for (const res of results) {
+          for (const p of res.places) {
+            if (seen.has(p.id)) continue;
+            seen.add(p.id);
+            mapped.push({
+              id: p.id,
+              name: p.name,
+              lat: p.lat,
+              lng: p.lng,
+              placeId: p.id,
+              locality: p.formattedAddress,
+              source: "places",
+            });
+          }
+        }
         setProspects(clusterId, mapped);
       })
       .catch((e) => console.error(e))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cluster?.id]);
+  }, [cluster?.id, hasProspects]);
 
   const prospects = state?.prospects ?? [];
   const regions = useMemo(() => groupIntoRegions(prospects), [prospects]);
