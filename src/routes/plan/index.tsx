@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
@@ -77,20 +77,16 @@ function PlanScreen() {
       }
     >
       <div className="space-y-6 px-6 py-8">
-        <Link
-          to="/plan/past-roadmap"
-          className="flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-medium text-navy hover:bg-muted/40"
-        >
-          <span className="flex items-center gap-2"><History className="h-4 w-4" /> Review Past Market Engagements</span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </Link>
+        <div className="space-y-2">
+          <h2 className="font-display text-lg leading-tight">Select a cluster to plan for the month</h2>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search clusters…"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          />
+        </div>
 
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search clusters…"
-          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-        />
 
         {recommended.length > 0 && (
           <section className="rounded-xl border border-border bg-card">
