@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
@@ -319,8 +319,18 @@ function ClusterDetailScreen() {
           </div>
         </section>
 
+        <Button
+          asChild
+          size="lg"
+          className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
+        >
+          <Link to="/plan/$clusterId" params={{ clusterId }}>
+            Create Engagement Plan for this Cluster
+          </Link>
+        </Button>
 
       </div>
+
 
       <AddProspectSheet
         open={sheetOpen}
