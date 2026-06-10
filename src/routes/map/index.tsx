@@ -30,7 +30,7 @@ function ClusterPotentialScreen() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="Stage 1 of 4 · Analyze Market Potential"
+          eyebrow="STAGE 1 OF 3 · MAP MY MARKET POTENTIAL"
           title="Clusters in Panvel"
           subtitle="Tap a bubble to open the cluster card and map its potential."
         />
