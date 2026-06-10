@@ -207,7 +207,7 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
           x={cx + dx}
           y={cy + dy}
           textAnchor={anchor}
-          fontSize={5}
+          fontSize={9.5}
           fontWeight={500}
           fill={COLOR_LABEL}
           style={{ pointerEvents: "none", userSelect: "none" }}
@@ -309,7 +309,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
         <ScatterChart margin={{ top: 40, right: 28, bottom: 32, left: 8 }}>
           <CartesianGrid stroke={COLOR_GRID} strokeWidth={0.75} />
 
-          <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill={COLOR_QUADRANT_HI} stroke="none" />
+          <ReferenceArea x1={50} x2={105} y1={50} y2={105} fill={COLOR_QUADRANT_HI} stroke="none" />
           <ReferenceLine x={50} stroke={COLOR_AXIS} strokeWidth={2} />
           <ReferenceLine y={50} stroke={COLOR_AXIS} strokeWidth={2} />
 
