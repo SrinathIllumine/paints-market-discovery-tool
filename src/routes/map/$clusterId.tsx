@@ -319,8 +319,18 @@ function ClusterDetailScreen() {
           </div>
         </section>
 
+        <Button
+          asChild
+          size="lg"
+          className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
+        >
+          <Link to="/plan/$clusterId" params={{ clusterId }}>
+            Create Engagement Plan for this Cluster
+          </Link>
+        </Button>
 
       </div>
+
 
       <AddProspectSheet
         open={sheetOpen}
