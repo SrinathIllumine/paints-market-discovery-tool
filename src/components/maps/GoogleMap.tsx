@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { loadGoogleMaps } from "@/lib/googleMaps";
 import { PANVEL_CENTER } from "@/data/clusters";
 import type { Prospect } from "@/store/appStore";
@@ -36,9 +36,17 @@ export function GoogleMap({
   const boundaryLineRef = useRef<google.maps.Polyline | null>(null);
   const infoRef = useRef<google.maps.InfoWindow | null>(null);
   const clickListenerRef = useRef<google.maps.MapsEventListener | null>(null);
+
+  // FIX 2: keep selectedIds in a ref so marker click handlers always see latest value
+  const selectedIdsRef = useRef<string[]>(selectedIds);
+  useEffect(() => {
+    selectedIdsRef.current = selectedIds;
+  }, [selectedIds]);
+
   const [ready, setReady] = useState(false);
   const [mapType, setMapType] = useState<"roadmap" | "hybrid">("roadmap");
 
+  // ── Init map ────────────────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
     loadGoogleMaps()
@@ -57,15 +65,27 @@ export function GoogleMap({
         setReady(true);
       })
       .catch((err) => console.error("Maps load failed", err));
+
     return () => {
       cancelled = true;
+      // FIX 4: clean up markers on unmount
+      for (const marker of markersRef.current.values()) marker.setMap(null);
+      markersRef.current.clear();
+      for (const poly of polygonsRef.current) poly.setMap(null);
+      polygonsRef.current = [];
+      for (const line of regionLinesRef.current) line.setMap(null);
+      regionLinesRef.current = [];
+      boundaryRef.current?.setMap(null);
+      boundaryLineRef.current?.setMap(null);
     };
   }, []);
 
+  // ── Map type toggle ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (mapRef.current) mapRef.current.setMapTypeId(mapType);
   }, [mapType]);
 
+  // ── Pin-picking cursor + click listener ────────────────────────────────────
   useEffect(() => {
     if (!ready || !mapRef.current) return;
     if (clickListenerRef.current) {
@@ -75,13 +95,10 @@ export function GoogleMap({
     const el = containerRef.current;
     if (el) el.style.cursor = pickingPin ? "crosshair" : "";
     if (pickingPin && onPinDropped) {
-      clickListenerRef.current = mapRef.current.addListener(
-        "click",
-        (e: google.maps.MapMouseEvent) => {
-          if (!e.latLng) return;
-          onPinDropped({ lat: e.latLng.lat(), lng: e.latLng.lng() });
-        },
-      );
+      clickListenerRef.current = mapRef.current.addListener("click", (e: google.maps.MapMouseEvent) => {
+        if (!e.latLng) return;
+        onPinDropped({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+      });
     }
     return () => {
       if (clickListenerRef.current) {
@@ -91,30 +108,35 @@ export function GoogleMap({
     };
   }, [ready, pickingPin, onPinDropped]);
 
-  // Color lookup per prospect
-  const colorById = new Map<string, string>();
-  if (regions) {
-    for (const r of regions) for (const p of r.prospects) colorById.set(p.id, r.color);
-  }
+  // FIX 1: memoize colorById so it's not rebuilt on every render
+  const colorById = useMemo(() => {
+    const map = new Map<string, string>();
+    if (regions) {
+      for (const r of regions) for (const p of r.prospects) map.set(p.id, r.color);
+    }
+    return map;
+  }, [regions]);
 
-  // Markers
+  // ── Markers ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!ready || !mapRef.current || !window.google) return;
     const g = window.google;
     const map = mapRef.current;
     const existing = markersRef.current;
     const nextIds = new Set(prospects.map((p) => p.id));
+
+    // Remove stale markers
     for (const [id, marker] of existing) {
       if (!nextIds.has(id)) {
         marker.setMap(null);
         existing.delete(id);
       }
     }
+
     for (const p of prospects) {
       const isSelected = selectedIds.includes(p.id);
       const regionColor = colorById.get(p.id);
       const baseColor = regionColor ?? (isSelected ? "#dc2626" : "#94a3b8");
-      let marker = existing.get(p.id);
       const icon = {
         path: g.maps.SymbolPath.CIRCLE,
         scale: isSelected ? 8 : 6,
@@ -123,6 +145,8 @@ export function GoogleMap({
         strokeColor: "#ffffff",
         strokeWeight: 2,
       };
+
+      let marker = existing.get(p.id);
       if (!marker) {
         marker = new g.maps.Marker({
           position: { lat: p.lat, lng: p.lng },
@@ -130,54 +154,69 @@ export function GoogleMap({
           title: p.name,
           icon,
         });
+
         marker.addListener("click", () => {
           if (!infoRef.current) return;
-          const isSel = selectedIds.includes(p.id);
+
+          // FIX 2: read from ref so we always have the latest selectedIds
+          const isSel = selectedIdsRef.current.includes(p.id);
+
           const html = `
-            <div style="font-family: Manrope, sans-serif; min-width:180px">
+            <div style="font-family:Manrope,sans-serif;min-width:180px">
               <div style="font-weight:600;font-size:13px;color:#0f172a;margin-bottom:2px">${escapeHtml(p.name)}</div>
               ${p.locality ? `<div style="font-size:11px;color:#64748b">${escapeHtml(p.locality)}</div>` : ""}
               ${readOnly ? "" : `<button id="toggle-${p.id}" style="margin-top:8px;background:${isSel ? "#e2e8f0" : "#dc2626"};color:${isSel ? "#0f172a" : "#fff"};border:none;padding:6px 10px;border-radius:8px;font-weight:600;font-size:12px;cursor:pointer">${isSel ? "Remove from map" : "Add to map"}</button>`}
             </div>`;
+
           infoRef.current.setContent(html);
           infoRef.current.open({ map, anchor: marker });
+
           if (!readOnly) {
-            setTimeout(() => {
+            // FIX 3: use domready instead of setTimeout to attach button handler
+            google.maps.event.addListenerOnce(infoRef.current, "domready", () => {
               const btn = document.getElementById(`toggle-${p.id}`);
-              if (btn) btn.onclick = () => {
-                onToggle(p.id);
-                infoRef.current?.close();
-              };
-            }, 0);
+              if (btn) {
+                btn.onclick = () => {
+                  onToggle(p.id);
+                  infoRef.current?.close();
+                };
+              }
+            });
           }
         });
+
         existing.set(p.id, marker);
       } else {
         marker.setPosition({ lat: p.lat, lng: p.lng });
         marker.setIcon(icon);
       }
     }
-  }, [ready, prospects, selectedIds, onToggle, readOnly, regions]);
 
-  // Region polygons (dotted outline via Polyline, soft fill via Polygon)
+    // FIX 4: clean up all markers if this effect re-runs after unmount
+    return () => {
+      for (const marker of markersRef.current.values()) marker.setMap(null);
+      markersRef.current.clear();
+    };
+  }, [ready, prospects, selectedIds, onToggle, readOnly, colorById]);
+
+  // ── Region polygons (dotted outline + soft fill) ───────────────────────────
   useEffect(() => {
     if (!ready || !mapRef.current || !window.google) return;
     const g = window.google;
+
     for (const poly of polygonsRef.current) poly.setMap(null);
     polygonsRef.current = [];
     for (const line of regionLinesRef.current) line.setMap(null);
     regionLinesRef.current = [];
+
     if (!regions) return;
 
-    const dashSymbol = {
-      path: "M 0,-1 0,1",
-      strokeOpacity: 1,
-      scale: 3,
-    };
+    const dashSymbol = { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 3 };
 
     for (const r of regions) {
       if (r.prospects.length < 3) continue;
       const hull = convexHull(r.prospects.map((p) => ({ lat: p.lat, lng: p.lng })));
+
       const fill = new g.maps.Polygon({
         paths: hull,
         strokeOpacity: 0,
@@ -187,9 +226,9 @@ export function GoogleMap({
         clickable: false,
       });
       polygonsRef.current.push(fill);
-      const closed = [...hull, hull[0]];
+
       const line = new g.maps.Polyline({
-        path: closed,
+        path: [...hull, hull[0]],
         strokeOpacity: 0,
         icons: [{ icon: { ...dashSymbol, strokeColor: r.color }, offset: "0", repeat: "12px" }],
         map: mapRef.current,
@@ -197,21 +236,28 @@ export function GoogleMap({
       });
       regionLinesRef.current.push(line);
     }
+
+    // FIX 4: clean up polygons on re-run / unmount
+    return () => {
+      for (const poly of polygonsRef.current) poly.setMap(null);
+      polygonsRef.current = [];
+      for (const line of regionLinesRef.current) line.setMap(null);
+      regionLinesRef.current = [];
+    };
   }, [ready, regions]);
 
-  // Panvel boundary (dotted outline)
+  // ── Panvel boundary (dotted outline) ──────────────────────────────────────
   useEffect(() => {
     if (!ready || !mapRef.current || !window.google) return;
     const g = window.google;
-    if (boundaryRef.current) {
-      boundaryRef.current.setMap(null);
-      boundaryRef.current = null;
-    }
-    if (boundaryLineRef.current) {
-      boundaryLineRef.current.setMap(null);
-      boundaryLineRef.current = null;
-    }
+
+    boundaryRef.current?.setMap(null);
+    boundaryRef.current = null;
+    boundaryLineRef.current?.setMap(null);
+    boundaryLineRef.current = null;
+
     if (!boundary || boundary.length < 3) return;
+
     boundaryRef.current = new g.maps.Polygon({
       paths: boundary,
       strokeOpacity: 0,
@@ -220,6 +266,7 @@ export function GoogleMap({
       map: mapRef.current,
       clickable: false,
     });
+
     boundaryLineRef.current = new g.maps.Polyline({
       path: [...boundary, boundary[0]],
       strokeOpacity: 0,
@@ -233,6 +280,14 @@ export function GoogleMap({
       map: mapRef.current,
       clickable: false,
     });
+
+    // FIX 4: clean up boundary on re-run / unmount
+    return () => {
+      boundaryRef.current?.setMap(null);
+      boundaryRef.current = null;
+      boundaryLineRef.current?.setMap(null);
+      boundaryLineRef.current = null;
+    };
   }, [ready, boundary]);
 
   return (
@@ -258,7 +313,5 @@ export function GoogleMap({
 }
 
 function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
-  );
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
