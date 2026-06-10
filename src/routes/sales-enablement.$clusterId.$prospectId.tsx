@@ -197,7 +197,7 @@ function ProspectDetailPage() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow={cluster.name}
+          eyebrow="STAGE 3 OF 3 · SALES ENABLERS"
           title={prospect.name}
           subtitle={prospect.locality}
           backTo={`/sales-enablement/${clusterId}`}
