@@ -61,12 +61,13 @@ function PastRoadmapPage() {
         <StageHeader
           eyebrow="Planning"
           title="Review Past Market Engagements"
-          subtitle="Capture how earlier events went."
           backTo="/plan"
         />
       }
     >
       <div className="space-y-3 px-6 py-6">
+        <h2 className="font-display text-lg leading-tight">Capture how earlier events went</h2>
+
         {clusterList.map((c) => {
           const events = PAST_BY_CLUSTER[c.id] ?? [];
           const isOpen = openCluster === c.id;

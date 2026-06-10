@@ -8,7 +8,8 @@ import { CLUSTERS } from "@/data/clusters";
 import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
 import { cn } from "@/lib/utils";
-import { ChevronRight, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronRight, Search } from "lucide-react";
 
 export const Route = createFileRoute("/market-potential")({
   head: () => ({
@@ -24,6 +25,8 @@ function ClusterMapPage() {
   const navigate = useNavigate();
   const clusterStates = useAppStore((s) => s.clusters);
   const [search, setSearch] = useState("");
+  const [recOpen, setRecOpen] = useState(true);
+  const [othersOpen, setOthersOpen] = useState(false);
 
   const scored = useMemo(() => {
     return CLUSTERS.map((c) => {
@@ -96,40 +99,60 @@ function ClusterMapPage() {
           </div>
 
           {recommended.length > 0 && (
-            <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
-                Recommended for You
-              </p>
-              <div className="space-y-2">
-                {recommended.map(({ c, sc }) => (
-                  <ClusterRow
-                    key={c.id}
-                    name={c.name}
-                    recommended
-                    scores={sc}
-                    onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
-                  />
-                ))}
-              </div>
-            </div>
+            <section className="rounded-xl border border-border bg-card">
+              <button
+                type="button"
+                onClick={() => setRecOpen((v) => !v)}
+                className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
+              >
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
+                  Recommended for You ({recommended.length})
+                </span>
+                <ChevronDown className={cn("h-4 w-4 transition-transform", !recOpen && "-rotate-90")} />
+              </button>
+              {recOpen && (
+                <div className="space-y-2 border-t border-border p-2">
+                  {recommended.map(({ c, sc }) => (
+                    <ClusterRow
+                      key={c.id}
+                      name={c.name}
+                      recommended
+                      scores={sc}
+                      onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
+                      onPlan={() => navigate({ to: "/plan/$clusterId", params: { clusterId: c.id } })}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
           )}
 
           {others.length > 0 && (
-            <div>
-              <p className="mb-2 mt-4 text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
-                All Other Clusters
-              </p>
-              <div className="space-y-2">
-                {others.map(({ c, sc }) => (
-                  <ClusterRow
-                    key={c.id}
-                    name={c.name}
-                    scores={sc}
-                    onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
-                  />
-                ))}
-              </div>
-            </div>
+            <section className="rounded-xl border border-border bg-card">
+              <button
+                type="button"
+                onClick={() => setOthersOpen((v) => !v)}
+                className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
+              >
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
+                  All Other Clusters ({others.length})
+                </span>
+                <ChevronDown className={cn("h-4 w-4 transition-transform", !othersOpen && "-rotate-90")} />
+              </button>
+              {othersOpen && (
+                <div className="space-y-2 border-t border-border p-2">
+                  {others.map(({ c, sc }) => (
+                    <ClusterRow
+                      key={c.id}
+                      name={c.name}
+                      scores={sc}
+                      onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
+                      onPlan={() => navigate({ to: "/plan/$clusterId", params: { clusterId: c.id } })}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
           )}
 
           {filtered.length === 0 && (
@@ -142,33 +165,44 @@ function ClusterMapPage() {
 }
 
 function ClusterRow({
-  name, recommended, scores, onClick,
+  name, recommended, scores, onClick, onPlan,
 }: {
   name: string;
   recommended?: boolean;
   scores: { revenue: number; competitive: number; access: number; ease: number };
   onClick: () => void;
+  onPlan: () => void;
 }) {
+  void recommended;
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-card p-3 text-left shadow-sm transition-colors hover:bg-muted/40"
-    >
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="truncate text-sm font-semibold">{name}</p>
-        </div>
+    <div className="group flex w-full flex-col gap-2 rounded-xl border border-border bg-card p-3 text-left shadow-sm">
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex w-full items-start justify-between gap-3 text-left"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="truncate text-sm font-semibold">{name}</p>
+          </div>
 
-        <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-          <ScoreSubCard label="Revenue" score={scores.revenue} />
-          <ScoreSubCard label="Competitive" score={scores.competitive} />
-          <ScoreSubCard label="Access" score={scores.access} />
-          <ScoreSubCard label="Ease" score={scores.ease} />
+          <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+            <ScoreSubCard label="Revenue" score={scores.revenue} />
+            <ScoreSubCard label="Competitive" score={scores.competitive} />
+            <ScoreSubCard label="Access" score={scores.access} />
+            <ScoreSubCard label="Ease" score={scores.ease} />
+          </div>
         </div>
-      </div>
-      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-    </button>
+        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+      </button>
+      <Button
+        size="sm"
+        onClick={onPlan}
+        className="h-8 w-full gap-1.5 bg-navy text-xs font-semibold text-navy-foreground hover:bg-navy/90"
+      >
+        Create Engagement Plan for this Cluster <ChevronRight className="h-3.5 w-3.5" />
+      </Button>
+    </div>
   );
 }
 

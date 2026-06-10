@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Map as MapIcon, Users, Lightbulb, ArrowRight } from "lucide-react";
+import { Map as MapIcon, Users, Lightbulb, ArrowRight, History } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { BottomNav } from "@/components/app/BottomNav";
 import { useAppStore } from "@/store/appStore";
@@ -82,28 +82,47 @@ function IntroScreen() {
 
 
       <div className="space-y-3 px-5 py-5">
-        {props.map(({ icon: Icon, title, desc, to, progress }) => (
-          <Link
-            key={title}
-            to={to}
-            className="relative flex items-start gap-3 rounded-2xl border border-border bg-card p-4 pb-7 text-left shadow-sm transition-colors hover:bg-muted/40"
-          >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-critical/10 text-critical">
-              <Icon className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="font-display text-lg leading-tight">{title}</h3>
-              <p className="mt-0.5 text-sm text-muted-foreground">{desc}</p>
-            </div>
-            <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
-            {progress && (
-              <span className="absolute bottom-2 right-3 text-[11px] font-semibold text-critical">
-                {progress}
-              </span>
+        {props.map(({ icon: Icon, title, desc, to, progress }, idx) => (
+          <div key={title} className="space-y-3">
+            <Link
+              to={to}
+              className="relative flex items-start gap-3 rounded-2xl border border-border bg-card p-4 pb-7 text-left shadow-sm transition-colors hover:bg-muted/40"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-critical/10 text-critical">
+                <Icon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-display text-lg leading-tight">{title}</h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">{desc}</p>
+              </div>
+              <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+              {progress && (
+                <span className="absolute bottom-2 right-3 text-[11px] font-semibold text-critical">
+                  {progress}
+                </span>
+              )}
+            </Link>
+            {idx === 1 && (
+              <div className="grid grid-cols-2 gap-3">
+                <div />
+                <Link
+                  to="/plan/past-roadmap"
+                  className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-card p-3 text-left shadow-sm transition-colors hover:bg-muted/40"
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-critical/10 text-critical">
+                      <History className="h-4 w-4" />
+                    </div>
+                    <p className="min-w-0 font-display text-sm leading-tight">Review Past Market Engagements</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </Link>
+              </div>
             )}
-          </Link>
+          </div>
         ))}
       </div>
+
     </AppShell>
   );
 }
