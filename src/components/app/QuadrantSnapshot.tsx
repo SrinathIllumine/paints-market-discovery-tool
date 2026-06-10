@@ -17,23 +17,22 @@ import { CLUSTERS } from "@/data/clusters";
 import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
 
-type Point = {
-  id: string;
-  name: string;
-  x: number;
-  y: number;
-  highlighted: boolean;
-};
+type Point = { id: string; name: string; x: number; y: number; highlighted: boolean };
 
-const COLOR_AXIS = "#000000";
-const COLOR_GRID = "rgba(0,0,0,0.12)";
-const COLOR_LABEL_MUTED = "#6b7280";
-const COLOR_DOT_DIM = "#a1a1aa";
+const COLOR_AXIS = "#1a1a1a";
+const COLOR_GRID = "rgba(0,0,0,0.08)";
+const COLOR_LABEL_MUTED = "#9ca3af";
+const COLOR_AXIS_LABEL = "#6b7280";
+const COLOR_DOT_DIM = "#f87171";
 const COLOR_DOT_HI = "#ef4444";
-const COLOR_LABEL = "#9ca3af"; // light gray for all labels
-const COLOR_QUADRANT_HI = "rgba(239,68,68,0.10)";
+const COLOR_CLUSTER_LBL = "#6b7280";
+const COLOR_QUADRANT_HI = "rgba(239,68,68,0.07)";
 
 const REQUIRED_NAMES = ["schools", "mid-size apartment"];
+const DOT_R = 7;
+const PAD = 10;
+const FONT_SIZE = 10;
+const MAX_NAME_CHARS = 26;
 
 function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
@@ -42,12 +41,11 @@ function clamp(v: number, lo: number, hi: number) {
 function jitter(seed: string, amp = 2): number {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
-  const norm = ((Math.abs(h) % 1000) / 1000) * 2 - 1;
-  return norm * amp;
+  return (((Math.abs(h) % 1000) / 1000) * 2 - 1) * amp;
 }
 
-function wrapName(name: string, maxChars = 12): string[] {
-  return [name]; // ← replace entire function body with this
+function truncate(name: string, max = MAX_NAME_CHARS) {
+  return name.length > max ? name.slice(0, max - 1) + "…" : name;
 }
 
 function isRequired(name: string) {
@@ -58,24 +56,21 @@ function pickEight(all: Point[]): Point[] {
   const quadrant = (p: Point) => (p.y >= 50 ? 2 : 0) + (p.x >= 50 ? 1 : 0);
   const buckets: Point[][] = [[], [], [], []];
   for (const p of all) buckets[quadrant(p)].push(p);
-
   const chosen: Point[] = [];
-  const chosenIds = new Set<string>();
-
+  const ids = new Set<string>();
   for (const p of all) {
     if (isRequired(p.name)) {
       chosen.push(p);
-      chosenIds.add(p.id);
+      ids.add(p.id);
     }
   }
   for (let q = 0; q < 4; q++) {
-    const already = chosen.filter((p) => quadrant(p) === q).length;
-    let need = 2 - already;
+    let need = 2 - chosen.filter((p) => quadrant(p) === q).length;
     for (const p of buckets[q]) {
       if (need <= 0) break;
-      if (!chosenIds.has(p.id)) {
+      if (!ids.has(p.id)) {
         chosen.push(p);
-        chosenIds.add(p.id);
+        ids.add(p.id);
         need--;
       }
     }
@@ -88,64 +83,82 @@ function toPixel(v: number, dMin: number, dMax: number, pStart: number, pSize: n
 }
 
 /**
- * Pick the best label placement for a dot so it avoids the axis lines
- * and stays inside the chart area.
+ * Radial outward placement:
+ * 1. Cast a ray from the chart centre through the dot.
+ * 2. Anchor the label at DOT_R + PAD along that ray.
+ * 3. textAnchor follows the horizontal direction of the ray.
+ * 4. Hard clamp so nothing leaves the chart area.
  *
- * Returns { dx, dy, anchor } where dx/dy are offsets from the dot centre
- * and anchor is the SVG textAnchor value.
- *
- * Strategy:
- *   - Prefer the direction with the most space from the dot to the nearest wall/axis.
- *   - Horizontal placement (left/right) when x is clearly off-centre.
- *   - Vertical placement (above/below) otherwise, using the half with more room.
+ * For two dots that share nearly the same angle, we rotate the
+ * label by ±15° so they fan out instead of stacking.
  */
-function labelPlacement(
-  px: number,
-  py: number,
-  chartLeft: number,
-  chartRight: number,
-  chartTop: number,
-  chartBottom: number,
+function computeLabelPos(
+  cx: number,
+  cy: number,
   midPx: number,
   midPy: number,
-): { dx: number; dy: number; lineOffsetDir: 1 | -1; anchor: "start" | "end" | "middle" } {
-  const DOT_R = 6;
-  const PAD = 8; // gap between dot edge and text
-
-  const spaceRight = chartRight - px;
-  const spaceLeft = px - chartLeft;
-  const spaceAbove = py - chartTop;
-  const spaceBelow = chartBottom - py;
-
-  const LINE_H = 11;
-  const LINES = 3; // worst-case lines
-  const labelHeight = LINES * LINE_H;
-  const labelWidth = 60; // approx max pixel width
-
-  // Prefer horizontal if there's clearly more horizontal room on one side
-  const hBias = Math.abs(spaceRight - spaceLeft);
-  const vBias = Math.abs(spaceBelow - spaceAbove);
-
-  if (hBias > vBias) {
-    // Place left or right of dot
-    if (spaceRight >= spaceLeft) {
-      return { dx: DOT_R + PAD, dy: -labelHeight / 2, lineOffsetDir: 1, anchor: "start" };
-    } else {
-      return { dx: -(DOT_R + PAD + labelWidth), dy: -labelHeight / 2, lineOffsetDir: 1, anchor: "start" };
-    }
-  } else {
-    // Place above or below dot
-    if (spaceAbove >= spaceBelow) {
-      // Above: last tspan lands just above dot
-      return { dx: 0, dy: -(DOT_R + PAD + labelHeight), lineOffsetDir: 1, anchor: "middle" };
-    } else {
-      // Below: first tspan starts just below dot
-      return { dx: 0, dy: DOT_R + PAD, lineOffsetDir: 1, anchor: "middle" };
-    }
+  pLeft: number,
+  pRight: number,
+  pTop: number,
+  pBottom: number,
+  angularNudge = 0, // degrees, to fan out close dots
+): { lx: number; ly: number; anchor: "start" | "end" | "middle"; lineX2: number; lineY2: number } {
+  const rad = (angularNudge * Math.PI) / 180;
+  let vx = cx - midPx;
+  let vy = cy - midPy;
+  // Rotate the vector slightly if a nudge is requested
+  if (angularNudge !== 0) {
+    const cos = Math.cos(rad),
+      sin = Math.sin(rad);
+    [vx, vy] = [vx * cos - vy * sin, vx * sin + vy * cos];
   }
+  const len = Math.sqrt(vx * vx + vy * vy) || 1;
+  const nx = vx / len,
+    ny = vy / len;
+
+  // Line end — edge of dot
+  const lineX2 = cx + nx * DOT_R;
+  const lineY2 = cy + ny * DOT_R;
+
+  // Label start — beyond the line end
+  let lx = cx + nx * (DOT_R + PAD);
+  let ly = cy + ny * (DOT_R + PAD);
+
+  // Horizontal text anchor
+  const anchor: "start" | "end" | "middle" = nx > 0.2 ? "start" : nx < -0.2 ? "end" : "middle";
+
+  // Clamp inside chart bounds with padding
+  const margin = 4;
+  lx = clamp(lx, pLeft + margin, pRight - margin);
+  ly = clamp(ly, pTop + FONT_SIZE, pBottom - margin);
+
+  return { lx, ly, anchor, lineX2, lineY2 };
 }
 
-// ── Dots + always-visible labels via Customized ───────────────────────────────
+// ── Sort points by angle from center so we can detect close neighbors ─────────
+function assignNudges(points: Point[], midX: number, midY: number): Map<string, number> {
+  const angles = points
+    .map((p) => ({
+      id: p.id,
+      angle: Math.atan2(p.y - midY, p.x - midX),
+    }))
+    .sort((a, b) => a.angle - b.angle);
+
+  const nudges = new Map<string, number>();
+  for (let i = 0; i < angles.length; i++) {
+    const prev = angles[(i - 1 + angles.length) % angles.length];
+    const next = angles[(i + 1) % angles.length];
+    const diffPrev = Math.abs(angles[i].angle - prev.angle);
+    const diffNext = Math.abs(angles[i].angle - next.angle);
+    // If a neighbour is within 15°, nudge away from it
+    if (diffPrev < 0.26) nudges.set(angles[i].id, 12);
+    else if (diffNext < 0.26) nudges.set(angles[i].id, -12);
+    else nudges.set(angles[i].id, 0);
+  }
+  return nudges;
+}
+
+// ── Dots + labels ──────────────────────────────────────────────────────────────
 function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
   const xAxis = Object.values(xAxisMap ?? {})[0] as any;
   const yAxis = Object.values(yAxisMap ?? {})[0] as any;
@@ -155,112 +168,131 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
     xMax = 105,
     yMin = -5,
     yMax = 105;
-  const pLeft = xAxis.x;
-  const pWidth = xAxis.width;
-  const pTop = yAxis.y;
-  const pHeight = yAxis.height;
+  const pLeft = xAxis.x,
+    pWidth = xAxis.width;
+  const pTop = yAxis.y,
+    pHeight = yAxis.height;
+  const pRight = pLeft + pWidth;
+  const pBottom = pTop + pHeight;
 
   const px = (v: number) => toPixel(v, xMin, xMax, pLeft, pWidth);
   const py = (v: number) => toPixel(v, yMin, yMax, pTop + pHeight, -pHeight);
+  const midPx = px(50),
+    midPy = py(50);
 
-  const midPx = px(50);
-  const midPy = py(50);
-  const LINE_H = 11;
+  const all = [...dim, ...highlighted];
+  const nudges = assignNudges(
+    all.map((p: Point) => ({ ...p, x: px(p.x), y: py(p.y) }) as any),
+    midPx,
+    midPy,
+  );
 
   const renderPoint = (p: Point) => {
     const cx = px(p.x);
     const cy = py(p.y);
-    const lines = wrapName(p.name, 12);
-    const dotColor = p.highlighted ? COLOR_DOT_HI : COLOR_DOT_DIM;
+    const label = truncate(p.name);
+    const dotFill = p.highlighted ? COLOR_DOT_HI : COLOR_DOT_DIM;
+    const nudge = nudges.get(p.id) ?? 0;
 
-    const { dx, dy, lineOffsetDir, anchor } = labelPlacement(
+    const { lx, ly, anchor, lineX2, lineY2 } = computeLabelPos(
       cx,
       cy,
-      pLeft,
-      pLeft + pWidth,
-      pTop,
-      pTop + pHeight,
       midPx,
       midPy,
+      pLeft,
+      pRight,
+      pTop,
+      pBottom,
+      nudge,
     );
 
     return (
       <g key={p.id}>
-        <circle cx={cx} cy={cy} r={6} fill={dotColor} fillOpacity={p.highlighted ? 1 : 0.75} />
+        {/* Subtle leader line from dot to label */}
+        <line
+          x1={lineX2}
+          y1={lineY2}
+          x2={lx}
+          y2={ly}
+          stroke={COLOR_LABEL_MUTED}
+          strokeWidth={0.75}
+          strokeOpacity={0.5}
+          strokeDasharray="2 2"
+        />
+        {/* Dot */}
+        <circle cx={cx} cy={cy} r={DOT_R} fill={dotFill} />
+        {/* White halo behind text for legibility */}
         <text
-          x={cx + dx}
-          y={cy + dy}
+          x={lx}
+          y={ly}
           textAnchor={anchor}
-          fontSize={9.5}
+          fontSize={FONT_SIZE}
           fontWeight={500}
-          fill={COLOR_LABEL}
+          stroke="white"
+          strokeWidth={3}
+          strokeLinejoin="round"
+          paintOrder="stroke"
           style={{ pointerEvents: "none", userSelect: "none" }}
         >
-          {lines.map((l, i) => (
-            <tspan key={i} x={cx + dx} dy={i === 0 ? 0 : LINE_H * lineOffsetDir}>
-              {l}
-            </tspan>
-          ))}
+          {label}
+        </text>
+        {/* Actual label */}
+        <text
+          x={lx}
+          y={ly}
+          textAnchor={anchor}
+          fontSize={FONT_SIZE}
+          fontWeight={500}
+          fill={COLOR_CLUSTER_LBL}
+          style={{ pointerEvents: "none", userSelect: "none" }}
+        >
+          {label}
         </text>
       </g>
     );
   };
 
-  return (
-    <>
-      {dim.map(renderPoint)}
-      {highlighted.map(renderPoint)}
-    </>
-  );
+  return <>{all.map(renderPoint)}</>;
 }
 
-// ── Axis Low / High labels ────────────────────────────────────────────────────
+// ── Axis Low / High labels ─────────────────────────────────────────────────────
 function AxisLabels({ xAxisMap, yAxisMap }: any) {
   const xAxis = Object.values(xAxisMap ?? {})[0] as any;
   const yAxis = Object.values(yAxisMap ?? {})[0] as any;
   if (!xAxis || !yAxis) return null;
 
-  const left = xAxis.x;
-  const right = xAxis.x + xAxis.width;
-  const top = yAxis.y;
-  const bottom = yAxis.y + yAxis.height;
+  const left = xAxis.x,
+    right = xAxis.x + xAxis.width;
+  const top = yAxis.y,
+    bottom = yAxis.y + yAxis.height;
   const midX = (left + right) / 2;
   const midY = (top + bottom) / 2;
 
-  const xLowCx = (left + midX) / 2;
-  const xHighCx = (midX + right) / 2;
-  const xLabelY = bottom + 16;
-  const yLowCy = (midY + bottom) / 2;
-  const yHighCy = (top + midY) / 2;
-  const yLabelX = left - 6;
+  const props = { fontSize: 10, fontWeight: 600, fill: COLOR_LABEL_MUTED } as const;
 
   return (
     <>
-      <text x={xLowCx} y={xLabelY} textAnchor="middle" fontSize={10} fontWeight={600} fill={COLOR_LABEL_MUTED}>
+      <text {...props} x={(left + midX) / 2} y={bottom + 16} textAnchor="middle">
         Low
       </text>
-      <text x={xHighCx} y={xLabelY} textAnchor="middle" fontSize={10} fontWeight={600} fill={COLOR_LABEL_MUTED}>
+      <text {...props} x={(midX + right) / 2} y={bottom + 16} textAnchor="middle">
         High
       </text>
       <text
-        x={yLabelX}
-        y={yLowCy}
+        {...props}
+        x={left - 6}
+        y={(midY + bottom) / 2}
         textAnchor="middle"
-        fontSize={10}
-        fontWeight={600}
-        fill={COLOR_LABEL_MUTED}
-        transform={`rotate(-90,${yLabelX},${yLowCy})`}
+        transform={`rotate(-90,${left - 6},${(midY + bottom) / 2})`}
       >
         Low
       </text>
       <text
-        x={yLabelX}
-        y={yHighCy}
+        {...props}
+        x={left - 6}
+        y={(top + midY) / 2}
         textAnchor="middle"
-        fontSize={10}
-        fontWeight={600}
-        fill={COLOR_LABEL_MUTED}
-        transform={`rotate(-90,${yLabelX},${yHighCy})`}
+        transform={`rotate(-90,${left - 6},${(top + midY) / 2})`}
       >
         High
       </text>
@@ -268,7 +300,7 @@ function AxisLabels({ xAxisMap, yAxisMap }: any) {
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Main ───────────────────────────────────────────────────────────────────────
 export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
   const clusterStates = useAppStore((s) => s.clusters);
 
@@ -281,21 +313,18 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
       return { id: c.id, name: c.name, x, y, highlighted: !highlightId || c.id === highlightId };
     });
     const eight = pickEight(all);
-    return {
-      highlighted: eight.filter((p) => p.highlighted),
-      dim: eight.filter((p) => !p.highlighted),
-    };
+    return { highlighted: eight.filter((p) => p.highlighted), dim: eight.filter((p) => !p.highlighted) };
   }, [clusterStates, highlightId]);
 
   return (
-    <div className="h-[480px] w-full">
+    <div className="h-[520px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 40, right: 28, bottom: 32, left: 8 }}>
+        <ScatterChart margin={{ top: 48, right: 48, bottom: 36, left: 8 }}>
           <CartesianGrid stroke={COLOR_GRID} strokeWidth={0.75} />
 
           <ReferenceArea x1={50} x2={105} y1={50} y2={105} fill={COLOR_QUADRANT_HI} stroke="none" />
-          <ReferenceLine x={50} stroke={COLOR_AXIS} strokeWidth={2} />
-          <ReferenceLine y={50} stroke={COLOR_AXIS} strokeWidth={2} />
+          <ReferenceLine x={50} stroke={COLOR_AXIS} strokeWidth={1.5} strokeOpacity={0.3} />
+          <ReferenceLine y={50} stroke={COLOR_AXIS} strokeWidth={1.5} strokeOpacity={0.3} />
 
           <XAxis
             type="number"
@@ -303,14 +332,14 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
             domain={[-5, 105]}
             tick={false}
             tickLine={false}
-            axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5 }}
+            axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5, strokeOpacity: 0.4 }}
           >
             <Label
               value="Access →"
               position="bottom"
-              offset={10}
-              fill={COLOR_LABEL_MUTED}
-              fontSize={12}
+              offset={12}
+              fill={COLOR_AXIS_LABEL}
+              fontSize={11}
               fontWeight={600}
             />
           </XAxis>
@@ -322,28 +351,24 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
             tick={false}
             tickLine={false}
             width={40}
-            axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5 }}
+            axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5, strokeOpacity: 0.4 }}
           >
             <Label
               value="Potential →"
               angle={-90}
               position="insideLeft"
               offset={10}
-              fill={COLOR_LABEL_MUTED}
-              fontSize={12}
+              fill={COLOR_AXIS_LABEL}
+              fontSize={11}
               fontWeight={600}
             />
           </YAxis>
 
           <ZAxis range={[1, 1]} />
           <Tooltip content={() => null} />
-
-          {/* Invisible scatter keeps Recharts axis scales alive */}
           <Scatter data={[...dim, ...highlighted]} fillOpacity={0} shape={() => <g />} />
 
-          {/* All rendering: dots + persistent labels */}
           <Customized component={(props: any) => <DotsAndLabels {...props} highlighted={highlighted} dim={dim} />} />
-
           <Customized component={AxisLabels} />
         </ScatterChart>
       </ResponsiveContainer>
