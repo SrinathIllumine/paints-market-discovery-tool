@@ -11,7 +11,7 @@ import { ArrowRight, ChevronDown } from "lucide-react";
 export const Route = createFileRoute("/map/")({
   head: () => ({
     meta: [
-      { title: "Cluster Potential" },
+      { title: "Map My Market Potential" },
       { name: "description", content: "Browse clusters relevant to Panvel and map their potential." },
     ],
   }),
@@ -31,7 +31,7 @@ function ClusterPotentialScreen() {
       header={
         <StageHeader
           eyebrow="STAGE 1 OF 3 · MAP MY MARKET POTENTIAL"
-          title="Clusters in Panvel"
+          title="Map My Market Potential"
           subtitle="Tap a bubble to open the cluster card and map its potential."
         />
       }
