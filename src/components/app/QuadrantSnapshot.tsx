@@ -34,7 +34,6 @@ const COLOR_LABEL_HI = "#991b1b";
 const COLOR_LABEL_DIM = "#52525b";
 const COLOR_QUADRANT_HI = "rgba(239,68,68,0.10)";
 
-// Cluster names that must always appear
 const REQUIRED_NAMES = ["schools", "mid-size apartment"];
 
 function clamp(v: number, lo: number, hi: number) {
@@ -73,75 +72,103 @@ function isRequired(name: string) {
   return REQUIRED_NAMES.some((r) => n.includes(r));
 }
 
-/** Pick exactly 2 points per quadrant, always keeping required clusters. */
-function pickEight(allPoints: Point[]): Point[] {
-  const quadrant = (p: Point) => {
-    const qx = p.x >= 50 ? 1 : 0;
-    const qy = p.y >= 50 ? 1 : 0;
-    return qy * 2 + qx; // 0=BL 1=BR 2=TL 3=TR
-  };
-
+function pickEight(all: Point[]): Point[] {
+  const quadrant = (p: Point) => (p.y >= 50 ? 2 : 0) + (p.x >= 50 ? 1 : 0);
   const buckets: Point[][] = [[], [], [], []];
-  for (const p of allPoints) buckets[quadrant(p)].push(p);
+  for (const p of all) buckets[quadrant(p)].push(p);
 
   const chosen: Point[] = [];
   const chosenIds = new Set<string>();
 
-  // First pass: lock in required clusters
-  for (const p of allPoints) {
+  for (const p of all) {
     if (isRequired(p.name)) {
       chosen.push(p);
       chosenIds.add(p.id);
     }
   }
 
-  // Second pass: fill each quadrant up to 2
   for (let q = 0; q < 4; q++) {
-    const inQ = chosen.filter((p) => quadrant(p) === q);
-    const remaining = buckets[q].filter((p) => !chosenIds.has(p.id));
-    let need = 2 - inQ.length;
-    for (const p of remaining) {
+    const already = chosen.filter((p) => quadrant(p) === q).length;
+    let need = 2 - already;
+    for (const p of buckets[q]) {
       if (need <= 0) break;
-      chosen.push(p);
-      chosenIds.add(p.id);
-      need--;
+      if (!chosenIds.has(p.id)) {
+        chosen.push(p);
+        chosenIds.add(p.id);
+        need--;
+      }
     }
   }
-
   return chosen;
 }
 
-// ── Above-dot label renderer ──────────────────────────────────────────────────
-function renderAboveLabel(color: string, weight: number) {
-  return (props: any) => {
-    const { x, y, payload } = props;
-    if (typeof x !== "number" || typeof y !== "number" || !payload) return null;
-    const lines = wrapName(payload.name, 14);
-    // Total height of label block (11px per line) so we lift the whole thing above the dot
-    const lineHeight = 11;
-    const totalH = lines.length * lineHeight;
-    const dotRadius = 6;
-    const gap = 4;
-    const baseY = y - dotRadius - gap - totalH;
+// ── Converts data value → pixel using axis scale ──────────────────────────────
+function toPixel(value: number, axisMin: number, axisMax: number, pixelStart: number, pixelSize: number) {
+  return pixelStart + ((value - axisMin) / (axisMax - axisMin)) * pixelSize;
+}
+
+// ── All dots + labels rendered as one Customized SVG layer ────────────────────
+function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
+  const xAxis = Object.values(xAxisMap ?? {})[0] as any;
+  const yAxis = Object.values(yAxisMap ?? {})[0] as any;
+  if (!xAxis || !yAxis) return null;
+
+  const xMin = -5,
+    xMax = 105;
+  const yMin = -5,
+    yMax = 105;
+  const pxLeft = xAxis.x;
+  const pxWidth = xAxis.width;
+  const pxTop = yAxis.y;
+  const pxHeight = yAxis.height;
+
+  const px = (v: number) => toPixel(v, xMin, xMax, pxLeft, pxWidth);
+  // Y axis is inverted in SVG: higher data value = smaller pixel y
+  const py = (v: number) => toPixel(v, yMin, yMax, pxTop + pxHeight, -pxHeight);
+
+  const DOT_R = 6;
+  const LINE_H = 11;
+  const GAP = 5;
+
+  const renderPoint = (p: Point) => {
+    const cx = px(p.x);
+    const cy = py(p.y);
+    const lines = wrapName(p.name, 14);
+    const totalH = lines.length * LINE_H;
+    const labelBaseY = cy - DOT_R - GAP - totalH;
+    const fill = p.highlighted ? COLOR_DOT_HI : COLOR_DOT_DIM;
+    const textColor = p.highlighted ? COLOR_LABEL_HI : COLOR_LABEL_DIM;
 
     return (
-      <text
-        x={x}
-        y={baseY}
-        fill={color}
-        fontSize={9}
-        fontWeight={weight}
-        textAnchor="middle"
-        style={{ pointerEvents: "none" }}
-      >
-        {lines.map((l, i) => (
-          <tspan key={i} x={x} dy={i === 0 ? 0 : lineHeight}>
-            {l}
-          </tspan>
-        ))}
-      </text>
+      <g key={p.id}>
+        {/* Always-visible label above the dot */}
+        <text
+          x={cx}
+          y={labelBaseY}
+          textAnchor="middle"
+          fontSize={9}
+          fontWeight={p.highlighted ? 700 : 600}
+          fill={textColor}
+          style={{ pointerEvents: "none", userSelect: "none" }}
+        >
+          {lines.map((l, i) => (
+            <tspan key={i} x={cx} dy={i === 0 ? 0 : LINE_H}>
+              {l}
+            </tspan>
+          ))}
+        </text>
+        {/* Dot */}
+        <circle cx={cx} cy={cy} r={DOT_R} fill={fill} fillOpacity={p.highlighted ? 1 : 0.7} />
+      </g>
     );
   };
+
+  return (
+    <>
+      {dim.map(renderPoint)}
+      {highlighted.map(renderPoint)}
+    </>
+  );
 }
 
 // ── Axis Low / High labels ────────────────────────────────────────────────────
@@ -160,33 +187,16 @@ function AxisLabels({ xAxisMap, yAxisMap }: any) {
   const xLowCx = (left + midX) / 2;
   const xHighCx = (midX + right) / 2;
   const xLabelY = bottom + 16;
-
   const yLowCy = (midY + bottom) / 2;
   const yHighCy = (top + midY) / 2;
   const yLabelX = left - 6;
 
   return (
     <>
-      <text
-        x={xLowCx}
-        y={xLabelY}
-        textAnchor="middle"
-        fontSize={10}
-        fontWeight={600}
-        fill={COLOR_LABEL_MUTED}
-        style={{ pointerEvents: "none" }}
-      >
+      <text x={xLowCx} y={xLabelY} textAnchor="middle" fontSize={10} fontWeight={600} fill={COLOR_LABEL_MUTED}>
         Low
       </text>
-      <text
-        x={xHighCx}
-        y={xLabelY}
-        textAnchor="middle"
-        fontSize={10}
-        fontWeight={600}
-        fill={COLOR_LABEL_MUTED}
-        style={{ pointerEvents: "none" }}
-      >
+      <text x={xHighCx} y={xLabelY} textAnchor="middle" fontSize={10} fontWeight={600} fill={COLOR_LABEL_MUTED}>
         High
       </text>
       <text
@@ -196,8 +206,7 @@ function AxisLabels({ xAxisMap, yAxisMap }: any) {
         fontSize={10}
         fontWeight={600}
         fill={COLOR_LABEL_MUTED}
-        transform={`rotate(-90, ${yLabelX}, ${yLowCy})`}
-        style={{ pointerEvents: "none" }}
+        transform={`rotate(-90,${yLabelX},${yLowCy})`}
       >
         Low
       </text>
@@ -208,8 +217,7 @@ function AxisLabels({ xAxisMap, yAxisMap }: any) {
         fontSize={10}
         fontWeight={600}
         fill={COLOR_LABEL_MUTED}
-        transform={`rotate(-90, ${yLabelX}, ${yHighCy})`}
-        style={{ pointerEvents: "none" }}
+        transform={`rotate(-90,${yLabelX},${yHighCy})`}
       >
         High
       </text>
@@ -222,7 +230,6 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
   const clusterStates = useAppStore((s) => s.clusters);
 
   const { highlighted, dim } = useMemo(() => {
-    // Build all points
     const all: Point[] = CLUSTERS.map((c) => {
       const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
       const sc = computeClusterScores(c, pc);
@@ -230,10 +237,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
       const y = clamp(sc.potentialScore * 10 + jitter(c.id + "y", 2.5), 4, 96);
       return { id: c.id, name: c.name, x, y, highlighted: !highlightId || c.id === highlightId };
     });
-
-    // Limit to 8, 2 per quadrant
     const eight = pickEight(all);
-
     return {
       highlighted: eight.filter((p) => p.highlighted),
       dim: eight.filter((p) => !p.highlighted),
@@ -247,7 +251,6 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
           <CartesianGrid stroke={COLOR_GRID} strokeWidth={0.75} />
 
           <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill={COLOR_QUADRANT_HI} stroke="none" />
-
           <ReferenceLine x={50} stroke={COLOR_AXIS} strokeWidth={2} />
           <ReferenceLine y={50} stroke={COLOR_AXIS} strokeWidth={2} />
 
@@ -289,52 +292,17 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
             />
           </YAxis>
 
-          <ZAxis range={[80, 80]} />
+          <ZAxis range={[1, 1]} />
 
-          {/* No tooltip needed — names always visible */}
-          <Tooltip
-            cursor={{ strokeDasharray: "3 3" }}
-            content={({ active, payload }) => {
-              if (!active || !payload?.length) return null;
-              const p = payload[0].payload as Point;
-              return (
-                <div
-                  style={{
-                    borderRadius: 6,
-                    border: "0.5px solid rgba(0,0,0,0.1)",
-                    background: "#fff",
-                    color: "#111827",
-                    padding: "4px 8px",
-                    fontSize: 11,
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                  }}
-                >
-                  {p.name}
-                </div>
-              );
-            }}
-          />
+          <Tooltip content={() => null} />
+
+          {/* Invisible scatter series just to satisfy Recharts internals */}
+          <Scatter data={[...dim, ...highlighted]} fillOpacity={0} shape={() => <g />} />
+
+          {/* All real rendering happens here — dots + labels always visible */}
+          <Customized component={(props: any) => <DotsAndLabels {...props} highlighted={highlighted} dim={dim} />} />
 
           <Customized component={AxisLabels} />
-
-          {dim.length > 0 && (
-            <Scatter
-              data={dim}
-              fill={COLOR_DOT_DIM}
-              fillOpacity={0.7}
-              shape="circle"
-              label={renderAboveLabel(COLOR_LABEL_DIM, 600) as any}
-            />
-          )}
-
-          {highlighted.length > 0 && (
-            <Scatter
-              data={highlighted}
-              fill={COLOR_DOT_HI}
-              shape="circle"
-              label={renderAboveLabel(COLOR_LABEL_HI, 700) as any}
-            />
-          )}
         </ScatterChart>
       </ResponsiveContainer>
     </div>
