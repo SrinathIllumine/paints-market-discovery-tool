@@ -99,40 +99,60 @@ function ClusterMapPage() {
           </div>
 
           {recommended.length > 0 && (
-            <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
-                Recommended for You
-              </p>
-              <div className="space-y-2">
-                {recommended.map(({ c, sc }) => (
-                  <ClusterRow
-                    key={c.id}
-                    name={c.name}
-                    recommended
-                    scores={sc}
-                    onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
-                  />
-                ))}
-              </div>
-            </div>
+            <section className="rounded-xl border border-border bg-card">
+              <button
+                type="button"
+                onClick={() => setRecOpen((v) => !v)}
+                className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
+              >
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
+                  Recommended for You ({recommended.length})
+                </span>
+                <ChevronDown className={cn("h-4 w-4 transition-transform", !recOpen && "-rotate-90")} />
+              </button>
+              {recOpen && (
+                <div className="space-y-2 border-t border-border p-2">
+                  {recommended.map(({ c, sc }) => (
+                    <ClusterRow
+                      key={c.id}
+                      name={c.name}
+                      recommended
+                      scores={sc}
+                      onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
+                      onPlan={() => navigate({ to: "/plan/$clusterId", params: { clusterId: c.id } })}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
           )}
 
           {others.length > 0 && (
-            <div>
-              <p className="mb-2 mt-4 text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
-                All Other Clusters
-              </p>
-              <div className="space-y-2">
-                {others.map(({ c, sc }) => (
-                  <ClusterRow
-                    key={c.id}
-                    name={c.name}
-                    scores={sc}
-                    onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
-                  />
-                ))}
-              </div>
-            </div>
+            <section className="rounded-xl border border-border bg-card">
+              <button
+                type="button"
+                onClick={() => setOthersOpen((v) => !v)}
+                className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
+              >
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
+                  All Other Clusters ({others.length})
+                </span>
+                <ChevronDown className={cn("h-4 w-4 transition-transform", !othersOpen && "-rotate-90")} />
+              </button>
+              {othersOpen && (
+                <div className="space-y-2 border-t border-border p-2">
+                  {others.map(({ c, sc }) => (
+                    <ClusterRow
+                      key={c.id}
+                      name={c.name}
+                      scores={sc}
+                      onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
+                      onPlan={() => navigate({ to: "/plan/$clusterId", params: { clusterId: c.id } })}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
           )}
 
           {filtered.length === 0 && (
