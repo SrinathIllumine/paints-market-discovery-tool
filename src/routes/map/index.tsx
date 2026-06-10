@@ -50,7 +50,20 @@ function ClusterPotentialScreen() {
         />
       }
     >
-      <div className="max-h-[calc(100vh-260px)] overflow-y-auto px-6 py-8">
+      <div
+        ref={scrollRef}
+        onScroll={() => {
+          if (showHint && (scrollRef.current?.scrollTop ?? 0) > 8) dismissHint();
+        }}
+        className="max-h-[calc(100vh-260px)] overflow-y-auto px-6 py-8"
+      >
+        {showHint && (
+          <div className="mb-2 flex items-center justify-center gap-1.5 text-xs font-medium text-muted-foreground animate-pulse">
+            <ChevronDown className="h-3.5 w-3.5" />
+            Scroll down
+            <ChevronDown className="h-3.5 w-3.5" />
+          </div>
+        )}
         <Link
           to="/market-potential"
           className="mb-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-critical text-base font-semibold text-critical-foreground shadow-lg shadow-critical/20"
