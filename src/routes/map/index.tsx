@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
@@ -7,8 +7,6 @@ import { BubbleCircle } from "@/components/app/BubbleCircle";
 import { CLUSTERS } from "@/data/clusters";
 
 import { ArrowRight, ChevronDown } from "lucide-react";
-
-const SCROLL_HINT_KEY = "clusters:scrollHintDismissed";
 
 export const Route = createFileRoute("/map/")({
   head: () => ({
@@ -22,22 +20,10 @@ export const Route = createFileRoute("/map/")({
 
 function ClusterPotentialScreen() {
   const navigate = useNavigate();
-  const [showHint, setShowHint] = useState(false);
+  const [showHint, setShowHint] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (sessionStorage.getItem(SCROLL_HINT_KEY)) return;
-    setShowHint(true);
-  }, []);
-
-  const dismissHint = () => {
-    setShowHint(false);
-    try {
-      sessionStorage.setItem(SCROLL_HINT_KEY, "1");
-    } catch {}
-  };
-
+  const dismissHint = () => setShowHint(false);
 
   return (
     <AppShell
