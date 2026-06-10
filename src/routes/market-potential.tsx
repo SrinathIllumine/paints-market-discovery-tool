@@ -25,6 +25,8 @@ function ClusterMapPage() {
   const navigate = useNavigate();
   const clusterStates = useAppStore((s) => s.clusters);
   const [search, setSearch] = useState("");
+  const [recOpen, setRecOpen] = useState(true);
+  const [othersOpen, setOthersOpen] = useState(false);
 
   const scored = useMemo(() => {
     return CLUSTERS.map((c) => {
