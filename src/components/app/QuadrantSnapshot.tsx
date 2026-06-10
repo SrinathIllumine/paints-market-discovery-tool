@@ -207,7 +207,7 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
           x={cx + dx}
           y={cy + dy}
           textAnchor={anchor}
-          fontSize={9.5}
+          fontSize={5}
           fontWeight={500}
           fill={COLOR_LABEL}
           style={{ pointerEvents: "none", userSelect: "none" }}
