@@ -3,6 +3,7 @@ import { Map as MapIcon, Users, Lightbulb, ArrowRight, History } from "lucide-re
 import { AppShell } from "@/components/app/AppShell";
 import { BottomNav } from "@/components/app/BottomNav";
 import { useAppStore } from "@/store/appStore";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
