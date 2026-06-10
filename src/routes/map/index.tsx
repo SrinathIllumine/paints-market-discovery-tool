@@ -1,11 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { BubbleCircle } from "@/components/app/BubbleCircle";
 import { CLUSTERS } from "@/data/clusters";
 
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
+
+const SCROLL_HINT_KEY = "clusters:scrollHintDismissed";
 
 export const Route = createFileRoute("/map/")({
   head: () => ({
