@@ -21,7 +21,7 @@ function SalesEnablementLanding() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="Stage 3 of 4 · Sales Enablers"
+          eyebrow="STAGE 3 OF 3 · SALES ENABLERS"
           title="Customer Management Funnel"
           subtitle="Pick a cluster from your monthly plan to manage its funnel."
         />
