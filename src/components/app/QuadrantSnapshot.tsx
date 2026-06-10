@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   Tooltip,
   Label,
+  Customized,
 } from "recharts";
 import { CLUSTERS } from "@/data/clusters";
 import { computeClusterScores } from "@/lib/clusterScoring";
@@ -23,6 +24,15 @@ type Point = {
   y: number;
   highlighted: boolean;
 };
+
+const COLOR_AXIS = "#000000";
+const COLOR_GRID = "rgba(0,0,0,0.12)";
+const COLOR_LABEL_MUTED = "#6b7280";
+const COLOR_DOT_DIM = "#a1a1aa";
+const COLOR_DOT_HI = "#ef4444";
+const COLOR_LABEL_HI = "#991b1b";
+const COLOR_LABEL_DIM = "#6b7280";
+const COLOR_QUADRANT_HI = "rgba(239,68,68,0.10)";
 
 function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
@@ -55,61 +65,30 @@ function wrapName(name: string, maxChars = 16): string[] {
   return lines;
 }
 
-// ─── FIX 1: Hardcoded color constants — SVG attrs can't resolve CSS variables ──
-const COLOR_AXIS = "#000000";
-const COLOR_GRID = "rgba(0,0,0,0.12)";
-const COLOR_LABEL_MUTED = "#6b7280";
-const COLOR_DOT_DIM = "#a1a1aa";
-const COLOR_DOT_HI = "#ef4444";
-const COLOR_LABEL_HI = "#991b1b";
-const COLOR_LABEL_DIM = "#6b7280";
-const COLOR_QUADRANT_HI = "rgba(239,68,68,0.10)";
-const COLOR_TOOLTIP_BG = "#ffffff";
-const COLOR_TOOLTIP_BD = "rgba(0,0,0,0.1)";
-const COLOR_TOOLTIP_TXT = "#111827";
+function QuadrantLabels({ xAxisMap, yAxisMap }: any) {
+  const xAxis = Object.values(xAxisMap ?? {})[0] as any;
+  const yAxis = Object.values(yAxisMap ?? {})[0] as any;
+  if (!xAxis || !yAxis) return null;
 
-// ─── FIX 2: Quadrant labels as a custom SVG layer that uses viewBox-relative % ──
-// Recharts exposes a `customized` prop on ScatterChart for injecting arbitrary SVG.
-// We use the `offset` object (passed by Recharts) which gives us the real pixel
-// boundaries of the plot area so labels are always correctly positioned.
-interface ChartOffset {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-}
+  const left = xAxis.x;
+  const right = xAxis.x + xAxis.width;
+  const top = yAxis.y;
+  const bottom = yAxis.y + yAxis.height;
+  const midX = (left + right) / 2;
+  const midY = (top + bottom) / 2;
 
-function QuadrantLabels(props: any) {
-  const { width, height, left, top } = props as ChartOffset & {
-    width: number;
-    height: number;
-    left: number;
-    top: number;
-  };
-
-  // Defensive guard — Recharts passes 0 on first render
-  if (!width || !height) return null;
-
-  const midX = left + width / 2;
-  const midY = top + height / 2;
-
-  const labels: Array<{
-    cx: number;
-    cy: number;
-    line1: string;
-    line2: string;
-  }> = [
-    { cx: left + width * 0.25, cy: top + 18, line1: "HIGH POTENTIAL", line2: "LOW ACCESS" },
-    { cx: left + width * 0.75, cy: top + 18, line1: "HIGH POTENTIAL", line2: "HIGH ACCESS" },
-    { cx: left + width * 0.25, cy: midY + 18, line1: "LOW POTENTIAL", line2: "LOW ACCESS" },
-    { cx: left + width * 0.75, cy: midY + 18, line1: "LOW POTENTIAL", line2: "HIGH ACCESS" },
+  const items = [
+    { cx: (left + midX) / 2, cy: top + 18, l1: "HIGH POTENTIAL", l2: "LOW ACCESS" },
+    { cx: (midX + right) / 2, cy: top + 18, l1: "HIGH POTENTIAL", l2: "HIGH ACCESS" },
+    { cx: (left + midX) / 2, cy: midY + 18, l1: "LOW POTENTIAL", l2: "LOW ACCESS" },
+    { cx: (midX + right) / 2, cy: midY + 18, l1: "LOW POTENTIAL", l2: "HIGH ACCESS" },
   ];
 
   return (
     <>
-      {labels.map(({ cx, cy, line1, line2 }) => (
+      {items.map(({ cx, cy, l1, l2 }) => (
         <text
-          key={line1 + line2}
+          key={l1 + l2}
           x={cx}
           y={cy}
           textAnchor="middle"
@@ -119,10 +98,10 @@ function QuadrantLabels(props: any) {
           style={{ pointerEvents: "none", letterSpacing: 0.5 }}
         >
           <tspan x={cx} dy={0}>
-            {line1}
+            {l1}
           </tspan>
           <tspan x={cx} dy={12}>
-            {line2}
+            {l2}
           </tspan>
         </text>
       ))}
@@ -149,7 +128,6 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     return { highlighted: hi, dim: lo };
   }, [clusterStates, highlightId]);
 
-  // ─── FIX 3: Dot label renderer with hardcoded fill colors ───────────────────
   const renderLabel =
     (color: string, weight: number, onlyTopRight = false) =>
     (props: any) => {
@@ -161,7 +139,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
         <text
           x={x}
           y={y}
-          fill={color} // ✅ hardcoded — not a CSS variable
+          fill={color}
           fontSize={10}
           fontWeight={weight}
           textAnchor="middle"
@@ -179,14 +157,11 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
   return (
     <div className="h-[480px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 40, right: 28, bottom: 32, left: 32 }}>
-          {/* ─── FIX 4: CartesianGrid without undefined prop hacks ──────────── */}
+        <ScatterChart margin={{ top: 40, right: 28, bottom: 32, left: 8 }}>
           <CartesianGrid stroke={COLOR_GRID} strokeWidth={0.75} />
 
-          {/* Highlight quadrant fill — top-right */}
           <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill={COLOR_QUADRANT_HI} stroke="none" />
 
-          {/* Bold partition lines */}
           <ReferenceLine x={50} stroke={COLOR_AXIS} strokeWidth={2} />
           <ReferenceLine y={50} stroke={COLOR_AXIS} strokeWidth={2} />
 
@@ -197,18 +172,15 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
             ticks={[0, 25, 50, 75, 100]}
             tick={false}
             tickLine={false}
-            axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5 }} // ✅ hardcoded
+            axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5 }}
           >
             <Label
               value="Access →"
               position="bottom"
               offset={10}
-              style={{
-                fill: COLOR_LABEL_MUTED, // ✅ hardcoded
-                fontSize: 12,
-                fontWeight: 600,
-                letterSpacing: 1,
-              }}
+              fill={COLOR_LABEL_MUTED}
+              fontSize={12}
+              fontWeight={600}
             />
           </XAxis>
 
@@ -219,19 +191,16 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
             ticks={[0, 25, 50, 75, 100]}
             tick={false}
             tickLine={false}
-            axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5 }} // ✅ hardcoded
+            axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5 }}
           >
             <Label
               value="Potential →"
               angle={-90}
               position="left"
-              offset={14}
-              style={{
-                fill: COLOR_LABEL_MUTED, // ✅ hardcoded
-                fontSize: 12,
-                fontWeight: 600,
-                letterSpacing: 1,
-              }}
+              offset={2}
+              fill={COLOR_LABEL_MUTED}
+              fontSize={12}
+              fontWeight={600}
             />
           </YAxis>
 
@@ -246,9 +215,9 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
                 <div
                   style={{
                     borderRadius: 6,
-                    border: `0.5px solid ${COLOR_TOOLTIP_BD}`,
-                    background: COLOR_TOOLTIP_BG,
-                    color: COLOR_TOOLTIP_TXT,
+                    border: "0.5px solid rgba(0,0,0,0.1)",
+                    background: "#ffffff",
+                    color: "#111827",
                     padding: "4px 8px",
                     fontSize: 11,
                     boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
@@ -260,14 +229,12 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
             }}
           />
 
-          {/* ─── FIX 2: Quadrant labels via customized prop ─────────────────── */}
-          {/* Recharts passes offset + dimensions into the customized component  */}
-          <QuadrantLabels />
+          <Customized component={QuadrantLabels} />
 
           {dim.length > 0 && (
             <Scatter
               data={dim}
-              fill={COLOR_DOT_DIM} // ✅ hardcoded
+              fill={COLOR_DOT_DIM}
               fillOpacity={0.55}
               shape="circle"
               label={renderLabel(COLOR_LABEL_DIM, 600, true) as any}
@@ -277,7 +244,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
           {highlighted.length > 0 && (
             <Scatter
               data={highlighted}
-              fill={COLOR_DOT_HI} // ✅ hardcoded
+              fill={COLOR_DOT_HI}
               shape="circle"
               label={renderLabel(COLOR_LABEL_HI, 700, false) as any}
             />
