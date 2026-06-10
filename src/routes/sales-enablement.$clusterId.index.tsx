@@ -89,7 +89,7 @@ function ClusterFunnelPage() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="Customer Management Funnel"
+          eyebrow="STAGE 3 OF 3 · SALES ENABLERS"
           title={cluster.name}
           subtitle="Tap a stage band to move prospects forward."
           backTo="/sales-enablement"
