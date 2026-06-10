@@ -81,7 +81,7 @@ function PlanScreen() {
           to="/plan/past-roadmap"
           className="flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-medium text-navy hover:bg-muted/40"
         >
-          <span className="flex items-center gap-2"><History className="h-4 w-4" /> Review Past Roadmap</span>
+          <span className="flex items-center gap-2"><History className="h-4 w-4" /> Review Past Market Engagements</span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </Link>
 
