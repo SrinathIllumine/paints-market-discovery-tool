@@ -6,11 +6,11 @@ import {
   YAxis,
   ZAxis,
   CartesianGrid,
+  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   Label,
-  LabelList,
 } from "recharts";
 import { CLUSTERS } from "@/data/clusters";
 import { computeClusterScores } from "@/lib/clusterScoring";
@@ -19,8 +19,8 @@ import { useAppStore } from "@/store/appStore";
 type Point = {
   id: string;
   name: string;
-  x: number; // access 0-100
-  y: number; // potential 0-100
+  x: number;
+  y: number;
   highlighted: boolean;
 };
 
@@ -28,8 +28,6 @@ function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
 }
 
-// Deterministic micro-jitter to break up identical-score overlaps without
-// changing which quadrant a cluster sits in.
 function jitter(seed: string, amp = 2): number {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
@@ -44,7 +42,10 @@ function wrapName(name: string, maxChars = 16): string[] {
   for (const w of words) {
     if (!cur) cur = w;
     else if ((cur + " " + w).length <= maxChars) cur += " " + w;
-    else { lines.push(cur); cur = w; }
+    else {
+      lines.push(cur);
+      cur = w;
+    }
   }
   if (cur) lines.push(cur);
   if (lines.length > 3) {
@@ -54,21 +55,80 @@ function wrapName(name: string, maxChars = 16): string[] {
   return lines;
 }
 
-// Curated 8-cluster shortlist: 2 per quadrant. Schools is pinned (HP/LA).
-const SHORTLIST_IDS = new Set<string>([
-  // HP-HA (top-right): high potential, high access
-  "mid-apartments",
-  "redevelopment",
-  // HP-LA (top-left): high potential, low access
-  "schools",
-  "midc",
-  // LP-HA (bottom-right): low potential, high access
-  "restaurants",
-  "petrol-pumps",
-  // LP-LA (bottom-left): low potential, low access
-  "highway-dhabas",
-  "religious",
-]);
+// ─── FIX 1: Hardcoded color constants — SVG attrs can't resolve CSS variables ──
+const COLOR_AXIS = "#000000";
+const COLOR_GRID = "rgba(0,0,0,0.12)";
+const COLOR_LABEL_MUTED = "#6b7280";
+const COLOR_DOT_DIM = "#a1a1aa";
+const COLOR_DOT_HI = "#ef4444";
+const COLOR_LABEL_HI = "#991b1b";
+const COLOR_LABEL_DIM = "#6b7280";
+const COLOR_QUADRANT_HI = "rgba(239,68,68,0.10)";
+const COLOR_TOOLTIP_BG = "#ffffff";
+const COLOR_TOOLTIP_BD = "rgba(0,0,0,0.1)";
+const COLOR_TOOLTIP_TXT = "#111827";
+
+// ─── FIX 2: Quadrant labels as a custom SVG layer that uses viewBox-relative % ──
+// Recharts exposes a `customized` prop on ScatterChart for injecting arbitrary SVG.
+// We use the `offset` object (passed by Recharts) which gives us the real pixel
+// boundaries of the plot area so labels are always correctly positioned.
+interface ChartOffset {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+function QuadrantLabels(props: any) {
+  const { width, height, left, top } = props as ChartOffset & {
+    width: number;
+    height: number;
+    left: number;
+    top: number;
+  };
+
+  // Defensive guard — Recharts passes 0 on first render
+  if (!width || !height) return null;
+
+  const midX = left + width / 2;
+  const midY = top + height / 2;
+
+  const labels: Array<{
+    cx: number;
+    cy: number;
+    line1: string;
+    line2: string;
+  }> = [
+    { cx: left + width * 0.25, cy: top + 18, line1: "HIGH POTENTIAL", line2: "LOW ACCESS" },
+    { cx: left + width * 0.75, cy: top + 18, line1: "HIGH POTENTIAL", line2: "HIGH ACCESS" },
+    { cx: left + width * 0.25, cy: midY + 18, line1: "LOW POTENTIAL", line2: "LOW ACCESS" },
+    { cx: left + width * 0.75, cy: midY + 18, line1: "LOW POTENTIAL", line2: "HIGH ACCESS" },
+  ];
+
+  return (
+    <>
+      {labels.map(({ cx, cy, line1, line2 }) => (
+        <text
+          key={line1 + line2}
+          x={cx}
+          y={cy}
+          textAnchor="middle"
+          fontSize={10}
+          fontWeight={700}
+          fill={COLOR_LABEL_MUTED}
+          style={{ pointerEvents: "none", letterSpacing: 0.5 }}
+        >
+          <tspan x={cx} dy={0}>
+            {line1}
+          </tspan>
+          <tspan x={cx} dy={12}>
+            {line2}
+          </tspan>
+        </text>
+      ))}
+    </>
+  );
+}
 
 export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
   const clusterStates = useAppStore((s) => s.clusters);
@@ -77,107 +137,150 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     const hi: Point[] = [];
     const lo: Point[] = [];
     for (const c of CLUSTERS) {
-      const inShortlist = SHORTLIST_IDS.has(c.id);
-      const isHi = highlightId === c.id;
-      // Render only shortlisted clusters, plus the highlighted one if it's
-      // not already in the shortlist (individual cluster view).
-      if (!inShortlist && !isHi) continue;
-
       const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
       const sc = computeClusterScores(c, pc);
       const x = clamp(sc.accessRollupScore * 10 + jitter(c.id + "x", 2.5), 4, 96);
       const y = clamp(sc.potentialScore * 10 + jitter(c.id + "y", 2.5), 4, 96);
+      const isHi = !highlightId || c.id === highlightId;
       const point: Point = { id: c.id, name: c.name, x, y, highlighted: isHi };
-      if (highlightId ? isHi : true) {
-        // overview mode: everything in shortlist is "highlighted" (dark dots)
-        // individual mode: only the matching cluster is highlighted
-        if (!highlightId || isHi) hi.push(point);
-        else lo.push(point);
-      } else {
-        lo.push(point);
-      }
+      if (isHi) hi.push(point);
+      else lo.push(point);
     }
     return { highlighted: hi, dim: lo };
   }, [clusterStates, highlightId]);
 
-  const renderLabel = (color: string, weight: number) => (props: any) => {
-    const { x, y, payload } = props;
-    if (typeof x !== "number" || typeof y !== "number" || !payload) return null;
-    const lines = wrapName(payload.name, 14);
-    const anchor = payload.x > 78 ? "end" : "start";
-    const dx = payload.x > 78 ? -12 : 12;
-    const dy = payload.y > 84 ? -10 : payload.y < 16 ? 18 : 4;
-    return (
-      <text x={x + dx} y={y + dy} fill={color} fontSize={10} fontWeight={weight}
-        textAnchor={anchor} style={{ pointerEvents: "none" }}>
-        {lines.map((l, i) => (
-          <tspan key={i} x={x + dx} dy={i === 0 ? 0 : 11}>{l}</tspan>
-        ))}
-      </text>
-    );
-  };
+  // ─── FIX 3: Dot label renderer with hardcoded fill colors ───────────────────
+  const renderLabel =
+    (color: string, weight: number, onlyTopRight = false) =>
+    (props: any) => {
+      const { x, y, payload } = props;
+      if (typeof x !== "number" || typeof y !== "number" || !payload) return null;
+      if (onlyTopRight && !(payload.x >= 50 && payload.y >= 50)) return null;
+      const lines = wrapName(payload.name, 14);
+      return (
+        <text
+          x={x}
+          y={y}
+          fill={color} // ✅ hardcoded — not a CSS variable
+          fontSize={10}
+          fontWeight={weight}
+          textAnchor="middle"
+          style={{ pointerEvents: "none" }}
+        >
+          {lines.map((l, i) => (
+            <tspan key={i} x={x} dy={i === 0 ? 14 : 11}>
+              {l}
+            </tspan>
+          ))}
+        </text>
+      );
+    };
 
   return (
     <div className="h-[480px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 28, right: 72, bottom: 72, left: 72 }}>
-          <CartesianGrid
-            stroke="hsl(var(--foreground))"
-            strokeOpacity={0.1}
-            strokeWidth={1}
-          />
-          {/* Axis lines and quadrant partition lines */}
-          <ReferenceLine x={0} stroke="hsl(var(--foreground))" strokeWidth={1.5} strokeOpacity={0.65} />
-          <ReferenceLine y={0} stroke="hsl(var(--foreground))" strokeWidth={1.5} strokeOpacity={0.65} />
-          <ReferenceLine x={50} stroke="hsl(var(--foreground))" strokeWidth={1.5} strokeOpacity={0.65} />
-          <ReferenceLine y={50} stroke="hsl(var(--foreground))" strokeWidth={1.5} strokeOpacity={0.65} />
+        <ScatterChart margin={{ top: 40, right: 28, bottom: 32, left: 32 }}>
+          {/* ─── FIX 4: CartesianGrid without undefined prop hacks ──────────── */}
+          <CartesianGrid stroke={COLOR_GRID} strokeWidth={0.75} />
+
+          {/* Highlight quadrant fill — top-right */}
+          <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill={COLOR_QUADRANT_HI} stroke="none" />
+
+          {/* Bold partition lines */}
+          <ReferenceLine x={50} stroke={COLOR_AXIS} strokeWidth={2} />
+          <ReferenceLine y={50} stroke={COLOR_AXIS} strokeWidth={2} />
 
           <XAxis
             type="number"
             dataKey="x"
             domain={[0, 100]}
-            ticks={[0, 100]}
-            tickFormatter={(v) => (v === 0 ? "Low" : v === 100 ? "High" : "")}
-            tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11, fontWeight: 600 }}
+            ticks={[0, 25, 50, 75, 100]}
+            tick={false}
             tickLine={false}
-            axisLine={{ stroke: "hsl(var(--foreground))", strokeWidth: 1.5 }}
+            axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5 }} // ✅ hardcoded
           >
-            <Label value="Access →" position="bottom" offset={32}
-              style={{ fill: "hsl(var(--foreground))", fontSize: 12, fontWeight: 700, letterSpacing: 1 }} />
+            <Label
+              value="Access →"
+              position="bottom"
+              offset={10}
+              style={{
+                fill: COLOR_LABEL_MUTED, // ✅ hardcoded
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: 1,
+              }}
+            />
           </XAxis>
+
           <YAxis
             type="number"
             dataKey="y"
             domain={[0, 100]}
-            ticks={[0, 100]}
-            tickFormatter={(v) => (v === 0 ? "Low" : v === 100 ? "High" : "")}
-            tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11, fontWeight: 600 }}
+            ticks={[0, 25, 50, 75, 100]}
+            tick={false}
             tickLine={false}
-            axisLine={{ stroke: "hsl(var(--foreground))", strokeWidth: 1.5 }}
+            axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5 }} // ✅ hardcoded
           >
-            <Label value="Potential →" angle={-90} position="left" offset={36}
-              style={{ fill: "hsl(var(--foreground))", fontSize: 12, fontWeight: 700, letterSpacing: 1 }} />
+            <Label
+              value="Potential →"
+              angle={-90}
+              position="left"
+              offset={14}
+              style={{
+                fill: COLOR_LABEL_MUTED, // ✅ hardcoded
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: 1,
+              }}
+            />
           </YAxis>
-          <ZAxis range={[90, 90]} />
-          <Tooltip cursor={{ strokeDasharray: "3 3" }}
+
+          <ZAxis range={[80, 80]} />
+
+          <Tooltip
+            cursor={{ strokeDasharray: "3 3" }}
             content={({ active, payload }) => {
               if (!active || !payload || payload.length === 0) return null;
               const p = payload[0].payload as Point;
               return (
-                <div className="rounded-md border border-border bg-popover px-2 py-1 text-[11px] shadow">
+                <div
+                  style={{
+                    borderRadius: 6,
+                    border: `0.5px solid ${COLOR_TOOLTIP_BD}`,
+                    background: COLOR_TOOLTIP_BG,
+                    color: COLOR_TOOLTIP_TXT,
+                    padding: "4px 8px",
+                    fontSize: 11,
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                  }}
+                >
                   {p.name}
                 </div>
               );
-            }} />
+            }}
+          />
+
+          {/* ─── FIX 2: Quadrant labels via customized prop ─────────────────── */}
+          {/* Recharts passes offset + dimensions into the customized component  */}
+          <QuadrantLabels />
+
           {dim.length > 0 && (
-            <Scatter data={dim} fill="hsl(0 0% 65%)" fillOpacity={0.55} shape="circle">
-              <LabelList content={renderLabel("hsl(var(--muted-foreground))", 600) as any} />
-            </Scatter>
+            <Scatter
+              data={dim}
+              fill={COLOR_DOT_DIM} // ✅ hardcoded
+              fillOpacity={0.55}
+              shape="circle"
+              label={renderLabel(COLOR_LABEL_DIM, 600, true) as any}
+            />
           )}
+
           {highlighted.length > 0 && (
-            <Scatter data={highlighted} fill="hsl(0 84% 55%)" shape="circle">
-              <LabelList content={renderLabel("hsl(0 70% 30%)", 700) as any} />
-            </Scatter>
+            <Scatter
+              data={highlighted}
+              fill={COLOR_DOT_HI} // ✅ hardcoded
+              shape="circle"
+              label={renderLabel(COLOR_LABEL_HI, 700, false) as any}
+            />
           )}
         </ScatterChart>
       </ResponsiveContainer>
