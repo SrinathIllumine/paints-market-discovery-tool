@@ -73,19 +73,33 @@ function QuadrantLabels({ xAxisMap, yAxisMap }: any) {
   const left = xAxis.x;
   const right = xAxis.x + xAxis.width;
   const top = yAxis.y;
+  const bottom = yAxis.y + yAxis.height;
   const midX = (left + right) / 2;
-  const midY = yAxis.y + yAxis.height / 2;
+  const midY = (top + bottom) / 2;
 
-  const items = [
-    { cx: (left + midX) / 2, cy: top + 18, l1: "", l2: "" },
-    { cx: (midX + right) / 2, cy: top + 18, l1: "", l2: "" },
-    { cx: (left + midX) / 2, cy: midY + 18, l1: "", l2: "" },
-    { cx: (midX + right) / 2, cy: midY + 18, l1: "", l2: "" },
+  // Quadrant title labels
+  const quadrants = [
+    { cx: (left + midX) / 2, cy: top + 18, l1: "HIGH POTENTIAL", l2: "LOW ACCESS" },
+    { cx: (midX + right) / 2, cy: top + 18, l1: "HIGH POTENTIAL", l2: "HIGH ACCESS" },
+    { cx: (left + midX) / 2, cy: midY + 18, l1: "LOW POTENTIAL", l2: "LOW ACCESS" },
+    { cx: (midX + right) / 2, cy: midY + 18, l1: "LOW POTENTIAL", l2: "HIGH ACCESS" },
   ];
+
+  // Y below axis line (bottom of chart + small gap)
+  const xLabelY = bottom + 18;
+  // X label positions along x axis
+  const xLow = left;
+  const xHigh = right;
+
+  // Y axis low/high — rotated, placed left of the axis line
+  const yLabelX = left - 8;
+  const yLow = bottom; // "Low" at bottom
+  const yHigh = top; // "High" at top
 
   return (
     <>
-      {items.map(({ cx, cy, l1, l2 }) => (
+      {/* Quadrant titles */}
+      {quadrants.map(({ cx, cy, l1, l2 }) => (
         <text
           key={l1 + l2}
           x={cx}
@@ -104,6 +118,56 @@ function QuadrantLabels({ xAxisMap, yAxisMap }: any) {
           </tspan>
         </text>
       ))}
+
+      {/* X axis: Low (left) and High (right) below the axis */}
+      <text
+        x={xLow}
+        y={xLabelY}
+        textAnchor="start"
+        fontSize={10}
+        fontWeight={600}
+        fill={COLOR_LABEL_MUTED}
+        style={{ pointerEvents: "none" }}
+      >
+        Low
+      </text>
+      <text
+        x={xHigh}
+        y={xLabelY}
+        textAnchor="end"
+        fontSize={10}
+        fontWeight={600}
+        fill={COLOR_LABEL_MUTED}
+        style={{ pointerEvents: "none" }}
+      >
+        High
+      </text>
+
+      {/* Y axis: Low (bottom) and High (top), rotated -90° anticlockwise */}
+      <text
+        x={yLabelX}
+        y={yLow}
+        textAnchor="start"
+        fontSize={10}
+        fontWeight={600}
+        fill={COLOR_LABEL_MUTED}
+        transform={`rotate(-90, ${yLabelX}, ${yLow})`}
+        style={{ pointerEvents: "none" }}
+      >
+        Low
+      </text>
+      <text
+        x={yLabelX}
+        y={yHigh}
+        textAnchor="end"
+        fontSize={10}
+        fontWeight={600}
+        fill={COLOR_LABEL_MUTED}
+        transform={`rotate(-90, ${yLabelX}, ${yHigh})`}
+        style={{ pointerEvents: "none" }}
+      >
+        High
+      </text>
     </>
   );
 }
