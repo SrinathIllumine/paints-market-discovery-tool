@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Tooltip,
   Label,
+  LabelList,
 } from "recharts";
 import { CLUSTERS } from "@/data/clusters";
 import { computeClusterScores } from "@/lib/clusterScoring";
@@ -103,11 +104,14 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     const { x, y, payload } = props;
     if (typeof x !== "number" || typeof y !== "number" || !payload) return null;
     const lines = wrapName(payload.name, 14);
+    const anchor = payload.x > 78 ? "end" : "start";
+    const dx = payload.x > 78 ? -12 : 12;
+    const dy = payload.y > 84 ? -10 : payload.y < 16 ? 18 : 4;
     return (
-      <text x={x} y={y} fill={color} fontSize={10} fontWeight={weight}
-        textAnchor="middle" style={{ pointerEvents: "none" }}>
+      <text x={x + dx} y={y + dy} fill={color} fontSize={10} fontWeight={weight}
+        textAnchor={anchor} style={{ pointerEvents: "none" }}>
         {lines.map((l, i) => (
-          <tspan key={i} x={x} dy={i === 0 ? 14 : 11}>{l}</tspan>
+          <tspan key={i} x={x + dx} dy={i === 0 ? 0 : 11}>{l}</tspan>
         ))}
       </text>
     );
@@ -116,15 +120,17 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
   return (
     <div className="h-[480px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 24, right: 40, bottom: 48, left: 48 }}>
+        <ScatterChart margin={{ top: 28, right: 72, bottom: 72, left: 72 }}>
           <CartesianGrid
             stroke="hsl(var(--foreground))"
-            strokeOpacity={0.12}
+            strokeOpacity={0.1}
             strokeWidth={1}
           />
-          {/* Quadrant partition lines */}
-          <ReferenceLine x={50} stroke="hsl(var(--foreground))" strokeWidth={1.5} strokeOpacity={0.6} />
-          <ReferenceLine y={50} stroke="hsl(var(--foreground))" strokeWidth={1.5} strokeOpacity={0.6} />
+          {/* Axis lines and quadrant partition lines */}
+          <ReferenceLine x={0} stroke="hsl(var(--foreground))" strokeWidth={1.5} strokeOpacity={0.65} />
+          <ReferenceLine y={0} stroke="hsl(var(--foreground))" strokeWidth={1.5} strokeOpacity={0.65} />
+          <ReferenceLine x={50} stroke="hsl(var(--foreground))" strokeWidth={1.5} strokeOpacity={0.65} />
+          <ReferenceLine y={50} stroke="hsl(var(--foreground))" strokeWidth={1.5} strokeOpacity={0.65} />
 
           <XAxis
             type="number"
@@ -136,7 +142,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
             tickLine={false}
             axisLine={{ stroke: "hsl(var(--foreground))", strokeWidth: 1.5 }}
           >
-            <Label value="Access →" position="bottom" offset={20}
+            <Label value="Access →" position="bottom" offset={32}
               style={{ fill: "hsl(var(--foreground))", fontSize: 12, fontWeight: 700, letterSpacing: 1 }} />
           </XAxis>
           <YAxis
@@ -149,7 +155,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
             tickLine={false}
             axisLine={{ stroke: "hsl(var(--foreground))", strokeWidth: 1.5 }}
           >
-            <Label value="Potential →" angle={-90} position="left" offset={24}
+            <Label value="Potential →" angle={-90} position="left" offset={36}
               style={{ fill: "hsl(var(--foreground))", fontSize: 12, fontWeight: 700, letterSpacing: 1 }} />
           </YAxis>
           <ZAxis range={[90, 90]} />
@@ -164,12 +170,14 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
               );
             }} />
           {dim.length > 0 && (
-            <Scatter data={dim} fill="hsl(0 0% 65%)" fillOpacity={0.55}
-              shape="circle" label={renderLabel("hsl(var(--muted-foreground))", 600) as any} />
+            <Scatter data={dim} fill="hsl(0 0% 65%)" fillOpacity={0.55} shape="circle">
+              <LabelList content={renderLabel("hsl(var(--muted-foreground))", 600) as any} />
+            </Scatter>
           )}
           {highlighted.length > 0 && (
-            <Scatter data={highlighted} fill="hsl(0 84% 55%)" shape="circle"
-              label={renderLabel("hsl(0 70% 30%)", 700) as any} />
+            <Scatter data={highlighted} fill="hsl(0 84% 55%)" shape="circle">
+              <LabelList content={renderLabel("hsl(0 70% 30%)", 700) as any} />
+            </Scatter>
           )}
         </ScatterChart>
       </ResponsiveContainer>
