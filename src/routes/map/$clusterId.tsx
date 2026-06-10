@@ -256,7 +256,7 @@ function ClusterDetailScreen() {
         <section className="space-y-3">
           <h2 className="font-display text-2xl">Cluster Potential Mapping</h2>
 
-          <Accordion type="multiple" defaultValue={["revenue"]} className="space-y-2">
+          <Accordion type="multiple" defaultValue={["revenue", "competitive", "access", "ease"]} className="space-y-2">
             <CollapsibleSub value="revenue" title="Revenue Potential" hml={intel.revenueHML}>
               <ul className="space-y-2 text-sm leading-relaxed">
                 <Bullet>
