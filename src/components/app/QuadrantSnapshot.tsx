@@ -77,10 +77,10 @@ function QuadrantLabels({ xAxisMap, yAxisMap }: any) {
   const midY = yAxis.y + yAxis.height / 2;
 
   const items = [
-    { cx: (left + midX) / 2, cy: top + 18, l1: "HIGH POTENTIAL", l2: "LOW ACCESS" },
-    { cx: (midX + right) / 2, cy: top + 18, l1: "HIGH POTENTIAL", l2: "HIGH ACCESS" },
-    { cx: (left + midX) / 2, cy: midY + 18, l1: "LOW POTENTIAL", l2: "LOW ACCESS" },
-    { cx: (midX + right) / 2, cy: midY + 18, l1: "LOW POTENTIAL", l2: "HIGH ACCESS" },
+    { cx: (left + midX) / 2, cy: top + 18, l1: "", l2: "" },
+    { cx: (midX + right) / 2, cy: top + 18, l1: "", l2: "" },
+    { cx: (left + midX) / 2, cy: midY + 18, l1: "", l2: "" },
+    { cx: (midX + right) / 2, cy: midY + 18, l1: "", l2: "" },
   ];
 
   return (
