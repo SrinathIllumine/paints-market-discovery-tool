@@ -52,18 +52,33 @@ function isRequired(name: string) {
   return REQUIRED_NAMES.some((r) => name.toLowerCase().includes(r));
 }
 
-function pickEight(all: Point[]): Point[] {
+// ── pickEight: always include highlightId cluster even if outside default 8 ───
+function pickEight(all: Point[], highlightId?: string): Point[] {
   const quadrant = (p: Point) => (p.y >= 50 ? 2 : 0) + (p.x >= 50 ? 1 : 0);
   const buckets: Point[][] = [[], [], [], []];
   for (const p of all) buckets[quadrant(p)].push(p);
+
   const chosen: Point[] = [];
   const ids = new Set<string>();
+
+  // 1. Always include the highlighted cluster first (even if not in default 8)
+  if (highlightId) {
+    const hi = all.find((p) => p.id === highlightId);
+    if (hi && !ids.has(hi.id)) {
+      chosen.push(hi);
+      ids.add(hi.id);
+    }
+  }
+
+  // 2. Always include required clusters
   for (const p of all) {
-    if (isRequired(p.name)) {
+    if (isRequired(p.name) && !ids.has(p.id)) {
       chosen.push(p);
       ids.add(p.id);
     }
   }
+
+  // 3. Fill each quadrant up to 2
   for (let q = 0; q < 4; q++) {
     let need = 2 - chosen.filter((p) => quadrant(p) === q).length;
     for (const p of buckets[q]) {
@@ -75,6 +90,7 @@ function pickEight(all: Point[]): Point[] {
       }
     }
   }
+
   return chosen;
 }
 
@@ -82,16 +98,6 @@ function toPixel(v: number, dMin: number, dMax: number, pStart: number, pSize: n
   return pStart + ((v - dMin) / (dMax - dMin)) * pSize;
 }
 
-/**
- * Radial outward placement:
- * 1. Cast a ray from the chart centre through the dot.
- * 2. Anchor the label at DOT_R + PAD along that ray.
- * 3. textAnchor follows the horizontal direction of the ray.
- * 4. Hard clamp so nothing leaves the chart area.
- *
- * For two dots that share nearly the same angle, we rotate the
- * label by ±15° so they fan out instead of stacking.
- */
 function computeLabelPos(
   cx: number,
   cy: number,
@@ -101,12 +107,11 @@ function computeLabelPos(
   pRight: number,
   pTop: number,
   pBottom: number,
-  angularNudge = 0, // degrees, to fan out close dots
+  angularNudge = 0,
 ): { lx: number; ly: number; anchor: "start" | "end" | "middle"; lineX2: number; lineY2: number } {
   const rad = (angularNudge * Math.PI) / 180;
   let vx = cx - midPx;
   let vy = cy - midPy;
-  // Rotate the vector slightly if a nudge is requested
   if (angularNudge !== 0) {
     const cos = Math.cos(rad),
       sin = Math.sin(rad);
@@ -116,18 +121,14 @@ function computeLabelPos(
   const nx = vx / len,
     ny = vy / len;
 
-  // Line end — edge of dot
   const lineX2 = cx + nx * DOT_R;
   const lineY2 = cy + ny * DOT_R;
 
-  // Label start — beyond the line end
   let lx = cx + nx * (DOT_R + PAD);
   let ly = cy + ny * (DOT_R + PAD);
 
-  // Horizontal text anchor
   const anchor: "start" | "end" | "middle" = nx > 0.2 ? "start" : nx < -0.2 ? "end" : "middle";
 
-  // Clamp inside chart bounds with padding
   const margin = 4;
   lx = clamp(lx, pLeft + margin, pRight - margin);
   ly = clamp(ly, pTop + FONT_SIZE, pBottom - margin);
@@ -135,13 +136,9 @@ function computeLabelPos(
   return { lx, ly, anchor, lineX2, lineY2 };
 }
 
-// ── Sort points by angle from center so we can detect close neighbors ─────────
 function assignNudges(points: Point[], midX: number, midY: number): Map<string, number> {
   const angles = points
-    .map((p) => ({
-      id: p.id,
-      angle: Math.atan2(p.y - midY, p.x - midX),
-    }))
+    .map((p) => ({ id: p.id, angle: Math.atan2(p.y - midY, p.x - midX) }))
     .sort((a, b) => a.angle - b.angle);
 
   const nudges = new Map<string, number>();
@@ -150,7 +147,6 @@ function assignNudges(points: Point[], midX: number, midY: number): Map<string, 
     const next = angles[(i + 1) % angles.length];
     const diffPrev = Math.abs(angles[i].angle - prev.angle);
     const diffNext = Math.abs(angles[i].angle - next.angle);
-    // If a neighbour is within 15°, nudge away from it
     if (diffPrev < 0.26) nudges.set(angles[i].id, 12);
     else if (diffNext < 0.26) nudges.set(angles[i].id, -12);
     else nudges.set(angles[i].id, 0);
@@ -208,7 +204,6 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
 
     return (
       <g key={p.id}>
-        {/* Subtle leader line from dot to label */}
         <line
           x1={lineX2}
           y1={lineY2}
@@ -219,9 +214,8 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
           strokeOpacity={0.5}
           strokeDasharray="2 2"
         />
-        {/* Dot */}
         <circle cx={cx} cy={cy} r={DOT_R} fill={dotFill} />
-        {/* White halo behind text for legibility */}
+        {/* White halo for legibility */}
         <text
           x={lx}
           y={ly}
@@ -236,7 +230,6 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
         >
           {label}
         </text>
-        {/* Actual label */}
         <text
           x={lx}
           y={ly}
@@ -312,8 +305,14 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
       const y = clamp(sc.potentialScore * 10 + jitter(c.id + "y", 2.5), 4, 96);
       return { id: c.id, name: c.name, x, y, highlighted: !highlightId || c.id === highlightId };
     });
-    const eight = pickEight(all);
-    return { highlighted: eight.filter((p) => p.highlighted), dim: eight.filter((p) => !p.highlighted) };
+
+    // Pass highlightId so that cluster is always included even outside default 8
+    const eight = pickEight(all, highlightId);
+
+    return {
+      highlighted: eight.filter((p) => p.highlighted),
+      dim: eight.filter((p) => !p.highlighted),
+    };
   }, [clusterStates, highlightId]);
 
   return (
