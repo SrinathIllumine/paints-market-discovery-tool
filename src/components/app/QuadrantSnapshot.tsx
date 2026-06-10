@@ -222,7 +222,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
             domain={[-5, 105]}
             tick={false}
             tickLine={false}
-            width={20}
+            width={40}
             axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5 }}
           >
             <Label
