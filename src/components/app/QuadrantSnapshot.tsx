@@ -6,7 +6,6 @@ import {
   YAxis,
   ZAxis,
   CartesianGrid,
-  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -54,6 +53,22 @@ function wrapName(name: string, maxChars = 16): string[] {
   return lines;
 }
 
+// Curated 8-cluster shortlist: 2 per quadrant. Schools is pinned (HP/LA).
+const SHORTLIST_IDS = new Set<string>([
+  // HP-HA (top-right): high potential, high access
+  "mid-apartments",
+  "redevelopment",
+  // HP-LA (top-left): high potential, low access
+  "schools",
+  "midc",
+  // LP-HA (bottom-right): low potential, high access
+  "restaurants",
+  "petrol-pumps",
+  // LP-LA (bottom-left): low potential, low access
+  "highway-dhabas",
+  "religious",
+]);
+
 export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
   const clusterStates = useAppStore((s) => s.clusters);
 
@@ -61,25 +76,33 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     const hi: Point[] = [];
     const lo: Point[] = [];
     for (const c of CLUSTERS) {
+      const inShortlist = SHORTLIST_IDS.has(c.id);
+      const isHi = highlightId === c.id;
+      // Render only shortlisted clusters, plus the highlighted one if it's
+      // not already in the shortlist (individual cluster view).
+      if (!inShortlist && !isHi) continue;
+
       const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
       const sc = computeClusterScores(c, pc);
-      // Direct mapping: score × 10 places each cluster precisely on the chart.
       const x = clamp(sc.accessRollupScore * 10 + jitter(c.id + "x", 2.5), 4, 96);
       const y = clamp(sc.potentialScore * 10 + jitter(c.id + "y", 2.5), 4, 96);
-      const isHi = !highlightId || c.id === highlightId;
       const point: Point = { id: c.id, name: c.name, x, y, highlighted: isHi };
-      if (isHi) hi.push(point);
-      else lo.push(point);
+      if (highlightId ? isHi : true) {
+        // overview mode: everything in shortlist is "highlighted" (dark dots)
+        // individual mode: only the matching cluster is highlighted
+        if (!highlightId || isHi) hi.push(point);
+        else lo.push(point);
+      } else {
+        lo.push(point);
+      }
     }
     return { highlighted: hi, dim: lo };
   }, [clusterStates, highlightId]);
 
-  const renderLabel = (color: string, weight: number, onlyHpHa = false) => (props: any) => {
+  const renderLabel = (color: string, weight: number) => (props: any) => {
     const { x, y, payload } = props;
     if (typeof x !== "number" || typeof y !== "number" || !payload) return null;
-    if (onlyHpHa && !(payload.x >= 50 && payload.y >= 50)) return null;
     const lines = wrapName(payload.name, 14);
-    // Place label BELOW the dot, like the reference chart.
     return (
       <text x={x} y={y} fill={color} fontSize={10} fontWeight={weight}
         textAnchor="middle" style={{ pointerEvents: "none" }}>
@@ -90,52 +113,46 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
     );
   };
 
-
-  // Quadrant titles rendered on top of each quadrant region.
-  const quadrantLabel = (cx: number, cy: number, line1: string, line2: string) => (
-    <text
-      x={`${cx}%`}
-      y={cy}
-      textAnchor="middle"
-      fontSize={10}
-      fontWeight={700}
-      fill="hsl(var(--muted-foreground))"
-      style={{ pointerEvents: "none", letterSpacing: 0.5 }}
-    >
-      <tspan x={`${cx}%`} dy={0}>{line1}</tspan>
-      <tspan x={`${cx}%`} dy={12}>{line2}</tspan>
-    </text>
-  );
-
   return (
     <div className="h-[480px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 40, right: 28, bottom: 32, left: 32 }}>
+        <ScatterChart margin={{ top: 24, right: 40, bottom: 48, left: 48 }}>
           <CartesianGrid
             stroke="hsl(var(--foreground))"
-            strokeOpacity={0.25}
+            strokeOpacity={0.12}
             strokeWidth={1}
-            horizontalPoints={undefined as any}
-            verticalPoints={undefined as any}
           />
-          <ReferenceArea x1={50} x2={100} y1={50} y2={100}
-            fill="hsl(0 84% 60%)" fillOpacity={0.10} stroke="none" />
-          {/* Bold partition lines splitting the 4 quadrants */}
-          <ReferenceLine x={50} stroke="hsl(var(--foreground))" strokeWidth={2} />
-          <ReferenceLine y={50} stroke="hsl(var(--foreground))" strokeWidth={2} />
-          <XAxis type="number" dataKey="x" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]}
-            tick={false} tickLine={false}
-            axisLine={{ stroke: "hsl(var(--foreground))", strokeWidth: 1.5 }}>
-            <Label value="Access →" position="bottom" offset={10}
-              style={{ fill: "hsl(var(--muted-foreground))", fontSize: 12, fontWeight: 600, letterSpacing: 1 }} />
+          {/* Quadrant partition lines */}
+          <ReferenceLine x={50} stroke="hsl(var(--foreground))" strokeWidth={1.5} strokeOpacity={0.6} />
+          <ReferenceLine y={50} stroke="hsl(var(--foreground))" strokeWidth={1.5} strokeOpacity={0.6} />
+
+          <XAxis
+            type="number"
+            dataKey="x"
+            domain={[0, 100]}
+            ticks={[0, 100]}
+            tickFormatter={(v) => (v === 0 ? "Low" : v === 100 ? "High" : "")}
+            tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11, fontWeight: 600 }}
+            tickLine={false}
+            axisLine={{ stroke: "hsl(var(--foreground))", strokeWidth: 1.5 }}
+          >
+            <Label value="Access →" position="bottom" offset={20}
+              style={{ fill: "hsl(var(--foreground))", fontSize: 12, fontWeight: 700, letterSpacing: 1 }} />
           </XAxis>
-          <YAxis type="number" dataKey="y" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]}
-            tick={false} tickLine={false}
-            axisLine={{ stroke: "hsl(var(--foreground))", strokeWidth: 1.5 }}>
-            <Label value="Potential →" angle={-90} position="left" offset={14}
-              style={{ fill: "hsl(var(--muted-foreground))", fontSize: 12, fontWeight: 600, letterSpacing: 1 }} />
+          <YAxis
+            type="number"
+            dataKey="y"
+            domain={[0, 100]}
+            ticks={[0, 100]}
+            tickFormatter={(v) => (v === 0 ? "Low" : v === 100 ? "High" : "")}
+            tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11, fontWeight: 600 }}
+            tickLine={false}
+            axisLine={{ stroke: "hsl(var(--foreground))", strokeWidth: 1.5 }}
+          >
+            <Label value="Potential →" angle={-90} position="left" offset={24}
+              style={{ fill: "hsl(var(--foreground))", fontSize: 12, fontWeight: 700, letterSpacing: 1 }} />
           </YAxis>
-          <ZAxis range={[80, 80]} />
+          <ZAxis range={[90, 90]} />
           <Tooltip cursor={{ strokeDasharray: "3 3" }}
             content={({ active, payload }) => {
               if (!active || !payload || payload.length === 0) return null;
@@ -146,20 +163,14 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
                 </div>
               );
             }} />
-          {/* Quadrant titles — placed near the top of each quadrant region */}
-          {quadrantLabel(27, 55, "HIGH POTENTIAL", "LOW ACCESS")}
-          {quadrantLabel(77, 55, "HIGH POTENTIAL", "HIGH ACCESS")}
-          {quadrantLabel(27, 258, "LOW POTENTIAL", "LOW ACCESS")}
-          {quadrantLabel(77, 258, "LOW POTENTIAL", "HIGH ACCESS")}
           {dim.length > 0 && (
             <Scatter data={dim} fill="hsl(0 0% 65%)" fillOpacity={0.55}
-              shape="circle" label={renderLabel("hsl(var(--muted-foreground))", 600, true) as any} />
+              shape="circle" label={renderLabel("hsl(var(--muted-foreground))", 600) as any} />
           )}
           {highlighted.length > 0 && (
             <Scatter data={highlighted} fill="hsl(0 84% 55%)" shape="circle"
-              label={renderLabel("hsl(0 70% 30%)", 700, false) as any} />
+              label={renderLabel("hsl(0 70% 30%)", 700) as any} />
           )}
-
         </ScatterChart>
       </ResponsiveContainer>
     </div>
