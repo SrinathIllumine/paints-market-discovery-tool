@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Map as MapIcon, Users, Lightbulb, ArrowRight } from "lucide-react";
+import { Map as MapIcon, Users, Lightbulb, ArrowRight, History } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { BottomNav } from "@/components/app/BottomNav";
 import { useAppStore } from "@/store/appStore";
