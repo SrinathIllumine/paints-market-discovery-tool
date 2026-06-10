@@ -8,7 +8,8 @@ import { CLUSTERS } from "@/data/clusters";
 import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
 import { cn } from "@/lib/utils";
-import { ChevronRight, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronRight, Search } from "lucide-react";
 
 export const Route = createFileRoute("/market-potential")({
   head: () => ({
