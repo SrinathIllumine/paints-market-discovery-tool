@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { ChevronDown, FileDown, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, FileDown, Plus, Trash2 } from "lucide-react";
 import { generateMonthlyEngagementPlanPdf } from "@/lib/monthlyPlanReport";
 import {
   CONNECT_STRATEGY_OPTIONS,
@@ -37,21 +37,19 @@ export const Route = createFileRoute("/plan/$clusterId")({
 type PlanStep = "value" | "market" | "customer" | "action";
 
 const STEPS: { id: PlanStep; title: string }[] = [
-  { id: "value",    title: "Select your value proposition" },
-  { id: "market",   title: "Design your market engagement strategy" },
+  { id: "value", title: "Select your value proposition" },
+  { id: "market", title: "Design your market engagement strategy" },
   { id: "customer", title: "Design your customer engagement strategy" },
-  { id: "action",   title: "Action plan" },
+  { id: "action", title: "Action plan" },
 ];
 
 const STAGE_HEADING_CLS = "font-display text-lg leading-tight";
-
-// Market-engagement selections live under the BRAND bucket (legacy).
 const MARKET_BUCKET: ConnectStrategy = "BRAND";
 
 const CATEGORY_TONE: Record<MarketEngagementCategory, string> = {
   Knowledge: "border-blue-200 bg-blue-50 text-blue-800",
-  Service:   "border-amber-200 bg-amber-50 text-amber-800",
-  Social:    "border-violet-200 bg-violet-50 text-violet-800",
+  Service: "border-amber-200 bg-amber-50 text-amber-800",
+  Social: "border-violet-200 bg-violet-50 text-violet-800",
 };
 
 const INFLUENCER_ROLES = ["Site supervisor", "Interior designer", "Architect", "Other"];
@@ -61,21 +59,21 @@ function PlanClusterScreen() {
   const navigate = useNavigate();
   const cluster = useMemo(() => getCluster(clusterId), [clusterId]);
 
-  const valuePropByCluster   = useAppStore((s) => s.plan.valuePropositionByCluster);
-  const setValueProposition  = useAppStore((s) => s.setValueProposition);
-  const selectedStrategies   = useAppStore((s) => s.plan.selectedStrategiesByCluster);
+  const valuePropByCluster = useAppStore((s) => s.plan.valuePropositionByCluster);
+  const setValueProposition = useAppStore((s) => s.setValueProposition);
+  const selectedStrategies = useAppStore((s) => s.plan.selectedStrategiesByCluster);
   const toggleSelectedStrategy = useAppStore((s) => s.toggleSelectedStrategy);
-  const strategyItems        = useAppStore((s) => s.plan.strategyItemsByCluster);
-  const toggleStrategyItem   = useAppStore((s) => s.toggleStrategyItem);
-  const strategyContacts     = useAppStore((s) => s.plan.strategyContactsByCluster);
-  const setStrategyContacts  = useAppStore((s) => s.setStrategyContacts);
-  const selectedActions      = useAppStore((s) => s.plan.selectedActionsByCluster);
+  const strategyItems = useAppStore((s) => s.plan.strategyItemsByCluster);
+  const toggleStrategyItem = useAppStore((s) => s.toggleStrategyItem);
+  const strategyContacts = useAppStore((s) => s.plan.strategyContactsByCluster);
+  const setStrategyContacts = useAppStore((s) => s.setStrategyContacts);
+  const selectedActions = useAppStore((s) => s.plan.selectedActionsByCluster);
   const toggleSelectedAction = useAppStore((s) => s.toggleSelectedAction);
-  const customActions        = useAppStore((s) => s.plan.customActionsByCluster);
-  const addCustomAction      = useAppStore((s) => s.addCustomAction);
-  const removeCustomAction   = useAppStore((s) => s.removeCustomAction);
-  const eventEstimates       = useAppStore((s) => s.plan.eventEstimatesByCluster);
-  const setEventEstimate     = useAppStore((s) => s.setEventEstimate);
+  const customActions = useAppStore((s) => s.plan.customActionsByCluster);
+  const addCustomAction = useAppStore((s) => s.addCustomAction);
+  const removeCustomAction = useAppStore((s) => s.removeCustomAction);
+  const eventEstimates = useAppStore((s) => s.plan.eventEstimatesByCluster);
+  const setEventEstimate = useAppStore((s) => s.setEventEstimate);
 
   const [openStep, setOpenStep] = useState<PlanStep>("value");
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -99,6 +97,13 @@ function PlanClusterScreen() {
   const marketSelected = strategyItems[clusterId]?.[MARKET_BUCKET] ?? [];
   const marketContacts = strategyContacts[clusterId]?.[MARKET_BUCKET] ?? [];
 
+  // ── Next-step helper ────────────────────────────────────────────────────────
+  const currentStepIdx = STEPS.findIndex((s) => s.id === openStep);
+  const nextStep = STEPS[currentStepIdx + 1] ?? null;
+  const handleNext = () => {
+    if (nextStep) setOpenStep(nextStep.id);
+  };
+
   const handleGenerate = () => {
     generateMonthlyEngagementPlanPdf({
       focusClusterId: clusterId,
@@ -114,23 +119,13 @@ function PlanClusterScreen() {
     setConfirmOpen(false);
   };
 
-  const estimateEvent = estimateEventId
-    ? MARKET_ENGAGEMENT_OPTIONS.find((m) => m.id === estimateEventId)
-    : undefined;
-  const estimateValue = estimateEventId
-    ? (eventEstimates[clusterId]?.[estimateEventId] ?? {})
-    : {};
+  const estimateEvent = estimateEventId ? MARKET_ENGAGEMENT_OPTIONS.find((m) => m.id === estimateEventId) : undefined;
+  const estimateValue = estimateEventId ? (eventEstimates[clusterId]?.[estimateEventId] ?? {}) : {};
 
   return (
     <AppShell
       bottom={<BottomNav />}
-      header={
-        <StageHeader
-          eyebrow="Planning"
-          title="My Engagement Plan"
-          backTo="/plan"
-        />
-      }
+      header={<StageHeader eyebrow="Planning" title="My Engagement Plan" backTo="/plan" />}
     >
       <div className="space-y-5 px-6 py-6">
         <div className="space-y-1">
@@ -143,8 +138,11 @@ function PlanClusterScreen() {
         <div className="space-y-3">
           {STEPS.map((step, idx) => {
             const isOpen = openStep === step.id;
+            const isLast = idx === STEPS.length - 1;
+
             return (
               <div key={step.id} className="overflow-hidden rounded-2xl border border-border bg-card">
+                {/* Accordion header */}
                 <button
                   type="button"
                   onClick={() => setOpenStep(isOpen ? ("" as PlanStep) : step.id)}
@@ -158,46 +156,62 @@ function PlanClusterScreen() {
                   />
                 </button>
 
+                {/* Accordion body */}
                 {isOpen && (
-                  <div className="space-y-4 border-t border-border px-4 pb-4 pt-3">
-                    {step.id === "value" && (
-                      <ValueStep
-                        clusterId={clusterId}
-                        selected={vp}
-                        onSelect={(v) => setValueProposition(clusterId, v)}
-                      />
-                    )}
-                    {step.id === "market" && (
-                      <MarketStep
-                        selected={marketSelected}
-                        contacts={marketContacts}
-                        onToggleItem={(it) => toggleStrategyItem(clusterId, MARKET_BUCKET, it)}
-                        onContactsChange={(list) => setStrategyContacts(clusterId, MARKET_BUCKET, list)}
-                      />
-                    )}
-                    {step.id === "customer" && (
-                      <CustomerStep
-                        clusterId={clusterId}
-                        strategies={customerStrategies}
-                        contactsByStrategy={strategyContacts[clusterId] ?? {}}
-                        onToggle={(s) => toggleSelectedStrategy(clusterId, s)}
-                        onContactsChange={(s, list) => setStrategyContacts(clusterId, s, list)}
-                      />
-                    )}
-                    {step.id === "action" && (
-                      <ActionStep
-                        clusterId={clusterId}
-                        marketSelected={marketSelected}
-                        customerStrategies={customerStrategies}
-                        selectedActions={selectedActions[clusterId] ?? {}}
-                        customActions={customActions[clusterId] ?? {}}
-                        contactsByStrategy={strategyContacts[clusterId] ?? {}}
-                        eventEstimates={eventEstimates[clusterId] ?? {}}
-                        onToggleAction={(s, a) => toggleSelectedAction(clusterId, s, a)}
-                        onAddCustom={(s, t) => addCustomAction(clusterId, s, t)}
-                        onRemoveCustom={(s, t) => removeCustomAction(clusterId, s, t)}
-                        onOpenEstimate={(eventId) => setEstimateEventId(eventId)}
-                      />
+                  <div className="border-t border-border px-4 pb-4 pt-3">
+                    <div className="space-y-4">
+                      {step.id === "value" && (
+                        <ValueStep
+                          clusterId={clusterId}
+                          selected={vp}
+                          onSelect={(v) => setValueProposition(clusterId, v)}
+                        />
+                      )}
+                      {step.id === "market" && (
+                        <MarketStep
+                          selected={marketSelected}
+                          contacts={marketContacts}
+                          onToggleItem={(it) => toggleStrategyItem(clusterId, MARKET_BUCKET, it)}
+                          onContactsChange={(list) => setStrategyContacts(clusterId, MARKET_BUCKET, list)}
+                        />
+                      )}
+                      {step.id === "customer" && (
+                        <CustomerStep
+                          clusterId={clusterId}
+                          strategies={customerStrategies}
+                          contactsByStrategy={strategyContacts[clusterId] ?? {}}
+                          onToggle={(s) => toggleSelectedStrategy(clusterId, s)}
+                          onContactsChange={(s, list) => setStrategyContacts(clusterId, s, list)}
+                        />
+                      )}
+                      {step.id === "action" && (
+                        <ActionStep
+                          clusterId={clusterId}
+                          marketSelected={marketSelected}
+                          customerStrategies={customerStrategies}
+                          selectedActions={selectedActions[clusterId] ?? {}}
+                          customActions={customActions[clusterId] ?? {}}
+                          contactsByStrategy={strategyContacts[clusterId] ?? {}}
+                          eventEstimates={eventEstimates[clusterId] ?? {}}
+                          onToggleAction={(s, a) => toggleSelectedAction(clusterId, s, a)}
+                          onAddCustom={(s, t) => addCustomAction(clusterId, s, t)}
+                          onRemoveCustom={(s, t) => removeCustomAction(clusterId, s, t)}
+                          onOpenEstimate={(eventId) => setEstimateEventId(eventId)}
+                        />
+                      )}
+                    </div>
+
+                    {/* Next → button — shown on all stages except the last */}
+                    {!isLast && (
+                      <div className="mt-4 flex justify-end">
+                        <Button
+                          size="sm"
+                          onClick={handleNext}
+                          className="gap-1.5 bg-navy text-navy-foreground hover:bg-navy/90"
+                        >
+                          Next <ChevronRight className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 )}
@@ -214,13 +228,14 @@ function PlanClusterScreen() {
         </Button>
       </div>
 
+      {/* Confirm generate dialog */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Ready to generate?</DialogTitle>
             <DialogDescription>
-              Have you completed all your planning decisions for <b>{cluster.name}</b>? The PDF will
-              capture your current selections.
+              Have you completed all your planning decisions for <b>{cluster.name}</b>? The PDF will capture your
+              current selections.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
@@ -234,6 +249,7 @@ function PlanClusterScreen() {
         </DialogContent>
       </Dialog>
 
+      {/* Event estimate dialog */}
       <Dialog open={estimateEventId !== null} onOpenChange={(o) => !o && setEstimateEventId(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -267,11 +283,18 @@ function PlanClusterScreen() {
   );
 }
 
-/* ---------------- Stage 1: value proposition ---------------- */
-
+/* ─────────────────────────────────────────────────────────────
+   Stage 1: value proposition
+───────────────────────────────────────────────────────────── */
 function ValueStep({
-  clusterId, selected, onSelect,
-}: { clusterId: string; selected?: string; onSelect: (v: string) => void }) {
+  clusterId,
+  selected,
+  onSelect,
+}: {
+  clusterId: string;
+  selected?: string;
+  onSelect: (v: string) => void;
+}) {
   const baseOptions = useMemo(() => getValuePropositions(clusterId).slice(0, 2), [clusterId]);
   const [customs, setCustoms] = useState<string[]>(() => {
     if (selected && !baseOptions.includes(selected)) return [selected];
@@ -284,7 +307,10 @@ function ValueStep({
 
   const submitCustom = () => {
     const t = draft.trim();
-    if (!t) { setAdding(false); return; }
+    if (!t) {
+      setAdding(false);
+      return;
+    }
     if (!allOptions.includes(t)) setCustoms((c) => [...c, t]);
     onSelect(t);
     setDraft("");
@@ -293,9 +319,7 @@ function ValueStep({
 
   return (
     <div>
-      <p className="mb-2 text-xs text-muted-foreground">
-        Pick one value proposition to carry through your plan.
-      </p>
+      <p className="mb-2 text-xs text-muted-foreground">Pick one value proposition to carry through your plan.</p>
       <div className="space-y-2">
         {allOptions.map((opt) => {
           const active = selected === opt;
@@ -325,7 +349,9 @@ function ValueStep({
               autoFocus
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") submitCustom(); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submitCustom();
+              }}
               placeholder="Type your own value proposition…"
               className="flex-1 rounded border border-border bg-background px-2 py-1.5 text-sm"
             />
@@ -347,10 +373,14 @@ function ValueStep({
   );
 }
 
-/* ---------------- Stage 2: market engagement ---------------- */
-
+/* ─────────────────────────────────────────────────────────────
+   Stage 2: market engagement
+───────────────────────────────────────────────────────────── */
 function MarketStep({
-  selected, contacts, onToggleItem, onContactsChange,
+  selected,
+  contacts,
+  onToggleItem,
+  onContactsChange,
 }: {
   selected: string[];
   contacts: ContactEntry[];
@@ -359,29 +389,30 @@ function MarketStep({
 }) {
   const grouped: Record<MarketEngagementCategory, typeof MARKET_ENGAGEMENT_OPTIONS> = {
     Knowledge: MARKET_ENGAGEMENT_OPTIONS.filter((o) => o.category === "Knowledge"),
-    Service:   MARKET_ENGAGEMENT_OPTIONS.filter((o) => o.category === "Service"),
-    Social:    MARKET_ENGAGEMENT_OPTIONS.filter((o) => o.category === "Social"),
+    Service: MARKET_ENGAGEMENT_OPTIONS.filter((o) => o.category === "Service"),
+    Social: MARKET_ENGAGEMENT_OPTIONS.filter((o) => o.category === "Social"),
   };
   const SUB_LABEL: Record<MarketEngagementCategory, string> = {
     Knowledge: "Knowledge contribution",
-    Service:   "Service contribution",
-    Social:    "Social contribution",
+    Service: "Service contribution",
+    Social: "Social contribution",
   };
 
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
-        Pick the brand-building &amp; contribution events you'll run this month — across knowledge,
-        service and social contributions.
+        Pick the brand-building &amp; contribution events you'll run this month — across knowledge, service and social
+        contributions.
       </p>
-
       <div className="space-y-4">
         {(Object.keys(grouped) as MarketEngagementCategory[]).map((cat) => (
           <div key={cat} className="space-y-2">
-            <h4 className={cn(
-              "rounded-md border px-2 py-1 text-[11px] font-semibold uppercase tracking-wider",
-              CATEGORY_TONE[cat],
-            )}>
+            <h4
+              className={cn(
+                "rounded-md border px-2 py-1 text-[11px] font-semibold uppercase tracking-wider",
+                CATEGORY_TONE[cat],
+              )}
+            >
               {SUB_LABEL[cat]}
             </h4>
             <div className="space-y-2">
@@ -412,20 +443,20 @@ function MarketStep({
           </div>
         ))}
       </div>
-
-      <ContactTable
-        title="Touchpoints / community contacts"
-        contacts={contacts}
-        onChange={onContactsChange}
-      />
+      <ContactTable title="Touchpoints / community contacts" contacts={contacts} onChange={onContactsChange} />
     </div>
   );
 }
 
-/* ---------------- Stage 3: customer engagement ---------------- */
-
+/* ─────────────────────────────────────────────────────────────
+   Stage 3: customer engagement
+───────────────────────────────────────────────────────────── */
 function CustomerStep({
-  clusterId, strategies, contactsByStrategy, onToggle, onContactsChange,
+  clusterId,
+  strategies,
+  contactsByStrategy,
+  onToggle,
+  onContactsChange,
 }: {
   clusterId: string;
   strategies: ConnectStrategy[];
@@ -444,10 +475,7 @@ function CustomerStep({
           return (
             <div
               key={opt.key}
-              className={cn(
-                "rounded-lg border",
-                active ? "border-critical bg-critical/5" : "border-border bg-card",
-              )}
+              className={cn("rounded-lg border", active ? "border-critical bg-critical/5" : "border-border bg-card")}
             >
               <label className="flex cursor-pointer items-start gap-2 px-3 py-2 text-sm">
                 <input
@@ -461,7 +489,6 @@ function CustomerStep({
                   <span className="block text-xs text-muted-foreground">{opt.description}</span>
                 </span>
               </label>
-
               {active && (
                 <div className="border-t border-border px-3 py-3">
                   <StrategyDetails
@@ -481,7 +508,10 @@ function CustomerStep({
 }
 
 function StrategyDetails({
-  clusterId, strategy, contacts, onContactsChange,
+  clusterId,
+  strategy,
+  contacts,
+  onContactsChange,
 }: {
   clusterId: string;
   strategy: ConnectStrategy;
@@ -522,35 +552,30 @@ function StrategyDetails({
   }
 
   if (strategy === "INFLUENCER") {
-    return (
-      <ContactTable
-        title="Influencer contacts"
-        contacts={contacts}
-        onChange={onContactsChange}
-        showRole
-      />
-    );
+    return <ContactTable title="Influencer contacts" contacts={contacts} onChange={onContactsChange} showRole />;
   }
 
   const title =
-    strategy === "CONTRACTOR" ? "Contractor contacts"
-      : strategy === "RETAILER" ? "Retailer contacts"
-      : "Contacts";
-  return (
-    <ContactTable
-      title={title}
-      contacts={contacts}
-      onChange={onContactsChange}
-    />
-  );
+    strategy === "CONTRACTOR" ? "Contractor contacts" : strategy === "RETAILER" ? "Retailer contacts" : "Contacts";
+
+  return <ContactTable title={title} contacts={contacts} onChange={onContactsChange} />;
 }
 
-/* ---------------- Stage 4: action plan ---------------- */
-
+/* ─────────────────────────────────────────────────────────────
+   Stage 4: action plan
+───────────────────────────────────────────────────────────── */
 function ActionStep({
-  clusterId, marketSelected, customerStrategies, selectedActions, customActions,
-  contactsByStrategy, eventEstimates,
-  onToggleAction, onAddCustom, onRemoveCustom, onOpenEstimate,
+  clusterId,
+  marketSelected,
+  customerStrategies,
+  selectedActions,
+  customActions,
+  contactsByStrategy,
+  eventEstimates,
+  onToggleAction,
+  onAddCustom,
+  onRemoveCustom,
+  onOpenEstimate,
 }: {
   clusterId: string;
   marketSelected: string[];
@@ -565,7 +590,9 @@ function ActionStep({
   onOpenEstimate: (eventId: string) => void;
 }) {
   const chosenEvents = MARKET_ENGAGEMENT_OPTIONS.filter((m) => marketSelected.includes(m.id));
-  const [assetDlg, setAssetDlg] = useState<{ title: string; asset: ActionAsset; userContacts?: ContactEntry[] } | null>(null);
+  const [assetDlg, setAssetDlg] = useState<{ title: string; asset: ActionAsset; userContacts?: ContactEntry[] } | null>(
+    null,
+  );
   const [draftByStrategy, setDraftByStrategy] = useState<Partial<Record<ConnectStrategy, string>>>({});
 
   return (
@@ -576,12 +603,10 @@ function ActionStep({
 
       <section>
         <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Contribution & brand events
+          Contribution &amp; brand events
         </h4>
         {chosenEvents.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            No events selected in Stage 2 yet.
-          </p>
+          <p className="text-xs text-muted-foreground">No events selected in Stage 2 yet.</p>
         ) : (
           <ul className="space-y-2">
             {chosenEvents.map((ev) => {
@@ -598,17 +623,15 @@ function ActionStep({
                       size="sm"
                       variant={filled ? "outline" : "default"}
                       onClick={() => onOpenEstimate(ev.id)}
-                      className={cn(
-                        "h-8 shrink-0 text-xs",
-                        !filled && "bg-navy text-navy-foreground hover:bg-navy/90",
-                      )}
+                      className={cn("h-8 shrink-0 text-xs", !filled && "bg-navy text-navy-foreground hover:bg-navy/90")}
                     >
                       {filled ? "Edit estimate" : "Plan event"}
                     </Button>
                   </div>
                   {filled && (
                     <p className="mt-1.5 text-[11px] text-muted-foreground">
-                      Participants: <b className="text-foreground">{est.participants ?? "—"}</b>{" · "}
+                      Participants: <b className="text-foreground">{est.participants ?? "—"}</b>
+                      {" · "}
                       Contractors: <b className="text-foreground">{est.contractors ?? "—"}</b>
                     </p>
                   )}
@@ -624,9 +647,7 @@ function ActionStep({
           Customer engagement strategies
         </h4>
         {customerStrategies.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            No customer engagement strategies selected in Stage 3 yet.
-          </p>
+          <p className="text-xs text-muted-foreground">No customer engagement strategies selected in Stage 3 yet.</p>
         ) : (
           <div className="space-y-3">
             {customerStrategies.map((s) => {
@@ -656,15 +677,20 @@ function ActionStep({
                             <button
                               key={ai}
                               type="button"
-                              onClick={() => setAssetDlg({
-                                title: a.text,
-                                asset,
-                                userContacts: asset.kind === "contacts" ? userContacts : undefined,
-                              })}
+                              onClick={() =>
+                                setAssetDlg({
+                                  title: a.text,
+                                  asset,
+                                  userContacts: asset.kind === "contacts" ? userContacts : undefined,
+                                })
+                              }
                               className="shrink-0 rounded border border-border bg-card px-2 py-0.5 text-[10px] font-semibold text-navy hover:bg-muted/40"
                             >
-                              {asset.kind === "contacts" ? "View contacts" :
-                                asset.kind === "deck" ? "View PPT" : "View pamphlets"}
+                              {asset.kind === "contacts"
+                                ? "View contacts"
+                                : asset.kind === "deck"
+                                  ? "View PPT"
+                                  : "View pamphlets"}
                             </button>
                           ))}
                         </li>
@@ -673,7 +699,9 @@ function ActionStep({
                     {customs.map((c, i) => (
                       <li key={`cust-${i}`} className="flex items-start justify-between gap-2 text-sm">
                         <span className="flex items-start gap-2">
-                          <span className="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded border border-critical bg-critical/10 text-[10px] text-critical">+</span>
+                          <span className="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded border border-critical bg-critical/10 text-[10px] text-critical">
+                            +
+                          </span>
                           <span className="leading-snug">{c}</span>
                         </span>
                         <button
@@ -694,7 +722,10 @@ function ActionStep({
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           const t = draft.trim();
-                          if (t) { onAddCustom(s, t); setDraftByStrategy((d) => ({ ...d, [s]: "" })); }
+                          if (t) {
+                            onAddCustom(s, t);
+                            setDraftByStrategy((d) => ({ ...d, [s]: "" }));
+                          }
                         }
                       }}
                       placeholder="Add your own action…"
@@ -705,7 +736,10 @@ function ActionStep({
                       variant="outline"
                       onClick={() => {
                         const t = draft.trim();
-                        if (t) { onAddCustom(s, t); setDraftByStrategy((d) => ({ ...d, [s]: "" })); }
+                        if (t) {
+                          onAddCustom(s, t);
+                          setDraftByStrategy((d) => ({ ...d, [s]: "" }));
+                        }
                       }}
                       className="h-7 gap-1 text-xs"
                     >
@@ -732,7 +766,13 @@ function ActionStep({
                   {(assetDlg.asset.items ?? []).map((it: string, i: number) => (
                     <li key={i} className="flex items-center justify-between gap-2">
                       <span>{it}</span>
-                      <a href="#" onClick={(e) => e.preventDefault()} className="text-[11px] font-semibold text-navy underline">Download</a>
+                      <a
+                        href="#"
+                        onClick={(e) => e.preventDefault()}
+                        className="text-[11px] font-semibold text-navy underline"
+                      >
+                        Download
+                      </a>
                     </li>
                   ))}
                 </ul>
@@ -740,7 +780,11 @@ function ActionStep({
               {assetDlg.asset.kind === "deck" && (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">{assetDlg.asset.body}</p>
-                  <a href="#" onClick={(e) => e.preventDefault()} className="inline-flex items-center gap-1 rounded border border-border bg-card px-3 py-1.5 text-xs font-semibold text-navy hover:bg-muted/40">
+                  <a
+                    href="#"
+                    onClick={(e) => e.preventDefault()}
+                    className="inline-flex items-center gap-1 rounded border border-border bg-card px-3 py-1.5 text-xs font-semibold text-navy hover:bg-muted/40"
+                  >
                     Open deck.pptx
                   </a>
                 </div>
@@ -749,7 +793,7 @@ function ActionStep({
                 <>
                   {(assetDlg.userContacts && assetDlg.userContacts.length > 0
                     ? assetDlg.userContacts
-                    : assetDlg.asset.contacts ?? []
+                    : (assetDlg.asset.contacts ?? [])
                   ).map((c: ContactEntry) => (
                     <div key={c.id} className="rounded-md border border-border bg-background p-2 text-xs">
                       <div className="font-semibold">{c.name || "—"}</div>
@@ -758,7 +802,7 @@ function ActionStep({
                       </div>
                     </div>
                   ))}
-                  {((assetDlg.userContacts?.length ?? 0) === 0 && (assetDlg.asset.contacts?.length ?? 0) === 0) && (
+                  {(assetDlg.userContacts?.length ?? 0) === 0 && (assetDlg.asset.contacts?.length ?? 0) === 0 && (
                     <p className="text-xs text-muted-foreground">No contacts added yet.</p>
                   )}
                 </>
@@ -766,7 +810,9 @@ function ActionStep({
             </div>
           )}
           <DialogFooter>
-            <Button onClick={() => setAssetDlg(null)} variant="outline">Close</Button>
+            <Button onClick={() => setAssetDlg(null)} variant="outline">
+              Close
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -774,25 +820,35 @@ function ActionStep({
   );
 }
 
-
-/* ---------------- shared: contacts table ---------------- */
-
+/* ─────────────────────────────────────────────────────────────
+   Shared: contacts table
+───────────────────────────────────────────────────────────── */
 function ContactTable({
-  title, contacts, onChange, showRole = false,
+  title,
+  contacts,
+  onChange,
+  showRole = false,
 }: {
   title: string;
   contacts: ContactEntry[];
   onChange: (list: ContactEntry[]) => void;
   showRole?: boolean;
 }) {
-  const list = contacts;
-  const update = (i: number, patch: Partial<ContactEntry>) => {
-    const next = list.map((c, idx) => (idx === i ? { ...c, ...patch } : c));
-    onChange(next);
-  };
+  const update = (i: number, patch: Partial<ContactEntry>) =>
+    onChange(contacts.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
   const add = () =>
-    onChange([...list, { id: `c-${Date.now()}`, name: "", phone: "", area: "", brandPreference: "", role: showRole ? INFLUENCER_ROLES[0] : undefined }]);
-  const remove = (i: number) => onChange(list.filter((_, idx) => idx !== i));
+    onChange([
+      ...contacts,
+      {
+        id: `c-${Date.now()}`,
+        name: "",
+        phone: "",
+        area: "",
+        brandPreference: "",
+        role: showRole ? INFLUENCER_ROLES[0] : undefined,
+      },
+    ]);
+  const remove = (i: number) => onChange(contacts.filter((_, idx) => idx !== i));
 
   return (
     <div className="rounded-lg border border-border bg-card p-3">
@@ -803,14 +859,17 @@ function ContactTable({
         </Button>
       </div>
       <div className="space-y-2">
-        {list.length === 0 && (
+        {contacts.length === 0 && (
           <p className="text-xs text-muted-foreground">No contacts yet. Add one to get started.</p>
         )}
-        {list.map((c, i) => (
-          <div key={c.id} className={cn(
-            "grid grid-cols-2 gap-1.5 rounded-md border border-border bg-background p-2",
-            showRole ? "sm:grid-cols-5" : "sm:grid-cols-4",
-          )}>
+        {contacts.map((c, i) => (
+          <div
+            key={c.id}
+            className={cn(
+              "grid grid-cols-2 gap-1.5 rounded-md border border-border bg-background p-2",
+              showRole ? "sm:grid-cols-5" : "sm:grid-cols-4",
+            )}
+          >
             <Input value={c.name} placeholder="Name" onChange={(v) => update(i, { name: v })} />
             <Input value={c.phone ?? ""} placeholder="Phone" onChange={(v) => update(i, { phone: v })} />
             <Input value={c.area ?? ""} placeholder="Area" onChange={(v) => update(i, { area: v })} />
@@ -821,7 +880,9 @@ function ContactTable({
                 className="w-full rounded border border-border bg-background px-2 py-1 text-xs"
               >
                 {INFLUENCER_ROLES.map((r) => (
-                  <option key={r} value={r}>{r}</option>
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
                 ))}
               </select>
             )}
@@ -848,8 +909,14 @@ function ContactTable({
 }
 
 function Input({
-  value, placeholder, onChange,
-}: { value: string; placeholder: string; onChange: (v: string) => void }) {
+  value,
+  placeholder,
+  onChange,
+}: {
+  value: string;
+  placeholder: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <input
       value={value}
@@ -861,8 +928,14 @@ function Input({
 }
 
 function NumberField({
-  label, value, onChange,
-}: { label: string; value?: number; onChange: (v: number | undefined) => void }) {
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: number;
+  onChange: (v: number | undefined) => void;
+}) {
   return (
     <label className="block">
       <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</span>
