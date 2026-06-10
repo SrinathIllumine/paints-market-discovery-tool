@@ -65,7 +65,7 @@ function wrapName(name: string, maxChars = 16): string[] {
   return lines;
 }
 
-function QuadrantLabels({ xAxisMap, yAxisMap }: any) {
+function AxisLabels({ xAxisMap, yAxisMap }: any) {
   const xAxis = Object.values(xAxisMap ?? {})[0] as any;
   const yAxis = Object.values(yAxisMap ?? {})[0] as any;
   if (!xAxis || !yAxis) return null;
@@ -77,53 +77,23 @@ function QuadrantLabels({ xAxisMap, yAxisMap }: any) {
   const midX = (left + right) / 2;
   const midY = (top + bottom) / 2;
 
-  // Quadrant title labels
-  const quadrants = [
-    { cx: (left + midX) / 2, cy: top + 18, l1: "HIGH POTENTIAL", l2: "LOW ACCESS" },
-    { cx: (midX + right) / 2, cy: top + 18, l1: "HIGH POTENTIAL", l2: "HIGH ACCESS" },
-    { cx: (left + midX) / 2, cy: midY + 18, l1: "LOW POTENTIAL", l2: "LOW ACCESS" },
-    { cx: (midX + right) / 2, cy: midY + 18, l1: "LOW POTENTIAL", l2: "HIGH ACCESS" },
-  ];
+  // X axis Low/High: centred within each half, just below axis line
+  const xLowCx = (left + midX) / 2;
+  const xHighCx = (midX + right) / 2;
+  const xLabelY = bottom + 16;
 
-  // Y below axis line (bottom of chart + small gap)
-  const xLabelY = bottom + 18;
-  // X label positions along x axis
-  const xLow = left;
-  const xHigh = right;
-
-  // Y axis low/high — rotated, placed left of the axis line
-  const yLabelX = left - 8;
-  const yLow = bottom; // "Low" at bottom
-  const yHigh = top; // "High" at top
+  // Y axis Low/High: centred within each half, just left of axis line
+  const yLowCy = (midY + bottom) / 2;
+  const yHighCy = (top + midY) / 2;
+  const yLabelX = left - 6;
 
   return (
     <>
-      {/* Quadrant titles */}
-      {quadrants.map(({ cx, cy, l1, l2 }) => (
-        <text
-          key={l1 + l2}
-          x={cx}
-          y={cy}
-          textAnchor="middle"
-          fontSize={10}
-          fontWeight={700}
-          fill={COLOR_LABEL_MUTED}
-          style={{ pointerEvents: "none", letterSpacing: 0.5 }}
-        >
-          <tspan x={cx} dy={0}>
-            {l1}
-          </tspan>
-          <tspan x={cx} dy={12}>
-            {l2}
-          </tspan>
-        </text>
-      ))}
-
-      {/* X axis: Low (left) and High (right) below the axis */}
+      {/* X axis — Low (left half centre) and High (right half centre) */}
       <text
-        x={xLow}
+        x={xLowCx}
         y={xLabelY}
-        textAnchor="start"
+        textAnchor="middle"
         fontSize={10}
         fontWeight={600}
         fill={COLOR_LABEL_MUTED}
@@ -132,9 +102,9 @@ function QuadrantLabels({ xAxisMap, yAxisMap }: any) {
         Low
       </text>
       <text
-        x={xHigh}
+        x={xHighCx}
         y={xLabelY}
-        textAnchor="end"
+        textAnchor="middle"
         fontSize={10}
         fontWeight={600}
         fill={COLOR_LABEL_MUTED}
@@ -143,27 +113,27 @@ function QuadrantLabels({ xAxisMap, yAxisMap }: any) {
         High
       </text>
 
-      {/* Y axis: Low (bottom) and High (top), rotated -90° anticlockwise */}
+      {/* Y axis — Low (bottom half centre) and High (top half centre), rotated */}
       <text
         x={yLabelX}
-        y={yLow}
-        textAnchor="start"
+        y={yLowCy}
+        textAnchor="middle"
         fontSize={10}
         fontWeight={600}
         fill={COLOR_LABEL_MUTED}
-        transform={`rotate(-90, ${yLabelX}, ${yLow})`}
+        transform={`rotate(-90, ${yLabelX}, ${yLowCy})`}
         style={{ pointerEvents: "none" }}
       >
         Low
       </text>
       <text
         x={yLabelX}
-        y={yHigh}
-        textAnchor="end"
+        y={yHighCy}
+        textAnchor="middle"
         fontSize={10}
         fontWeight={600}
         fill={COLOR_LABEL_MUTED}
-        transform={`rotate(-90, ${yLabelX}, ${yHigh})`}
+        transform={`rotate(-90, ${yLabelX}, ${yHighCy})`}
         style={{ pointerEvents: "none" }}
       >
         High
@@ -291,7 +261,8 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
             }}
           />
 
-          <Customized component={QuadrantLabels} />
+          {/* Low/High axis labels only — no quadrant title labels */}
+          <Customized component={AxisLabels} />
 
           {dim.length > 0 && (
             <Scatter
