@@ -395,7 +395,7 @@ function DashboardPage() {
             className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-sm transition-colors hover:bg-muted/40"
           >
             <div>
-              <p className="font-display text-sm leading-tight">View Engagement History</p>
+              <p className="font-display text-sm leading-tight">Review Past Market Engagements</p>
               <p className="text-[11px] text-muted-foreground">Past contribution events &amp; outcomes</p>
             </div>
             <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
