@@ -30,8 +30,7 @@ const COLOR_GRID = "rgba(0,0,0,0.12)";
 const COLOR_LABEL_MUTED = "#6b7280";
 const COLOR_DOT_DIM = "#a1a1aa";
 const COLOR_DOT_HI = "#ef4444";
-const COLOR_LABEL_HI = "#991b1b";
-const COLOR_LABEL_DIM = "#52525b";
+const COLOR_LABEL = "#9ca3af"; // light gray for all labels
 const COLOR_QUADRANT_HI = "rgba(239,68,68,0.10)";
 
 const REQUIRED_NAMES = ["schools", "mid-size apartment"];
@@ -47,7 +46,7 @@ function jitter(seed: string, amp = 2): number {
   return norm * amp;
 }
 
-function wrapName(name: string, maxChars = 14): string[] {
+function wrapName(name: string, maxChars = 12): string[] {
   const words = name.replace(/\s*\/\s*/g, " / ").split(/\s+/);
   const lines: string[] = [];
   let cur = "";
@@ -68,8 +67,7 @@ function wrapName(name: string, maxChars = 14): string[] {
 }
 
 function isRequired(name: string) {
-  const n = name.toLowerCase();
-  return REQUIRED_NAMES.some((r) => n.includes(r));
+  return REQUIRED_NAMES.some((r) => name.toLowerCase().includes(r));
 }
 
 function pickEight(all: Point[]): Point[] {
@@ -86,7 +84,6 @@ function pickEight(all: Point[]): Point[] {
       chosenIds.add(p.id);
     }
   }
-
   for (let q = 0; q < 4; q++) {
     const already = chosen.filter((p) => quadrant(p) === q).length;
     let need = 2 - already;
@@ -102,63 +99,125 @@ function pickEight(all: Point[]): Point[] {
   return chosen;
 }
 
-// ── Converts data value → pixel using axis scale ──────────────────────────────
-function toPixel(value: number, axisMin: number, axisMax: number, pixelStart: number, pixelSize: number) {
-  return pixelStart + ((value - axisMin) / (axisMax - axisMin)) * pixelSize;
+function toPixel(v: number, dMin: number, dMax: number, pStart: number, pSize: number) {
+  return pStart + ((v - dMin) / (dMax - dMin)) * pSize;
 }
 
-// ── All dots + labels rendered as one Customized SVG layer ────────────────────
+/**
+ * Pick the best label placement for a dot so it avoids the axis lines
+ * and stays inside the chart area.
+ *
+ * Returns { dx, dy, anchor } where dx/dy are offsets from the dot centre
+ * and anchor is the SVG textAnchor value.
+ *
+ * Strategy:
+ *   - Prefer the direction with the most space from the dot to the nearest wall/axis.
+ *   - Horizontal placement (left/right) when x is clearly off-centre.
+ *   - Vertical placement (above/below) otherwise, using the half with more room.
+ */
+function labelPlacement(
+  px: number,
+  py: number,
+  chartLeft: number,
+  chartRight: number,
+  chartTop: number,
+  chartBottom: number,
+  midPx: number,
+  midPy: number,
+): { dx: number; dy: number; lineOffsetDir: 1 | -1; anchor: "start" | "end" | "middle" } {
+  const DOT_R = 6;
+  const PAD = 8; // gap between dot edge and text
+
+  const spaceRight = chartRight - px;
+  const spaceLeft = px - chartLeft;
+  const spaceAbove = py - chartTop;
+  const spaceBelow = chartBottom - py;
+
+  const LINE_H = 11;
+  const LINES = 3; // worst-case lines
+  const labelHeight = LINES * LINE_H;
+  const labelWidth = 60; // approx max pixel width
+
+  // Prefer horizontal if there's clearly more horizontal room on one side
+  const hBias = Math.abs(spaceRight - spaceLeft);
+  const vBias = Math.abs(spaceBelow - spaceAbove);
+
+  if (hBias > vBias) {
+    // Place left or right of dot
+    if (spaceRight >= spaceLeft) {
+      return { dx: DOT_R + PAD, dy: -labelHeight / 2, lineOffsetDir: 1, anchor: "start" };
+    } else {
+      return { dx: -(DOT_R + PAD + labelWidth), dy: -labelHeight / 2, lineOffsetDir: 1, anchor: "start" };
+    }
+  } else {
+    // Place above or below dot
+    if (spaceAbove >= spaceBelow) {
+      // Above: last tspan lands just above dot
+      return { dx: 0, dy: -(DOT_R + PAD + labelHeight), lineOffsetDir: 1, anchor: "middle" };
+    } else {
+      // Below: first tspan starts just below dot
+      return { dx: 0, dy: DOT_R + PAD, lineOffsetDir: 1, anchor: "middle" };
+    }
+  }
+}
+
+// ── Dots + always-visible labels via Customized ───────────────────────────────
 function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
   const xAxis = Object.values(xAxisMap ?? {})[0] as any;
   const yAxis = Object.values(yAxisMap ?? {})[0] as any;
   if (!xAxis || !yAxis) return null;
 
   const xMin = -5,
-    xMax = 105;
-  const yMin = -5,
+    xMax = 105,
+    yMin = -5,
     yMax = 105;
-  const pxLeft = xAxis.x;
-  const pxWidth = xAxis.width;
-  const pxTop = yAxis.y;
-  const pxHeight = yAxis.height;
+  const pLeft = xAxis.x;
+  const pWidth = xAxis.width;
+  const pTop = yAxis.y;
+  const pHeight = yAxis.height;
 
-  const px = (v: number) => toPixel(v, xMin, xMax, pxLeft, pxWidth);
-  // Y axis is inverted in SVG: higher data value = smaller pixel y
-  const py = (v: number) => toPixel(v, yMin, yMax, pxTop + pxHeight, -pxHeight);
+  const px = (v: number) => toPixel(v, xMin, xMax, pLeft, pWidth);
+  const py = (v: number) => toPixel(v, yMin, yMax, pTop + pHeight, -pHeight);
 
-  const DOT_R = 6;
+  const midPx = px(50);
+  const midPy = py(50);
   const LINE_H = 11;
-  const GAP = 5;
 
   const renderPoint = (p: Point) => {
     const cx = px(p.x);
     const cy = py(p.y);
-    const lines = wrapName(p.name, 14);
-    const totalH = lines.length * LINE_H;
-    const labelBaseY = cy - DOT_R - GAP - totalH;
-    const fill = p.highlighted ? COLOR_DOT_HI : COLOR_DOT_DIM;
-    const textColor = p.highlighted ? COLOR_LABEL_HI : COLOR_LABEL_DIM;
+    const lines = wrapName(p.name, 12);
+    const dotColor = p.highlighted ? COLOR_DOT_HI : COLOR_DOT_DIM;
+
+    const { dx, dy, lineOffsetDir, anchor } = labelPlacement(
+      cx,
+      cy,
+      pLeft,
+      pLeft + pWidth,
+      pTop,
+      pTop + pHeight,
+      midPx,
+      midPy,
+    );
 
     return (
       <g key={p.id}>
-        {/* Always-visible label above the dot */}
+        <circle cx={cx} cy={cy} r={6} fill={dotColor} fillOpacity={p.highlighted ? 1 : 0.75} />
         <text
-          x={cx}
-          y={labelBaseY}
-          textAnchor="middle"
-          fontSize={9}
-          fontWeight={p.highlighted ? 700 : 600}
-          fill={textColor}
+          x={cx + dx}
+          y={cy + dy}
+          textAnchor={anchor}
+          fontSize={9.5}
+          fontWeight={500}
+          fill={COLOR_LABEL}
           style={{ pointerEvents: "none", userSelect: "none" }}
         >
           {lines.map((l, i) => (
-            <tspan key={i} x={cx} dy={i === 0 ? 0 : LINE_H}>
+            <tspan key={i} x={cx + dx} dy={i === 0 ? 0 : LINE_H * lineOffsetDir}>
               {l}
             </tspan>
           ))}
         </text>
-        {/* Dot */}
-        <circle cx={cx} cy={cy} r={DOT_R} fill={fill} fillOpacity={p.highlighted ? 1 : 0.7} />
       </g>
     );
   };
@@ -278,7 +337,7 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
             domain={[-5, 105]}
             tick={false}
             tickLine={false}
-            width={20}
+            width={40}
             axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5 }}
           >
             <Label
@@ -293,13 +352,12 @@ export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
           </YAxis>
 
           <ZAxis range={[1, 1]} />
-
           <Tooltip content={() => null} />
 
-          {/* Invisible scatter series just to satisfy Recharts internals */}
+          {/* Invisible scatter keeps Recharts axis scales alive */}
           <Scatter data={[...dim, ...highlighted]} fillOpacity={0} shape={() => <g />} />
 
-          {/* All real rendering happens here — dots + labels always visible */}
+          {/* All rendering: dots + persistent labels */}
           <Customized component={(props: any) => <DotsAndLabels {...props} highlighted={highlighted} dim={dim} />} />
 
           <Customized component={AxisLabels} />
