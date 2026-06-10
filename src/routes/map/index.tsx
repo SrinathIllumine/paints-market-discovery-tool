@@ -22,6 +22,22 @@ export const Route = createFileRoute("/map/")({
 
 function ClusterPotentialScreen() {
   const navigate = useNavigate();
+  const [showHint, setShowHint] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (sessionStorage.getItem(SCROLL_HINT_KEY)) return;
+    setShowHint(true);
+  }, []);
+
+  const dismissHint = () => {
+    setShowHint(false);
+    try {
+      sessionStorage.setItem(SCROLL_HINT_KEY, "1");
+    } catch {}
+  };
+
 
   return (
     <AppShell
