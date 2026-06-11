@@ -392,7 +392,7 @@ function CompareButton({ isComparing, onToggle }: { isComparing: boolean; onTogg
             <circle cx="6" cy="18" r="2.5" />
             <circle cx="18" cy="18" r="2.5" />
           </svg>
-          Compare with others
+          Compare with others clusters
         </>
       )}
     </button>
@@ -462,15 +462,15 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
     <div className="relative h-[520px] w-full">
       {mode === "single" && !isStageComplete && <LockedOverlay />}
 
-      {showCompareButton && <CompareButton isComparing={isComparing} onToggle={() => setIsComparing((v) => !v)} />}
-
       {mode === "single" && isStageComplete && quadrantLabel && targetName && (
-        <p className="text-sm text-gray-600 mt-2 mb-1 pl-4 pr-36">
+        <p className="text-sm text-gray-600 text-center mt-10 mb-1 pr-28">
           <span className="font-semibold text-gray-800">{targetName} cluster</span>
           {" is in "}
           <span className="font-semibold text-red-600">{quadrantLabel}</span>
         </p>
       )}
+
+      {showCompareButton && <CompareButton isComparing={isComparing} onToggle={() => setIsComparing((v) => !v)} />}
 
       <div className={mode === "single" && !isStageComplete ? "opacity-20 pointer-events-none select-none" : undefined}>
         <ResponsiveContainer width="100%" height={520}>
