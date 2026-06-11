@@ -295,6 +295,14 @@ function ClusterDetailScreen() {
                   </Accordion>
                 )}
               </section>
+              {/* Navigate to next tab */}
+              <button
+                onClick={() => setActiveTab("mapping")}
+                className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-5 py-4 shadow-sm"
+              >
+                <span className="font-display text-base">Calculate your cluster potential</span>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
             </div>
           )}
 
@@ -390,9 +398,7 @@ function ClusterDetailScreen() {
                     <p className="font-display text-lg leading-snug">
                       Generate the cluster snapshot for <span className="text-critical">{cluster.name}</span>?
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      {"\n"}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{"\n"}</p>
                   </div>
                   <Button
                     onClick={() => setSnapshotRevealed(true)}
