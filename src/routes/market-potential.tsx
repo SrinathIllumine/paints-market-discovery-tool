@@ -158,6 +158,21 @@ function ClusterMapPage() {
           {filtered.length === 0 && <p className="text-sm text-muted-foreground">No clusters match "{search}".</p>}
         </section>
       </div>
+      <Tour
+        tourKey="market-potential-v1"
+        steps={[
+          {
+            selector: '[data-tour="mp-snapshot"]',
+            title: "Your full cluster map",
+            body: "Every cluster you've scored is placed here by Revenue Potential vs Access. Top-right is where to focus first.",
+          },
+          {
+            selector: '[data-tour="mp-list"]',
+            title: "All clusters ranked",
+            body: "Browse and search every cluster. Tap any row to open its detail or jump straight into planning.",
+          },
+        ]}
+      />
     </AppShell>
   );
 }
