@@ -529,8 +529,11 @@ export const useAppStore = create<State & Actions>()(
             },
           };
         }),
+
+      unlockStage: (n) =>
+        set((state) => ({ unlockedStage: Math.max(state.unlockedStage, n) as 1 | 2 | 3 })),
     }),
-    { name: "sed.v9" },
+    { name: "sed.v10" },
   ),
 );
 
