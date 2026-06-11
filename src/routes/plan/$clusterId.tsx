@@ -120,7 +120,7 @@ function PlanClusterScreen() {
     });
     setConfirmOpen(false);
     unlockStage(3);
-    navigate({ to: "/" });
+    // navigate({ to: "/" });
   };
 
   const estimateEvent = estimateEventId ? MARKET_ENGAGEMENT_OPTIONS.find((m) => m.id === estimateEventId) : undefined;
@@ -404,7 +404,8 @@ function MarketStep({
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
-        Pick the contribution events you'll run this month. One suggestion is shown for each type — Knowledge, Service and Social.
+        Pick the contribution events you'll run this month. One suggestion is shown for each type — Knowledge, Service
+        and Social.
       </p>
       <div className="space-y-2">
         {firstPerCategory.map((opt) => {
