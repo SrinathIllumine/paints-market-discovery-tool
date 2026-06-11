@@ -168,7 +168,7 @@ function ClusterDetailScreen() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="STAGE 1 OF 3 · MAP MY MARKET POTENTIAL"
+          eyebrow="STAGE 1 OF 3 · EXPLORE MARKET POTENTIAL"
           title={cluster.name}
           subtitle={`${cluster.nature} — ${cluster.description}`}
           backTo="/map"
