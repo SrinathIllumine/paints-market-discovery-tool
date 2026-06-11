@@ -429,14 +429,7 @@ function ClusterDetailScreen() {
           )}
         </div>
 
-        {/* ── Persistent CTA — always visible outside tabs ── */}
-        <div className="shrink-0 border-t border-border bg-background px-6 py-4">
-          <Button asChild size="lg" className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90">
-            <Link to="/plan/$clusterId" params={{ clusterId }}>
-              Create Engagement Plan for this Cluster
-            </Link>
-          </Button>
-        </div>
+        {/* ── Persistent CTA — always visible outside tabs- Removed ── */}
       </div>
 
       <AddProspectSheet
