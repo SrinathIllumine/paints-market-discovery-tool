@@ -70,7 +70,7 @@ function ClusterMapPage() {
       }
     >
       <div className="space-y-8 px-6 py-8">
-        <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <section data-tour="mp-snapshot" className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <h2 className="font-display text-xl">View Cluster Snapshot</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Each cluster placed by Revenue Potential vs Cluster Access.
@@ -80,7 +80,7 @@ function ClusterMapPage() {
           </div>
         </section>
 
-        <section className="space-y-3">
+        <section data-tour="mp-list" className="space-y-3">
           <div>
             <h2 className="font-display text-xl">All Clusters by Score</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
