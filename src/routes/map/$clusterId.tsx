@@ -49,9 +49,9 @@ export const Route = createFileRoute("/map/$clusterId")({
 type Tab = "prospects" | "mapping" | "snapshot";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "prospects", label: "Prospects by region" },
-  { id: "mapping", label: "Cluster Potential Mapping" },
-  { id: "snapshot", label: "Cluster Snapshot" },
+  { id: "prospects", label: "View Prospects by region" },
+  { id: "mapping", label: "Calculate Cluster Potential Mapping" },
+  { id: "snapshot", label: "View Cluster Snapshot" },
 ];
 
 function ClusterDetailScreen() {
