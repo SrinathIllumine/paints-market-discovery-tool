@@ -165,6 +165,13 @@ function ClusterDetailScreen() {
   const observedCount = intel.totalProspectsObserved || prospects.length || cluster.prospectCountEstimate;
   const totalRevenue = profile.avgRevenuePerProspect * observedCount;
   const singular = pluralCap.toLowerCase().replace(/s$/, "");
+  const cycleYears = getRepaintingCycleYears(clusterId);
+  const annualRevenue = totalRevenue / cycleYears;
+  const annualRevenuePerProspect = profile.avgRevenuePerProspect / cycleYears;
+  const dynamicRevenueHML: HML = scoreToHML(scoreRevenue(annualRevenuePerProspect));
+  const accessYesCount = accessAnswers.filter((a) => a === "Y").length;
+  const accessScore = Math.round(accessYesCount * 3.33 * 10) / 10;
+  const dynamicAccessHML: HML | null = accessAnswers.every((a) => a !== null) ? scoreToHML(accessScore) : null;
 
   return (
     <AppShell
