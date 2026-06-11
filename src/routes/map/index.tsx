@@ -14,7 +14,10 @@ export const Route = createFileRoute("/map/")({
   head: () => ({
     meta: [
       { title: "Map Market Potential" },
-      { name: "description", content: "Browse clusters relevant to Panvel and map their potential." },
+      {
+        name: "description",
+        content: "Browse clusters relevant to Panvel and map their potential.",
+      },
     ],
   }),
   component: ClusterPotentialScreen,
@@ -24,6 +27,7 @@ function ClusterPotentialScreen() {
   const navigate = useNavigate();
   const [showHint, setShowHint] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+
   const assessments = useAppStore((s) => s.assessments);
   const mappedCount = Object.keys(assessments).length;
   const totalClusters = CLUSTERS.length;
@@ -44,7 +48,9 @@ function ClusterPotentialScreen() {
       <div
         ref={scrollRef}
         onScroll={() => {
-          if (showHint && (scrollRef.current?.scrollTop ?? 0) > 8) dismissHint();
+          if (showHint && (scrollRef.current?.scrollTop ?? 0) > 8) {
+            dismissHint();
+          }
         }}
         className="px-6 py-8"
       >
@@ -55,6 +61,7 @@ function ClusterPotentialScreen() {
             <ChevronDown className="h-3.5 w-3.5" />
           </div>
         )}
+
         <Link
           to="/market-potential"
           data-tour="map-view-button"
@@ -71,18 +78,26 @@ function ClusterPotentialScreen() {
             <span className="text-muted-foreground"> of {totalClusters} clusters mapped so far</span>
           </p>
         </div>
+
         <div data-tour="map-clusters" className="grid grid-cols-2 gap-5 sm:grid-cols-3">
           {CLUSTERS.map((c) => (
             <BubbleCircle
               key={c.id}
               cluster={c}
-              onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
+              isMapped={!!assessments[c.id]}
+              onClick={() =>
+                navigate({
+                  to: "/map/$clusterId",
+                  params: { clusterId: c.id },
+                })
+              }
             />
           ))}
         </div>
       </div>
 
-      {/*<Tour
+      {/*
+      <Tour
         tourKey="map-v1"
         steps={[
           {
@@ -96,7 +111,8 @@ function ClusterPotentialScreen() {
             body: "Each bubble is a cluster type in your area. Tap one to identify prospects and score its potential.",
           },
         ]}
-      />*/}
+      />
+      */}
     </AppShell>
   );
 }
