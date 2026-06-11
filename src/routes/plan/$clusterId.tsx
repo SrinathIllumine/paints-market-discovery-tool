@@ -208,7 +208,7 @@ function PlanClusterScreen() {
       </div>
 
       {/* stepper — outside the scrollable padding block so it stays flush */}
-      <StepperBar current={step} onGoTo={setStep} />
+      <StepperBar current={step} onGoTo={goTo} />
 
       <div className="px-5 pb-8 space-y-4">
         {/* ── Stage 1 ── */}
@@ -216,7 +216,7 @@ function PlanClusterScreen() {
           <>
             <StageSectionTitle index={1} title="Select your value proposition" />
             <ValueStep clusterId={clusterId} selected={vp} onSelect={(v) => setValueProposition(clusterId, v)} />
-            <NavButtons onNext={() => setStep(1)} />
+            <NavButtons onNext={() => goTo(1)} />
           </>
         )}
 
@@ -230,7 +230,7 @@ function PlanClusterScreen() {
               onToggleItem={(it) => toggleStrategyItem(clusterId, MARKET_BUCKET, it)}
               onContactsChange={(list) => setStrategyContacts(clusterId, MARKET_BUCKET, list)}
             />
-            <NavButtons onBack={() => setStep(0)} onNext={() => setStep(2)} />
+            <NavButtons onBack={() => goTo(0)} onNext={() => goto(2)} />
           </>
         )}
 
@@ -245,7 +245,7 @@ function PlanClusterScreen() {
               onToggle={(s) => toggleSelectedStrategy(clusterId, s)}
               onContactsChange={(s, list) => setStrategyContacts(clusterId, s, list)}
             />
-            <NavButtons onBack={() => setStep(1)} onNext={() => setStep(3)} />
+            <NavButtons onBack={() => goTo(1)} onNext={() => goTo(3)} />
           </>
         )}
 
@@ -274,7 +274,7 @@ function PlanClusterScreen() {
               <FileDown className="h-4 w-4" /> Generate Monthly Cluster Engagement Plan
             </Button>
 
-            <NavButtons onBack={() => setStep(2)} />
+            <NavButtons onBack={() => goTo(2)} />
           </>
         )}
       </div>
