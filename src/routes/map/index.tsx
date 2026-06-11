@@ -85,7 +85,7 @@ function ClusterPotentialScreen() {
         </div>
       </div>
 
-      <Tour
+      {/*<Tour
         tourKey="map-v1"
         steps={[
           {
@@ -99,7 +99,7 @@ function ClusterPotentialScreen() {
             body: "Each bubble is a cluster type in your area. Tap one to identify prospects and score its potential.",
           },
         ]}
-      />
+      />*/}
     </AppShell>
   );
 }
