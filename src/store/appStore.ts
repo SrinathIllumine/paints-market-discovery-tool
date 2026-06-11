@@ -112,6 +112,7 @@ type State = {
     roadmapCompletion: RoadmapCompletion;
   };
   assessments: Record<string, ClusterAssessment>;
+  unlockedStage: 1 | 2 | 3;
   sales: {
     prospectStages: Record<string, Record<string, SalesStage>>;
     prospectActivity: Record<string, ProspectActivity>;
