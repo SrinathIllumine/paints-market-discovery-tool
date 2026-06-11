@@ -12,14 +12,14 @@ import {
   type SalesStage,
 } from "@/store/appStore";
 import { getCluster, prospectSingular } from "@/data/clusters";
-import { getContractorSuggestions, CONNECT_STRATEGY_LABEL, type ContactEntry, type ConnectStrategy } from "@/lib/strategyContent";
-import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  getContractorSuggestions,
+  CONNECT_STRATEGY_LABEL,
+  type ContactEntry,
+  type ConnectStrategy,
+} from "@/lib/strategyContent";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -42,9 +42,7 @@ function ProspectDetailPage() {
   const cluster = getCluster(clusterId);
   const prospects = useAppStore((s) => s.clusters[clusterId]?.prospects ?? EMPTY_PROSPECTS);
   const prospect = useMemo(() => prospects.find((p) => p.id === prospectId), [prospects, prospectId]);
-  const currentStage = useAppStore(
-    (s) => s.sales.prospectStages[clusterId]?.[prospectId] ?? "prospects",
-  );
+  const currentStage = useAppStore((s) => s.sales.prospectStages[clusterId]?.[prospectId] ?? "prospects");
   const activity = useAppStore((s) => s.sales.prospectActivity[prospectId] ?? EMPTY_ACTIVITY);
   const setStage = useAppStore((s) => s.setProspectStage);
   const recordActivity = useAppStore((s) => s.recordProspectActivity);
@@ -79,13 +77,8 @@ function ProspectDetailPage() {
       : undefined;
 
   const STAGE_DONE: Record<SalesStage, DoneItem[]> = {
-    prospects: [
-      { label: "Prospect identified in cluster" },
-    ],
-    contacted: [
-      { label: "Decision-maker contacted", clickIn: contactsClickIn },
-      { label: "Intro meeting completed" },
-    ],
+    prospects: [{ label: "Prospect identified in cluster" }],
+    contacted: [{ label: "Decision-maker contacted", clickIn: contactsClickIn }, { label: "Intro meeting completed" }],
     decision: [
       { label: "Site walkthrough done" },
       { label: "Product discussion shared", clickIn: outcomesClickIn },
@@ -96,16 +89,14 @@ function ProspectDetailPage() {
       { label: "Supply terms confirmed" },
       { label: "Final discussion summary", clickIn: outcomesClickIn },
     ],
-    ongoing: [
-      { label: "Project handed over" },
-      { label: "Quality audit scheduled" },
-    ],
+    ongoing: [{ label: "Project handed over" }, { label: "Quality audit scheduled" }],
   };
 
   // History = strictly previous stages (do NOT show current stage's pending details here)
-  const doneAcross: { stage: SalesStage; items: DoneItem[] }[] = SALES_STAGES
-    .slice(0, stageIdx)
-    .map((s) => ({ stage: s, items: STAGE_DONE[s] }));
+  const doneAcross: { stage: SalesStage; items: DoneItem[] }[] = SALES_STAGES.slice(0, stageIdx).map((s) => ({
+    stage: s,
+    items: STAGE_DONE[s],
+  }));
 
   // ── "what to do next" — checkboxes with optional click-ins ──────────────
   const proposalDeck: ClickIn = {
@@ -156,10 +147,13 @@ function ProspectDetailPage() {
       { key: "qualityAudit", label: "Plan the post-handover quality audit" },
     ],
     ongoing: [
-      { key: "qCheckIn", label: "Set up a quarterly check-in cadence" },
       { key: "referrals", label: "Capture referral opportunities from the account" },
       { key: "amcOffer", label: "Offer an AMC / refresh proposal" },
-      { key: "felicitateContractors", label: `Felicitate top contractors involved in ${prospect.name}`, clickIn: contactsClickIn },
+      {
+        key: "felicitateContractors",
+        label: `Felicitate top contractors involved in ${prospect.name}`,
+        clickIn: contactsClickIn,
+      },
       { key: "prospectTestimonial", label: `Capture a testimonial / case study from ${prospect.name}` },
     ],
   };
@@ -217,9 +211,11 @@ function ProspectDetailPage() {
                     <div
                       className={cn(
                         "flex h-6 w-6 items-center justify-center rounded-full border-2 text-[10px] font-bold",
-                        active ? "border-critical bg-critical text-critical-foreground"
-                          : done ? "border-green-600 bg-green-600 text-white"
-                          : "border-border bg-card text-muted-foreground",
+                        active
+                          ? "border-critical bg-critical text-critical-foreground"
+                          : done
+                            ? "border-green-600 bg-green-600 text-white"
+                            : "border-border bg-card text-muted-foreground",
                       )}
                     >
                       {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
@@ -256,7 +252,10 @@ function ProspectDetailPage() {
                   <p className="text-xs text-muted-foreground">Connect strategies chosen:</p>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {chosenStrategies.map((s) => (
-                      <span key={s} className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground">
+                      <span
+                        key={s}
+                        className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground"
+                      >
                         {CONNECT_STRATEGY_LABEL[s]}
                       </span>
                     ))}
@@ -291,9 +290,7 @@ function ProspectDetailPage() {
                     <input
                       type="checkbox"
                       checked={on}
-                      onChange={() =>
-                        recordActivity(prospectId, { [it.key]: !on } as Record<string, unknown>)
-                      }
+                      onChange={() => recordActivity(prospectId, { [it.key]: !on } as Record<string, unknown>)}
                       className="h-4 w-4 accent-critical"
                     />
                     <span>{it.label}</span>
@@ -339,9 +336,7 @@ function ProspectDetailPage() {
 
         {(() => {
           const singular = prospectSingular(clusterId);
-          const advanceLabel = nextStage
-            ? `Move to ${SALES_STAGE_LABEL[nextStage]}`
-            : "Engagement complete";
+          const advanceLabel = nextStage ? `Move to ${SALES_STAGE_LABEL[nextStage]}` : "Engagement complete";
           const removeLabel = `Remove ${singular.toLowerCase()} from the list`;
           return (
             <div className="grid grid-cols-2 gap-2">
@@ -405,10 +400,10 @@ function ClickInDialog({ click, onClose }: { click: ClickIn | null; onClose: () 
               {click.contacts.map((c) => (
                 <div key={c.id} className="rounded border border-border bg-card p-2 text-xs">
                   <p className="font-semibold">{c.name}</p>
-                  <p className="text-muted-foreground">{c.phone} · {c.area}</p>
-                  {c.brandPreference && (
-                    <p className="text-muted-foreground">Prefers: {c.brandPreference}</p>
-                  )}
+                  <p className="text-muted-foreground">
+                    {c.phone} · {c.area}
+                  </p>
+                  {c.brandPreference && <p className="text-muted-foreground">Prefers: {c.brandPreference}</p>}
                 </div>
               ))}
             </div>
