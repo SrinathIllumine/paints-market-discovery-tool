@@ -341,7 +341,7 @@ function ClusterDetailScreen() {
                 size="lg"
                 className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
               >
-                Calculate your cluster potential
+                Map your cluster potential
               </Button>
             </div>
           )}
@@ -350,7 +350,7 @@ function ClusterDetailScreen() {
           {activeTab === "mapping" && (
             <div className="space-y-3 px-6 py-6">
               <div className="space-y-0.5">
-                <h2 className="font-display text-2xl">Calculate your cluster potential</h2>
+                <h2 className="font-display text-2xl">Map your cluster potential</h2>
               </div>
               <Accordion
                 data-tour="cluster-mapping-cards"
