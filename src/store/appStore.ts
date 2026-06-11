@@ -209,9 +209,7 @@ export const useAppStore = create<State & Actions>()(
       sales: { prospectStages: {}, prospectActivity: {}, seededClusters: {} },
 
       ensureCluster: (clusterId) =>
-        set((s) =>
-          s.clusters[clusterId] ? s : { clusters: { ...s.clusters, [clusterId]: emptyCluster() } },
-        ),
+        set((s) => (s.clusters[clusterId] ? s : { clusters: { ...s.clusters, [clusterId]: emptyCluster() } })),
 
       markVisited: (clusterId) =>
         set((s) => ({
@@ -263,19 +261,31 @@ export const useAppStore = create<State & Actions>()(
           };
         }),
 
+      // ✅ FIXED: appends clusterId instead of replacing the whole array
       setMonthlyFocus: (clusterId) =>
-        set((state) => ({
-          plan: { ...state.plan, monthlyFocusIds: [clusterId], roadmapCompletion: emptyRoadmap() },
-        })),
+        set((state) => {
+          const existing = state.plan.monthlyFocusIds;
+          if (existing.includes(clusterId)) return state; // already planned, no-op
+          return {
+            plan: {
+              ...state.plan,
+              monthlyFocusIds: [...existing, clusterId],
+            },
+          };
+        }),
 
+      // ✅ FIXED: toggles a single cluster in/out without clearing other planned clusters
       toggleMonthlyFocus: (clusterId) =>
-        set((state) => ({
-          plan: {
-            ...state.plan,
-            monthlyFocusIds: state.plan.monthlyFocusIds.includes(clusterId) ? [] : [clusterId],
-            roadmapCompletion: emptyRoadmap(),
-          },
-        })),
+        set((state) => {
+          const existing = state.plan.monthlyFocusIds;
+          const isPlanned = existing.includes(clusterId);
+          return {
+            plan: {
+              ...state.plan,
+              monthlyFocusIds: isPlanned ? existing.filter((id) => id !== clusterId) : [...existing, clusterId],
+            },
+          };
+        }),
 
       setConnectStrategy: (clusterId, strategy) =>
         set((state) => ({
@@ -308,9 +318,7 @@ export const useAppStore = create<State & Actions>()(
         set((state) => {
           const prev = state.plan.selectedStrategiesByCluster[clusterId] ?? [];
           const has = prev.includes(strategy);
-          const next: ConnectStrategy[] = has
-            ? prev.filter((s) => s !== strategy)
-            : [...prev, strategy];
+          const next: ConnectStrategy[] = has ? prev.filter((s) => s !== strategy) : [...prev, strategy];
           return {
             plan: {
               ...state.plan,
@@ -530,8 +538,7 @@ export const useAppStore = create<State & Actions>()(
           };
         }),
 
-      unlockStage: (n) =>
-        set((state) => ({ unlockedStage: Math.max(state.unlockedStage, n) as 1 | 2 | 3 })),
+      unlockStage: (n) => set((state) => ({ unlockedStage: Math.max(state.unlockedStage, n) as 1 | 2 | 3 })),
     }),
     { name: "sed.v10" },
   ),
