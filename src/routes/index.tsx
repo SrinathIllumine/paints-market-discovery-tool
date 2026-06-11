@@ -101,7 +101,7 @@ function IntroScreen() {
             <div key={title} className={cn("relative", isPlanCard && "pb-5")}>
               {isNextStage && (
                 <span className="absolute -top-2 left-4 z-10 rounded-full bg-critical px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-critical-foreground shadow">
-                  Next stage
+                  {nextStageIdx === 0 ? "First Stage" : "Next Stage"}
                 </span>
               )}
               <Link
@@ -123,8 +123,7 @@ function IntroScreen() {
                 {count > 0 && (
                   <span className="absolute bottom-2 right-3 text-[11px] font-semibold text-critical">
                     {count} {countLabel}
-                    {count === 1 ? "" : "s"}{" "}
-                    {idx === 0 ? "mapped" : idx === 1 ? "planned" : ""}
+                    {count === 1 ? "" : "s"} {idx === 0 ? "mapped" : idx === 1 ? "planned" : ""}
                   </span>
                 )}
               </Link>
