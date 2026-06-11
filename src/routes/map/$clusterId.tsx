@@ -178,7 +178,7 @@ function ClusterDetailScreen() {
       {/* ── Layout: tab bar + scrollable content + sticky CTA ── */}
       <div className="flex h-full flex-col">
         {/* Tab bar */}
-        <div className="flex shrink-0 bg-navy">
+        <div className="flex shrink-0 bg-red-600">
           {TABS.map((t) => (
             <button
               key={t.id}
