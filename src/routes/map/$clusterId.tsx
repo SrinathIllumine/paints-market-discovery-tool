@@ -432,9 +432,6 @@ function ClusterDetailScreen() {
             <div className="space-y-4 px-6 py-6">
               <div className="space-y-0.5">
                 <h2 className="font-display text-2xl">Cluster snapshot</h2>
-                <p className="text-sm text-muted-foreground">
-                  {cluster.nature} — {cluster.description}
-                </p>
               </div>
               <div
                 data-tour="cluster-snapshot-graph"
