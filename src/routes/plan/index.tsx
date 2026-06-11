@@ -21,7 +21,6 @@ export const Route = createFileRoute("/plan/")({
 function PlanScreen() {
   const navigate = useNavigate();
   const focusIds = useAppStore((s) => s.plan.monthlyFocusIds);
-  const setMonthlyFocus = useAppStore((s) => s.setMonthlyFocus);
   const clusterStates = useAppStore((s) => s.clusters);
 
   const scored = useMemo(() => {
@@ -47,8 +46,8 @@ function PlanScreen() {
   const toplan = scored.filter(({ c }) => mappedIds.has(c.id) && !plannedIds.has(c.id));
   const planned = scored.filter(({ c }) => mappedIds.has(c.id) && plannedIds.has(c.id));
 
+  // ✅ Just navigates — setMonthlyFocus is called on the Generate button in the detail page
   const handlePlan = (clusterId: string) => {
-    setMonthlyFocus(clusterId);
     navigate({ to: "/plan/$clusterId", params: { clusterId } });
   };
 
