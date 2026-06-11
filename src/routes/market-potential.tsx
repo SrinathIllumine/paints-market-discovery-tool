@@ -76,7 +76,7 @@ function ClusterMapPage() {
             Each cluster placed by Revenue Potential vs Cluster Access.
           </p>
           <div className="mt-3">
-            <QuadrantSnapshot />
+            <QuadrantSnapshot mode="all" />
           </div>
         </section>
 

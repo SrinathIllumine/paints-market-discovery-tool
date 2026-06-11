@@ -401,7 +401,7 @@ function ClusterDetailScreen() {
                 <p className="mb-2 text-xs text-muted-foreground">
                   Position of <b>{cluster.name}</b> against all other clusters.
                 </p>
-                <QuadrantSnapshot highlightId={cluster.id} />
+                <QuadrantSnapshot mode="single" highlightId={cluster.id} />
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <ScoreTile label="Revenue" score={scores.revenue} />
