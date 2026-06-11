@@ -143,13 +143,12 @@ function PlanClusterScreen() {
   const unlockStage = useAppStore((s) => s.unlockStage);
 
   const mainRef = useRef<HTMLElement>(null);
+  const [step, setStep] = useState<PlanStep>(0);
 
   const goTo = (n: PlanStep) => {
     setStep(n);
     mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
   };
-
-  const [step, setStep] = useState<PlanStep>(0);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [estimateEventId, setEstimateEventId] = useState<string | null>(null);
 
