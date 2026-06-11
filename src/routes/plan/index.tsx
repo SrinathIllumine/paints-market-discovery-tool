@@ -6,9 +6,8 @@ import { BottomNav } from "@/components/app/BottomNav";
 import { CLUSTERS } from "@/data/clusters";
 import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 
 export const Route = createFileRoute("/plan/")({
   head: () => ({
@@ -25,10 +24,6 @@ function PlanScreen() {
   const focusIds = useAppStore((s) => s.plan.monthlyFocusIds);
   const setMonthlyFocus = useAppStore((s) => s.setMonthlyFocus);
   const clusterStates = useAppStore((s) => s.clusters);
-  const [picked, setPicked] = useState<string | null>(focusIds[0] ?? null);
-  const [search, setSearch] = useState("");
-  const [recOpen, setRecOpen] = useState(true);
-  const [othersOpen, setOthersOpen] = useState(false);
 
   const scored = useMemo(() => {
     return CLUSTERS.map((c) => {
@@ -41,28 +36,18 @@ function PlanScreen() {
     });
   }, [clusterStates]);
 
-  const recommendedIds = useMemo(() => {
-    return new Set(
-      scored
-        .filter(({ sc }) => sc.potentialScore >= 5 && sc.accessRollupScore >= 5)
-        .slice(0, 5)
-        .map(({ c }) => c.id),
-    );
-  }, [scored]);
+  const plannedIds = new Set(focusIds);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return scored;
-    return scored.filter(({ c }) => c.name.toLowerCase().includes(q));
-  }, [scored, search]);
+  const toplan = scored.filter(({ c }) => !plannedIds.has(c.id));
+  const planned = scored.filter(({ c }) => plannedIds.has(c.id));
 
-  const recommended = filtered.filter(({ c }) => recommendedIds.has(c.id));
-  const others = filtered.filter(({ c }) => !recommendedIds.has(c.id));
+  const handlePlan = (clusterId: string) => {
+    setMonthlyFocus(clusterId);
+    navigate({ to: "/plan/$clusterId", params: { clusterId } });
+  };
 
-  const handleContinue = () => {
-    if (!picked) return;
-    setMonthlyFocus(picked);
-    navigate({ to: "/plan/$clusterId", params: { clusterId: picked } });
+  const handleView = (clusterId: string) => {
+    navigate({ to: "/plan/$clusterId", params: { clusterId } });
   };
 
   return (
@@ -76,156 +61,72 @@ function PlanScreen() {
         />
       }
     >
-      <div className="space-y-6 px-6 py-8">
-        <div className="space-y-2">
-          <h2 className="font-display text-lg leading-tight">Select a cluster to plan for the month</h2>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search clusters…"
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-          />
-        </div>
-
-
-        {recommended.length > 0 && (
-          <section className="rounded-xl border border-border bg-card">
-            <button
-              type="button"
-              onClick={() => setRecOpen((v) => !v)}
-              className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
-            >
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
-                Recommended for You ({recommended.length})
-              </span>
-              <ChevronDown className={cn("h-4 w-4 transition-transform", !recOpen && "-rotate-90")} />
-            </button>
-            {recOpen && (
-              <div className="space-y-2 border-t border-border p-2">
-                {recommended.map(({ c, sc }) => (
-                  <ClusterRow
-                    key={c.id}
-                    name={c.name}
-                    active={picked === c.id}
-                    recommended
-                    scores={sc}
-                    onClick={() => setPicked(c.id)}
-                  />
-                ))}
-              </div>
-            )}
+      <div className="space-y-6 px-4 py-6">
+        {/* ── Create plan section ── */}
+        {toplan.length > 0 && (
+          <section className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/50">
+              Create market engagement plan
+            </p>
+            <div className="space-y-2">
+              {toplan.map(({ c, sc }) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => handlePlan(c.id)}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-card p-3 text-left transition-colors hover:bg-muted/40"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{c.name}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate} prospects
+                    </p>
+                  </div>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy text-navy-foreground">
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                </button>
+              ))}
+            </div>
           </section>
         )}
 
-        {others.length > 0 && (
-          <section className="rounded-xl border border-border bg-card">
-            <button
-              type="button"
-              onClick={() => setOthersOpen((v) => !v)}
-              className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
-            >
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
-                All Other Clusters ({others.length})
-              </span>
-              <ChevronDown className={cn("h-4 w-4 transition-transform", !othersOpen && "-rotate-90")} />
-            </button>
-            {othersOpen && (
-              <div className="space-y-2 border-t border-border p-2">
-                {others.map(({ c, sc }) => (
-                  <ClusterRow
-                    key={c.id}
-                    name={c.name}
-                    active={picked === c.id}
-                    scores={sc}
-                    onClick={() => setPicked(c.id)}
-                  />
-                ))}
-              </div>
-            )}
+        {/* ── Already planned section ── */}
+        {planned.length > 0 && (
+          <section className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/50">
+              View engagement plan — already planned
+            </p>
+            <div className="space-y-2">
+              {planned.map(({ c }) => (
+                <div
+                  key={c.id}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-card p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{c.name}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Last planned · {new Date().toLocaleString("default", { month: "long", year: "numeric" })}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleView(c.id)}
+                      className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100"
+                    >
+                      View
+                    </button>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+                      <Check className="h-4 w-4 text-green-700" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </section>
         )}
-
-        {filtered.length === 0 && (
-          <p className="text-sm text-muted-foreground">No clusters match "{search}".</p>
-        )}
-
-        <Button
-          onClick={handleContinue}
-          disabled={!picked}
-          className={cn(
-            "h-12 w-full gap-2 bg-navy text-base font-semibold text-navy-foreground hover:bg-navy/90",
-            !picked && "opacity-60",
-          )}
-        >
-          Continue to Planning <ChevronRight className="h-4 w-4" />
-        </Button>
       </div>
     </AppShell>
   );
 }
-
-function ClusterRow({
-  name, active, recommended, scores, onClick,
-}: {
-  name: string;
-  active: boolean;
-  recommended?: boolean;
-  scores: { revenue: number; competitive: number; access: number; ease: number };
-  onClick: () => void;
-}) {
-  const navigate = useNavigate();
-  const setMonthlyFocus = useAppStore((s) => s.setMonthlyFocus);
-  return (
-    <div
-      className={cn(
-        "flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition-colors",
-        active ? "border-critical bg-critical/5" : "border-border bg-card hover:bg-muted/40",
-      )}
-    >
-      <button type="button" onClick={onClick} className="min-w-0 flex-1 text-left">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="truncate text-sm font-medium">{name}</p>
-        </div>
-
-        <div className="mt-1 flex flex-wrap items-center gap-1">
-          <ScoreChip label="Revenue" score={scores.revenue} />
-          <ScoreChip label="Competitive" score={scores.competitive} />
-          <ScoreChip label="Access" score={scores.access} />
-          <ScoreChip label="Ease" score={scores.ease} />
-        </div>
-      </button>
-      {active && (
-        <Button
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            // Find cluster id via name lookup is fragile; use onClick already set id.
-            // We rely on the parent having set picked; navigate using name->id map.
-            const cluster = CLUSTERS.find((c) => c.name === name);
-            if (cluster) {
-              setMonthlyFocus(cluster.id);
-              navigate({ to: "/plan/$clusterId", params: { clusterId: cluster.id } });
-            }
-          }}
-          className="shrink-0 gap-1 bg-navy text-navy-foreground hover:bg-navy/90"
-        >
-          Plan <ChevronRight className="h-4 w-4" />
-        </Button>
-      )}
-      <div className={cn(
-        "h-5 w-5 shrink-0 rounded-full border-2",
-        active ? "border-critical bg-critical" : "border-border",
-      )} />
-    </div>
-  );
-}
-
-function ScoreChip({ label, score }: { label: string; score: number }) {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[10px] font-medium text-foreground/80">
-      <span className="uppercase tracking-wider">{label}</span>
-      <span>{score}<span>/10</span></span>
-    </span>
-  );
-}
-
