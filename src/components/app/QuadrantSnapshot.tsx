@@ -417,7 +417,7 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
     });
   }, [clusterStates, assessments]);
 
-  const { highlighted, dim, isInTopRight } = useMemo(() => {
+  const { highlighted, dim } = useMemo(() => {
     // ── mode="single" ─────────────────────────────────────────────────────────
     if (mode === "single") {
       const target = highlightId ? allPoints.find((p) => p.id === highlightId) : null;
@@ -454,7 +454,7 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
     };
   }, [allPoints, highlightId, mode, isComparing]);
 
-  const showCompareButton = mode === "single" && isStageComplete && isInTopRight;
+  const showCompareButton = mode === "single" && isStageComplete;
 
   return (
     <div className="relative h-[520px] w-full">
