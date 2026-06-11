@@ -383,7 +383,7 @@ function ClusterDetailScreen() {
                 size="lg"
                 className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
               >
-                Click here to generate the cluster snapshot for this cluster
+                Generate the Cluster Snapshot for this Cluster
               </Button>
             </div>
           )}
