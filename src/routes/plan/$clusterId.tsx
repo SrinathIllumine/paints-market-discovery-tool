@@ -37,13 +37,6 @@ export const Route = createFileRoute("/plan/$clusterId")({
 
 type PlanStep = 0 | 1 | 2 | 3;
 
-const STEPS = [
-  { title: "Value\nProposition" },
-  { title: "Market\nEngagement\nStrategy" },
-  { title: "Customer\nEngagement\nStrategy" },
-  { title: "Action\nPlans" },
-];
-
 const MARKET_BUCKET: ConnectStrategy = "BRAND";
 
 const CATEGORY_TONE: Record<MarketEngagementCategory, string> = {
@@ -55,52 +48,69 @@ const CATEGORY_TONE: Record<MarketEngagementCategory, string> = {
 const INFLUENCER_ROLES = ["Site supervisor", "Interior designer", "Architect", "Other"];
 
 /* ─────────────────────────────────────────────────────────────
-   Stepper bar
+   Stepper bar — uses clip-path for clean chevron shapes
 ───────────────────────────────────────────────────────────── */
+const STEP_LABELS = [
+  ["Value", "Proposition"],
+  ["Market", "Engagement", "Strategy"],
+  ["Customer", "Engagement", "Strategy"],
+  ["Action", "Plans"],
+];
+
+const ARROW_PX = 12;
+
 function StepperBar({ current, onGoTo }: { current: PlanStep; onGoTo: (n: PlanStep) => void }) {
   return (
-    <div className="flex items-center px-5 pb-4">
-      {STEPS.map((step, i) => {
+    <div className="flex items-stretch px-5 pb-4" style={{ gap: 2 }}>
+      {STEP_LABELS.map((lines, i) => {
         const active = i <= current;
-        const isLast = i === STEPS.length - 1;
-        return (
-          <div key={i} className="flex items-center" style={{ flex: isLast ? 1 : undefined }}>
-            {/* step box */}
-            <button
-              type="button"
-              onClick={() => onGoTo(i as PlanStep)}
-              className={cn(
-                "flex-1 min-w-0 px-1.5 py-2 text-center border-none outline-none cursor-pointer",
-                i === 0 && "rounded-l-md",
-                isLast && "rounded-r-md",
-                active ? "bg-navy" : "bg-slate-200",
-              )}
-            >
-              {step.title.split("\n").map((line, li) => (
-                <span
-                  key={li}
-                  className={cn(
-                    "block text-[9px] font-medium leading-tight tracking-wide",
-                    active ? "text-white" : "text-navy",
-                  )}
-                >
-                  {line}
-                </span>
-              ))}
-            </button>
+        const isFirst = i === 0;
+        const isLast = i === STEP_LABELS.length - 1;
 
-            {/* arrow divider */}
-            {!isLast && (
-              <div
-                className={cn(
-                  "w-0 h-0 flex-shrink-0 z-10",
-                  "border-t-[19px] border-b-[19px] border-l-[13px]",
-                  "border-t-transparent border-b-transparent",
-                  active ? "border-l-navy" : "border-l-slate-200",
-                )}
-              />
-            )}
-          </div>
+        const clipPath = isFirst
+          ? `polygon(0 0, calc(100% - ${ARROW_PX}px) 0, 100% 50%, calc(100% - ${ARROW_PX}px) 100%, 0 100%)`
+          : isLast
+            ? `polygon(0 0, 100% 0, 100% 100%, 0 100%, ${ARROW_PX}px 50%)`
+            : `polygon(0 0, calc(100% - ${ARROW_PX}px) 0, 100% 50%, calc(100% - ${ARROW_PX}px) 100%, 0 100%, ${ARROW_PX}px 50%)`;
+
+        return (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onGoTo(i as PlanStep)}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              clipPath,
+              paddingTop: 8,
+              paddingBottom: 8,
+              paddingLeft: isFirst ? 10 : ARROW_PX + 6,
+              paddingRight: isLast ? 10 : ARROW_PX + 6,
+              border: "none",
+              outline: "none",
+              cursor: "pointer",
+              background: active ? "#1B2F5E" : "#CBD5E1",
+              transition: "background 0.15s",
+            }}
+          >
+            {lines.map((line, li) => (
+              <span
+                key={li}
+                style={{
+                  display: "block",
+                  fontSize: 9,
+                  fontWeight: 500,
+                  lineHeight: 1.35,
+                  letterSpacing: "0.02em",
+                  color: active ? "#ffffff" : "#1B2F5E",
+                  textAlign: "center",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {line}
+              </span>
+            ))}
+          </button>
         );
       })}
     </div>
@@ -168,7 +178,7 @@ function PlanClusterScreen() {
     });
     setConfirmOpen(false);
     unlockStage(3);
-    // navigate({ to: "/" });
+    navigate({ to: "/" });
   };
 
   const estimateEvent = estimateEventId ? MARKET_ENGAGEMENT_OPTIONS.find((m) => m.id === estimateEventId) : undefined;
@@ -325,7 +335,7 @@ function PlanClusterScreen() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Small shared helpers
+   Shared: tiny helpers
 ───────────────────────────────────────────────────────────── */
 function StageSectionTitle({ index, title }: { index: number; title: string }) {
   return (
