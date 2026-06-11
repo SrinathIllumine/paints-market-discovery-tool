@@ -36,7 +36,7 @@ const COLOR_AXIS_LABEL = "#6b7280";
 const COLOR_DOT_DIM = "#d1d5db";
 const COLOR_DOT_HI = "#ef4444";
 const COLOR_CLUSTER_LBL = "#6b7280";
-const COLOR_QUADRANT_HI = "rgba(239,68,68,0.07)";
+const COLOR_QUADRANT_HI = "rgba(239,68,68,0.3)";
 
 const REQUIRED_NAMES = ["schools", "mid-size apartment"];
 const DOT_R = 7;
