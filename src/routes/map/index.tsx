@@ -58,7 +58,7 @@ function ClusterPotentialScreen() {
           <ArrowRight className="h-4 w-4" />
         </Link>
         <div className="space-y-0.5">
-          <p className="font-display text-2xl">Total clusters in your area: 20</p>
+          <p className="font-display text-lg">Total clusters in your area: 20</p>
         </div>
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
           {CLUSTERS.map((c) => (
