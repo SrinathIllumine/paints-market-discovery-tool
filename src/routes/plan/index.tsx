@@ -6,7 +6,7 @@ import { BottomNav } from "@/components/app/BottomNav";
 import { CLUSTERS } from "@/data/clusters";
 import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
-import { Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 
 export const Route = createFileRoute("/plan/")({
   head: () => ({
@@ -21,7 +21,6 @@ export const Route = createFileRoute("/plan/")({
 function PlanScreen() {
   const navigate = useNavigate();
   const focusIds = useAppStore((s) => s.plan.monthlyFocusIds);
-  const setMonthlyFocus = useAppStore((s) => s.setMonthlyFocus);
   const clusterStates = useAppStore((s) => s.clusters);
 
   const scored = useMemo(() => {
@@ -47,9 +46,8 @@ function PlanScreen() {
   const toplan = scored.filter(({ c }) => mappedIds.has(c.id) && !plannedIds.has(c.id));
   const planned = scored.filter(({ c }) => mappedIds.has(c.id) && plannedIds.has(c.id));
 
-  // ✅ Marks as planned AND navigates — triggered only by the Generate button
-  const handleGenerate = (clusterId: string) => {
-    setMonthlyFocus(clusterId);
+  // Only navigates — setMonthlyFocus is called on the Generate button inside the detail page
+  const handlePlan = (clusterId: string) => {
     navigate({ to: "/plan/$clusterId", params: { clusterId } });
   };
 
@@ -77,21 +75,22 @@ function PlanScreen() {
             </p>
             <div className="space-y-2">
               {toplan.map(({ c }) => (
-                <div key={c.id} className="flex w-full flex-col gap-3 rounded-xl border border-border bg-card p-3">
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => handlePlan(c.id)}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-card p-3 text-left transition-colors hover:bg-muted/40"
+                >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{c.name}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate} prospects
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleGenerate(c.id)}
-                    className="w-full rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-navy-foreground transition-opacity hover:opacity-90"
-                  >
-                    Generate Monthly Cluster Engagement Plan
-                  </button>
-                </div>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy text-navy-foreground">
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                </button>
               ))}
             </div>
           </section>
