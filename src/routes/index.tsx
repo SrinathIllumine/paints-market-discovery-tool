@@ -52,7 +52,7 @@ function IntroScreen() {
     },
     {
       icon: Users,
-      title: "Create Monthly Cluster Engagement Plan",
+      title: "CREATE MARKET ENGAGEMENT PLAN FOR BELOW MAPPED CLUSTERS",
       desc: "Select your focus cluster and co-create your value proposition, strategy and action plan.",
       to: "/plan",
       count: plannedCount,
