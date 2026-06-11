@@ -188,6 +188,7 @@ export const useAppStore = create<State & Actions>()(
       stakeholders: {},
       insights: [],
       assessments: {},
+      unlockedStage: 1,
       plan: {
         targetClusterIds: [],
         events: [],
