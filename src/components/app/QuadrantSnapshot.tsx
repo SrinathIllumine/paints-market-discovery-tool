@@ -21,28 +21,10 @@ import { useAppStore } from "@/store/appStore";
 
 type Point = { id: string; name: string; x: number; y: number; highlighted: boolean };
 
-/**
- * USAGE:
- *
- * Specific cluster page:
- *   <QuadrantSnapshot mode="single" highlightId={cluster.id} isStageComplete={true} />
- *
- * View my clusters page:
- *   <QuadrantSnapshot mode="all" />
- *
- * mode="single"
- *   - isStageComplete=false  → locked overlay, blurred chart
- *   - isStageComplete=true, cluster NOT in top-right → single red dot, no compare
- *   - isStageComplete=true, cluster IN top-right  → single red dot + "Compare with others" button
- *     → clicking compare dims all 7 others in gray, keeps current cluster red
- *
- * mode="all"
- *   → shows the default 8 representative clusters, all highlighted
- */
 export interface QuadrantSnapshotProps {
   highlightId?: string;
   mode: "single" | "all";
-  isStageComplete?: boolean; // only relevant in mode="single", defaults to true
+  isStageComplete?: boolean;
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -82,7 +64,19 @@ function isRequired(name: string) {
   return REQUIRED_NAMES.some((r) => name.toLowerCase().includes(r));
 }
 
-/** Always returns exactly 8 points, guaranteed to include highlightId if provided. */
+/**
+ * Derive a user's real access score (0–10) from their saved Y/N answers.
+ * Returns undefined if they haven't answered all 3 questions yet,
+ * so the caller can fall back to the hardcoded seed value.
+ */
+function resolveUserAccessScore(accessAnswers3?: (string | undefined)[]): number | undefined {
+  if (!accessAnswers3 || accessAnswers3.length !== 3) return undefined;
+  if (accessAnswers3.some((v) => v === undefined)) return undefined;
+  const yesCount = accessAnswers3.filter((v) => v === "Y").length;
+  return Math.round(yesCount * 3.33 * 10) / 10;
+}
+
+/** Always returns exactly 8 points, guaranteed to include highlightId. */
 function pickEight(all: Point[], highlightId?: string): Point[] {
   const quadrant = (p: Point) => (p.y >= 50 ? 2 : 0) + (p.x >= 50 ? 1 : 0);
   const buckets: Point[][] = [[], [], [], []];
@@ -91,7 +85,6 @@ function pickEight(all: Point[], highlightId?: string): Point[] {
   const chosen: Point[] = [];
   const ids = new Set<string>();
 
-  // 1. Always include the highlighted cluster
   if (highlightId) {
     const hi = all.find((p) => p.id === highlightId);
     if (hi && !ids.has(hi.id)) {
@@ -99,16 +92,12 @@ function pickEight(all: Point[], highlightId?: string): Point[] {
       ids.add(hi.id);
     }
   }
-
-  // 2. Always include required-name clusters
   for (const p of all) {
     if (isRequired(p.name) && !ids.has(p.id)) {
       chosen.push(p);
       ids.add(p.id);
     }
   }
-
-  // 3. Fill up to 2 per quadrant
   for (let q = 0; q < 4; q++) {
     let need = 2 - chosen.filter((p) => quadrant(p) === q).length;
     for (const p of buckets[q]) {
@@ -120,7 +109,6 @@ function pickEight(all: Point[], highlightId?: string): Point[] {
       }
     }
   }
-
   return chosen;
 }
 
@@ -239,7 +227,6 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
               strokeDasharray="2 2"
             />
             <circle cx={cx} cy={cy} r={DOT_R} fill={dotFill} />
-            {/* White halo for legibility */}
             <text
               x={lx}
               y={ly}
@@ -407,33 +394,38 @@ function CompareButton({ isComparing, onToggle }: { isComparing: boolean; onTogg
 
 export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: QuadrantSnapshotProps) {
   const clusterStates = useAppStore((s) => s.clusters);
+  // ← NEW: read persisted assessments so we can use real user access scores
+  const assessments = useAppStore((s) => s.assessments);
   const [isComparing, setIsComparing] = useState(false);
 
-  // Build scored positions for every cluster
+  // Build scored positions for every cluster.
+  // For each cluster, if the user has answered all 3 access questions
+  // (accessAnswers3 is fully populated) we use their real score on the X axis.
+  // Otherwise we fall back to the hardcoded SCORE_SEED value.
   const allPoints = useMemo<Point[]>(() => {
     return CLUSTERS.map((c) => {
       const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
-      const sc = computeClusterScores(c, pc);
+      const assessment = assessments[c.id];
+
+      // Derive real access score from saved Y/N answers, or undefined to use seed
+      const userAccessScore = resolveUserAccessScore(assessment?.accessAnswers3);
+
+      const sc = computeClusterScores(c, pc, assessment, userAccessScore);
       const x = clamp(sc.accessRollupScore * 10 + jitter(c.id + "x", 2.5), 4, 96);
       const y = clamp(sc.potentialScore * 10 + jitter(c.id + "y", 2.5), 4, 96);
       return { id: c.id, name: c.name, x, y, highlighted: false };
     });
-  }, [clusterStates]);
+  }, [clusterStates, assessments]);
 
   const { highlighted, dim, isInTopRight } = useMemo(() => {
-    // ── mode="single": only show the one cluster (or 8 during compare) ─────
+    // ── mode="single" ─────────────────────────────────────────────────────────
     if (mode === "single") {
       const target = highlightId ? allPoints.find((p) => p.id === highlightId) : null;
-
-      if (!target) {
-        // No matching cluster — fall back gracefully to an empty chart
-        return { highlighted: [], dim: [], isInTopRight: false };
-      }
+      if (!target) return { highlighted: [], dim: [], isInTopRight: false };
 
       const inTopRight = target.x >= 50 && target.y >= 50;
 
       if (isComparing) {
-        // Show all 8: highlight only the current cluster, dim the other 7
         const eight = pickEight(allPoints, highlightId);
         return {
           highlighted: eight.filter((p) => p.id === highlightId).map((p) => ({ ...p, highlighted: true })),
@@ -442,7 +434,6 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
         };
       }
 
-      // Default: single red dot only
       return {
         highlighted: [{ ...target, highlighted: true }],
         dim: [],
@@ -450,7 +441,7 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
       };
     }
 
-    // ── mode="all": show the representative 8, all highlighted ─────────────
+    // ── mode="all" ────────────────────────────────────────────────────────────
     const eight = pickEight(allPoints, highlightId);
     const withHighlight = eight.map((p) => ({
       ...p,
@@ -463,18 +454,14 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
     };
   }, [allPoints, highlightId, mode, isComparing]);
 
-  // Compare button: single mode, stage complete, cluster is in top-right quadrant
   const showCompareButton = mode === "single" && isStageComplete && isInTopRight;
 
   return (
     <div className="relative h-[520px] w-full">
-      {/* ── Locked overlay ── */}
       {mode === "single" && !isStageComplete && <LockedOverlay />}
 
-      {/* ── Compare button ── */}
       {showCompareButton && <CompareButton isComparing={isComparing} onToggle={() => setIsComparing((v) => !v)} />}
 
-      {/* ── Chart (blurred behind overlay when locked) ── */}
       <div className={mode === "single" && !isStageComplete ? "opacity-20 pointer-events-none select-none" : undefined}>
         <ResponsiveContainer width="100%" height={520}>
           <ScatterChart margin={{ top: 48, right: 48, bottom: 36, left: 8 }}>
@@ -532,7 +519,6 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
         </ResponsiveContainer>
       </div>
 
-      {/* ── Compare mode hint ── */}
       {isComparing && (
         <div
           className="absolute bottom-2 left-1/2 -translate-x-1/2
