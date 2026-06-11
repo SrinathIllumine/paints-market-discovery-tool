@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronRight, FileDown, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileDown, Plus, Trash2 } from "lucide-react";
 import { generateMonthlyEngagementPlanPdf } from "@/lib/monthlyPlanReport";
 import {
   CONNECT_STRATEGY_OPTIONS,
@@ -35,16 +35,15 @@ export const Route = createFileRoute("/plan/$clusterId")({
   component: PlanClusterScreen,
 });
 
-type PlanStep = "value" | "market" | "customer" | "action";
+type PlanStep = 0 | 1 | 2 | 3;
 
-const STEPS: { id: PlanStep; title: string }[] = [
-  { id: "value", title: "Select your value proposition" },
-  { id: "market", title: "Design your market engagement strategy" },
-  { id: "customer", title: "Design your customer engagement strategy" },
-  { id: "action", title: "Action plan" },
+const STEPS = [
+  { title: "Value\nProposition" },
+  { title: "Market\nEngagement\nStrategy" },
+  { title: "Customer\nEngagement\nStrategy" },
+  { title: "Action\nPlans" },
 ];
 
-const STAGE_HEADING_CLS = "text-base font-bold leading-tight";
 const MARKET_BUCKET: ConnectStrategy = "BRAND";
 
 const CATEGORY_TONE: Record<MarketEngagementCategory, string> = {
@@ -55,6 +54,62 @@ const CATEGORY_TONE: Record<MarketEngagementCategory, string> = {
 
 const INFLUENCER_ROLES = ["Site supervisor", "Interior designer", "Architect", "Other"];
 
+/* ─────────────────────────────────────────────────────────────
+   Stepper bar
+───────────────────────────────────────────────────────────── */
+function StepperBar({ current, onGoTo }: { current: PlanStep; onGoTo: (n: PlanStep) => void }) {
+  return (
+    <div className="flex items-center px-5 pb-4">
+      {STEPS.map((step, i) => {
+        const active = i <= current;
+        const isLast = i === STEPS.length - 1;
+        return (
+          <div key={i} className="flex items-center" style={{ flex: isLast ? 1 : undefined }}>
+            {/* step box */}
+            <button
+              type="button"
+              onClick={() => onGoTo(i as PlanStep)}
+              className={cn(
+                "flex-1 min-w-0 px-1.5 py-2 text-center border-none outline-none cursor-pointer",
+                i === 0 && "rounded-l-md",
+                isLast && "rounded-r-md",
+                active ? "bg-navy" : "bg-slate-200",
+              )}
+            >
+              {step.title.split("\n").map((line, li) => (
+                <span
+                  key={li}
+                  className={cn(
+                    "block text-[9px] font-medium leading-tight tracking-wide",
+                    active ? "text-white" : "text-navy",
+                  )}
+                >
+                  {line}
+                </span>
+              ))}
+            </button>
+
+            {/* arrow divider */}
+            {!isLast && (
+              <div
+                className={cn(
+                  "w-0 h-0 flex-shrink-0 z-10",
+                  "border-t-[19px] border-b-[19px] border-l-[13px]",
+                  "border-t-transparent border-b-transparent",
+                  active ? "border-l-navy" : "border-l-slate-200",
+                )}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Main screen
+───────────────────────────────────────────────────────────── */
 function PlanClusterScreen() {
   const { clusterId } = Route.useParams();
   const navigate = useNavigate();
@@ -75,8 +130,9 @@ function PlanClusterScreen() {
   const removeCustomAction = useAppStore((s) => s.removeCustomAction);
   const eventEstimates = useAppStore((s) => s.plan.eventEstimatesByCluster);
   const setEventEstimate = useAppStore((s) => s.setEventEstimate);
+  const unlockStage = useAppStore((s) => s.unlockStage);
 
-  const [openStep, setOpenStep] = useState<PlanStep>("value");
+  const [step, setStep] = useState<PlanStep>(0);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [estimateEventId, setEstimateEventId] = useState<string | null>(null);
 
@@ -98,14 +154,6 @@ function PlanClusterScreen() {
   const marketSelected = strategyItems[clusterId]?.[MARKET_BUCKET] ?? [];
   const marketContacts = strategyContacts[clusterId]?.[MARKET_BUCKET] ?? [];
 
-  // ── Next-step helper ────────────────────────────────────────────────────────
-  const currentStepIdx = STEPS.findIndex((s) => s.id === openStep);
-  const nextStep = STEPS[currentStepIdx + 1] ?? null;
-  const handleNext = () => {
-    if (nextStep) setOpenStep(nextStep.id);
-  };
-
-  const unlockStage = useAppStore((s) => s.unlockStage);
   const handleGenerate = () => {
     generateMonthlyEngagementPlanPdf({
       focusClusterId: clusterId,
@@ -120,7 +168,7 @@ function PlanClusterScreen() {
     });
     setConfirmOpen(false);
     unlockStage(3);
-    // navigate({ to: "/" });
+    navigate({ to: "/" });
   };
 
   const estimateEvent = estimateEventId ? MARKET_ENGAGEMENT_OPTIONS.find((m) => m.id === estimateEventId) : undefined;
@@ -131,105 +179,86 @@ function PlanClusterScreen() {
       bottom={<BottomNav />}
       header={<StageHeader eyebrow="STAGE 2 OF 3 · MY ENGAGEMENT PLAN" title="My Engagement Plan" backTo="/plan" />}
     >
-      <div className="space-y-5 px-6 py-6">
-        <div className="space-y-1">
+      <div className="space-y-4 px-5 py-5">
+        {/* cluster label */}
+        <div className="space-y-0.5">
           <h2 className="font-display text-xl leading-tight">
             Selected Cluster: <span className="text-critical">{cluster.name}</span>
           </h2>
-          <p className="text-sm text-muted-foreground">Roadmap for the cluster - Design with your ASM</p>
+          <p className="text-sm text-muted-foreground">Roadmap for the cluster — design with your ASM</p>
         </div>
+      </div>
 
-        <div className="space-y-3">
-          {STEPS.map((step, idx) => {
-            const isOpen = openStep === step.id;
-            const isLast = idx === STEPS.length - 1;
+      {/* stepper — outside the scrollable padding block so it stays flush */}
+      <StepperBar current={step} onGoTo={setStep} />
 
-            return (
-              <div key={step.id} className="overflow-hidden rounded-2xl border border-border bg-card">
-                {/* Accordion header */}
-                <button
-                  type="button"
-                  onClick={() => setOpenStep(isOpen ? ("" as PlanStep) : step.id)}
-                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-                >
-                  <span className={STAGE_HEADING_CLS}>
-                    STAGE {idx + 1}: {step.title.toUpperCase()}
-                  </span>
-                  <ChevronDown
-                    className={cn("h-4 w-4 text-muted-foreground transition-transform", isOpen && "rotate-180")}
-                  />
-                </button>
+      <div className="px-5 pb-8 space-y-4">
+        {/* ── Stage 1 ── */}
+        {step === 0 && (
+          <>
+            <StageSectionTitle index={1} title="Select your value proposition" />
+            <ValueStep clusterId={clusterId} selected={vp} onSelect={(v) => setValueProposition(clusterId, v)} />
+            <NavButtons onNext={() => setStep(1)} />
+          </>
+        )}
 
-                {/* Accordion body */}
-                {isOpen && (
-                  <div className="border-t border-border px-4 pb-4 pt-3">
-                    <div className="space-y-4">
-                      {step.id === "value" && (
-                        <ValueStep
-                          clusterId={clusterId}
-                          selected={vp}
-                          onSelect={(v) => setValueProposition(clusterId, v)}
-                        />
-                      )}
-                      {step.id === "market" && (
-                        <MarketStep
-                          selected={marketSelected}
-                          contacts={marketContacts}
-                          onToggleItem={(it) => toggleStrategyItem(clusterId, MARKET_BUCKET, it)}
-                          onContactsChange={(list) => setStrategyContacts(clusterId, MARKET_BUCKET, list)}
-                        />
-                      )}
-                      {step.id === "customer" && (
-                        <CustomerStep
-                          clusterId={clusterId}
-                          strategies={customerStrategies}
-                          contactsByStrategy={strategyContacts[clusterId] ?? {}}
-                          onToggle={(s) => toggleSelectedStrategy(clusterId, s)}
-                          onContactsChange={(s, list) => setStrategyContacts(clusterId, s, list)}
-                        />
-                      )}
-                      {step.id === "action" && (
-                        <ActionStep
-                          clusterId={clusterId}
-                          marketSelected={marketSelected}
-                          customerStrategies={customerStrategies}
-                          selectedActions={selectedActions[clusterId] ?? {}}
-                          customActions={customActions[clusterId] ?? {}}
-                          contactsByStrategy={strategyContacts[clusterId] ?? {}}
-                          eventEstimates={eventEstimates[clusterId] ?? {}}
-                          onToggleAction={(s, a) => toggleSelectedAction(clusterId, s, a)}
-                          onAddCustom={(s, t) => addCustomAction(clusterId, s, t)}
-                          onRemoveCustom={(s, t) => removeCustomAction(clusterId, s, t)}
-                          onOpenEstimate={(eventId) => setEstimateEventId(eventId)}
-                        />
-                      )}
-                    </div>
+        {/* ── Stage 2 ── */}
+        {step === 1 && (
+          <>
+            <StageSectionTitle index={2} title="Design your market engagement strategy" />
+            <MarketStep
+              selected={marketSelected}
+              contacts={marketContacts}
+              onToggleItem={(it) => toggleStrategyItem(clusterId, MARKET_BUCKET, it)}
+              onContactsChange={(list) => setStrategyContacts(clusterId, MARKET_BUCKET, list)}
+            />
+            <NavButtons onBack={() => setStep(0)} onNext={() => setStep(2)} />
+          </>
+        )}
 
-                    {/* Next → button — shown on all stages except the last */}
-                    {!isLast && (
-                      <div className="mt-4 flex justify-end">
-                        <Button
-                          size="sm"
-                          onClick={handleNext}
-                          className="gap-1.5 bg-navy text-navy-foreground hover:bg-navy/90"
-                        >
-                          Next <ChevronRight className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {/* ── Stage 3 ── */}
+        {step === 2 && (
+          <>
+            <StageSectionTitle index={3} title="Design your customer engagement strategy" />
+            <CustomerStep
+              clusterId={clusterId}
+              strategies={customerStrategies}
+              contactsByStrategy={strategyContacts[clusterId] ?? {}}
+              onToggle={(s) => toggleSelectedStrategy(clusterId, s)}
+              onContactsChange={(s, list) => setStrategyContacts(clusterId, s, list)}
+            />
+            <NavButtons onBack={() => setStep(1)} onNext={() => setStep(3)} />
+          </>
+        )}
 
-        <Button
-          onClick={() => setConfirmOpen(true)}
-          className="h-12 w-full gap-2 bg-navy text-base font-semibold text-navy-foreground hover:bg-navy/90"
-        >
-          <FileDown className="h-4 w-4" /> Generate Monthly Cluster Engagement Plan
-        </Button>
+        {/* ── Stage 4 ── */}
+        {step === 3 && (
+          <>
+            <StageSectionTitle index={4} title="Action plan" />
+            <ActionStep
+              clusterId={clusterId}
+              marketSelected={marketSelected}
+              customerStrategies={customerStrategies}
+              selectedActions={selectedActions[clusterId] ?? {}}
+              customActions={customActions[clusterId] ?? {}}
+              contactsByStrategy={strategyContacts[clusterId] ?? {}}
+              eventEstimates={eventEstimates[clusterId] ?? {}}
+              onToggleAction={(s, a) => toggleSelectedAction(clusterId, s, a)}
+              onAddCustom={(s, t) => addCustomAction(clusterId, s, t)}
+              onRemoveCustom={(s, t) => removeCustomAction(clusterId, s, t)}
+              onOpenEstimate={(eventId) => setEstimateEventId(eventId)}
+            />
+
+            <Button
+              onClick={() => setConfirmOpen(true)}
+              className="h-12 w-full gap-2 bg-navy text-base font-semibold text-navy-foreground hover:bg-navy/90 mt-4"
+            >
+              <FileDown className="h-4 w-4" /> Generate Monthly Cluster Engagement Plan
+            </Button>
+
+            <NavButtons onBack={() => setStep(2)} />
+          </>
+        )}
       </div>
 
       {/* Confirm generate dialog */}
@@ -267,12 +296,20 @@ function PlanClusterScreen() {
               <NumberField
                 label="Participants estimated"
                 value={estimateValue.participants}
-                onChange={(v) => setEventEstimate(clusterId, estimateEventId, { participants: v })}
+                onChange={(v) =>
+                  setEventEstimate(clusterId, estimateEventId, {
+                    participants: v,
+                  })
+                }
               />
               <NumberField
                 label="Contractors estimated"
                 value={estimateValue.contractors}
-                onChange={(v) => setEventEstimate(clusterId, estimateEventId, { contractors: v })}
+                onChange={(v) =>
+                  setEventEstimate(clusterId, estimateEventId, {
+                    contractors: v,
+                  })
+                }
               />
             </div>
           )}
@@ -284,6 +321,34 @@ function PlanClusterScreen() {
         </DialogContent>
       </Dialog>
     </AppShell>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Small shared helpers
+───────────────────────────────────────────────────────────── */
+function StageSectionTitle({ index, title }: { index: number; title: string }) {
+  return (
+    <p className="text-xs font-bold uppercase tracking-widest text-foreground">
+      Stage {index}: {title}
+    </p>
+  );
+}
+
+function NavButtons({ onBack, onNext }: { onBack?: () => void; onNext?: () => void }) {
+  return (
+    <div className={cn("flex mt-4", onBack && onNext ? "justify-between" : onBack ? "justify-start" : "justify-end")}>
+      {onBack && (
+        <Button size="sm" variant="outline" onClick={onBack} className="gap-1.5">
+          <ChevronLeft className="h-3.5 w-3.5" /> Back
+        </Button>
+      )}
+      {onNext && (
+        <Button size="sm" onClick={onNext} className="gap-1.5 bg-navy text-navy-foreground hover:bg-navy/90">
+          Next <ChevronRight className="h-3.5 w-3.5" />
+        </Button>
+      )}
+    </div>
   );
 }
 
@@ -306,7 +371,6 @@ function ValueStep({
   });
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
-
   const allOptions = [...baseOptions, ...customs];
 
   const submitCustom = () => {
@@ -589,9 +653,11 @@ function ActionStep({
   onOpenEstimate: (eventId: string) => void;
 }) {
   const chosenEvents = MARKET_ENGAGEMENT_OPTIONS.filter((m) => marketSelected.includes(m.id));
-  const [assetDlg, setAssetDlg] = useState<{ title: string; asset: ActionAsset; userContacts?: ContactEntry[] } | null>(
-    null,
-  );
+  const [assetDlg, setAssetDlg] = useState<{
+    title: string;
+    asset: ActionAsset;
+    userContacts?: ContactEntry[];
+  } | null>(null);
   const [draftByStrategy, setDraftByStrategy] = useState<Partial<Record<ConnectStrategy, string>>>({});
 
   return (
@@ -600,6 +666,7 @@ function ActionStep({
         Plan the next concrete steps for each event and each customer engagement strategy.
       </p>
 
+      {/* Events */}
       <section>
         <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Contribution &amp; brand events
@@ -641,6 +708,7 @@ function ActionStep({
         )}
       </section>
 
+      {/* Customer strategies */}
       <section>
         <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Customer engagement strategies
@@ -717,7 +785,12 @@ function ActionStep({
                   <div className="mt-2 flex items-center gap-1.5">
                     <input
                       value={draft}
-                      onChange={(e) => setDraftByStrategy((d) => ({ ...d, [s]: e.target.value }))}
+                      onChange={(e) =>
+                        setDraftByStrategy((d) => ({
+                          ...d,
+                          [s]: e.target.value,
+                        }))
+                      }
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           const t = draft.trim();
@@ -752,6 +825,7 @@ function ActionStep({
         )}
       </section>
 
+      {/* Asset dialog */}
       <Dialog open={assetDlg !== null} onOpenChange={(o) => !o && setAssetDlg(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
