@@ -389,7 +389,7 @@ function DashboardPage() {
         </section>
 
         {/* Quick links */}
-        <section className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <section data-tour="dash-quicklinks" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <button
             type="button"
             onClick={() => setHistoryOpen(true)}
@@ -413,6 +413,32 @@ function DashboardPage() {
           </Link>
         </section>
       </div>
+
+      <Tour
+        tourKey="dashboard-v1"
+        steps={[
+          {
+            selector: '[data-tour="dash-kpi"]',
+            title: "Performance at a glance",
+            body: "Your top KPIs — total revenue potential, active clusters, conversion rate, and which cluster needs attention. Tap a card to jump into it.",
+          },
+          {
+            selector: '[data-tour="dash-chart"]',
+            title: "Conversions month-on-month",
+            body: "Track how prospects move into 'Ongoing' or 'Closure' across months. Use the dropdown to filter by a single cluster.",
+          },
+          {
+            selector: '[data-tour="dash-table"]',
+            title: "Cluster summary",
+            body: "Sortable view of every cluster — penetration, prospects, and matrix position. Tap any cluster name to open its plan.",
+          },
+          {
+            selector: '[data-tour="dash-quicklinks"]',
+            title: "Past engagements & your network",
+            body: "Review previous events and outcomes, or jump to your network of contractors, retailers and influencers.",
+          },
+        ]}
+      />
 
       {/* Past events popup */}
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
