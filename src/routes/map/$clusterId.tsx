@@ -23,10 +23,12 @@ import {
   getClusterIntel,
   getCompetitiveInsights,
   getEaseInsights,
+  getRepaintingCycleYears,
   highlightBrands,
+  scoreRevenue,
+  scoreToHML,
   HML_LABEL,
   scoreFromHML,
-  scoreToHML,
   type HML,
 } from "@/lib/clusterScoring";
 import { cn } from "@/lib/utils";
