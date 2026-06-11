@@ -4,7 +4,9 @@ import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { BubbleCircle } from "@/components/app/BubbleCircle";
+import { Tour } from "@/components/app/Tour";
 import { CLUSTERS } from "@/data/clusters";
+import { useAppStore } from "@/store/appStore";
 
 import { ArrowRight, ChevronDown } from "lucide-react";
 
@@ -22,6 +24,9 @@ function ClusterPotentialScreen() {
   const navigate = useNavigate();
   const [showHint, setShowHint] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const assessments = useAppStore((s) => s.assessments);
+  const mappedCount = Object.keys(assessments).length;
+  const totalClusters = CLUSTERS.length;
 
   const dismissHint = () => setShowHint(false);
 
@@ -52,15 +57,16 @@ function ClusterPotentialScreen() {
         )}
         <Link
           to="/market-potential"
+          data-tour="map-view-button"
           className="mb-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-critical text-base font-semibold text-critical-foreground shadow-lg shadow-critical/20"
         >
           View my Cluster Map
           <ArrowRight className="h-4 w-4" />
         </Link>
         <div className="space-y-0.5">
-          <p className="font-display text-lg">Total clusters in your area: 20</p>
+          <p className="font-display text-lg">Total clusters in your area: {totalClusters}</p>
         </div>
-        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
+        <div data-tour="map-clusters" className="grid grid-cols-2 gap-5 sm:grid-cols-3">
           {CLUSTERS.map((c) => (
             <BubbleCircle
               key={c.id}
@@ -69,7 +75,31 @@ function ClusterPotentialScreen() {
             />
           ))}
         </div>
+
+        <div className="mt-6 rounded-2xl border border-border bg-card px-4 py-3 text-center shadow-sm">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Progress</p>
+          <p className="mt-0.5 font-display text-base">
+            <span className="font-bold text-critical">{mappedCount}</span>
+            <span className="text-muted-foreground"> of {totalClusters} clusters mapped so far</span>
+          </p>
+        </div>
       </div>
+
+      <Tour
+        tourKey="map-v1"
+        steps={[
+          {
+            selector: '[data-tour="map-view-button"]',
+            title: "View your Cluster Map",
+            body: "Once you've mapped a few clusters, open this map to compare them side by side across revenue, competition, access and ease of sale.",
+          },
+          {
+            selector: '[data-tour="map-clusters"]',
+            title: "Your clusters",
+            body: "Each bubble is a cluster type in your area. Tap one to identify prospects and score its potential.",
+          },
+        ]}
+      />
     </AppShell>
   );
 }
