@@ -63,10 +63,8 @@ function ClusterPotentialScreen() {
           View my Cluster Map
           <ArrowRight className="h-4 w-4" />
         </Link>
-        <div className="space-y-0.5">
-          <p className="font-display text-lg">Total clusters in your area: {totalClusters}</p>
-        </div>
-        <div className="mt-6 rounded-2xl border border-border bg-card px-4 py-3 text-center shadow-sm">
+
+        <div className="mt-6 mb-6 rounded-2xl border border-border bg-card px-4 py-3 text-center shadow-sm">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Progress</p>
           <p className="mt-0.5 font-display text-base">
             <span className="font-bold text-critical">{mappedCount}</span>
