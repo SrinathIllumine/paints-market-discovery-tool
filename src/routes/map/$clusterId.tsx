@@ -404,6 +404,7 @@ function ClusterDetailScreen() {
                 </CollapsibleSub>
               </Accordion>
               <Button
+                data-tour="cluster-generate-snapshot"
                 onClick={() => {
                   setActiveTab("snapshot");
                 }}
@@ -424,11 +425,11 @@ function ClusterDetailScreen() {
                   {cluster.nature} — {cluster.description}
                 </p>
               </div>
-              <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <div data-tour="cluster-snapshot-graph" className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                 {/* ── CHANGE: mode="single" + isStageComplete wired to snapshotRevealed ── */}
                 <QuadrantSnapshot mode="single" highlightId={cluster.id} isStageComplete={allAnswered} />
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div data-tour="cluster-scores" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {allAnswered && <ScoreTile label="Revenue" score={scores.revenue} />}
                 {allAnswered && <ScoreTile label="Competitive" score={scores.competitive} />}
                 {allAnswered && <ScoreTile label="Access" score={scores.access} />}
@@ -436,7 +437,11 @@ function ClusterDetailScreen() {
               </div>
               {allAnswered && (
                 <Button
-                  onClick={() => navigate({ to: "/" })}
+                  data-tour="cluster-next-stage"
+                  onClick={() => {
+                    unlockStage(2);
+                    navigate({ to: "/" });
+                  }}
                   size="lg"
                   className="w-full gap-2 bg-critical text-critical-foreground hover:bg-critical/90"
                 >
