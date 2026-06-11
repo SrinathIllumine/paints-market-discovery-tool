@@ -455,22 +455,61 @@ function ClusterDetailScreen() {
       </div>
 
       <Tour
-        tourKey="cluster-v1"
+        tourKey={`cluster-v2-${clusterId}`}
         steps={[
           {
             selector: '[data-tour="cluster-tab-prospects"]',
-            title: "1. Prospects by region",
-            body: "See every prospect we've identified for this cluster on the map, grouped by region. Add your own pins too.",
+            title: "Three tabs to score this cluster",
+            body: "Work through these tabs in order — Prospects, Mapping, then Snapshot. You can come back anytime.",
+            onShow: () => setActiveTab("prospects"),
           },
           {
-            selector: '[data-tour="cluster-tab-mapping"]',
-            title: "2. Cluster Potential Mapping",
-            body: "Answer a few quick questions to score this cluster on revenue, competition, access and ease of sale.",
+            selector: '[data-tour="cluster-geo-view"]',
+            title: "Geo View",
+            body: "Every prospect we've identified is plotted on the map. Tap 'Add prospect' to drop your own pin for anyone we missed.",
+            onShow: () => setActiveTab("prospects"),
+          },
+          {
+            selector: '[data-tour="cluster-prospects-region"]',
+            title: "Prospects by region",
+            body: "Prospects are grouped into regions so you can plan visits efficiently. Expand a region to see who's inside it.",
+            onShow: () => setActiveTab("prospects"),
+          },
+          {
+            selector: '[data-tour="cluster-calc-button"]',
+            title: "Calculate your cluster potential",
+            body: "Tap this when your prospect list looks right — it takes you to the scoring questions.",
+            onShow: () => setActiveTab("prospects"),
+          },
+          {
+            selector: '[data-tour="cluster-mapping-cards"]',
+            title: "Score across 4 dimensions",
+            body: "Revenue, Competitive Strength, Access and Ease of Sale. Open each card — Access needs your input, the others auto-fill from cluster intelligence.",
+            onShow: () => setActiveTab("mapping"),
+          },
+          {
+            selector: '[data-tour="cluster-generate-snapshot"]',
+            title: "Generate the snapshot",
+            body: "Once you've answered the Access questions, tap here to plot this cluster on the snapshot grid.",
+            onShow: () => setActiveTab("mapping"),
+          },
+          {
+            selector: '[data-tour="cluster-snapshot-graph"]',
+            title: "Snapshot graph",
+            body: "See where this cluster lands on the Potential vs Access grid — a quick visual of whether to invest time here.",
+            onShow: () => setActiveTab("snapshot"),
+          },
+          {
+            selector: '[data-tour="cluster-scores"]',
+            title: "Your 4 scores",
+            body: "Revenue, Competitive, Access and Ease — all on a 0–10 scale. Green is strong, red needs attention.",
+            onShow: () => setActiveTab("snapshot"),
           },
           {
             selector: '[data-tour="cluster-tab-snapshot"]',
-            title: "3. Cluster Snapshot",
-            body: "Get a visual snapshot of where this cluster sits versus the others, and move on to the next stage.",
+            title: "Go to the next stage",
+            body: "When you're done, the 'Go to next stage' button takes you home and unlocks Stage 2 — Monthly Engagement Plan.",
+            onShow: () => setActiveTab("snapshot"),
           },
         ]}
       />
