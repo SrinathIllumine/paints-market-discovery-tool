@@ -49,7 +49,7 @@ export const Route = createFileRoute("/map/$clusterId")({
 type Tab = "prospects" | "mapping" | "snapshot";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "prospects", label: "Prospects by region" },
+  { id: "prospects", label: "Residential Societies by region" },
   { id: "mapping", label: "Cluster Potential Mapping" },
   { id: "snapshot", label: "Cluster Snapshot" },
 ];
@@ -242,7 +242,7 @@ function ClusterDetailScreen() {
 
               {/* Prospects by region accordion */}
               <section className="space-y-3">
-                <h2 className="font-display text-xl">Prospects by region</h2>
+                <h2 className="font-display text-xl">Residential Societies by region</h2>
                 {prospects.length === 0 ? (
                   <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
                     {loading ? "Loading prospects…" : "No prospects identified yet."}
