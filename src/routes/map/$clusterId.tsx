@@ -62,7 +62,6 @@ function ClusterDetailScreen() {
   const cluster = useMemo(() => getCluster(clusterId), [clusterId]);
 
   const [activeTab, setActiveTab] = useState<Tab>("prospects");
-  const [snapshotRevealed, setSnapshotRevealed] = useState(false);
 
   const state = useAppStore((s) => s.clusters[clusterId]);
   const ensureCluster = useAppStore((s) => s.ensureCluster);
@@ -400,7 +399,6 @@ function ClusterDetailScreen() {
               </Accordion>
               <Button
                 onClick={() => {
-                  setSnapshotRevealed(true);
                   setActiveTab("snapshot");
                 }}
                 size="lg"
