@@ -257,6 +257,35 @@ const CYCLE: Record<string, Omit<CycleProfile, "months">> = {
   "textile-garment": { label: "≈ 2 weeks", days: 14, explanation: "Owner-driven, refreshed around festive sales." },
 };
 
+/* ─────────────────────────── repainting cycle (years) */
+
+const REPAINTING_CYCLE_YEARS: Record<string, number> = {
+  "mid-apartments": 5,
+  redevelopment: 7,
+  "gated-community": 5,
+  schools: 4,
+  colleges: 5,
+  hospitals: 3,
+  restaurants: 2,
+  hotels: 3,
+  midc: 5,
+  warehousing: 6,
+  "marriage-halls": 3,
+  "paying-guest": 4,
+  religious: 5,
+  "auto-showrooms": 3,
+  "petrol-pumps": 3,
+  "bus-stand-market": 4,
+  "highway-dhabas": 3,
+  "clinics-nursing": 4,
+  jewellery: 4,
+  "textile-garment": 3,
+};
+
+export function getRepaintingCycleYears(clusterId: string): number {
+  return REPAINTING_CYCLE_YEARS[clusterId] ?? 4;
+}
+
 export function getCycle(clusterId: string): CycleProfile {
   const c = CYCLE[clusterId] ?? { label: "Varies", days: 45, explanation: "Cycle depends on the specific prospect." };
   return { ...c, months: Math.max(0.5, Math.round((c.days / 30) * 10) / 10) };
