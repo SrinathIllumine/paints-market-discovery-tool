@@ -59,6 +59,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 function ClusterDetailScreen() {
+  const navigate = useNavigate();
   const { clusterId } = Route.useParams();
   const cluster = useMemo(() => getCluster(clusterId), [clusterId]);
 
