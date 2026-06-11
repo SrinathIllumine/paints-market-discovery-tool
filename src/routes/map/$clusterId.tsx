@@ -49,9 +49,9 @@ export const Route = createFileRoute("/map/$clusterId")({
 type Tab = "prospects" | "mapping" | "snapshot";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "prospects", label: "View Prospects by region" },
-  { id: "mapping", label: "Calculate Cluster Potential Mapping" },
-  { id: "snapshot", label: "View Cluster Snapshot" },
+  { id: "prospects", label: "Prospects by region" },
+  { id: "mapping", label: "Cluster Potential Mapping" },
+  { id: "snapshot", label: "Cluster Snapshot" },
 ];
 
 function ClusterDetailScreen() {
@@ -176,7 +176,7 @@ function ClusterDetailScreen() {
       }
     >
       {/* ── Layout: tab bar + scrollable content + sticky CTA ── */}
-      <div className="flex h-full flex-col overflow-hidden">
+      <div className="flex h-screen flex-col overflow-hidden">
         {/* Tab bar */}
         <div className="sticky top-0 z-10 flex shrink-0 bg-red-600">
           {TABS.map((t) => (
@@ -196,7 +196,7 @@ function ClusterDetailScreen() {
         </div>
 
         {/* Scrollable tab body */}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain pb-4">
           {/* ── TAB 1: Prospects by region ── */}
           {activeTab === "prospects" && (
             <div className="space-y-5 px-6 py-6">
@@ -242,7 +242,7 @@ function ClusterDetailScreen() {
 
               {/* Prospects by region accordion */}
               <section className="space-y-3">
-                <h2 className="font-display text-xl">View Prospects by region</h2>
+                <h2 className="font-display text-xl">Prospects by region</h2>
                 {prospects.length === 0 ? (
                   <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
                     {loading ? "Loading prospects…" : "No prospects identified yet."}
@@ -287,12 +287,6 @@ function ClusterDetailScreen() {
           {/* ── TAB 2: Cluster Potential Mapping ── */}
           {activeTab === "mapping" && (
             <div className="space-y-3 px-6 py-6">
-              <section>
-                <h2 className="font-display text-xl">Calculate Cluster Potential Mapping</h2>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Breakdown of revenue, competitive strength, access and ease of sale.
-                </p>
-              </section>
               <Accordion
                 type="multiple"
                 defaultValue={["revenue", "competitive", "access", "ease"]}
