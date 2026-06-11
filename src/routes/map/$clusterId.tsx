@@ -490,7 +490,6 @@ function HMLBadge({ hml, small }: { hml: HML | null; small?: boolean }) {
 function Bullet({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex gap-2">
-      <span className="mt-0.5 text-critical">•</span>
       <span className="flex-1">{children}</span>
     </li>
   );
