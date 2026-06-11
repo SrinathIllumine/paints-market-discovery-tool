@@ -142,6 +142,13 @@ function PlanClusterScreen() {
   const setEventEstimate = useAppStore((s) => s.setEventEstimate);
   const unlockStage = useAppStore((s) => s.unlockStage);
 
+  const mainRef = useRef<HTMLElement>(null);
+
+  const goTo = (n: PlanStep) => {
+    setStep(n);
+    mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
+  };
+
   const [step, setStep] = useState<PlanStep>(0);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [estimateEventId, setEstimateEventId] = useState<string | null>(null);
@@ -186,6 +193,7 @@ function PlanClusterScreen() {
 
   return (
     <AppShell
+      ref={mainRef}
       bottom={<BottomNav />}
       header={<StageHeader eyebrow="STAGE 2 OF 3 · MY ENGAGEMENT PLAN" title="My Engagement Plan" backTo="/plan" />}
     >
