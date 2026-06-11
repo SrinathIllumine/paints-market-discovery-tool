@@ -287,6 +287,12 @@ function ClusterDetailScreen() {
           {/* ── TAB 2: Cluster Potential Mapping ── */}
           {activeTab === "mapping" && (
             <div className="space-y-3 px-6 py-6">
+              <section>
+                <h2 className="font-display text-xl">Calculate Cluster Potential Mapping</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Breakdown of revenue, competitive strength, access and ease of sale.
+                </p>
+              </section>
               <Accordion
                 type="multiple"
                 defaultValue={["revenue", "competitive", "access", "ease"]}
