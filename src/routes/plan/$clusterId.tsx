@@ -178,7 +178,7 @@ function PlanClusterScreen() {
     });
     setConfirmOpen(false);
     unlockStage(3);
-    navigate({ to: "/" });
+    // navigate({ to: "/" });
   };
 
   const estimateEvent = estimateEventId ? MARKET_ENGAGEMENT_OPTIONS.find((m) => m.id === estimateEventId) : undefined;
