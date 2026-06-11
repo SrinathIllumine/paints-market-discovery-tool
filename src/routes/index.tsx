@@ -38,7 +38,7 @@ function IntroScreen() {
   const props: CardDef[] = [
     {
       icon: MapIcon,
-      title: "Explore Market Potential",
+      title: "Map Market Potential",
       desc: "Map your clusters with their revenue potential, access level, competitive strength and ease of sale.",
       to: "/map",
       progress: null,
@@ -81,7 +81,6 @@ function IntroScreen() {
         </div>
       </div>
 
-
       <div className="space-y-3 px-5 py-5">
         {props.map(({ icon: Icon, title, desc, to, progress }, idx) => (
           <div key={title} className={cn("relative", idx === 1 && "pb-5")}>
@@ -98,9 +97,7 @@ function IntroScreen() {
               </div>
               <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
               {progress && (
-                <span className="absolute bottom-2 right-3 text-[11px] font-semibold text-critical">
-                  {progress}
-                </span>
+                <span className="absolute bottom-2 right-3 text-[11px] font-semibold text-critical">{progress}</span>
               )}
             </Link>
             {idx === 1 && (
@@ -115,9 +112,7 @@ function IntroScreen() {
             )}
           </div>
         ))}
-
       </div>
-
     </AppShell>
   );
 }
