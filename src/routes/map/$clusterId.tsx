@@ -431,10 +431,42 @@ function ClusterDetailScreen() {
                 {allAnswered && <ScoreTile label="Access" score={scores.access} />}
                 {allAnswered && <ScoreTile label="Ease of Sale" score={scores.ease} />}
               </div>
+              {allAnswered && (
+                <Button
+                  onClick={() => navigate({ to: "/" })}
+                  size="lg"
+                  className="w-full gap-2 bg-critical text-critical-foreground hover:bg-critical/90"
+                >
+                  <Home className="h-4 w-4" />
+                  Go to the next stage
+                </Button>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      <Tour
+        tourKey="cluster-v1"
+        steps={[
+          {
+            selector: '[data-tour="cluster-tab-prospects"]',
+            title: "1. Prospects by region",
+            body: "See every prospect we've identified for this cluster on the map, grouped by region. Add your own pins too.",
+          },
+          {
+            selector: '[data-tour="cluster-tab-mapping"]',
+            title: "2. Cluster Potential Mapping",
+            body: "Answer a few quick questions to score this cluster on revenue, competition, access and ease of sale.",
+          },
+          {
+            selector: '[data-tour="cluster-tab-snapshot"]',
+            title: "3. Cluster Snapshot",
+            body: "Get a visual snapshot of where this cluster sits versus the others, and move on to the next stage.",
+          },
+        ]}
+      />
+
 
       <AddProspectSheet
         open={sheetOpen}
