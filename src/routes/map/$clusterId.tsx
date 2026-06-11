@@ -323,6 +323,10 @@ function ClusterDetailScreen() {
                       .
                     </Bullet>
                     <Bullet>
+                      Total cluster revenue potential is <b>{formatRupees(totalRevenue)}</b> over the full repainting
+                      cycle.
+                    </Bullet>
+                    <Bullet>
                       Total cluster revenue potential per year is{" "}
                       <b className="text-critical">{formatRupees(annualRevenue)}</b>.
                     </Bullet>
@@ -490,6 +494,7 @@ function HMLBadge({ hml, small }: { hml: HML | null; small?: boolean }) {
 function Bullet({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex gap-2">
+      <span className="mt-0.5 text-critical">•</span>
       <span className="flex-1">{children}</span>
     </li>
   );
