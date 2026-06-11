@@ -38,7 +38,7 @@ function IntroScreen() {
   const props: CardDef[] = [
     {
       icon: MapIcon,
-      title: "Identify Your Market Potential",
+      title: "Explore Market Potential",
       desc: "Map your clusters with their revenue potential, access level, competitive strength and ease of sale.",
       to: "/map",
       progress: null,
