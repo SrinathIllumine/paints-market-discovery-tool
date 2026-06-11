@@ -186,7 +186,7 @@ function ClusterDetailScreen() {
       }
     >
       {/* ── Layout: tab bar + scrollable content + sticky CTA ── */}
-      <div className="flex h-screen flex-col overflow-hidden">
+      <div className="flex h-full flex-col overflow-hidden">
         {/* Tab bar */}
         <div className="sticky top-0 z-10 flex shrink-0 bg-red-600">
           {TABS.map((t) => (
