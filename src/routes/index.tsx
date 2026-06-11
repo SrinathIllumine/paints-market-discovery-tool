@@ -33,10 +33,12 @@ type CardDef = {
 function IntroScreen() {
   const assessments = useAppStore((s) => s.assessments);
   const valueProps = useAppStore((s) => s.plan.valuePropositionByCluster);
+  const unlockedStage = useAppStore((s) => s.unlockedStage);
 
   const mappedCount = Object.keys(assessments).length;
   const plannedCount = Object.values(valueProps).filter((v) => v && v.trim().length > 0).length;
-  const highlightPlan = mappedCount > 0;
+  // Highlight only the current next stage based on user-driven progression.
+  const nextStageIdx = unlockedStage - 1; // 0, 1, or 2
 
   const props: CardDef[] = [
     {
