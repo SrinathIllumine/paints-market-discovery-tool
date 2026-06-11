@@ -296,13 +296,13 @@ function ClusterDetailScreen() {
                 )}
               </section>
               {/* Navigate to next tab */}
-              <button
+              <Button
                 onClick={() => setActiveTab("mapping")}
-                className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-5 py-4 shadow-sm"
+                size="lg"
+                className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
               >
-                <span className="font-display text-base">Calculate your cluster potential</span>
-                <ChevronRight className="h-5 w-5 text-muted-foreground" />
-              </button>
+                Calculate your cluster potential
+              </Button>
             </div>
           )}
 
