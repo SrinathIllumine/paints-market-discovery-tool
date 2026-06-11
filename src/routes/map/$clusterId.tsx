@@ -240,7 +240,7 @@ function ClusterDetailScreen() {
               <div className="space-y-0.5">
                 <h2 className="font-display text-2xl">View prospects by region</h2>
               </div>
-              <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <section data-tour="cluster-geo-view" className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <h2 className="font-display text-xl">Geo View</h2>
                   <Button size="sm" variant="outline" onClick={() => setSheetOpen(true)} className="h-8 gap-1 text-xs">
@@ -279,7 +279,7 @@ function ClusterDetailScreen() {
                 </p>
               </section>
 
-              <section className="space-y-3">
+              <section data-tour="cluster-prospects-region" className="space-y-3">
                 <h2 className="font-display text-xl">Prospects by region</h2>
                 {prospects.length === 0 ? (
                   <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
