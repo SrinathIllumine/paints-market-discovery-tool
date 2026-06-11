@@ -583,15 +583,7 @@ function AccessQuestions({
           </li>
         ))}
       </ul>
-      <div className="rounded-xl border border-border bg-card p-3 text-sm">
-        {allAnswered ? (
-          <p>
-            Access score: <b>{score.toFixed(2)}</b> / 10
-          </p>
-        ) : (
-          <p className="text-muted-foreground">Answer all questions to see the access score.</p>
-        )}
-      </div>
+      <div>{allAnswered ? <p>&nbsp;</p> : <p className="text-muted-foreground">Answer all the questions</p>}</div>
     </div>
   );
 }
