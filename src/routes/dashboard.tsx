@@ -272,7 +272,7 @@ function DashboardPage() {
         </section>
 
         {/* MoM Conversion Chart */}
-        <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <section data-tour="dash-chart" className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
             <div>
               <h2 className="font-display text-lg leading-tight">Conversions · Month on Month</h2>
