@@ -62,8 +62,8 @@ function ClusterMapPage() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="STAGE 1 OF 3 · EXPLORE MARKET POTENTIAL"
-          title="Explore Market Potential"
+          eyebrow="STAGE 1 OF 3 · MAP MARKET POTENTIAL"
+          title="Map Market Potential"
           subtitle="Snapshot driven by backend cluster intelligence."
           backTo="/map"
         />
@@ -155,9 +155,7 @@ function ClusterMapPage() {
             </section>
           )}
 
-          {filtered.length === 0 && (
-            <p className="text-sm text-muted-foreground">No clusters match "{search}".</p>
-          )}
+          {filtered.length === 0 && <p className="text-sm text-muted-foreground">No clusters match "{search}".</p>}
         </section>
       </div>
     </AppShell>
@@ -165,7 +163,10 @@ function ClusterMapPage() {
 }
 
 function ClusterRow({
-  name, recommended, scores, onClick,
+  name,
+  recommended,
+  scores,
+  onClick,
 }: {
   name: string;
   recommended?: boolean;
@@ -176,11 +177,7 @@ function ClusterRow({
   void recommended;
   return (
     <div className="group flex w-full flex-col gap-2 rounded-xl border border-border bg-card p-3 text-left shadow-sm">
-      <button
-        type="button"
-        onClick={onClick}
-        className="flex w-full items-start justify-between gap-3 text-left"
-      >
+      <button type="button" onClick={onClick} className="flex w-full items-start justify-between gap-3 text-left">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="truncate text-sm font-semibold">{name}</p>
@@ -198,7 +195,6 @@ function ClusterRow({
     </div>
   );
 }
-
 
 function ScoreSubCard({ label, score }: { label: string; score: number }) {
   const hi = score >= 6;
