@@ -24,6 +24,7 @@ import {
 } from "recharts";
 import { AppShell } from "@/components/app/AppShell";
 import { BottomNav } from "@/components/app/BottomNav";
+import { Tour } from "@/components/app/Tour";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CLUSTERS, getCluster } from "@/data/clusters";
 import { getClusterIntel, getRevenueProfile, formatRupees } from "@/lib/clusterScoring";
@@ -220,7 +221,7 @@ function DashboardPage() {
         </section>
 
         {/* KPI Section */}
-        <section>
+        <section data-tour="dash-kpi">
           <h2 className="mb-2 font-display text-lg leading-tight">Performance at a glance</h2>
           <div className="grid grid-cols-2 gap-2">
             <KpiCard
@@ -271,7 +272,7 @@ function DashboardPage() {
         </section>
 
         {/* MoM Conversion Chart */}
-        <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <section data-tour="dash-chart" className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
             <div>
               <h2 className="font-display text-lg leading-tight">Conversions · Month on Month</h2>
@@ -317,7 +318,7 @@ function DashboardPage() {
 
 
         {/* Cluster Summary Table */}
-        <section className="rounded-2xl border border-border bg-card shadow-sm">
+        <section data-tour="dash-table" className="rounded-2xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between px-4 pb-2 pt-4">
             <div>
               <h2 className="font-display text-lg leading-tight">Cluster Summary</h2>
@@ -388,7 +389,7 @@ function DashboardPage() {
         </section>
 
         {/* Quick links */}
-        <section className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <section data-tour="dash-quicklinks" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <button
             type="button"
             onClick={() => setHistoryOpen(true)}
@@ -412,6 +413,32 @@ function DashboardPage() {
           </Link>
         </section>
       </div>
+
+      <Tour
+        tourKey="dashboard-v1"
+        steps={[
+          {
+            selector: '[data-tour="dash-kpi"]',
+            title: "Performance at a glance",
+            body: "Your top KPIs — total revenue potential, active clusters, conversion rate, and which cluster needs attention. Tap a card to jump into it.",
+          },
+          {
+            selector: '[data-tour="dash-chart"]',
+            title: "Conversions month-on-month",
+            body: "Track how prospects move into 'Ongoing' or 'Closure' across months. Use the dropdown to filter by a single cluster.",
+          },
+          {
+            selector: '[data-tour="dash-table"]',
+            title: "Cluster summary",
+            body: "Sortable view of every cluster — penetration, prospects, and matrix position. Tap any cluster name to open its plan.",
+          },
+          {
+            selector: '[data-tour="dash-quicklinks"]',
+            title: "Past engagements & your network",
+            body: "Review previous events and outcomes, or jump to your network of contractors, retailers and influencers.",
+          },
+        ]}
+      />
 
       {/* Past events popup */}
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>

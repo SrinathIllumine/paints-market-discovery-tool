@@ -4,6 +4,7 @@ import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { QuadrantSnapshot } from "@/components/app/QuadrantSnapshot";
+import { Tour } from "@/components/app/Tour";
 import { CLUSTERS } from "@/data/clusters";
 import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
@@ -70,7 +71,7 @@ function ClusterMapPage() {
       }
     >
       <div className="space-y-8 px-6 py-8">
-        <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <section data-tour="mp-snapshot" className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <h2 className="font-display text-xl">View Cluster Snapshot</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Each cluster placed by Revenue Potential vs Cluster Access.
@@ -80,7 +81,7 @@ function ClusterMapPage() {
           </div>
         </section>
 
-        <section className="space-y-3">
+        <section data-tour="mp-list" className="space-y-3">
           <div>
             <h2 className="font-display text-xl">All Clusters by Score</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
@@ -158,6 +159,21 @@ function ClusterMapPage() {
           {filtered.length === 0 && <p className="text-sm text-muted-foreground">No clusters match "{search}".</p>}
         </section>
       </div>
+      <Tour
+        tourKey="market-potential-v1"
+        steps={[
+          {
+            selector: '[data-tour="mp-snapshot"]',
+            title: "Your full cluster map",
+            body: "Every cluster you've scored is placed here by Revenue Potential vs Access. Top-right is where to focus first.",
+          },
+          {
+            selector: '[data-tour="mp-list"]',
+            title: "All clusters ranked",
+            body: "Browse and search every cluster. Tap any row to open its detail or jump straight into planning.",
+          },
+        ]}
+      />
     </AppShell>
   );
 }

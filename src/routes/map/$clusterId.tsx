@@ -72,6 +72,7 @@ function ClusterDetailScreen() {
   const addProspect = useAppStore((s) => s.addProspect);
   const existingAssessment = useAppStore((s) => s.assessments[clusterId]);
   const setAssessment = useAppStore((s) => s.setAssessment);
+  const unlockStage = useAppStore((s) => s.unlockStage);
 
   // ── CHANGE 1: initialise from persisted answers if the user already visited ──
   const [accessAnswers, setAccessAnswers] = useState<("Y" | "N" | null)[]>(() => {
@@ -211,8 +212,8 @@ function ClusterDetailScreen() {
         />
       }
     >
-      <div className="flex h-full flex-col overflow-hidden">
-        {/* Tab bar */}
+      <div className="flex min-h-full flex-col">
+        {/* Tab bar — sticky against AppShell's scrollable main */}
         <div className="sticky top-0 z-10 flex shrink-0 bg-red-600">
           {TABS.map((t) => (
             <button
@@ -231,15 +232,15 @@ function ClusterDetailScreen() {
           ))}
         </div>
 
-        {/* Scrollable tab body */}
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-8">
+        {/* Tab body — scrolls with main, no inner overflow trap */}
+        <div className="pb-8">
           {/* ── TAB 1: Prospects by region ── */}
           {activeTab === "prospects" && (
             <div className="space-y-5 px-6 py-6">
               <div className="space-y-0.5">
                 <h2 className="font-display text-2xl">View prospects by region</h2>
               </div>
-              <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <section data-tour="cluster-geo-view" className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <h2 className="font-display text-xl">Geo View</h2>
                   <Button size="sm" variant="outline" onClick={() => setSheetOpen(true)} className="h-8 gap-1 text-xs">
@@ -278,7 +279,7 @@ function ClusterDetailScreen() {
                 </p>
               </section>
 
-              <section className="space-y-3">
+              <section data-tour="cluster-prospects-region" className="space-y-3">
                 <h2 className="font-display text-xl">Prospects by region</h2>
                 {prospects.length === 0 ? (
                   <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
@@ -319,6 +320,7 @@ function ClusterDetailScreen() {
                 )}
               </section>
               <Button
+                data-tour="cluster-calc-button"
                 onClick={() => setActiveTab("mapping")}
                 size="lg"
                 className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
@@ -335,6 +337,7 @@ function ClusterDetailScreen() {
                 <h2 className="font-display text-2xl">Calculate your cluster potential</h2>
               </div>
               <Accordion
+                data-tour="cluster-mapping-cards"
                 type="multiple"
                 defaultValue={["revenue", "competitive", "access", "ease"]}
                 className="space-y-2"
@@ -401,6 +404,7 @@ function ClusterDetailScreen() {
                 </CollapsibleSub>
               </Accordion>
               <Button
+                data-tour="cluster-generate-snapshot"
                 onClick={() => {
                   setActiveTab("snapshot");
                 }}
@@ -421,11 +425,11 @@ function ClusterDetailScreen() {
                   {cluster.nature} — {cluster.description}
                 </p>
               </div>
-              <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <div data-tour="cluster-snapshot-graph" className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                 {/* ── CHANGE: mode="single" + isStageComplete wired to snapshotRevealed ── */}
                 <QuadrantSnapshot mode="single" highlightId={cluster.id} isStageComplete={allAnswered} />
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div data-tour="cluster-scores" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {allAnswered && <ScoreTile label="Revenue" score={scores.revenue} />}
                 {allAnswered && <ScoreTile label="Competitive" score={scores.competitive} />}
                 {allAnswered && <ScoreTile label="Access" score={scores.access} />}
@@ -433,7 +437,11 @@ function ClusterDetailScreen() {
               </div>
               {allAnswered && (
                 <Button
-                  onClick={() => navigate({ to: "/" })}
+                  data-tour="cluster-next-stage"
+                  onClick={() => {
+                    unlockStage(2);
+                    navigate({ to: "/" });
+                  }}
                   size="lg"
                   className="w-full gap-2 bg-critical text-critical-foreground hover:bg-critical/90"
                 >
@@ -447,22 +455,61 @@ function ClusterDetailScreen() {
       </div>
 
       <Tour
-        tourKey="cluster-v1"
+        tourKey={`cluster-v2-${clusterId}`}
         steps={[
           {
             selector: '[data-tour="cluster-tab-prospects"]',
-            title: "1. Prospects by region",
-            body: "See every prospect we've identified for this cluster on the map, grouped by region. Add your own pins too.",
+            title: "Three tabs to score this cluster",
+            body: "Work through these tabs in order — Prospects, Mapping, then Snapshot. You can come back anytime.",
+            onShow: () => setActiveTab("prospects"),
           },
           {
-            selector: '[data-tour="cluster-tab-mapping"]',
-            title: "2. Cluster Potential Mapping",
-            body: "Answer a few quick questions to score this cluster on revenue, competition, access and ease of sale.",
+            selector: '[data-tour="cluster-geo-view"]',
+            title: "Geo View",
+            body: "Every prospect we've identified is plotted on the map. Tap 'Add prospect' to drop your own pin for anyone we missed.",
+            onShow: () => setActiveTab("prospects"),
+          },
+          {
+            selector: '[data-tour="cluster-prospects-region"]',
+            title: "Prospects by region",
+            body: "Prospects are grouped into regions so you can plan visits efficiently. Expand a region to see who's inside it.",
+            onShow: () => setActiveTab("prospects"),
+          },
+          {
+            selector: '[data-tour="cluster-calc-button"]',
+            title: "Calculate your cluster potential",
+            body: "Tap this when your prospect list looks right — it takes you to the scoring questions.",
+            onShow: () => setActiveTab("prospects"),
+          },
+          {
+            selector: '[data-tour="cluster-mapping-cards"]',
+            title: "Score across 4 dimensions",
+            body: "Revenue, Competitive Strength, Access and Ease of Sale. Open each card — Access needs your input, the others auto-fill from cluster intelligence.",
+            onShow: () => setActiveTab("mapping"),
+          },
+          {
+            selector: '[data-tour="cluster-generate-snapshot"]',
+            title: "Generate the snapshot",
+            body: "Once you've answered the Access questions, tap here to plot this cluster on the snapshot grid.",
+            onShow: () => setActiveTab("mapping"),
+          },
+          {
+            selector: '[data-tour="cluster-snapshot-graph"]',
+            title: "Snapshot graph",
+            body: "See where this cluster lands on the Potential vs Access grid — a quick visual of whether to invest time here.",
+            onShow: () => setActiveTab("snapshot"),
+          },
+          {
+            selector: '[data-tour="cluster-scores"]',
+            title: "Your 4 scores",
+            body: "Revenue, Competitive, Access and Ease — all on a 0–10 scale. Green is strong, red needs attention.",
+            onShow: () => setActiveTab("snapshot"),
           },
           {
             selector: '[data-tour="cluster-tab-snapshot"]',
-            title: "3. Cluster Snapshot",
-            body: "Get a visual snapshot of where this cluster sits versus the others, and move on to the next stage.",
+            title: "Go to the next stage",
+            body: "When you're done, the 'Go to next stage' button takes you home and unlocks Stage 2 — Monthly Engagement Plan.",
+            onShow: () => setActiveTab("snapshot"),
           },
         ]}
       />

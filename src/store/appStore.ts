@@ -112,6 +112,7 @@ type State = {
     roadmapCompletion: RoadmapCompletion;
   };
   assessments: Record<string, ClusterAssessment>;
+  unlockedStage: 1 | 2 | 3;
   sales: {
     prospectStages: Record<string, Record<string, SalesStage>>;
     prospectActivity: Record<string, ProspectActivity>;
@@ -157,6 +158,7 @@ type Actions = {
   recordProspectActivity: (prospectId: string, patch: Partial<ProspectActivity>) => void;
   addProspectOutcome: (prospectId: string, outcome: string) => void;
   markProspectNotInterested: (clusterId: string, prospectId: string) => void;
+  unlockStage: (n: 1 | 2 | 3) => void;
 };
 
 const emptyCluster = (): ClusterState => ({ jkShare: null, prospects: [], visited: false });
@@ -186,6 +188,7 @@ export const useAppStore = create<State & Actions>()(
       stakeholders: {},
       insights: [],
       assessments: {},
+      unlockedStage: 1,
       plan: {
         targetClusterIds: [],
         events: [],
@@ -526,8 +529,11 @@ export const useAppStore = create<State & Actions>()(
             },
           };
         }),
+
+      unlockStage: (n) =>
+        set((state) => ({ unlockedStage: Math.max(state.unlockedStage, n) as 1 | 2 | 3 })),
     }),
-    { name: "sed.v9" },
+    { name: "sed.v10" },
   ),
 );
 

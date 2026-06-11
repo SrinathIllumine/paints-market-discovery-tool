@@ -46,7 +46,7 @@ function ClusterPotentialScreen() {
         onScroll={() => {
           if (showHint && (scrollRef.current?.scrollTop ?? 0) > 8) dismissHint();
         }}
-        className="max-h-[calc(100vh-260px)] overflow-y-auto px-6 py-8"
+        className="px-6 py-8"
       >
         {showHint && (
           <div className="mb-2 flex items-center justify-center gap-1.5 text-xs font-medium text-muted-foreground animate-pulse">

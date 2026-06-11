@@ -105,6 +105,7 @@ function PlanClusterScreen() {
     if (nextStep) setOpenStep(nextStep.id);
   };
 
+  const unlockStage = useAppStore((s) => s.unlockStage);
   const handleGenerate = () => {
     generateMonthlyEngagementPlanPdf({
       focusClusterId: clusterId,
@@ -118,6 +119,8 @@ function PlanClusterScreen() {
       eventEstimates: eventEstimates[clusterId] ?? {},
     });
     setConfirmOpen(false);
+    unlockStage(3);
+    navigate({ to: "/" });
   };
 
   const estimateEvent = estimateEventId ? MARKET_ENGAGEMENT_OPTIONS.find((m) => m.id === estimateEventId) : undefined;
