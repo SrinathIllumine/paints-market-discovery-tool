@@ -159,7 +159,7 @@ function ClusterMapPage() {
           {filtered.length === 0 && <p className="text-sm text-muted-foreground">No clusters match "{search}".</p>}
         </section>
       </div>
-      <Tour
+      {/*<Tour
         tourKey="market-potential-v1"
         steps={[
           {
@@ -173,7 +173,7 @@ function ClusterMapPage() {
             body: "Browse and search every cluster. Tap any row to open its detail or jump straight into planning.",
           },
         ]}
-      />
+      />*/}
     </AppShell>
   );
 }
