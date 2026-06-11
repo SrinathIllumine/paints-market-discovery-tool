@@ -33,15 +33,9 @@ const PAST_BY_CLUSTER: Record<string, { id: string; name: string; date: string }
     { id: "rd-1", name: "Pre-handover paint audit", date: "06 May 2026" },
     { id: "rd-2", name: "Healthy-home low-VOC drive", date: "20 Apr 2026" },
   ],
-  hospitals: [
-    { id: "hp-1", name: "Hospital hygienic-finish demo", date: "12 Apr 2026" },
-  ],
-  midc: [
-    { id: "mi-1", name: "Industrial coatings roadshow", date: "28 Mar 2026" },
-  ],
-  schools: [
-    { id: "sc-1", name: "Vacation repaint contractor meet", date: "10 Mar 2026" },
-  ],
+  hospitals: [{ id: "hp-1", name: "Hospital hygienic-finish demo", date: "12 Apr 2026" }],
+  midc: [{ id: "mi-1", name: "Industrial coatings roadshow", date: "28 Mar 2026" }],
+  schools: [{ id: "sc-1", name: "Vacation repaint contractor meet", date: "10 Mar 2026" }],
 };
 
 function PastRoadmapPage() {
@@ -49,21 +43,12 @@ function PastRoadmapPage() {
   const setFeedback = useAppStore((s) => s.setPastEventFeedback);
   const [openCluster, setOpenCluster] = useState<string | null>(null);
 
-  const clusterList = useMemo(
-    () => CLUSTERS.filter((c) => (PAST_BY_CLUSTER[c.id] ?? []).length > 0),
-    [],
-  );
+  const clusterList = useMemo(() => CLUSTERS.filter((c) => (PAST_BY_CLUSTER[c.id] ?? []).length > 0), []);
 
   return (
     <AppShell
       bottom={<BottomNav />}
-      header={
-        <StageHeader
-          eyebrow="Planning"
-          title="Review Past Market Engagements"
-          backTo="/plan"
-        />
-      }
+      header={<StageHeader eyebrow="Planning" title="Review Past Market Engagements" backTo="/plan" />}
     >
       <div className="space-y-3 px-6 py-6">
         <h2 className="font-display text-lg leading-tight">Capture how earlier events went</h2>
@@ -98,7 +83,8 @@ function PastRoadmapPage() {
                 <div className="space-y-3 border-t border-border p-4">
                   {events.map((e) => {
                     const fb = feedbackAll[c.id]?.[e.id] ?? {};
-                    const hasData = fb.attended != null || fb.leads != null || (fb.challenges && fb.challenges.length > 0);
+                    const hasData =
+                      fb.attended != null || fb.leads != null || (fb.challenges && fb.challenges.length > 0);
                     return (
                       <div key={e.id} className="rounded-lg border border-border bg-background p-3">
                         <div className="flex items-start justify-between gap-2">
@@ -118,7 +104,7 @@ function PastRoadmapPage() {
                             label="Participants attended"
                             value={fb.attended}
                             onChange={(v) => setFeedback(c.id, e.id, { attended: v })}
-                          />*/?
+                          />*/}
                           <NumField
                             label="Leads generated"
                             value={fb.leads}
@@ -161,17 +147,21 @@ function PastRoadmapPage() {
           );
         })}
 
-        {clusterList.length === 0 && (
-          <p className="text-sm text-muted-foreground">No past events recorded yet.</p>
-        )}
+        {clusterList.length === 0 && <p className="text-sm text-muted-foreground">No past events recorded yet.</p>}
       </div>
     </AppShell>
   );
 }
 
 function NumField({
-  label, value, onChange,
-}: { label: string; value?: number; onChange: (v: number | undefined) => void }) {
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: number;
+  onChange: (v: number | undefined) => void;
+}) {
   return (
     <label className="block">
       <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</span>
