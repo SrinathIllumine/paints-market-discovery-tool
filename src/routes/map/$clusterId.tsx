@@ -186,7 +186,7 @@ function ClusterDetailScreen() {
       }
     >
       {/* ── Layout: tab bar + scrollable content + sticky CTA ── */}
-      <div className="flex h-screen flex-col overflow-hidden">
+      <div className="flex h-full flex-col overflow-hidden">
         {/* Tab bar */}
         <div className="sticky top-0 z-10 flex shrink-0 bg-red-600">
           {TABS.map((t) => (
@@ -206,7 +206,7 @@ function ClusterDetailScreen() {
         </div>
 
         {/* Scrollable tab body */}
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-24">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-8">
           {/* ── TAB 1: Prospects by region ── */}
           {activeTab === "prospects" && (
             <div className="space-y-5 px-6 py-6">
