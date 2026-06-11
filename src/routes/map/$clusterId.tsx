@@ -23,10 +23,12 @@ import {
   getClusterIntel,
   getCompetitiveInsights,
   getEaseInsights,
+  getRepaintingCycleYears,
   highlightBrands,
+  scoreRevenue,
+  scoreToHML,
   HML_LABEL,
   scoreFromHML,
-  scoreToHML,
   type HML,
 } from "@/lib/clusterScoring";
 import { cn } from "@/lib/utils";
@@ -60,6 +62,7 @@ function ClusterDetailScreen() {
 
   const [activeTab, setActiveTab] = useState<Tab>("prospects");
   const [snapshotRevealed, setSnapshotRevealed] = useState(false);
+  const [accessAnswers, setAccessAnswers] = useState<("Y" | "N" | null)[]>([null, null, null]);
 
   const state = useAppStore((s) => s.clusters[clusterId]);
   const ensureCluster = useAppStore((s) => s.ensureCluster);
@@ -162,6 +165,13 @@ function ClusterDetailScreen() {
   const observedCount = intel.totalProspectsObserved || prospects.length || cluster.prospectCountEstimate;
   const totalRevenue = profile.avgRevenuePerProspect * observedCount;
   const singular = pluralCap.toLowerCase().replace(/s$/, "");
+  const cycleYears = getRepaintingCycleYears(clusterId);
+  const annualRevenue = totalRevenue / cycleYears;
+  const annualRevenuePerProspect = profile.avgRevenuePerProspect / cycleYears;
+  const dynamicRevenueHML: HML = scoreToHML(scoreRevenue(annualRevenuePerProspect));
+  const accessYesCount = accessAnswers.filter((a) => a === "Y").length;
+  const accessScore = Math.round(accessYesCount * 3.33 * 10) / 10;
+  const dynamicAccessHML: HML | null = accessAnswers.every((a) => a !== null) ? scoreToHML(accessScore) : null;
 
   return (
     <AppShell
@@ -292,7 +302,7 @@ function ClusterDetailScreen() {
                 defaultValue={["revenue", "competitive", "access", "ease"]}
                 className="space-y-2"
               >
-                <CollapsibleSub value="revenue" title="Revenue Potential" hml={intel.revenueHML}>
+                <CollapsibleSub value="revenue" title="Revenue Potential" hml={dynamicRevenueHML}>
                   <ul className="space-y-2 text-sm leading-relaxed">
                     <Bullet>
                       There are{" "}
@@ -306,7 +316,19 @@ function ClusterDetailScreen() {
                       <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
                     </Bullet>
                     <Bullet>
-                      Total cluster revenue potential is <b className="text-critical">{formatRupees(totalRevenue)}</b>.
+                      Typical repainting cycle time for {pluralCap.toLowerCase()} is{" "}
+                      <b>
+                        {cycleYears} year{cycleYears === 1 ? "" : "s"}
+                      </b>
+                      .
+                    </Bullet>
+                    <Bullet>
+                      Total cluster revenue potential is <b>{formatRupees(totalRevenue)}</b> over the full repainting
+                      cycle.
+                    </Bullet>
+                    <Bullet>
+                      Total cluster revenue potential per year is{" "}
+                      <b className="text-critical">{formatRupees(annualRevenue)}</b>.
                     </Bullet>
                   </ul>
                 </CollapsibleSub>
@@ -321,16 +343,17 @@ function ClusterDetailScreen() {
                   </ul>
                 </CollapsibleSub>
 
-                <CollapsibleSub value="access" title="Access" hml={intel.accessHML}>
-                  <ul className="space-y-2 text-sm leading-relaxed">
-                    <Bullet>
-                      There are <b>{intel.contractorCount}</b> contractors dominating this cluster.
-                    </Bullet>
-                    <Bullet>
-                      There are <b>{intel.retailerCount}</b> retailers operating within this cluster.
-                    </Bullet>
-                  </ul>
+                <CollapsibleSub value="access" title="Access" hml={dynamicAccessHML ?? intel.accessHML}>
+                  <AccessQuestions
+                    pluralLower={pluralCap.toLowerCase()}
+                    singular={singular}
+                    answers={accessAnswers}
+                    onChange={setAccessAnswers}
+                    score={accessScore}
+                    allAnswered={accessAnswers.every((a) => a !== null)}
+                  />
                 </CollapsibleSub>
+
 
                 <CollapsibleSub value="ease" title="Ease of Sale" hml={intel.easeHML}>
                   <ul className="space-y-2 text-sm leading-relaxed">
@@ -431,7 +454,7 @@ function CollapsibleSub({
 }: {
   value: string;
   title: string;
-  hml: HML;
+  hml: HML | null;
   children: React.ReactNode;
 }) {
   return (
@@ -487,6 +510,75 @@ function ScoreTile({ label, score }: { label: string; score: number }) {
         <span className="font-bold">{score}</span>
         <span className="text-xs opacity-70">/10</span>
       </p>
+    </div>
+  );
+}
+
+function AccessQuestions({
+  pluralLower,
+  singular,
+  answers,
+  onChange,
+  score,
+  allAnswered,
+}: {
+  pluralLower: string;
+  singular: string;
+  answers: ("Y" | "N" | null)[];
+  onChange: (next: ("Y" | "N" | null)[]) => void;
+  score: number;
+  allAnswered: boolean;
+}) {
+  const questions = [
+    `Do you have 2-3 major / leading ${pluralLower} that are your customers?`,
+    `Do you have any contractors who are loyal to JK and are deeply connected with this market?`,
+    `Do you have any touchpoints in the ${singular} community who is well-known?`,
+  ];
+  const set = (i: number, v: "Y" | "N") => {
+    const next = [...answers];
+    next[i] = v;
+    onChange(next);
+  };
+  return (
+    <div className="space-y-3">
+      <ul className="space-y-3">
+        {questions.map((q, i) => (
+          <li key={i} className="rounded-xl border border-border bg-background/40 p-3">
+            <p className="mb-2 text-sm leading-snug">{q}</p>
+            <div className="flex gap-2">
+              {(["Y", "N"] as const).map((v) => {
+                const active = answers[i] === v;
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => set(i, v)}
+                    className={cn(
+                      "flex-1 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors",
+                      active
+                        ? v === "Y"
+                          ? "border-green-400 bg-green-100 text-green-800"
+                          : "border-red-400 bg-red-100 text-red-800"
+                        : "border-border bg-card text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {v === "Y" ? "Yes" : "No"}
+                  </button>
+                );
+              })}
+            </div>
+          </li>
+        ))}
+      </ul>
+      <div className="rounded-xl border border-border bg-card p-3 text-sm">
+        {allAnswered ? (
+          <p>
+            Access score: <b>{score.toFixed(2)}</b> / 10
+          </p>
+        ) : (
+          <p className="text-muted-foreground">Answer all questions to see the access score.</p>
+        )}
+      </div>
     </div>
   );
 }
