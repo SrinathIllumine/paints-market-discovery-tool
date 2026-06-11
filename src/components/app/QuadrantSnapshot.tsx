@@ -64,6 +64,15 @@ function isRequired(name: string) {
   return REQUIRED_NAMES.some((r) => name.toLowerCase().includes(r));
 }
 
+function getQuadrantLabel(x: number, y: number): string {
+  const hiY = y >= 50;
+  const hiX = x >= 50;
+  if (hiY && hiX) return "High Potential · High Access";
+  if (hiY && !hiX) return "High Potential · Low Access";
+  if (!hiY && hiX) return "Low Potential · High Access";
+  return "Low Potential · Low Access";
+}
+
 /**
  * Derive a user's real access score (0–10) from their saved Y/N answers.
  * Returns undefined if they haven't answered all 3 questions yet,
@@ -394,22 +403,14 @@ function CompareButton({ isComparing, onToggle }: { isComparing: boolean; onTogg
 
 export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: QuadrantSnapshotProps) {
   const clusterStates = useAppStore((s) => s.clusters);
-  // ← NEW: read persisted assessments so we can use real user access scores
   const assessments = useAppStore((s) => s.assessments);
   const [isComparing, setIsComparing] = useState(false);
 
-  // Build scored positions for every cluster.
-  // For each cluster, if the user has answered all 3 access questions
-  // (accessAnswers3 is fully populated) we use their real score on the X axis.
-  // Otherwise we fall back to the hardcoded SCORE_SEED value.
   const allPoints = useMemo<Point[]>(() => {
     return CLUSTERS.map((c) => {
       const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
       const assessment = assessments[c.id];
-
-      // Derive real access score from saved Y/N answers, or undefined to use seed
       const userAccessScore = resolveUserAccessScore(assessment?.accessAnswers3);
-
       const sc = computeClusterScores(c, pc, assessment, userAccessScore);
       const x = clamp(sc.accessRollupScore * 10 + jitter(c.id + "x", 2.5), 4, 96);
       const y = clamp(sc.potentialScore * 10 + jitter(c.id + "y", 2.5), 4, 96);
@@ -417,27 +418,27 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
     });
   }, [clusterStates, assessments]);
 
-  const { highlighted, dim } = useMemo(() => {
+  const { highlighted, dim, quadrantLabel } = useMemo(() => {
     // ── mode="single" ─────────────────────────────────────────────────────────
     if (mode === "single") {
       const target = highlightId ? allPoints.find((p) => p.id === highlightId) : null;
-      if (!target) return { highlighted: [], dim: [], isInTopRight: false };
+      if (!target) return { highlighted: [], dim: [], quadrantLabel: undefined };
 
-      const inTopRight = target.x >= 50 && target.y >= 50;
+      const label = getQuadrantLabel(target.x, target.y);
 
       if (isComparing) {
         const eight = pickEight(allPoints, highlightId);
         return {
           highlighted: eight.filter((p) => p.id === highlightId).map((p) => ({ ...p, highlighted: true })),
           dim: eight.filter((p) => p.id !== highlightId).map((p) => ({ ...p, highlighted: false })),
-          isInTopRight: inTopRight,
+          quadrantLabel: label,
         };
       }
 
       return {
         highlighted: [{ ...target, highlighted: true }],
         dim: [],
-        isInTopRight: inTopRight,
+        quadrantLabel: label,
       };
     }
 
@@ -450,17 +451,26 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
     return {
       highlighted: withHighlight.filter((p) => p.highlighted),
       dim: withHighlight.filter((p) => !p.highlighted),
-      isInTopRight: false,
+      quadrantLabel: undefined,
     };
   }, [allPoints, highlightId, mode, isComparing]);
 
   const showCompareButton = mode === "single" && isStageComplete;
+  const targetName = allPoints.find((p) => p.id === highlightId)?.name;
 
   return (
     <div className="relative h-[520px] w-full">
       {mode === "single" && !isStageComplete && <LockedOverlay />}
 
       {showCompareButton && <CompareButton isComparing={isComparing} onToggle={() => setIsComparing((v) => !v)} />}
+
+      {mode === "single" && isStageComplete && quadrantLabel && targetName && (
+        <p className="text-sm text-gray-600 text-center mb-1">
+          <span className="font-semibold text-gray-800">{targetName} cluster</span>
+          {" is in "}
+          <span className="font-semibold text-red-600">{quadrantLabel}</span>
+        </p>
+      )}
 
       <div className={mode === "single" && !isStageComplete ? "opacity-20 pointer-events-none select-none" : undefined}>
         <ResponsiveContainer width="100%" height={520}>
