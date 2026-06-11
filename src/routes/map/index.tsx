@@ -57,6 +57,9 @@ function ClusterPotentialScreen() {
           View my Cluster Map
           <ArrowRight className="h-4 w-4" />
         </Link>
+        <div className="space-y-0.5">
+          <h3 className="font-display text-2xl">Total clusters in your area: 20</h3>
+        </div>
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
           {CLUSTERS.map((c) => (
             <BubbleCircle
