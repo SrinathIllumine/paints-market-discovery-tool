@@ -213,9 +213,6 @@ function ClusterDetailScreen() {
               {/* Tab page header */}
               <div className="space-y-0.5">
                 <h2 className="font-display text-2xl">View prospects by region</h2>
-                <p className="text-sm text-muted-foreground">
-                  {cluster.nature} — {cluster.description}
-                </p>
               </div>
               {/* Geo view card */}
               <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
@@ -304,6 +301,10 @@ function ClusterDetailScreen() {
           {/* ── TAB 2: Cluster Potential Mapping ── */}
           {activeTab === "mapping" && (
             <div className="space-y-3 px-6 py-6">
+              {/* Tab page header */}
+              <div className="space-y-0.5">
+                <h2 className="font-display text-2xl">Calculate your cluster potential</h2>
+              </div>
               <Accordion
                 type="multiple"
                 defaultValue={["revenue", "competitive", "access", "ease"]}
