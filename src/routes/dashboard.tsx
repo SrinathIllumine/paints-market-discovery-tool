@@ -24,6 +24,7 @@ import {
 } from "recharts";
 import { AppShell } from "@/components/app/AppShell";
 import { BottomNav } from "@/components/app/BottomNav";
+import { Tour } from "@/components/app/Tour";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CLUSTERS, getCluster } from "@/data/clusters";
 import { getClusterIntel, getRevenueProfile, formatRupees } from "@/lib/clusterScoring";
