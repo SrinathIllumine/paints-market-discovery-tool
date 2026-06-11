@@ -196,7 +196,7 @@ function ClusterDetailScreen() {
         </div>
 
         {/* Scrollable tab body */}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4">
           {/* ── TAB 1: Prospects by region ── */}
           {activeTab === "prospects" && (
             <div className="space-y-5 px-6 py-6">
