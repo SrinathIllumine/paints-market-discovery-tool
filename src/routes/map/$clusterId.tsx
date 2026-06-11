@@ -337,6 +337,7 @@ function ClusterDetailScreen() {
                 <h2 className="font-display text-2xl">Calculate your cluster potential</h2>
               </div>
               <Accordion
+                data-tour="cluster-mapping-cards"
                 type="multiple"
                 defaultValue={["revenue", "competitive", "access", "ease"]}
                 className="space-y-2"
