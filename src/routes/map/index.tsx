@@ -84,7 +84,7 @@ function ClusterPotentialScreen() {
             <BubbleCircle
               key={c.id}
               cluster={c}
-              isMapped={!!assessments[c.id]}
+              badge={assessments[c.id] ? "Mapped" : undefined}
               onClick={() =>
                 navigate({
                   to: "/map/$clusterId",
