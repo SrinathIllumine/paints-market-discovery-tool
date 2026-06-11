@@ -217,6 +217,7 @@ function ClusterDetailScreen() {
           {TABS.map((t) => (
             <button
               key={t.id}
+              data-tour={`cluster-tab-${t.id}`}
               onClick={() => setActiveTab(t.id)}
               className={cn(
                 "flex-1 border-b-2 px-2 py-2.5 text-center text-[13px] font-medium leading-tight transition-colors",
