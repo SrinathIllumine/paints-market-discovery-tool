@@ -62,6 +62,7 @@ function ClusterDetailScreen() {
 
   const [activeTab, setActiveTab] = useState<Tab>("prospects");
   const [snapshotRevealed, setSnapshotRevealed] = useState(false);
+  const [accessAnswers, setAccessAnswers] = useState<("Y" | "N" | null)[]>([null, null, null]);
 
   const state = useAppStore((s) => s.clusters[clusterId]);
   const ensureCluster = useAppStore((s) => s.ensureCluster);
