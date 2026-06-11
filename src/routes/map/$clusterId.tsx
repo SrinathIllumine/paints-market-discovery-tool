@@ -339,10 +339,6 @@ function ClusterDetailScreen() {
                       .
                     </Bullet>
                     <Bullet>
-                      Total cluster revenue potential is <b>{formatRupees(totalRevenue)}</b> over the full repainting
-                      cycle.
-                    </Bullet>
-                    <Bullet>
                       Total cluster revenue potential per year is{" "}
                       <b className="text-critical">{formatRupees(annualRevenue)}</b>.
                     </Bullet>
@@ -387,7 +383,7 @@ function ClusterDetailScreen() {
                 size="lg"
                 className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
               >
-                Click here to generate the cluster snapshot for "{cluster.name}"
+                Click here to generate the cluster snapshot for this cluster
               </Button>
             </div>
           )}
@@ -527,9 +523,9 @@ function AccessQuestions({
   allAnswered: boolean;
 }) {
   const questions = [
-    `Do you have 2-3 major / leading ${pluralLower} that are your customers?`,
-    `Do you have any contractors who are loyal to JK and are deeply connected with this market?`,
-    `Do you have any touchpoints in the ${singular} community who is well-known?`,
+    `Are some of the leading ${pluralLower} in your area already your customers?`,
+    `Do you have access to contractors in this cluster who are also loyal to JK?`,
+    `Do you have any touchpoints who can connect you to the decision-makers in ${pluralLower}?`,
   ];
   const set = (i: number, v: "Y" | "N") => {
     const next = [...answers];
