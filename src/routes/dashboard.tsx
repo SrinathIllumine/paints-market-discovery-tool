@@ -318,7 +318,7 @@ function DashboardPage() {
 
 
         {/* Cluster Summary Table */}
-        <section className="rounded-2xl border border-border bg-card shadow-sm">
+        <section data-tour="dash-table" className="rounded-2xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between px-4 pb-2 pt-4">
             <div>
               <h2 className="font-display text-lg leading-tight">Cluster Summary</h2>
