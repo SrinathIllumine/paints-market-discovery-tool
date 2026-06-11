@@ -126,7 +126,7 @@ function PlanClusterScreen() {
   return (
     <AppShell
       bottom={<BottomNav />}
-      header={<StageHeader eyebrow="Planning" title="My Engagement Plan" backTo="/plan" />}
+      header={<StageHeader eyebrow="STAGE 2 OF 3 · MY ENGAGEMENT PLAN" title="My Engagement Plan" backTo="/plan" />}
     >
       <div className="space-y-5 px-6 py-6">
         <div className="space-y-1">
