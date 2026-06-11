@@ -229,7 +229,7 @@ function PlanClusterScreen() {
               onToggleItem={(it) => toggleStrategyItem(clusterId, MARKET_BUCKET, it)}
               onContactsChange={(list) => setStrategyContacts(clusterId, MARKET_BUCKET, list)}
             />
-            <NavButtons onBack={() => goTo(0)} onNext={() => goto(2)} />
+            <NavButtons onBack={() => goTo(0)} onNext={() => goTo(2)} />
           </>
         )}
 
