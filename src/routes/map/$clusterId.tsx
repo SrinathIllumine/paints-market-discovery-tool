@@ -64,6 +64,7 @@ function ClusterDetailScreen() {
 
   const [activeTab, setActiveTab] = useState<Tab>("prospects");
 
+  // ── Scroll-to-top sentinel ─────────────────────────────────────────────────
   const tabTopRef = useRef<HTMLDivElement>(null);
 
   const goToTab = (tab: Tab) => {
@@ -244,7 +245,7 @@ function ClusterDetailScreen() {
           ))}
         </div>
 
-        {/* Sentinel */}
+        {/* Sentinel — scroll target on tab change */}
         <div ref={tabTopRef} />
 
         {/* Tab body */}
@@ -436,18 +437,31 @@ function ClusterDetailScreen() {
               <div className="space-y-0.5">
                 <h2 className="font-display text-2xl">Cluster snapshot</h2>
               </div>
+
+              {/* Chart */}
               <div
                 data-tour="cluster-snapshot-graph"
                 className="rounded-2xl border border-border bg-card p-4 shadow-sm"
               >
                 <QuadrantSnapshot mode="single" highlightId={cluster.id} isStageComplete={allAnswered} />
               </div>
+
+              {/* Strategic insights — only once access questions are done */}
+              {allAnswered && (
+                <StrategicInsights
+                  potentialScore={scores.potentialScore}
+                  accessRollupScore={scores.accessRollupScore}
+                />
+              )}
+
+              {/* Score tiles */}
               <div data-tour="cluster-scores" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {allAnswered && <ScoreTile label="Revenue" score={scores.revenue} />}
                 {allAnswered && <ScoreTile label="Competitive" score={scores.competitive} />}
                 {allAnswered && <ScoreTile label="Access" score={scores.access} />}
                 {allAnswered && <ScoreTile label="Ease of Sale" score={scores.ease} />}
               </div>
+
               {allAnswered && (
                 <Button
                   data-tour="cluster-next-stage"
@@ -615,6 +629,95 @@ function AccessQuestions({
         ))}
       </ul>
       <div>{allAnswered ? <p>&nbsp;</p> : <p className="text-muted-foreground">Answer all the questions</p>}</div>
+    </div>
+  );
+}
+
+// ── Strategic Insights ─────────────────────────────────────────────────────────
+
+function StrategicInsights({
+  potentialScore,
+  accessRollupScore,
+}: {
+  potentialScore: number;
+  accessRollupScore: number;
+}) {
+  const highPotential = potentialScore >= 5;
+  const highAccess = accessRollupScore >= 5;
+
+  type Config = {
+    label: string;
+    wrapperCls: string;
+    badgeCls: string;
+    points: string[];
+  };
+
+  const config: Config =
+    highPotential && highAccess
+      ? {
+          label: "High Potential · High Access",
+          wrapperCls: "border-green-200 bg-green-50",
+          badgeCls: "bg-green-100 text-green-800",
+          points: [
+            "This cluster already has high potential and you have strong access into it.",
+            "Plan contribution events with your ASM to penetrate more deeply into the cluster.",
+          ],
+        }
+      : highPotential && !highAccess
+        ? {
+            label: "High Potential · Low Access",
+            wrapperCls: "border-orange-200 bg-orange-50",
+            badgeCls: "bg-orange-100 text-orange-800",
+            points: [
+              "This cluster has high potential but your connect level here is low.",
+              "Create a plan in the next stage to increase your connects with contractors, site supervisors, etc.",
+              "Conduct more on-site visits to get in touch with more touchpoints.",
+            ],
+          }
+        : !highPotential && highAccess
+          ? {
+              label: "Low Potential · High Access",
+              wrapperCls: "border-blue-200 bg-blue-50",
+              badgeCls: "bg-blue-100 text-blue-800",
+              points: [
+                "You have strong access into this cluster even though the overall potential is low.",
+                "Make use of your connects to conduct events and maximise the available potential.",
+              ],
+            }
+          : {
+              label: "Low Potential · Low Access",
+              wrapperCls: "border-red-200 bg-red-50",
+              badgeCls: "bg-red-100 text-red-800",
+              points: [
+                "Both the potential and your access into this cluster are low.",
+                "Don't prioritise this cluster as part of your engagement plans.",
+              ],
+            };
+
+  return (
+    <div className={cn("rounded-2xl border p-4 space-y-3", config.wrapperCls)}>
+      {/* Badge */}
+      <span
+        className={cn(
+          "inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+          config.badgeCls,
+        )}
+      >
+        {config.label}
+      </span>
+
+      {/* Header */}
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Strategic Insights</p>
+
+      {/* Points */}
+      <ul className="space-y-2">
+        {config.points.map((point, i) => (
+          <li key={i} className="flex gap-2 text-sm leading-snug">
+            <span className="mt-0.5 shrink-0 font-bold tabular-nums text-muted-foreground">{i + 1}.</span>
+            <span>{point}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
