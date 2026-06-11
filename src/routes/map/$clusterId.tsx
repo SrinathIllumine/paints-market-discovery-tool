@@ -425,7 +425,10 @@ function ClusterDetailScreen() {
                   {cluster.nature} — {cluster.description}
                 </p>
               </div>
-              <div data-tour="cluster-snapshot-graph" className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <div
+                data-tour="cluster-snapshot-graph"
+                className="rounded-2xl border border-border bg-card p-4 shadow-sm"
+              >
                 {/* ── CHANGE: mode="single" + isStageComplete wired to snapshotRevealed ── */}
                 <QuadrantSnapshot mode="single" highlightId={cluster.id} isStageComplete={allAnswered} />
               </div>
@@ -454,7 +457,7 @@ function ClusterDetailScreen() {
         </div>
       </div>
 
-      <Tour
+      {/*<Tour
         tourKey={`cluster-v2-${clusterId}`}
         steps={[
           {
@@ -512,8 +515,7 @@ function ClusterDetailScreen() {
             onShow: () => setActiveTab("snapshot"),
           },
         ]}
-      />
-
+      /> */}
 
       <AddProspectSheet
         open={sheetOpen}
