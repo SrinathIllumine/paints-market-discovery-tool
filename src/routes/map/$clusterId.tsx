@@ -382,6 +382,13 @@ function ClusterDetailScreen() {
                   </ul>
                 </CollapsibleSub>
               </Accordion>
+              <Button
+                onClick={() => setActiveTab("snapshot")}
+                size="lg"
+                className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
+              >
+                Click here to generate the cluster snapshot for "{cluster.name}"
+              </Button>
             </div>
           )}
 
