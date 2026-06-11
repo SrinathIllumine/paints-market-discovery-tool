@@ -426,10 +426,10 @@ function ClusterDetailScreen() {
                 <QuadrantSnapshot mode="single" highlightId={cluster.id} isStageComplete={allAnswered} />
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <ScoreTile label="Revenue" score={scores.revenue} />
-                <ScoreTile label="Competitive" score={scores.competitive} />
-                <ScoreTile label="Access" score={scores.access} />
-                <ScoreTile label="Ease of Sale" score={scores.ease} />
+                {allAnswered && <ScoreTile label="Revenue" score={scores.revenue} />}
+                {allAnswered && <ScoreTile label="Competitive" score={scores.competitive} />}
+                {allAnswered && <ScoreTile label="Access" score={scores.access} />}
+                {allAnswered && <ScoreTile label="Ease of Sale" score={scores.ease} />}
               </div>
             </div>
           )}
