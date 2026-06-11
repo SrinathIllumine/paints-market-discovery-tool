@@ -212,8 +212,8 @@ function ClusterDetailScreen() {
         />
       }
     >
-      <div className="flex h-full flex-col overflow-hidden">
-        {/* Tab bar */}
+      <div className="flex min-h-full flex-col">
+        {/* Tab bar — sticky against AppShell's scrollable main */}
         <div className="sticky top-0 z-10 flex shrink-0 bg-red-600">
           {TABS.map((t) => (
             <button
@@ -232,8 +232,8 @@ function ClusterDetailScreen() {
           ))}
         </div>
 
-        {/* Scrollable tab body */}
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-8">
+        {/* Tab body — scrolls with main, no inner overflow trap */}
+        <div className="pb-8">
           {/* ── TAB 1: Prospects by region ── */}
           {activeTab === "prospects" && (
             <div className="space-y-5 px-6 py-6">
