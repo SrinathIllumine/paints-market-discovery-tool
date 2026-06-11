@@ -62,7 +62,7 @@ function ClusterMapPage() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="My Cluster Map"
+          eyebrow="STAGE 1 OF 3 · EXPLORE MARKET POTENTIAL"
           title="Explore Market Potential"
           subtitle="Snapshot driven by backend cluster intelligence."
           backTo="/map"
