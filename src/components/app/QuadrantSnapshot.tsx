@@ -463,6 +463,7 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
               <span className="font-semibold text-gray-800">{targetName} cluster</span>
               {" is in "}
               <span className="font-semibold text-red-600">{quadrantLabel}</span>
+              {" Quadrant"}
             </p>
           ) : (
             <span />
