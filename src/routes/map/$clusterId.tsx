@@ -455,12 +455,12 @@ function ClusterDetailScreen() {
               )}
 
               {/* Score tiles */}
-              <div data-tour="cluster-scores" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {/*{allAnswered && <ScoreTile label="Revenue" score={scores.revenue} />}
+              {/* <div data-tour="cluster-scores" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {allAnswered && <ScoreTile label="Revenue" score={scores.revenue} />}
                 {allAnswered && <ScoreTile label="Competitive" score={scores.competitive} />}
                 {allAnswered && <ScoreTile label="Access" score={scores.access} />}
-                {allAnswered && <ScoreTile label="Ease of Sale" score={scores.ease} />}*/}
-              </div>
+                {allAnswered && <ScoreTile label="Ease of Sale" score={scores.ease} />}
+              </div>*/}
 
               {allAnswered && (
                 <Button
