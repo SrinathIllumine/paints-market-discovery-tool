@@ -423,7 +423,7 @@ function ClusterDetailScreen() {
                   Position of <b>{cluster.name}</b> against all other clusters.
                 </p>
                 {/* ── CHANGE: mode="single" + isStageComplete wired to snapshotRevealed ── */}
-                <QuadrantSnapshot mode="single" highlightId={cluster.id} isStageComplete={snapshotRevealed} />
+                <QuadrantSnapshot mode="single" highlightId={cluster.id} isStageComplete={allAnswered} />
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <ScoreTile label="Revenue" score={scores.revenue} />
