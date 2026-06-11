@@ -1,12 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { CLUSTERS } from "@/data/clusters";
 import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
-import { cn } from "@/lib/utils";
 import { ArrowRight, Check } from "lucide-react";
 
 export const Route = createFileRoute("/plan/")({
@@ -41,7 +40,7 @@ function PlanScreen() {
   const mappedIds = new Set(
     Object.keys(clusterStates).filter((id) => {
       const s = clusterStates[id];
-      return s && (s.prospects.length > 0 || s.isMapped);
+      return s && s.prospects.length > 0;
     }),
   );
 
@@ -76,7 +75,7 @@ function PlanScreen() {
               Create market engagement plan
             </p>
             <div className="space-y-2">
-              {toplan.map(({ c, sc }) => (
+              {toplan.map(({ c }) => (
                 <button
                   key={c.id}
                   type="button"
@@ -133,8 +132,10 @@ function PlanScreen() {
             </div>
           </section>
         )}
+
+        {/* ── Empty state ── */}
         {toplan.length === 0 && planned.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-8">
+          <p className="py-8 text-center text-sm text-muted-foreground">
             No clusters mapped yet. Complete Stage 1 to start planning.
           </p>
         )}
