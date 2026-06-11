@@ -184,7 +184,7 @@ function ClusterDetailScreen() {
               key={t.id}
               onClick={() => setActiveTab(t.id)}
               className={cn(
-                "flex-1 border-b-2 px-2 py-2.5 text-center text-[11px] font-medium leading-tight transition-colors",
+                "flex-1 border-b-2 px-2 py-2.5 text-center text-[13px] font-medium leading-tight transition-colors",
                 activeTab === t.id
                   ? "border-white bg-white/10 text-white"
                   : "border-transparent text-white/55 hover:text-white/80",
