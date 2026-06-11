@@ -20,8 +20,8 @@ function SalesEnablementLanding() {
     <AppShell
       bottom={<BottomNav />}
       header={<StageHeader eyebrow="STAGE 3 OF 3 · SALES ENABLERS" title="Customer Management Funnel" />}
-    >
       subtitle="Pick a cluster from your monthly plan to manage its funnel."
+    >
       <div className="space-y-6 px-6 py-8">
         {shortlisted.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
