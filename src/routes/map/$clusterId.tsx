@@ -302,7 +302,7 @@ function ClusterDetailScreen() {
                 defaultValue={["revenue", "competitive", "access", "ease"]}
                 className="space-y-2"
               >
-                <CollapsibleSub value="revenue" title="Revenue Potential" hml={intel.revenueHML}>
+                <CollapsibleSub value="revenue" title="Revenue Potential" hml={dynamicRevenueHML}>
                   <ul className="space-y-2 text-sm leading-relaxed">
                     <Bullet>
                       There are{" "}
@@ -316,7 +316,19 @@ function ClusterDetailScreen() {
                       <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
                     </Bullet>
                     <Bullet>
-                      Total cluster revenue potential is <b className="text-critical">{formatRupees(totalRevenue)}</b>.
+                      Typical repainting cycle time for {pluralCap.toLowerCase()} is{" "}
+                      <b>
+                        {cycleYears} year{cycleYears === 1 ? "" : "s"}
+                      </b>
+                      .
+                    </Bullet>
+                    <Bullet>
+                      Total cluster revenue potential is <b>{formatRupees(totalRevenue)}</b> over the full repainting
+                      cycle.
+                    </Bullet>
+                    <Bullet>
+                      Total cluster revenue potential per year is{" "}
+                      <b className="text-critical">{formatRupees(annualRevenue)}</b>.
                     </Bullet>
                   </ul>
                 </CollapsibleSub>
@@ -331,16 +343,17 @@ function ClusterDetailScreen() {
                   </ul>
                 </CollapsibleSub>
 
-                <CollapsibleSub value="access" title="Access" hml={intel.accessHML}>
-                  <ul className="space-y-2 text-sm leading-relaxed">
-                    <Bullet>
-                      There are <b>{intel.contractorCount}</b> contractors dominating this cluster.
-                    </Bullet>
-                    <Bullet>
-                      There are <b>{intel.retailerCount}</b> retailers operating within this cluster.
-                    </Bullet>
-                  </ul>
+                <CollapsibleSub value="access" title="Access" hml={dynamicAccessHML ?? intel.accessHML}>
+                  <AccessQuestions
+                    pluralLower={pluralCap.toLowerCase()}
+                    singular={singular}
+                    answers={accessAnswers}
+                    onChange={setAccessAnswers}
+                    score={accessScore}
+                    allAnswered={accessAnswers.every((a) => a !== null)}
+                  />
                 </CollapsibleSub>
+
 
                 <CollapsibleSub value="ease" title="Ease of Sale" hml={intel.easeHML}>
                   <ul className="space-y-2 text-sm leading-relaxed">
