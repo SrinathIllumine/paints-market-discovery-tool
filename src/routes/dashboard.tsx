@@ -12,16 +12,7 @@ import {
   Wallet,
   ArrowUpDown,
 } from "lucide-react";
-import {
-  Bar,
-  CartesianGrid,
-  ComposedChart,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AppShell } from "@/components/app/AppShell";
 import { BottomNav } from "@/components/app/BottomNav";
 import { Tour } from "@/components/app/Tour";
@@ -35,7 +26,10 @@ export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "My Dashboard — Market Discovery Tool" },
-      { name: "description", content: "Demand Generator dashboard with KPIs, conversion trends and cluster intelligence." },
+      {
+        name: "description",
+        content: "Demand Generator dashboard with KPIs, conversion trends and cluster intelligence.",
+      },
     ],
   }),
   component: DashboardPage,
@@ -46,11 +40,41 @@ export const Route = createFileRoute("/dashboard")({
 type EventRow = { name: string; clusterId: string; region: string; date: string; outcome?: string };
 
 const PAST_EVENTS: EventRow[] = [
-  { name: "Painter loyalty meet", clusterId: "mid-apartments", region: "Kharghar", date: "14 May", outcome: "32 painters attended, 18 leads" },
-  { name: "Pre-handover paint audit", clusterId: "redevelopment", region: "Old Panvel", date: "06 May", outcome: "4 audits, 2 site conversions" },
-  { name: "RWA premium exteriors session", clusterId: "gated-community", region: "Kamothe", date: "22 Apr", outcome: "55 attendees, 9 inquiries" },
-  { name: "Hospital hygienic-finish demo", clusterId: "hospitals", region: "New Panvel", date: "12 Apr", outcome: "3 facility managers engaged" },
-  { name: "Industrial coatings roadshow", clusterId: "midc", region: "Taloja MIDC", date: "28 Mar", outcome: "12 units visited, 5 quotations" },
+  {
+    name: "Painter loyalty meet",
+    clusterId: "mid-apartments",
+    region: "Kharghar",
+    date: "14 May",
+    outcome: "32 painters attended, 18 leads",
+  },
+  {
+    name: "Pre-handover paint audit",
+    clusterId: "redevelopment",
+    region: "Old Panvel",
+    date: "06 May",
+    outcome: "4 audits, 2 site conversions",
+  },
+  {
+    name: "RWA premium exteriors session",
+    clusterId: "gated-community",
+    region: "Kamothe",
+    date: "22 Apr",
+    outcome: "55 attendees, 9 inquiries",
+  },
+  {
+    name: "Hospital hygienic-finish demo",
+    clusterId: "hospitals",
+    region: "New Panvel",
+    date: "12 Apr",
+    outcome: "3 facility managers engaged",
+  },
+  {
+    name: "Industrial coatings roadshow",
+    clusterId: "midc",
+    region: "Taloja MIDC",
+    date: "28 Mar",
+    outcome: "12 units visited, 5 quotations",
+  },
 ];
 
 /* ----------------------------- MoM conversions (derived from rows) ----------------------------- */
@@ -105,7 +129,16 @@ function buildRow(clusterId: string, stages: Record<string, SalesStage> | undefi
   const penetrationPct = Math.min(100, penetrationBase + Math.round((conversions / Math.max(1, total)) * 60));
   const engagedPct = Math.round((engaged / Math.max(1, total)) * 100);
   const matrixKey = `${intel.revenueHML === "H" || intel.competitiveHML === "H" ? "H" : "L"}${intel.accessHML === "H" || intel.easeHML === "H" ? "H" : "L"}`;
-  return { id: clusterId, name: c.name, matrixKey, prospects: total, penetrationPct, engagedPct, conversions, isTarget };
+  return {
+    id: clusterId,
+    name: c.name,
+    matrixKey,
+    prospects: total,
+    penetrationPct,
+    engagedPct,
+    conversions,
+    isTarget,
+  };
 }
 
 type SortKey = "name" | "matrix" | "prospects" | "penetration";
@@ -122,7 +155,10 @@ function DashboardPage() {
 
   // KPI values
   const kpi = useMemo(() => {
-    const totalRevenue = CLUSTERS.reduce((sum, c) => sum + c.prospectCountEstimate * getRevenueProfile(c.id).avgRevenuePerProspect, 0);
+    const totalRevenue = CLUSTERS.reduce(
+      (sum, c) => sum + c.prospectCountEstimate * getRevenueProfile(c.id).avgRevenuePerProspect,
+      0,
+    );
     const totalClusters = CLUSTERS.length;
     const activeClusters = new Set<string>(targetClusterIds);
     for (const r of rows) if (r.conversions > 0 || r.engagedPct > 0) activeClusters.add(r.id);
@@ -133,7 +169,7 @@ function DashboardPage() {
     const conversionRate = totalEngaged > 0 ? Math.round((totalConversions / totalEngaged) * 100) : 0;
 
     const top = [...activeRows].sort(
-      (a, b) => (b.penetrationPct + b.conversions * 3) - (a.penetrationPct + a.conversions * 3),
+      (a, b) => b.penetrationPct + b.conversions * 3 - (a.penetrationPct + a.conversions * 3),
     )[0];
 
     // Attention: high potential clusters with weak penetration
@@ -169,7 +205,10 @@ function DashboardPage() {
 
   const toggleSort = (k: SortKey) => {
     if (sortKey === k) setSortDir(sortDir === "asc" ? "desc" : "asc");
-    else { setSortKey(k); setSortDir(k === "name" ? "asc" : "desc"); }
+    else {
+      setSortKey(k);
+      setSortDir(k === "name" ? "asc" : "desc");
+    }
   };
 
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -291,7 +330,9 @@ function DashboardPage() {
               >
                 <option value="all">All clusters</option>
                 {CLUSTERS.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
               <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
@@ -316,7 +357,6 @@ function DashboardPage() {
           </div>
         </section>
 
-
         {/* Cluster Summary Table */}
         <section data-tour="dash-table" className="rounded-2xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between px-4 pb-2 pt-4">
@@ -329,29 +369,55 @@ function DashboardPage() {
             <table className="w-full text-left text-sm">
               <thead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <tr>
-                  <Th onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir}>Cluster</Th>
-                  <Th onClick={() => toggleSort("matrix")} active={sortKey === "matrix"} dir={sortDir}>Matrix</Th>
-                  <Th onClick={() => toggleSort("prospects")} active={sortKey === "prospects"} dir={sortDir} className="text-right">Prospects</Th>
-                  <Th onClick={() => toggleSort("penetration")} active={sortKey === "penetration"} dir={sortDir} className="text-right">Penetration</Th>
+                  <Th onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir}>
+                    Cluster
+                  </Th>
+                  <Th onClick={() => toggleSort("matrix")} active={sortKey === "matrix"} dir={sortDir}>
+                    Matrix
+                  </Th>
+                  <Th
+                    onClick={() => toggleSort("prospects")}
+                    active={sortKey === "prospects"}
+                    dir={sortDir}
+                    className="text-right"
+                  >
+                    Prospects
+                  </Th>
+                  <Th
+                    onClick={() => toggleSort("penetration")}
+                    active={sortKey === "penetration"}
+                    dir={sortDir}
+                    className="text-right"
+                  >
+                    Penetration
+                  </Th>
                 </tr>
               </thead>
               <tbody>
                 {pagedRows.map((r) => (
                   <tr key={r.id} className="border-t border-border">
                     <td className="px-3 py-2">
-                      <Link to="/plan/$clusterId" params={{ clusterId: r.id }} className="font-medium text-navy hover:underline">
+                      <Link
+                        to="/plan/$clusterId"
+                        params={{ clusterId: r.id }}
+                        className="font-medium text-navy hover:underline"
+                      >
                         {r.name}
                       </Link>
                     </td>
-                    <td className="px-3 py-2 text-xs text-foreground">
-                      {MATRIX_LABEL[r.matrixKey] ?? r.matrixKey}
-                    </td>
+                    <td className="px-3 py-2 text-xs text-foreground">{MATRIX_LABEL[r.matrixKey] ?? r.matrixKey}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{r.prospects}</td>
                     <td className="px-3 py-2 text-right">
-                      <span className={cn(
-                        "tabular-nums font-semibold",
-                        r.penetrationPct >= 30 ? "text-emerald-700" : r.penetrationPct >= 15 ? "text-amber-700" : "text-critical",
-                      )}>
+                      <span
+                        className={cn(
+                          "tabular-nums font-semibold",
+                          r.penetrationPct >= 30
+                            ? "text-emerald-700"
+                            : r.penetrationPct >= 15
+                              ? "text-amber-700"
+                              : "text-critical",
+                        )}
+                      >
                         {r.penetrationPct}%
                       </span>
                     </td>
@@ -367,7 +433,9 @@ function DashboardPage() {
               <Legend tone="bg-critical" label="<15%" />
             </div>
             <div className="flex items-center gap-2">
-              <span>Page {pageSafe} of {totalPages} · {rows.length} clusters</span>
+              <span>
+                Page {pageSafe} of {totalPages} · {rows.length} clusters
+              </span>
               <button
                 type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -414,7 +482,7 @@ function DashboardPage() {
         </section>
       </div>
 
-      <Tour
+      {/*<Tour
         tourKey="dashboard-v1"
         steps={[
           {
@@ -439,7 +507,7 @@ function DashboardPage() {
           },
         ]}
       />
-
+*/}
       {/* Past events popup */}
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
         <DialogContent className="max-h-[80vh] overflow-y-auto">
@@ -478,7 +546,12 @@ const TONE_CLASS: Record<string, { icon: string; ring: string }> = {
 };
 
 function KpiCard({
-  icon, label, value, hint, tone = "neutral", href,
+  icon,
+  label,
+  value,
+  hint,
+  tone = "neutral",
+  href,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -489,10 +562,12 @@ function KpiCard({
 }) {
   const t = TONE_CLASS[tone];
   const inner = (
-    <div className={cn(
-      "h-full rounded-2xl border border-border bg-card p-3 shadow-sm transition-colors",
-      href && "hover:bg-muted/40",
-    )}>
+    <div
+      className={cn(
+        "h-full rounded-2xl border border-border bg-card p-3 shadow-sm transition-colors",
+        href && "hover:bg-muted/40",
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
         <span className={cn("flex h-7 w-7 items-center justify-center rounded-full", t.icon)}>{icon}</span>
         {href && <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />}
@@ -502,12 +577,21 @@ function KpiCard({
       {hint && <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{hint}</p>}
     </div>
   );
-  if (href) return <Link to={href} className="block">{inner}</Link>;
+  if (href)
+    return (
+      <Link to={href} className="block">
+        {inner}
+      </Link>
+    );
   return inner;
 }
 
 function Th({
-  children, onClick, active, dir, className,
+  children,
+  onClick,
+  active,
+  dir,
+  className,
 }: {
   children: React.ReactNode;
   onClick: () => void;
@@ -519,7 +603,13 @@ function Th({
     <th className={cn("px-3 py-2 font-semibold", className)}>
       <button type="button" onClick={onClick} className="inline-flex items-center gap-1 hover:text-foreground">
         {children}
-        <ArrowUpDown className={cn("h-3 w-3", active ? "text-navy" : "text-muted-foreground/50", active && dir === "asc" && "rotate-180")} />
+        <ArrowUpDown
+          className={cn(
+            "h-3 w-3",
+            active ? "text-navy" : "text-muted-foreground/50",
+            active && dir === "asc" && "rotate-180",
+          )}
+        />
       </button>
     </th>
   );
