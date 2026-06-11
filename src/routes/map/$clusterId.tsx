@@ -302,7 +302,7 @@ function ClusterDetailScreen() {
                 defaultValue={["revenue", "competitive", "access", "ease"]}
                 className="space-y-2"
               >
-                <CollapsibleSub value="revenue" title="Revenue Potential" hml={dynamicRevenueHML}>
+                <CollapsibleSub value="revenue" title="Explore the Revenue Potential" hml={dynamicRevenueHML}>
                   <ul className="space-y-2 text-sm leading-relaxed">
                     <Bullet>
                       There are{" "}
@@ -333,7 +333,7 @@ function ClusterDetailScreen() {
                   </ul>
                 </CollapsibleSub>
 
-                <CollapsibleSub value="competitive" title="Competitive Strength" hml={intel.competitiveHML}>
+                <CollapsibleSub value="competitive" title="View the Competitive Strength" hml={intel.competitiveHML}>
                   <ul className="space-y-2 text-sm leading-relaxed">
                     {getCompetitiveInsights(clusterId)
                       .slice(0, 2)
@@ -343,7 +343,7 @@ function ClusterDetailScreen() {
                   </ul>
                 </CollapsibleSub>
 
-                <CollapsibleSub value="access" title="Access" hml={dynamicAccessHML ?? intel.accessHML}>
+                <CollapsibleSub value="access" title="Share Your Access Level in this Cluster" hml={dynamicAccessHML ?? intel.accessHML}>
                   <AccessQuestions
                     pluralLower={pluralCap.toLowerCase()}
                     singular={singular}
@@ -355,7 +355,7 @@ function ClusterDetailScreen() {
                 </CollapsibleSub>
 
 
-                <CollapsibleSub value="ease" title="Ease of Sale" hml={intel.easeHML}>
+                <CollapsibleSub value="ease" title="View Ease of Sale in this Cluster" hml={intel.easeHML}>
                   <ul className="space-y-2 text-sm leading-relaxed">
                     {getEaseInsights(clusterId).map((line, i) => (
                       <Bullet key={i}>{line}</Bullet>
