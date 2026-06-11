@@ -242,7 +242,7 @@ function ClusterDetailScreen() {
 
               {/* Prospects by region accordion */}
               <section className="space-y-3">
-                <h2 className="font-display text-xl">Prospects by region</h2>
+                <h2 className="font-display text-xl">View Prospects by region</h2>
                 {prospects.length === 0 ? (
                   <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
                     {loading ? "Loading prospects…" : "No prospects identified yet."}
