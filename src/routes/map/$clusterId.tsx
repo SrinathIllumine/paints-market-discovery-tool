@@ -180,7 +180,7 @@ function ClusterDetailScreen() {
         <StageHeader
           eyebrow="STAGE 1 OF 3 · MAP MY MARKET POTENTIAL"
           title={cluster.name}
-          subtitle={clusterId === "schools" ? "" : `${cluster.nature} — ${cluster.description}`}
+          subtitle={`${cluster.nature} — ${cluster.description}`}
           backTo="/map"
         />
       }
