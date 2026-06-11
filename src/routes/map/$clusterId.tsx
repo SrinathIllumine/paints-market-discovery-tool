@@ -388,18 +388,17 @@ function ClusterDetailScreen() {
                   </div>
                   <div className="space-y-1.5">
                     <p className="font-display text-lg leading-snug">
-                      View the cluster snapshot for <span className="text-critical">{cluster.name}</span>?
+                      Generate the cluster snapshot for <span className="text-critical">{cluster.name}</span>?
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      See how this cluster ranks against all others across revenue, competition, access, and ease of
-                      sale.
+                      {"\n"}
                     </p>
                   </div>
                   <Button
                     onClick={() => setSnapshotRevealed(true)}
                     className="gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
                   >
-                    Yes, show me
+                    Yes, generate
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
