@@ -420,12 +420,18 @@ export function computeClusterScores(
   cluster: Cluster,
   _prospectCount: number,
   _assessment?: ClusterAssessment,
+  userAccessScore?: number, // ← NEW: real score from user's Y/N answers
 ): ClusterScores {
   const t = getClusterScoreTuple(cluster.id);
-  const { revenue, competitive, access, ease } = t;
+  const { revenue, competitive, ease } = t;
+  // If the user has answered all 3 access questions, use their score.
+  // Otherwise fall back to the seeded hardcoded value.
+  const access = userAccessScore !== undefined ? userAccessScore : t.access;
+
   const potentialScore = Number(((revenue + competitive) / 2).toFixed(1));
   const accessRollupScore = Number(((access + ease) / 2).toFixed(1));
   const aggregate = Number(((revenue + competitive + access + ease) / 4).toFixed(1));
+
   return {
     revenue,
     access,
