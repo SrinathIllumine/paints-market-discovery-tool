@@ -38,8 +38,15 @@ function PlanScreen() {
 
   const plannedIds = new Set(focusIds);
 
-  const toplan = scored.filter(({ c }) => !plannedIds.has(c.id));
-  const planned = scored.filter(({ c }) => plannedIds.has(c.id));
+  const mappedIds = new Set(
+  Object.keys(clusterStates).filter((id) => {
+    const s = clusterStates[id];
+    return s && (s.prospects.length > 0 || s.isMapped);
+  })
+);
+
+const toplan = scored.filter(({ c }) => mappedIds.has(c.id) && !plannedIds.has(c.id));
+const planned = scored.filter(({ c }) => mappedIds.has(c.id) && plannedIds.has(c.id));
 
   const handlePlan = (clusterId: string) => {
     setMonthlyFocus(clusterId);
@@ -125,6 +132,11 @@ function PlanScreen() {
               ))}
             </div>
           </section>
+      {toplan.length === 0 && planned.length === 0 && (
+  <p className="text-sm text-muted-foreground text-center py-8">
+    No clusters mapped yet. Complete Stage 1 to start planning.
+  </p>
+)}
         )}
       </div>
     </AppShell>
