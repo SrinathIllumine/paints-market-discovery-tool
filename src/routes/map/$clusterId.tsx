@@ -320,6 +320,7 @@ function ClusterDetailScreen() {
                 )}
               </section>
               <Button
+                data-tour="cluster-calc-button"
                 onClick={() => setActiveTab("mapping")}
                 size="lg"
                 className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
