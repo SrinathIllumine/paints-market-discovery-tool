@@ -141,7 +141,7 @@ function IntroScreen() {
           );
         })}
       </div>
-
+      {/*
       <Tour
         tourKey="home-v1"
         steps={[
@@ -167,6 +167,7 @@ function IntroScreen() {
           },
         ]}
       />
+      */}
     </AppShell>
   );
 }
