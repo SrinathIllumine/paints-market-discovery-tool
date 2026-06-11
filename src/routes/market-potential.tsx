@@ -4,6 +4,7 @@ import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { QuadrantSnapshot } from "@/components/app/QuadrantSnapshot";
+import { Tour } from "@/components/app/Tour";
 import { CLUSTERS } from "@/data/clusters";
 import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
