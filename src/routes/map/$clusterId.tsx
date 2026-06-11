@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { GoogleMap } from "@/components/maps/GoogleMap";
 import { AddProspectSheet } from "@/components/maps/AddProspectSheet";
+import { Tour } from "@/components/app/Tour";
 import { CLUSTERS, getCluster, prospectPlural } from "@/data/clusters";
 import { PANVEL_CENTER } from "@/data/clusters";
 import { PANVEL_BOUNDARY } from "@/data/panvelBoundary";
@@ -15,7 +16,7 @@ import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, MapPin, ChevronRight, BarChart2 } from "lucide-react";
+import { Plus, Loader2, MapPin, ChevronRight, BarChart2, Home } from "lucide-react";
 import {
   computeClusterScores,
   getRevenueProfile,
