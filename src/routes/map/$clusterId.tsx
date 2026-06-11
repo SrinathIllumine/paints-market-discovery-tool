@@ -395,43 +395,24 @@ function ClusterDetailScreen() {
           {/* ── TAB 3: Cluster Snapshot ── */}
           {activeTab === "snapshot" && (
             <div className="space-y-4 px-6 py-6">
-              {!snapshotRevealed ? (
-                /* Prompt gate */
-                <div className="flex flex-col items-center gap-5 rounded-2xl border border-border bg-card px-6 py-10 text-center shadow-sm">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-navy/10">
-                    <BarChart2 className="h-7 w-7 text-navy" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <p className="font-display text-lg leading-snug">
-                      Generate the cluster snapshot for <span className="text-critical">{cluster.name}</span>?
-                    </p>
-                    <p className="text-sm text-muted-foreground">{"\n"}</p>
-                  </div>
-                  <Button
-                    onClick={() => setSnapshotRevealed(true)}
-                    className="gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
-                  >
-                    Yes, generate
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                /* Revealed content */
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-                    <p className="mb-2 text-xs text-muted-foreground">
-                      Position of <b>{cluster.name}</b> against all other clusters.
-                    </p>
-                    <QuadrantSnapshot highlightId={cluster.id} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    <ScoreTile label="Revenue" score={scores.revenue} />
-                    <ScoreTile label="Competitive" score={scores.competitive} />
-                    <ScoreTile label="Access" score={scores.access} />
-                    <ScoreTile label="Ease of Sale" score={scores.ease} />
-                  </div>
-                </div>
-              )}
+              <div className="space-y-0.5">
+                <h2 className="font-display text-2xl">Cluster snapshot</h2>
+                <p className="text-sm text-muted-foreground">
+                  {cluster.nature} — {cluster.description}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Position of <b>{cluster.name}</b> against all other clusters.
+                </p>
+                <QuadrantSnapshot highlightId={cluster.id} />
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <ScoreTile label="Revenue" score={scores.revenue} />
+                <ScoreTile label="Competitive" score={scores.competitive} />
+                <ScoreTile label="Access" score={scores.access} />
+                <ScoreTile label="Ease of Sale" score={scores.ease} />
+              </div>
             </div>
           )}
         </div>
