@@ -4,12 +4,7 @@ import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { Button } from "@/components/ui/button";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { GoogleMap } from "@/components/maps/GoogleMap";
 import { AddProspectSheet } from "@/components/maps/AddProspectSheet";
 import { CLUSTERS, getCluster, prospectPlural } from "@/data/clusters";
@@ -20,7 +15,7 @@ import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, MapPin } from "lucide-react";
+import { Plus, Loader2, MapPin, ChevronRight, BarChart2 } from "lucide-react";
 import {
   computeClusterScores,
   getRevenueProfile,
@@ -43,15 +38,28 @@ export const Route = createFileRoute("/map/$clusterId")({
       <div className="space-y-3 p-6 text-center">
         <p className="font-display text-xl">Something went wrong loading this cluster.</p>
         <p className="text-sm text-muted-foreground">{error.message}</p>
-        <Button onClick={reset} className="bg-navy text-navy-foreground hover:bg-navy/90">Retry</Button>
+        <Button onClick={reset} className="bg-navy text-navy-foreground hover:bg-navy/90">
+          Retry
+        </Button>
       </div>
     </AppShell>
   ),
 });
 
+type Tab = "prospects" | "mapping" | "snapshot";
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: "prospects", label: "Prospects by region" },
+  { id: "mapping", label: "Cluster Potential Mapping" },
+  { id: "snapshot", label: "Cluster Snapshot" },
+];
+
 function ClusterDetailScreen() {
   const { clusterId } = Route.useParams();
   const cluster = useMemo(() => getCluster(clusterId), [clusterId]);
+
+  const [activeTab, setActiveTab] = useState<Tab>("prospects");
+  const [snapshotRevealed, setSnapshotRevealed] = useState(false);
 
   const state = useAppStore((s) => s.clusters[clusterId]);
   const ensureCluster = useAppStore((s) => s.ensureCluster);
@@ -80,11 +88,8 @@ function ClusterDetailScreen() {
     if (hasProspects) return;
     if (loading) return;
 
-    // Divide Panvel area into a 4x4 grid of overlapping sub-regions and run
-    // parallel Places searches. Google text-search caps results at ~60 per
-    // query, so a single 25km query misses most prospects in dense clusters.
     const GRID = 4;
-    const STEP = 0.045; // ~5 km
+    const STEP = 0.045;
     const RADIUS_M = 6000;
     const centers: Array<{ lat: number; lng: number }> = [];
     const offset = (GRID - 1) / 2;
@@ -141,9 +146,7 @@ function ClusterDetailScreen() {
   const prospects = state?.prospects ?? [];
   const regions = useMemo(() => groupIntoRegions(prospects), [prospects]);
   const selectedAllIds = useMemo(() => prospects.map((p) => p.id), [prospects]);
-
   const profile = getRevenueProfile(clusterId);
-
 
   if (!cluster) {
     return (
@@ -172,165 +175,230 @@ function ClusterDetailScreen() {
         />
       }
     >
-      <div className="space-y-8 px-6 py-8">
-        {/* Map */}
-        <Section
-          title="Geo View"
-          right={
-            <Button size="sm" variant="outline" onClick={() => setSheetOpen(true)} className="h-8 gap-1 text-xs">
-              <Plus className="h-3.5 w-3.5" /> Add prospect
-            </Button>
-          }
-        >
-          <div className="relative h-72 w-full overflow-hidden rounded-2xl border border-border">
-            <GoogleMap
-              prospects={prospects}
-              selectedIds={selectedAllIds}
-              onToggle={() => {}}
-              readOnly
-              pickingPin={pickingPin}
-              onPinDropped={(ll) => {
-                setPendingLatLng(ll);
-                setPickingPin(false);
-                setSheetOpen(true);
-              }}
-              regions={regions}
-              boundary={PANVEL_BOUNDARY}
-            />
-            {loading && (
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/60">
-                <Loader2 className="h-5 w-5 animate-spin text-navy" />
-              </div>
-            )}
-            {pickingPin && (
-              <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-critical px-3 py-1 text-[11px] font-semibold text-critical-foreground shadow">
-                Tap on the map to drop a pin
-              </div>
-            )}
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            <MapPin className="mr-1 inline h-3 w-3" />
-            {prospects.length} prospects on map · all included by default
-          </p>
-        </Section>
+      {/* ── Layout: tab bar + scrollable content + sticky CTA ── */}
+      <div className="flex h-full flex-col">
+        {/* Tab bar */}
+        <div className="flex shrink-0 bg-navy">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={cn(
+                "flex-1 border-b-2 px-2 py-2.5 text-center text-[11px] font-medium leading-tight transition-colors",
+                activeTab === t.id
+                  ? "border-white bg-white/10 text-white"
+                  : "border-transparent text-white/55 hover:text-white/80",
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
 
-        {/* Prospects by region */}
-        <section className="space-y-3">
-          <h2 className="font-display text-xl">Prospects by region</h2>
-          {prospects.length === 0 ? (
-            <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
-              {loading ? "Loading prospects…" : "No prospects identified yet."}
-            </div>
-          ) : (
-            <Accordion type="multiple" defaultValue={[]} className="space-y-2">
-              {regions.map((r) => (
-                <AccordionItem key={r.id} value={r.id} className="overflow-hidden rounded-2xl border border-border bg-card">
-                  <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                    <div className="flex w-full items-center justify-between gap-3 pr-2">
-                      <div className="flex items-center gap-2">
-                        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: r.color }} />
-                        <span className="font-display text-base leading-tight">{r.label}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {r.prospects.length} prospect{r.prospects.length === 1 ? "" : "s"}
-                      </span>
+        {/* Scrollable tab body */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {/* ── TAB 1: Prospects by region ── */}
+          {activeTab === "prospects" && (
+            <div className="space-y-5 px-6 py-6">
+              {/* Geo view card */}
+              <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h2 className="font-display text-xl">Geo View</h2>
+                  <Button size="sm" variant="outline" onClick={() => setSheetOpen(true)} className="h-8 gap-1 text-xs">
+                    <Plus className="h-3.5 w-3.5" /> Add prospect
+                  </Button>
+                </div>
+                <div className="relative h-64 w-full overflow-hidden rounded-2xl border border-border">
+                  <GoogleMap
+                    prospects={prospects}
+                    selectedIds={selectedAllIds}
+                    onToggle={() => {}}
+                    readOnly
+                    pickingPin={pickingPin}
+                    onPinDropped={(ll) => {
+                      setPendingLatLng(ll);
+                      setPickingPin(false);
+                      setSheetOpen(true);
+                    }}
+                    regions={regions}
+                    boundary={PANVEL_BOUNDARY}
+                  />
+                  {loading && (
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/60">
+                      <Loader2 className="h-5 w-5 animate-spin text-navy" />
                     </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-3">
-                    <ul className="divide-y divide-border">
-                      {r.prospects.map((p) => (
-                        <li key={p.id} className="py-2.5">
-                          <p className="truncate text-sm font-medium">{p.name}</p>
-                          {p.locality && <p className="truncate text-xs text-muted-foreground">{p.locality}</p>}
-                        </li>
-                      ))}
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+                  )}
+                  {pickingPin && (
+                    <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-critical px-3 py-1 text-[11px] font-semibold text-critical-foreground shadow">
+                      Tap on the map to drop a pin
+                    </div>
+                  )}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  <MapPin className="mr-1 inline h-3 w-3" />
+                  {prospects.length} prospects on map · all included by default
+                </p>
+              </section>
+
+              {/* Prospects by region accordion */}
+              <section className="space-y-3">
+                <h2 className="font-display text-xl">Prospects by region</h2>
+                {prospects.length === 0 ? (
+                  <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
+                    {loading ? "Loading prospects…" : "No prospects identified yet."}
+                  </div>
+                ) : (
+                  <Accordion type="multiple" defaultValue={[]} className="space-y-2">
+                    {regions.map((r) => (
+                      <AccordionItem
+                        key={r.id}
+                        value={r.id}
+                        className="overflow-hidden rounded-2xl border border-border bg-card"
+                      >
+                        <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                          <div className="flex w-full items-center justify-between gap-3 pr-2">
+                            <div className="flex items-center gap-2">
+                              <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: r.color }} />
+                              <span className="font-display text-base leading-tight">{r.label}</span>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {r.prospects.length} prospect{r.prospects.length === 1 ? "" : "s"}
+                            </span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4 pb-3">
+                          <ul className="divide-y divide-border">
+                            {r.prospects.map((p) => (
+                              <li key={p.id} className="py-2.5">
+                                <p className="truncate text-sm font-medium">{p.name}</p>
+                                {p.locality && <p className="truncate text-xs text-muted-foreground">{p.locality}</p>}
+                              </li>
+                            ))}
+                          </ul>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+              </section>
+            </div>
           )}
-        </section>
 
-        {/* Cluster Potential Mapping — four collapsible subsections */}
-        <section className="space-y-3">
-          <h2 className="font-display text-2xl">Cluster Potential Mapping</h2>
+          {/* ── TAB 2: Cluster Potential Mapping ── */}
+          {activeTab === "mapping" && (
+            <div className="space-y-3 px-6 py-6">
+              <Accordion
+                type="multiple"
+                defaultValue={["revenue", "competitive", "access", "ease"]}
+                className="space-y-2"
+              >
+                <CollapsibleSub value="revenue" title="Revenue Potential" hml={intel.revenueHML}>
+                  <ul className="space-y-2 text-sm leading-relaxed">
+                    <Bullet>
+                      There are{" "}
+                      <b>
+                        {observedCount} {pluralCap.toLowerCase()}
+                      </b>{" "}
+                      present in this cluster.
+                    </Bullet>
+                    <Bullet>
+                      The national average revenue per {singular} is{" "}
+                      <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
+                    </Bullet>
+                    <Bullet>
+                      Total cluster revenue potential is <b className="text-critical">{formatRupees(totalRevenue)}</b>.
+                    </Bullet>
+                  </ul>
+                </CollapsibleSub>
 
-          <Accordion type="multiple" defaultValue={["revenue", "competitive", "access", "ease"]} className="space-y-2">
-            <CollapsibleSub value="revenue" title="Revenue Potential" hml={intel.revenueHML}>
-              <ul className="space-y-2 text-sm leading-relaxed">
-                <Bullet>
-                  There are <b>{observedCount} {pluralCap.toLowerCase()}</b> present in this cluster.
-                </Bullet>
-                <Bullet>
-                  The national average revenue per {singular} is <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
-                </Bullet>
-                <Bullet>
-                  Total cluster revenue potential is{" "}
-                  <b className="text-critical">{formatRupees(totalRevenue)}</b>.
-                </Bullet>
-              </ul>
-            </CollapsibleSub>
+                <CollapsibleSub value="competitive" title="Competitive Strength" hml={intel.competitiveHML}>
+                  <ul className="space-y-2 text-sm leading-relaxed">
+                    {getCompetitiveInsights(clusterId)
+                      .slice(0, 2)
+                      .map((line, i) => (
+                        <Bullet key={i}>{highlightBrands(line)}</Bullet>
+                      ))}
+                  </ul>
+                </CollapsibleSub>
 
-            <CollapsibleSub value="competitive" title="Competitive Strength" hml={intel.competitiveHML}>
-              <ul className="space-y-2 text-sm leading-relaxed">
-                {getCompetitiveInsights(clusterId).slice(0, 2).map((line, i) => (
-                  <Bullet key={i}>{highlightBrands(line)}</Bullet>
-                ))}
-              </ul>
-            </CollapsibleSub>
+                <CollapsibleSub value="access" title="Access" hml={intel.accessHML}>
+                  <ul className="space-y-2 text-sm leading-relaxed">
+                    <Bullet>
+                      There are <b>{intel.contractorCount}</b> contractors dominating this cluster.
+                    </Bullet>
+                    <Bullet>
+                      There are <b>{intel.retailerCount}</b> retailers operating within this cluster.
+                    </Bullet>
+                  </ul>
+                </CollapsibleSub>
 
-            <CollapsibleSub value="access" title="Access" hml={intel.accessHML}>
-              <ul className="space-y-2 text-sm leading-relaxed">
-                <Bullet>
-                  There are <b>{intel.contractorCount}</b> contractors dominating this cluster.
-                </Bullet>
-                <Bullet>
-                  There are <b>{intel.retailerCount}</b> retailers operating within this cluster.
-                </Bullet>
-              </ul>
-            </CollapsibleSub>
+                <CollapsibleSub value="ease" title="Ease of Sale" hml={intel.easeHML}>
+                  <ul className="space-y-2 text-sm leading-relaxed">
+                    {getEaseInsights(clusterId).map((line, i) => (
+                      <Bullet key={i}>{line}</Bullet>
+                    ))}
+                  </ul>
+                </CollapsibleSub>
+              </Accordion>
+            </div>
+          )}
 
-            <CollapsibleSub value="ease" title="Ease of Sale" hml={intel.easeHML}>
-              <ul className="space-y-2 text-sm leading-relaxed">
-                {getEaseInsights(clusterId).map((line, i) => (
-                  <Bullet key={i}>{line}</Bullet>
-                ))}
-              </ul>
-            </CollapsibleSub>
-          </Accordion>
-        </section>
+          {/* ── TAB 3: Cluster Snapshot ── */}
+          {activeTab === "snapshot" && (
+            <div className="space-y-4 px-6 py-6">
+              {!snapshotRevealed ? (
+                /* Prompt gate */
+                <div className="flex flex-col items-center gap-5 rounded-2xl border border-border bg-card px-6 py-10 text-center shadow-sm">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-navy/10">
+                    <BarChart2 className="h-7 w-7 text-navy" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="font-display text-lg leading-snug">
+                      View the cluster snapshot for <span className="text-critical">{cluster.name}</span>?
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      See how this cluster ranks against all others across revenue, competition, access, and ease of
+                      sale.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setSnapshotRevealed(true)}
+                    className="gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
+                  >
+                    Yes, show me
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                /* Revealed content */
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                    <p className="mb-2 text-xs text-muted-foreground">
+                      Position of <b>{cluster.name}</b> against all other clusters.
+                    </p>
+                    <QuadrantSnapshot highlightId={cluster.id} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <ScoreTile label="Revenue" score={scores.revenue} />
+                    <ScoreTile label="Competitive" score={scores.competitive} />
+                    <ScoreTile label="Access" score={scores.access} />
+                    <ScoreTile label="Ease of Sale" score={scores.ease} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
-
-        {/* Snapshot + scoring tiles */}
-        <section className="space-y-3">
-          <h2 className="font-display text-2xl">Cluster Snapshot</h2>
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <p className="mb-2 text-xs text-muted-foreground">
-              Position of <b>{cluster.name}</b> against all other clusters.
-            </p>
-            <QuadrantSnapshot highlightId={cluster.id} />
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <ScoreTile label="Revenue" score={scores.revenue} />
-            <ScoreTile label="Competitive" score={scores.competitive} />
-            <ScoreTile label="Access" score={scores.access} />
-            <ScoreTile label="Ease of Sale" score={scores.ease} />
-          </div>
-        </section>
-
-        <Button
-          asChild
-          size="lg"
-          className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
-        >
-          <Link to="/plan/$clusterId" params={{ clusterId }}>
-            Create Engagement Plan for this Cluster
-          </Link>
-        </Button>
-
+        {/* ── Persistent CTA — always visible outside tabs ── */}
+        <div className="shrink-0 border-t border-border bg-background px-6 py-4">
+          <Button asChild size="lg" className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90">
+            <Link to="/plan/$clusterId" params={{ clusterId }}>
+              Create Engagement Plan for this Cluster
+            </Link>
+          </Button>
+        </div>
       </div>
-
 
       <AddProspectSheet
         open={sheetOpen}
@@ -353,28 +421,21 @@ function ClusterDetailScreen() {
   );
 }
 
-function Section({
-  title, right, children,
-}: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="font-display text-xl">{title}</h2>
-        {right}
-      </div>
-      {children}
-    </section>
-  );
-}
+// ─── Sub-components (unchanged) ───────────────────────────────────────────────
 
 function CollapsibleSub({
-  value, title, hml, children,
-}: { value: string; title: string; hml: HML; children: React.ReactNode }) {
+  value,
+  title,
+  hml,
+  children,
+}: {
+  value: string;
+  title: string;
+  hml: HML;
+  children: React.ReactNode;
+}) {
   return (
-    <AccordionItem
-      value={value}
-      className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
-    >
+    <AccordionItem value={value} className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <AccordionTrigger className="px-4 py-3 hover:no-underline">
         <div className="flex w-full items-center justify-between gap-3 pr-2">
           <span className="font-display text-lg leading-tight">{title}</span>
@@ -386,19 +447,22 @@ function CollapsibleSub({
   );
 }
 
-
 function HMLBadge({ hml, small }: { hml: HML | null; small?: boolean }) {
   if (!hml) return null;
   const cls =
-    hml === "H" ? "bg-green-100 text-green-800 border-green-300"
-    : hml === "M" ? "bg-orange-100 text-orange-800 border-orange-300"
-    : "bg-red-100 text-red-800 border-red-300";
+    hml === "H"
+      ? "bg-green-100 text-green-800 border-green-300"
+      : hml === "M"
+        ? "bg-orange-100 text-orange-800 border-orange-300"
+        : "bg-red-100 text-red-800 border-red-300";
   return (
-    <span className={cn(
-      "shrink-0 rounded-full border font-semibold uppercase tracking-wider",
-      small ? "px-2 py-0.5 text-[9px]" : "px-2.5 py-0.5 text-[10px]",
-      cls,
-    )}>
+    <span
+      className={cn(
+        "shrink-0 rounded-full border font-semibold uppercase tracking-wider",
+        small ? "px-2 py-0.5 text-[9px]" : "px-2.5 py-0.5 text-[10px]",
+        cls,
+      )}
+    >
       {HML_LABEL[hml]}
     </span>
   );
@@ -413,24 +477,9 @@ function Bullet({ children }: { children: React.ReactNode }) {
   );
 }
 
-function HMLTile({ label, hml }: { label: string; hml: HML }) {
-  const cls =
-    hml === "H" ? "border-green-300 bg-green-50 text-green-800"
-    : hml === "M" ? "border-orange-300 bg-orange-50 text-orange-800"
-    : "border-red-300 bg-red-50 text-red-800";
-  return (
-    <div className={cn("rounded-xl border p-2 text-center", cls)}>
-      <p className="text-[10px] uppercase tracking-wider opacity-80">{label}</p>
-      <p className="mt-0.5 font-display text-sm leading-tight">{HML_LABEL[hml]}</p>
-    </div>
-  );
-}
-
 function ScoreTile({ label, score }: { label: string; score: number }) {
   const hi = score >= 6;
-  const cls = hi
-    ? "border-green-300 bg-green-50 text-green-800"
-    : "border-red-300 bg-red-50 text-red-800";
+  const cls = hi ? "border-green-300 bg-green-50 text-green-800" : "border-red-300 bg-red-50 text-red-800";
   return (
     <div className={cn("rounded-xl border p-2 text-center", cls)}>
       <p className="text-[10px] uppercase tracking-wider opacity-80">{label}</p>
@@ -441,21 +490,6 @@ function ScoreTile({ label, score }: { label: string; score: number }) {
     </div>
   );
 }
-
-function ParentCard({
-  title, hml, children,
-}: { title: string; hml: HML; children: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-3 shadow-sm">
-      <div className="mb-2 flex items-center justify-between gap-3 px-1">
-        <h3 className="font-display text-xl leading-tight">{title}</h3>
-        <HMLBadge hml={hml} />
-      </div>
-      {children}
-    </div>
-  );
-}
-
 
 void CLUSTERS;
 void scoreFromHML;
