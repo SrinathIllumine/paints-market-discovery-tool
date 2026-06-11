@@ -73,11 +73,6 @@ function getQuadrantLabel(x: number, y: number): string {
   return "Low Potential · Low Access";
 }
 
-/**
- * Derive a user's real access score (0–10) from their saved Y/N answers.
- * Returns undefined if they haven't answered all 3 questions yet,
- * so the caller can fall back to the hardcoded seed value.
- */
 function resolveUserAccessScore(accessAnswers3?: (string | undefined)[]): number | undefined {
   if (!accessAnswers3 || accessAnswers3.length !== 3) return undefined;
   if (accessAnswers3.some((v) => v === undefined)) return undefined;
@@ -347,13 +342,13 @@ function LockedOverlay() {
 
 // ── Compare button ─────────────────────────────────────────────────────────────
 
+// FIX 1: removed "absolute top-3 right-3 z-10" — now laid out in a flex row
 function CompareButton({ isComparing, onToggle }: { isComparing: boolean; onToggle: () => void }) {
   return (
     <button
       onClick={onToggle}
       className={[
-        "absolute top-3 right-3 z-10",
-        "inline-flex items-center gap-1.5 px-3 py-1.5",
+        "shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5",
         "rounded-full text-xs font-medium border transition-all duration-150",
         isComparing
           ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
@@ -392,7 +387,7 @@ function CompareButton({ isComparing, onToggle }: { isComparing: boolean; onTogg
             <circle cx="6" cy="18" r="2.5" />
             <circle cx="18" cy="18" r="2.5" />
           </svg>
-          Compare with others clusters
+          Compare with others
         </>
       )}
     </button>
@@ -419,7 +414,6 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
   }, [clusterStates, assessments]);
 
   const { highlighted, dim, quadrantLabel } = useMemo(() => {
-    // ── mode="single" ─────────────────────────────────────────────────────────
     if (mode === "single") {
       const target = highlightId ? allPoints.find((p) => p.id === highlightId) : null;
       if (!target) return { highlighted: [], dim: [], quadrantLabel: undefined };
@@ -442,7 +436,6 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
       };
     }
 
-    // ── mode="all" ────────────────────────────────────────────────────────────
     const eight = pickEight(allPoints, highlightId);
     const withHighlight = eight.map((p) => ({
       ...p,
@@ -459,22 +452,29 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
   const targetName = allPoints.find((p) => p.id === highlightId)?.name;
 
   return (
-    <div className="relative h-[520px] w-full">
+    <div className="relative w-full">
       {mode === "single" && !isStageComplete && <LockedOverlay />}
 
-      {mode === "single" && isStageComplete && quadrantLabel && targetName && (
-        <p className="text-sm text-gray-600 text-center mt-10 mb-1 pr-28">
-          <span className="font-semibold text-gray-800">{targetName} cluster</span>
-          {" is in "}
-          <span className="font-semibold text-red-600">{quadrantLabel}</span>
-        </p>
+      {/* FIX 1: flex row keeps label and button on the same line without overlap */}
+      {mode === "single" && isStageComplete && (
+        <div className="flex items-center justify-between gap-2 mb-2 min-h-[32px]">
+          {quadrantLabel && targetName ? (
+            <p className="text-sm text-gray-600 leading-snug">
+              <span className="font-semibold text-gray-800">{targetName} cluster</span>
+              {" is in "}
+              <span className="font-semibold text-red-600">{quadrantLabel}</span>
+            </p>
+          ) : (
+            <span />
+          )}
+          {showCompareButton && <CompareButton isComparing={isComparing} onToggle={() => setIsComparing((v) => !v)} />}
+        </div>
       )}
 
-      {showCompareButton && <CompareButton isComparing={isComparing} onToggle={() => setIsComparing((v) => !v)} />}
-
       <div className={mode === "single" && !isStageComplete ? "opacity-20 pointer-events-none select-none" : undefined}>
-        <ResponsiveContainer width="100%" height={520}>
-          <ScatterChart margin={{ top: 48, right: 48, bottom: 36, left: 8 }}>
+        {/* FIX 2 & 3: reduced top margin (less wasted space), increased bottom margin (x-axis label no longer clipped) */}
+        <ResponsiveContainer width="100%" height={480}>
+          <ScatterChart margin={{ top: 16, right: 48, bottom: 52, left: 8 }}>
             <CartesianGrid stroke={COLOR_GRID} strokeWidth={0.75} />
 
             <ReferenceArea x1={50} x2={105} y1={50} y2={105} fill={COLOR_QUADRANT_HI} stroke="none" />
