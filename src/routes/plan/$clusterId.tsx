@@ -150,7 +150,7 @@ function PlanClusterScreen() {
                   className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
                 >
                   <span className={STAGE_HEADING_CLS}>
-                    STAGE {idx + 1}: {step.title}
+                    STAGE {idx + 1}: {step.title.toUpperCase()}
                   </span>
                   <ChevronDown
                     className={cn("h-4 w-4 text-muted-foreground transition-transform", isOpen && "rotate-180")}
