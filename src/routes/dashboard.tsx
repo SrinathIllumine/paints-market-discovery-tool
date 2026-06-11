@@ -221,7 +221,7 @@ function DashboardPage() {
         </section>
 
         {/* KPI Section */}
-        <section>
+        <section data-tour="dash-kpi">
           <h2 className="mb-2 font-display text-lg leading-tight">Performance at a glance</h2>
           <div className="grid grid-cols-2 gap-2">
             <KpiCard
