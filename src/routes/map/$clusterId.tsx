@@ -210,6 +210,13 @@ function ClusterDetailScreen() {
           {/* ── TAB 1: Prospects by region ── */}
           {activeTab === "prospects" && (
             <div className="space-y-5 px-6 py-6">
+              {/* Tab page header */}
+              <div className="space-y-0.5">
+                <h2 className="font-display text-2xl">View prospects by region</h2>
+                <p className="text-sm text-muted-foreground">
+                  {cluster.nature} — {cluster.description}
+                </p>
+              </div>
               {/* Geo view card */}
               <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                 <div className="mb-3 flex items-center justify-between gap-3">
@@ -343,7 +350,11 @@ function ClusterDetailScreen() {
                   </ul>
                 </CollapsibleSub>
 
-                <CollapsibleSub value="access" title="Share Your Access Level in this Cluster" hml={dynamicAccessHML ?? intel.accessHML}>
+                <CollapsibleSub
+                  value="access"
+                  title="Share Your Access Level in this Cluster"
+                  hml={dynamicAccessHML ?? intel.accessHML}
+                >
                   <AccessQuestions
                     pluralLower={pluralCap.toLowerCase()}
                     singular={singular}
@@ -353,7 +364,6 @@ function ClusterDetailScreen() {
                     allAnswered={accessAnswers.every((a) => a !== null)}
                   />
                 </CollapsibleSub>
-
 
                 <CollapsibleSub value="ease" title="View Ease of Sale in this Cluster" hml={intel.easeHML}>
                   <ul className="space-y-2 text-sm leading-relaxed">
