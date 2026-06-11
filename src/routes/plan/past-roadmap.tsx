@@ -112,12 +112,13 @@ function PastRoadmapPage() {
                             </span>
                           )}
                         </div>
-                        <div className="mt-2 grid grid-cols-2 gap-2">
-                          <NumField
+                        <div className="mt-2 grid ">
+                          {/*<div className="mt-2 grid grid-cols-2 gap-2">*/}
+                          {/*<NumField
                             label="Participants attended"
                             value={fb.attended}
                             onChange={(v) => setFeedback(c.id, e.id, { attended: v })}
-                          />
+                          />*/?
                           <NumField
                             label="Leads generated"
                             value={fb.leads}
