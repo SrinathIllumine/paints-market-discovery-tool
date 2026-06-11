@@ -419,9 +419,6 @@ function ClusterDetailScreen() {
                 </p>
               </div>
               <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-                <p className="mb-2 text-xs text-muted-foreground">
-                  Position of <b>{cluster.name}</b> against all other clusters.
-                </p>
                 {/* ── CHANGE: mode="single" + isStageComplete wired to snapshotRevealed ── */}
                 <QuadrantSnapshot mode="single" highlightId={cluster.id} isStageComplete={allAnswered} />
               </div>
