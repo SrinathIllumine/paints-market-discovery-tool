@@ -323,10 +323,6 @@ function ClusterDetailScreen() {
                       .
                     </Bullet>
                     <Bullet>
-                      Total cluster revenue potential is <b>{formatRupees(totalRevenue)}</b> over the full repainting
-                      cycle.
-                    </Bullet>
-                    <Bullet>
                       Total cluster revenue potential per year is{" "}
                       <b className="text-critical">{formatRupees(annualRevenue)}</b>.
                     </Bullet>
