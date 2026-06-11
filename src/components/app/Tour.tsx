@@ -7,6 +7,7 @@ export type TourStep = {
   selector: string; // CSS selector for [data-tour="..."]
   title: string;
   body: string;
+  onShow?: () => void; // optional side-effect when step becomes active (e.g. switch tab)
 };
 
 const STORAGE_KEY = "sed.tour.done";
