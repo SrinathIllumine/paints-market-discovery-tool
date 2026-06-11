@@ -64,13 +64,20 @@ function ClusterDetailScreen() {
 
   const [activeTab, setActiveTab] = useState<Tab>("prospects");
 
-  // ── Scroll-to-top sentinel ref ─────────────────────────────────────────────
   const tabTopRef = useRef<HTMLDivElement>(null);
 
   const goToTab = (tab: Tab) => {
     setActiveTab(tab);
     requestAnimationFrame(() => {
-      tabTopRef.current?.scrollIntoView({ block: "start" });
+      let el = tabTopRef.current?.parentElement;
+      while (el) {
+        const { overflowY } = getComputedStyle(el);
+        if (el.scrollHeight > el.clientHeight && overflowY !== "visible") {
+          el.scrollTop = 0;
+          break;
+        }
+        el = el.parentElement;
+      }
     });
   };
 
@@ -83,7 +90,6 @@ function ClusterDetailScreen() {
   const setAssessment = useAppStore((s) => s.setAssessment);
   const unlockStage = useAppStore((s) => s.unlockStage);
 
-  // Initialise from persisted answers if the user already visited
   const [accessAnswers, setAccessAnswers] = useState<("Y" | "N" | null)[]>(() => {
     const saved = existingAssessment?.accessAnswers3;
     if (saved && saved.length === 3) {
@@ -189,17 +195,14 @@ function ClusterDetailScreen() {
   const annualRevenuePerProspect = profile.avgRevenuePerProspect / cycleYears;
   const dynamicRevenueHML: HML = scoreToHML(scoreRevenue(annualRevenuePerProspect));
 
-  // Access score derived from user's Y/N answers
   const accessYesCount = accessAnswers.filter((a) => a === "Y").length;
   const accessScore = Math.round(accessYesCount * 3.33 * 10) / 10;
   const allAnswered = accessAnswers.every((a) => a !== null);
   const dynamicAccessHML: HML | null = allAnswered ? scoreToHML(accessScore) : null;
 
-  // userAccessScore fed into computeClusterScores
   const userAccessScore = allAnswered ? accessScore : undefined;
   const scores = computeClusterScores(cluster, prospects.length, existingAssessment, userAccessScore);
 
-  // Persist access answers to the store on every change
   const handleAccessAnswers = (next: ("Y" | "N" | null)[]) => {
     setAccessAnswers(next);
     setAssessment(clusterId, {
@@ -222,7 +225,7 @@ function ClusterDetailScreen() {
       }
     >
       <div className="flex min-h-full flex-col">
-        {/* Tab bar — sticky against AppShell's scrollable main */}
+        {/* Tab bar */}
         <div className="sticky top-0 z-10 flex shrink-0 bg-red-600">
           {TABS.map((t) => (
             <button
@@ -241,7 +244,7 @@ function ClusterDetailScreen() {
           ))}
         </div>
 
-        {/* Sentinel — scrollIntoView targets this on every tab change */}
+        {/* Sentinel */}
         <div ref={tabTopRef} />
 
         {/* Tab body */}
