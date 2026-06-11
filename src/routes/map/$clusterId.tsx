@@ -1,5 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { GoogleMap } from "@/components/maps/GoogleMap";
 import { AddProspectSheet } from "@/components/maps/AddProspectSheet";
-import { Tour } from "@/components/app/Tour";
 import { CLUSTERS, getCluster, prospectPlural } from "@/data/clusters";
 import { PANVEL_CENTER } from "@/data/clusters";
 import { PANVEL_BOUNDARY } from "@/data/panvelBoundary";
@@ -16,7 +15,7 @@ import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, MapPin, ChevronRight, BarChart2, Home } from "lucide-react";
+import { Plus, Loader2, MapPin, Home } from "lucide-react";
 import {
   computeClusterScores,
   getRevenueProfile,
@@ -65,6 +64,16 @@ function ClusterDetailScreen() {
 
   const [activeTab, setActiveTab] = useState<Tab>("prospects");
 
+  // ── Scroll-to-top sentinel ref ─────────────────────────────────────────────
+  const tabTopRef = useRef<HTMLDivElement>(null);
+
+  const goToTab = (tab: Tab) => {
+    setActiveTab(tab);
+    requestAnimationFrame(() => {
+      tabTopRef.current?.scrollIntoView({ block: "start" });
+    });
+  };
+
   const state = useAppStore((s) => s.clusters[clusterId]);
   const ensureCluster = useAppStore((s) => s.ensureCluster);
   const markVisited = useAppStore((s) => s.markVisited);
@@ -74,7 +83,7 @@ function ClusterDetailScreen() {
   const setAssessment = useAppStore((s) => s.setAssessment);
   const unlockStage = useAppStore((s) => s.unlockStage);
 
-  // ── CHANGE 1: initialise from persisted answers if the user already visited ──
+  // Initialise from persisted answers if the user already visited
   const [accessAnswers, setAccessAnswers] = useState<("Y" | "N" | null)[]>(() => {
     const saved = existingAssessment?.accessAnswers3;
     if (saved && saved.length === 3) {
@@ -180,17 +189,17 @@ function ClusterDetailScreen() {
   const annualRevenuePerProspect = profile.avgRevenuePerProspect / cycleYears;
   const dynamicRevenueHML: HML = scoreToHML(scoreRevenue(annualRevenuePerProspect));
 
-  // ── Access score derived from user's Y/N answers ───────────────────────────
+  // Access score derived from user's Y/N answers
   const accessYesCount = accessAnswers.filter((a) => a === "Y").length;
   const accessScore = Math.round(accessYesCount * 3.33 * 10) / 10;
   const allAnswered = accessAnswers.every((a) => a !== null);
   const dynamicAccessHML: HML | null = allAnswered ? scoreToHML(accessScore) : null;
 
-  // ── CHANGE 2: userAccessScore fed into computeClusterScores ───────────────
+  // userAccessScore fed into computeClusterScores
   const userAccessScore = allAnswered ? accessScore : undefined;
   const scores = computeClusterScores(cluster, prospects.length, existingAssessment, userAccessScore);
 
-  // ── CHANGE 3: persist access answers to the store on every change ──────────
+  // Persist access answers to the store on every change
   const handleAccessAnswers = (next: ("Y" | "N" | null)[]) => {
     setAccessAnswers(next);
     setAssessment(clusterId, {
@@ -219,7 +228,7 @@ function ClusterDetailScreen() {
             <button
               key={t.id}
               data-tour={`cluster-tab-${t.id}`}
-              onClick={() => setActiveTab(t.id)}
+              onClick={() => goToTab(t.id)}
               className={cn(
                 "flex-1 border-b-2 px-2 py-2.5 text-center text-[13px] font-medium leading-tight transition-colors",
                 activeTab === t.id
@@ -232,7 +241,10 @@ function ClusterDetailScreen() {
           ))}
         </div>
 
-        {/* Tab body — scrolls with main, no inner overflow trap */}
+        {/* Sentinel — scrollIntoView targets this on every tab change */}
+        <div ref={tabTopRef} />
+
+        {/* Tab body */}
         <div className="pb-8">
           {/* ── TAB 1: Prospects by region ── */}
           {activeTab === "prospects" && (
@@ -319,9 +331,10 @@ function ClusterDetailScreen() {
                   </Accordion>
                 )}
               </section>
+
               <Button
                 data-tour="cluster-calc-button"
-                onClick={() => setActiveTab("mapping")}
+                onClick={() => goToTab("mapping")}
                 size="lg"
                 className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
               >
@@ -384,7 +397,6 @@ function ClusterDetailScreen() {
                   title="Share Your Access Level in this Cluster"
                   hml={dynamicAccessHML ?? intel.accessHML}
                 >
-                  {/* ── CHANGE 3 wired here: onChange → handleAccessAnswers ── */}
                   <AccessQuestions
                     pluralLower={pluralCap.toLowerCase()}
                     singular={singular}
@@ -403,11 +415,10 @@ function ClusterDetailScreen() {
                   </ul>
                 </CollapsibleSub>
               </Accordion>
+
               <Button
                 data-tour="cluster-generate-snapshot"
-                onClick={() => {
-                  setActiveTab("snapshot");
-                }}
+                onClick={() => goToTab("snapshot")}
                 size="lg"
                 className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
               >
@@ -429,7 +440,6 @@ function ClusterDetailScreen() {
                 data-tour="cluster-snapshot-graph"
                 className="rounded-2xl border border-border bg-card p-4 shadow-sm"
               >
-                {/* ── CHANGE: mode="single" + isStageComplete wired to snapshotRevealed ── */}
                 <QuadrantSnapshot mode="single" highlightId={cluster.id} isStageComplete={allAnswered} />
               </div>
               <div data-tour="cluster-scores" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -456,66 +466,6 @@ function ClusterDetailScreen() {
           )}
         </div>
       </div>
-
-      {/*<Tour
-        tourKey={`cluster-v2-${clusterId}`}
-        steps={[
-          {
-            selector: '[data-tour="cluster-tab-prospects"]',
-            title: "Three tabs to score this cluster",
-            body: "Work through these tabs in order — Prospects, Mapping, then Snapshot. You can come back anytime.",
-            onShow: () => setActiveTab("prospects"),
-          },
-          {
-            selector: '[data-tour="cluster-geo-view"]',
-            title: "Geo View",
-            body: "Every prospect we've identified is plotted on the map. Tap 'Add prospect' to drop your own pin for anyone we missed.",
-            onShow: () => setActiveTab("prospects"),
-          },
-          {
-            selector: '[data-tour="cluster-prospects-region"]',
-            title: "Prospects by region",
-            body: "Prospects are grouped into regions so you can plan visits efficiently. Expand a region to see who's inside it.",
-            onShow: () => setActiveTab("prospects"),
-          },
-          {
-            selector: '[data-tour="cluster-calc-button"]',
-            title: "Calculate your cluster potential",
-            body: "Tap this when your prospect list looks right — it takes you to the scoring questions.",
-            onShow: () => setActiveTab("prospects"),
-          },
-          {
-            selector: '[data-tour="cluster-mapping-cards"]',
-            title: "Score across 4 dimensions",
-            body: "Revenue, Competitive Strength, Access and Ease of Sale. Open each card — Access needs your input, the others auto-fill from cluster intelligence.",
-            onShow: () => setActiveTab("mapping"),
-          },
-          {
-            selector: '[data-tour="cluster-generate-snapshot"]',
-            title: "Generate the snapshot",
-            body: "Once you've answered the Access questions, tap here to plot this cluster on the snapshot grid.",
-            onShow: () => setActiveTab("mapping"),
-          },
-          {
-            selector: '[data-tour="cluster-snapshot-graph"]',
-            title: "Snapshot graph",
-            body: "See where this cluster lands on the Potential vs Access grid — a quick visual of whether to invest time here.",
-            onShow: () => setActiveTab("snapshot"),
-          },
-          {
-            selector: '[data-tour="cluster-scores"]',
-            title: "Your 4 scores",
-            body: "Revenue, Competitive, Access and Ease — all on a 0–10 scale. Green is strong, red needs attention.",
-            onShow: () => setActiveTab("snapshot"),
-          },
-          {
-            selector: '[data-tour="cluster-tab-snapshot"]',
-            title: "Go to the next stage",
-            body: "When you're done, the 'Go to next stage' button takes you home and unlocks Stage 2 — Monthly Engagement Plan.",
-            onShow: () => setActiveTab("snapshot"),
-          },
-        ]}
-      /> */}
 
       <AddProspectSheet
         open={sheetOpen}
