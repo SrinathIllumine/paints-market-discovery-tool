@@ -18,24 +18,28 @@ import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
+
 type Point = { id: string; name: string; x: number; y: number; highlighted: boolean };
 
-/** "single" = a specific cluster's detail page (one dot, locked state, compare CTA)
- *  "overview" = the "View my clusters" page (8 dots, no locked state, no compare CTA) */
-export type QuadrantMode = "single" | "overview";
-
+/**
+ * mode="single"  → specific cluster page: shows only highlightId's cluster dot.
+ *                  If isStageComplete=false, renders the locked overlay instead.
+ *                  If the cluster lands in the top-right quadrant a "Compare with
+ *                  others" button appears; clicking it overlays all 8 clusters with
+ *                  only the current one highlighted.
+ *
+ * mode="all"     → "View my clusters" page: shows the default 8 clusters, all
+ *                  highlighted (no single-cluster emphasis).
+ */
 export interface QuadrantSnapshotProps {
-  /** The cluster to spotlight. Required in "single" mode. */
   highlightId?: string;
-  mode?: QuadrantMode;
-  /**
-   * Whether the user has completed the "Calculate cluster potential" step.
-   * Only checked in "single" mode. Defaults to true so the overview is never blocked.
-   */
-  isPotentialCalculated?: boolean;
+  mode?: "single" | "all";
+  /** Only relevant when mode="single". Defaults to true. */
+  isStageComplete?: boolean;
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────────
+
 const COLOR_AXIS = "#1a1a1a";
 const COLOR_GRID = "rgba(0,0,0,0.08)";
 const COLOR_LABEL_MUTED = "#9ca3af";
@@ -52,6 +56,7 @@ const FONT_SIZE = 10;
 const MAX_NAME_CHARS = 26;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
+
 function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
 }
@@ -124,8 +129,8 @@ function computeLabelPos(
   angularNudge = 0,
 ): { lx: number; ly: number; anchor: "start" | "end" | "middle"; lineX2: number; lineY2: number } {
   const rad = (angularNudge * Math.PI) / 180;
-  let vx = cx - midPx,
-    vy = cy - midPy;
+  let vx = cx - midPx;
+  let vy = cy - midPy;
   if (angularNudge !== 0) {
     const cos = Math.cos(rad),
       sin = Math.sin(rad);
@@ -134,18 +139,14 @@ function computeLabelPos(
   const len = Math.sqrt(vx * vx + vy * vy) || 1;
   const nx = vx / len,
     ny = vy / len;
-
   const lineX2 = cx + nx * DOT_R;
   const lineY2 = cy + ny * DOT_R;
   let lx = cx + nx * (DOT_R + PAD);
   let ly = cy + ny * (DOT_R + PAD);
-
   const anchor: "start" | "end" | "middle" = nx > 0.2 ? "start" : nx < -0.2 ? "end" : "middle";
-
   const margin = 4;
   lx = clamp(lx, pLeft + margin, pRight - margin);
   ly = clamp(ly, pTop + FONT_SIZE, pBottom - margin);
-
   return { lx, ly, anchor, lineX2, lineY2 };
 }
 
@@ -153,7 +154,6 @@ function assignNudges(points: Point[], midX: number, midY: number): Map<string, 
   const angles = points
     .map((p) => ({ id: p.id, angle: Math.atan2(p.y - midY, p.x - midX) }))
     .sort((a, b) => a.angle - b.angle);
-
   const nudges = new Map<string, number>();
   for (let i = 0; i < angles.length; i++) {
     const prev = angles[(i - 1 + angles.length) % angles.length];
@@ -168,6 +168,7 @@ function assignNudges(points: Point[], midX: number, midY: number): Map<string, 
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
+
 function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
   const xAxis = Object.values(xAxisMap ?? {})[0] as any;
   const yAxis = Object.values(yAxisMap ?? {})[0] as any;
@@ -197,8 +198,8 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
   );
 
   const renderPoint = (p: Point) => {
-    const cx = px(p.x),
-      cy = py(p.y);
+    const cx = px(p.x);
+    const cy = py(p.y);
     const label = truncate(p.name);
     const dotFill = p.highlighted ? COLOR_DOT_HI : COLOR_DOT_DIM;
     const nudge = nudges.get(p.id) ?? 0;
@@ -224,10 +225,10 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
           y2={ly}
           stroke={COLOR_LABEL_MUTED}
           strokeWidth={0.75}
-          strokeOpacity={p.highlighted ? 0.5 : 0.25}
+          strokeOpacity={0.5}
           strokeDasharray="2 2"
         />
-        <circle cx={cx} cy={cy} r={DOT_R} fill={dotFill} opacity={p.highlighted ? 1 : 0.45} />
+        <circle cx={cx} cy={cy} r={DOT_R} fill={dotFill} />
         <text
           x={lx}
           y={ly}
@@ -239,7 +240,6 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
           strokeLinejoin="round"
           paintOrder="stroke"
           style={{ pointerEvents: "none", userSelect: "none" }}
-          opacity={p.highlighted ? 1 : 0.5}
         >
           {label}
         </text>
@@ -251,7 +251,6 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
           fontWeight={500}
           fill={p.highlighted ? "#374151" : COLOR_CLUSTER_LBL}
           style={{ pointerEvents: "none", userSelect: "none" }}
-          opacity={p.highlighted ? 1 : 0.5}
         >
           {label}
         </text>
@@ -271,8 +270,8 @@ function AxisLabels({ xAxisMap, yAxisMap }: any) {
     right = xAxis.x + xAxis.width;
   const top = yAxis.y,
     bottom = yAxis.y + yAxis.height;
-  const midX = (left + right) / 2,
-    midY = (top + bottom) / 2;
+  const midX = (left + right) / 2;
+  const midY = (top + bottom) / 2;
 
   const props = { fontSize: 10, fontWeight: 600, fill: COLOR_LABEL_MUTED } as const;
 
@@ -306,237 +305,239 @@ function AxisLabels({ xAxisMap, yAxisMap }: any) {
   );
 }
 
-// ── Locked overlay (incomplete potential step) ─────────────────────────────────
-function LockedState() {
+// ── Locked overlay ─────────────────────────────────────────────────────────────
+
+function LockedOverlay() {
   return (
-    <div className="h-[520px] w-full flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-gray-200 bg-gray-50">
-      {/* Lock icon */}
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm border border-gray-200">
+    <div
+      className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3
+                    bg-white/80 backdrop-blur-[2px] rounded-xl"
+    >
+      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
         <svg
-          className="h-5 w-5 text-gray-400"
           xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth={2}
+          strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          className="text-gray-400"
         >
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
           <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
       </div>
-
-      <div className="text-center">
-        <p className="text-sm font-semibold text-gray-700">Cluster snapshot locked</p>
-        <p className="mt-1 max-w-[260px] text-xs leading-relaxed text-gray-400">
-          Complete the <span className="font-medium text-gray-500">Calculate cluster potential</span> step to unlock the
-          snapshot for this cluster.
-        </p>
-      </div>
-
-      {/* Step indicator strip */}
-      <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-sm border border-gray-100">
-        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500">
-          <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 12 12" fill="currentColor">
-            <path
-              d="M10 3L5 8.5 2 5.5"
-              stroke="white"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-          </svg>
-        </span>
-        <span className="text-xs text-gray-400">Map cluster</span>
-        <span className="text-gray-200">›</span>
-        <span className="flex h-4 w-4 items-center justify-center rounded-full border-2 border-dashed border-amber-400 bg-amber-50">
-          <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-        </span>
-        <span className="text-xs font-medium text-amber-600">Calculate potential</span>
-        <span className="text-gray-200">›</span>
-        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100">
-          <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
-        </span>
-        <span className="text-xs text-gray-300">View snapshot</span>
-      </div>
+      <p className="text-sm font-medium text-gray-700 text-center max-w-[240px] leading-snug">
+        Complete the previous step to view the cluster snapshot
+      </p>
+      <p className="text-xs text-gray-400 text-center max-w-[200px] leading-snug">
+        Calculate cluster potential to unlock this view
+      </p>
     </div>
   );
 }
 
-// ── Compare CTA overlay (top-right cluster in single mode) ─────────────────────
-function CompareButton({ onClick }: { onClick: () => void }) {
+// ── Compare button ─────────────────────────────────────────────────────────────
+
+interface CompareButtonProps {
+  isComparing: boolean;
+  onToggle: () => void;
+}
+
+function CompareButton({ isComparing, onToggle }: CompareButtonProps) {
   return (
     <button
-      onClick={onClick}
-      className="
+      onClick={onToggle}
+      className={`
         absolute top-3 right-3 z-10
-        flex items-center gap-1.5 rounded-lg
-        bg-white px-3 py-1.5 text-xs font-medium text-gray-600
-        shadow-sm border border-gray-200
-        hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800
-        transition-all duration-150
-      "
+        inline-flex items-center gap-1.5 px-3 py-1.5
+        rounded-full text-xs font-medium
+        border transition-all duration-200
+        ${
+          isComparing
+            ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
+            : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 shadow-sm"
+        }
+      `}
     >
-      <svg className="h-3.5 w-3.5 text-red-400" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="4" cy="4" r="2.5" fill="#fca5a5" />
-        <circle cx="12" cy="4" r="2.5" fill="#d1d5db" />
-        <circle cx="4" cy="12" r="2.5" fill="#d1d5db" />
-        <circle cx="12" cy="12" r="2.5" fill="#d1d5db" />
-      </svg>
-      Compare with others
+      {isComparing ? (
+        <>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+          Exit compare
+        </>
+      ) : (
+        <>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="18" cy="18" r="3" />
+            <circle cx="6" cy="6" r="3" />
+            <circle cx="6" cy="18" r="3" />
+            <path d="M6 9v6M9 6h6M9 18h6" />
+          </svg>
+          Compare with others
+        </>
+      )}
     </button>
   );
 }
 
-function ExitCompareButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="
-        absolute top-3 right-3 z-10
-        flex items-center gap-1.5 rounded-lg
-        bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600
-        shadow-sm border border-red-100
-        hover:bg-red-100 hover:border-red-200
-        transition-all duration-150
-      "
-    >
-      <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-      Exit compare
-    </button>
-  );
-}
+// ── Main ───────────────────────────────────────────────────────────────────────
 
-// ── Main export ────────────────────────────────────────────────────────────────
-export function QuadrantSnapshot({
-  highlightId,
-  mode = "overview",
-  isPotentialCalculated = true,
-}: QuadrantSnapshotProps) {
-  const [compareMode, setCompareMode] = useState(false);
+export function QuadrantSnapshot({ highlightId, mode = "all", isStageComplete = true }: QuadrantSnapshotProps) {
   const clusterStates = useAppStore((s) => s.clusters);
+  const [isComparing, setIsComparing] = useState(false);
 
-  // ── Build points ─────────────────────────────────────────────────────────────
-  const allPoints = useMemo<Point[]>(() => {
+  const allPoints: Point[] = useMemo(() => {
     return CLUSTERS.map((c) => {
       const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
       const sc = computeClusterScores(c, pc);
       const x = clamp(sc.accessRollupScore * 10 + jitter(c.id + "x", 2.5), 4, 96);
       const y = clamp(sc.potentialScore * 10 + jitter(c.id + "y", 2.5), 4, 96);
-      return { id: c.id, name: c.name, x, y, highlighted: !highlightId || c.id === highlightId };
+      return { id: c.id, name: c.name, x, y, highlighted: false };
     });
-  }, [clusterStates, highlightId]);
+  }, [clusterStates]);
 
-  // ── Is the highlighted cluster in the top-right quadrant? ────────────────────
-  const isTopRight = useMemo(() => {
-    if (!highlightId || mode !== "single") return false;
-    const p = allPoints.find((pt) => pt.id === highlightId);
-    return !!p && p.x >= 50 && p.y >= 50;
-  }, [allPoints, highlightId, mode]);
+  const { highlighted, dim, isTopRight } = useMemo(() => {
+    // ── Single mode ───────────────────────────────────────────────────────────
+    if (mode === "single" && highlightId) {
+      const target = allPoints.find((p) => p.id === highlightId);
+      if (!target) return { highlighted: [], dim: [], isTopRight: false };
 
-  // ── Select which points to render ────────────────────────────────────────────
-  const { highlighted, dim } = useMemo(() => {
-    if (mode === "single" && !compareMode) {
-      // Only the single cluster
-      const solo = allPoints.find((p) => p.id === highlightId);
+      const inTopRight = target.x >= 50 && target.y >= 50;
+
+      // Compare mode: show all 8, only highlight the current cluster
+      if (isComparing) {
+        const eight = pickEight(allPoints, highlightId);
+        return {
+          highlighted: eight.filter((p) => p.id === highlightId).map((p) => ({ ...p, highlighted: true })),
+          dim: eight.filter((p) => p.id !== highlightId).map((p) => ({ ...p, highlighted: false })),
+          isTopRight: inTopRight,
+        };
+      }
+
+      // Default single mode: just the one dot
       return {
-        highlighted: solo ? [{ ...solo, highlighted: true }] : [],
-        dim: [] as Point[],
+        highlighted: [{ ...target, highlighted: true }],
+        dim: [],
+        isTopRight: inTopRight,
       };
     }
 
-    // overview OR compare mode: show 8 clusters
-    // In compare mode, only the highlighted one stays red; all others are dim
-    const eight = pickEight(
-      compareMode ? allPoints.map((p) => ({ ...p, highlighted: p.id === highlightId })) : allPoints,
-      highlightId,
-    );
-
+    // ── All mode ──────────────────────────────────────────────────────────────
+    const eight = pickEight(allPoints, highlightId);
+    const withHighlight = eight.map((p) => ({
+      ...p,
+      highlighted: !highlightId || p.id === highlightId,
+    }));
     return {
-      highlighted: eight.filter((p) => p.highlighted),
-      dim: eight.filter((p) => !p.highlighted),
+      highlighted: withHighlight.filter((p) => p.highlighted),
+      dim: withHighlight.filter((p) => !p.highlighted),
+      isTopRight: false,
     };
-  }, [allPoints, highlightId, mode, compareMode]);
+  }, [allPoints, highlightId, mode, isComparing]);
 
-  // ── Guard: locked state ───────────────────────────────────────────────────────
-  if (mode === "single" && !isPotentialCalculated) {
-    return <LockedState />;
-  }
+  const showCompareButton = mode === "single" && isStageComplete && isTopRight;
 
-  // ── Chart ─────────────────────────────────────────────────────────────────────
   return (
     <div className="relative h-[520px] w-full">
-      {/* Compare / Exit-compare button */}
-      {mode === "single" && isTopRight && !compareMode && <CompareButton onClick={() => setCompareMode(true)} />}
-      {mode === "single" && compareMode && <ExitCompareButton onClick={() => setCompareMode(false)} />}
+      {/* Stage gate overlay */}
+      {mode === "single" && !isStageComplete && <LockedOverlay />}
 
-      {/* Compare-mode header */}
-      {compareMode && (
-        <div className="absolute top-3 left-0 right-0 z-10 flex justify-center pointer-events-none">
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-500 shadow-sm border border-gray-100">
-            Showing <span className="font-semibold text-gray-700">your cluster</span> vs 7 others
-          </span>
+      {/* Compare button — only in top-right quadrant on single mode */}
+      {showCompareButton && <CompareButton isComparing={isComparing} onToggle={() => setIsComparing((v) => !v)} />}
+
+      {/* Chart — blurred out when locked */}
+      <div className={mode === "single" && !isStageComplete ? "opacity-20 pointer-events-none" : undefined}>
+        <ResponsiveContainer width="100%" height={520}>
+          <ScatterChart margin={{ top: 48, right: 48, bottom: 36, left: 8 }}>
+            <CartesianGrid stroke={COLOR_GRID} strokeWidth={0.75} />
+
+            <ReferenceArea x1={50} x2={105} y1={50} y2={105} fill={COLOR_QUADRANT_HI} stroke="none" />
+            <ReferenceLine x={50} stroke={COLOR_AXIS} strokeWidth={1.5} strokeOpacity={0.3} />
+            <ReferenceLine y={50} stroke={COLOR_AXIS} strokeWidth={1.5} strokeOpacity={0.3} />
+
+            <XAxis
+              type="number"
+              dataKey="x"
+              domain={[-5, 105]}
+              tick={false}
+              tickLine={false}
+              axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5, strokeOpacity: 0.4 }}
+            >
+              <Label
+                value="Access →"
+                position="bottom"
+                offset={12}
+                fill={COLOR_AXIS_LABEL}
+                fontSize={11}
+                fontWeight={600}
+              />
+            </XAxis>
+
+            <YAxis
+              type="number"
+              dataKey="y"
+              domain={[-5, 105]}
+              tick={false}
+              tickLine={false}
+              width={40}
+              axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5, strokeOpacity: 0.4 }}
+            >
+              <Label
+                value="Potential →"
+                angle={-90}
+                position="insideLeft"
+                offset={10}
+                fill={COLOR_AXIS_LABEL}
+                fontSize={11}
+                fontWeight={600}
+              />
+            </YAxis>
+
+            <ZAxis range={[1, 1]} />
+            <Tooltip content={() => null} />
+            <Scatter data={[...dim, ...highlighted]} fillOpacity={0} shape={() => <g />} />
+
+            <Customized component={(props: any) => <DotsAndLabels {...props} highlighted={highlighted} dim={dim} />} />
+            <Customized component={AxisLabels} />
+          </ScatterChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Compare mode footer hint */}
+      {isComparing && mode === "single" && (
+        <div
+          className="absolute bottom-2 left-1/2 -translate-x-1/2
+                        text-[11px] text-gray-400 bg-white/90 px-3 py-1
+                        rounded-full border border-gray-100 whitespace-nowrap"
+        >
+          Showing your cluster against 7 others
         </div>
       )}
-
-      <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 48, right: 48, bottom: 36, left: 8 }}>
-          <CartesianGrid stroke={COLOR_GRID} strokeWidth={0.75} />
-
-          <ReferenceArea x1={50} x2={105} y1={50} y2={105} fill={COLOR_QUADRANT_HI} stroke="none" />
-          <ReferenceLine x={50} stroke={COLOR_AXIS} strokeWidth={1.5} strokeOpacity={0.3} />
-          <ReferenceLine y={50} stroke={COLOR_AXIS} strokeWidth={1.5} strokeOpacity={0.3} />
-
-          <XAxis
-            type="number"
-            dataKey="x"
-            domain={[-5, 105]}
-            tick={false}
-            tickLine={false}
-            axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5, strokeOpacity: 0.4 }}
-          >
-            <Label
-              value="Access →"
-              position="bottom"
-              offset={12}
-              fill={COLOR_AXIS_LABEL}
-              fontSize={11}
-              fontWeight={600}
-            />
-          </XAxis>
-
-          <YAxis
-            type="number"
-            dataKey="y"
-            domain={[-5, 105]}
-            tick={false}
-            tickLine={false}
-            width={40}
-            axisLine={{ stroke: COLOR_AXIS, strokeWidth: 1.5, strokeOpacity: 0.4 }}
-          >
-            <Label
-              value="Potential →"
-              angle={-90}
-              position="insideLeft"
-              offset={10}
-              fill={COLOR_AXIS_LABEL}
-              fontSize={11}
-              fontWeight={600}
-            />
-          </YAxis>
-
-          <ZAxis range={[1, 1]} />
-          <Tooltip content={() => null} />
-          <Scatter data={[...dim, ...highlighted]} fillOpacity={0} shape={() => <g />} />
-
-          <Customized component={(props: any) => <DotsAndLabels {...props} highlighted={highlighted} dim={dim} />} />
-          <Customized component={AxisLabels} />
-        </ScatterChart>
-      </ResponsiveContainer>
     </div>
   );
 }
