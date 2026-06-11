@@ -465,7 +465,7 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
       {showCompareButton && <CompareButton isComparing={isComparing} onToggle={() => setIsComparing((v) => !v)} />}
 
       {mode === "single" && isStageComplete && quadrantLabel && targetName && (
-        <p className="text-sm text-gray-600 text-center mb-1">
+        <p className="text-sm text-gray-600 mt-2 mb-1 pl-4 pr-36">
           <span className="font-semibold text-gray-800">{targetName} cluster</span>
           {" is in "}
           <span className="font-semibold text-red-600">{quadrantLabel}</span>
