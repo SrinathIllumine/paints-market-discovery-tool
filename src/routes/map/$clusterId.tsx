@@ -168,7 +168,7 @@ function ClusterDetailScreen() {
       bottom={<BottomNav />}
       header={
         <StageHeader
-          eyebrow="STAGE 1 OF 3 · EXPLORE MARKET POTENTIAL"
+          eyebrow="STAGE 1 OF 3 · MAP MY MARKET POTENTIAL"
           title={cluster.name}
           subtitle={`${cluster.nature} — ${cluster.description}`}
           backTo="/map"
@@ -178,7 +178,7 @@ function ClusterDetailScreen() {
       {/* ── Layout: tab bar + scrollable content + sticky CTA ── */}
       <div className="flex h-full flex-col">
         {/* Tab bar */}
-        <div className="flex shrink-0 bg-red-600">
+        <div className="sticky top-0 z-10 flex shrink-0 bg-red-600">
           {TABS.map((t) => (
             <button
               key={t.id}
