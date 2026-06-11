@@ -30,6 +30,7 @@ import {
   HML_LABEL,
   scoreFromHML,
   type HML,
+  type YesNo,
 } from "@/lib/clusterScoring";
 import { cn } from "@/lib/utils";
 
@@ -62,7 +63,6 @@ function ClusterDetailScreen() {
 
   const [activeTab, setActiveTab] = useState<Tab>("prospects");
   const [snapshotRevealed, setSnapshotRevealed] = useState(false);
-  const [accessAnswers, setAccessAnswers] = useState<("Y" | "N" | null)[]>([null, null, null]);
 
   const state = useAppStore((s) => s.clusters[clusterId]);
   const ensureCluster = useAppStore((s) => s.ensureCluster);
@@ -71,6 +71,15 @@ function ClusterDetailScreen() {
   const addProspect = useAppStore((s) => s.addProspect);
   const existingAssessment = useAppStore((s) => s.assessments[clusterId]);
   const setAssessment = useAppStore((s) => s.setAssessment);
+
+  // ── CHANGE 1: initialise from persisted answers if the user already visited ──
+  const [accessAnswers, setAccessAnswers] = useState<("Y" | "N" | null)[]>(() => {
+    const saved = existingAssessment?.accessAnswers3;
+    if (saved && saved.length === 3) {
+      return saved.map((v) => v ?? null) as ("Y" | "N" | null)[];
+    }
+    return [null, null, null];
+  });
 
   const callPlaces = useServerFn(searchPlacesForCluster);
   const [loading, setLoading] = useState(false);
@@ -161,7 +170,6 @@ function ClusterDetailScreen() {
 
   const pluralCap = prospectPlural(clusterId);
   const intel = getClusterIntel(clusterId, prospects.length);
-  const scores = computeClusterScores(cluster, prospects.length);
   const observedCount = intel.totalProspectsObserved || prospects.length || cluster.prospectCountEstimate;
   const totalRevenue = profile.avgRevenuePerProspect * observedCount;
   const singular = pluralCap.toLowerCase().replace(/s$/, "");
@@ -169,9 +177,26 @@ function ClusterDetailScreen() {
   const annualRevenue = totalRevenue / cycleYears;
   const annualRevenuePerProspect = profile.avgRevenuePerProspect / cycleYears;
   const dynamicRevenueHML: HML = scoreToHML(scoreRevenue(annualRevenuePerProspect));
+
+  // ── Access score derived from user's Y/N answers ───────────────────────────
   const accessYesCount = accessAnswers.filter((a) => a === "Y").length;
   const accessScore = Math.round(accessYesCount * 3.33 * 10) / 10;
-  const dynamicAccessHML: HML | null = accessAnswers.every((a) => a !== null) ? scoreToHML(accessScore) : null;
+  const allAnswered = accessAnswers.every((a) => a !== null);
+  const dynamicAccessHML: HML | null = allAnswered ? scoreToHML(accessScore) : null;
+
+  // ── CHANGE 2: userAccessScore fed into computeClusterScores ───────────────
+  const userAccessScore = allAnswered ? accessScore : undefined;
+  const scores = computeClusterScores(cluster, prospects.length, existingAssessment, userAccessScore);
+
+  // ── CHANGE 3: persist access answers to the store on every change ──────────
+  const handleAccessAnswers = (next: ("Y" | "N" | null)[]) => {
+    setAccessAnswers(next);
+    setAssessment(clusterId, {
+      ...(existingAssessment ?? { completedAt: Date.now() }),
+      accessAnswers3: next.map((v) => v ?? undefined) as (YesNo | undefined)[],
+      completedAt: Date.now(),
+    });
+  };
 
   return (
     <AppShell
@@ -185,7 +210,6 @@ function ClusterDetailScreen() {
         />
       }
     >
-      {/* ── Layout: tab bar + scrollable content + sticky CTA ── */}
       <div className="flex h-full flex-col overflow-hidden">
         {/* Tab bar */}
         <div className="sticky top-0 z-10 flex shrink-0 bg-red-600">
@@ -210,11 +234,9 @@ function ClusterDetailScreen() {
           {/* ── TAB 1: Prospects by region ── */}
           {activeTab === "prospects" && (
             <div className="space-y-5 px-6 py-6">
-              {/* Tab page header */}
               <div className="space-y-0.5">
                 <h2 className="font-display text-2xl">View prospects by region</h2>
               </div>
-              {/* Geo view card */}
               <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <h2 className="font-display text-xl">Geo View</h2>
@@ -254,7 +276,6 @@ function ClusterDetailScreen() {
                 </p>
               </section>
 
-              {/* Prospects by region accordion */}
               <section className="space-y-3">
                 <h2 className="font-display text-xl">Prospects by region</h2>
                 {prospects.length === 0 ? (
@@ -295,7 +316,6 @@ function ClusterDetailScreen() {
                   </Accordion>
                 )}
               </section>
-              {/* Navigate to next tab */}
               <Button
                 onClick={() => setActiveTab("mapping")}
                 size="lg"
@@ -309,7 +329,6 @@ function ClusterDetailScreen() {
           {/* ── TAB 2: Cluster Potential Mapping ── */}
           {activeTab === "mapping" && (
             <div className="space-y-3 px-6 py-6">
-              {/* Tab page header */}
               <div className="space-y-0.5">
                 <h2 className="font-display text-2xl">Calculate your cluster potential</h2>
               </div>
@@ -360,13 +379,14 @@ function ClusterDetailScreen() {
                   title="Share Your Access Level in this Cluster"
                   hml={dynamicAccessHML ?? intel.accessHML}
                 >
+                  {/* ── CHANGE 3 wired here: onChange → handleAccessAnswers ── */}
                   <AccessQuestions
                     pluralLower={pluralCap.toLowerCase()}
                     singular={singular}
                     answers={accessAnswers}
-                    onChange={setAccessAnswers}
+                    onChange={handleAccessAnswers}
                     score={accessScore}
-                    allAnswered={accessAnswers.every((a) => a !== null)}
+                    allAnswered={allAnswered}
                   />
                 </CollapsibleSub>
 
@@ -379,7 +399,10 @@ function ClusterDetailScreen() {
                 </CollapsibleSub>
               </Accordion>
               <Button
-                onClick={() => setActiveTab("snapshot")}
+                onClick={() => {
+                  setSnapshotRevealed(true);
+                  setActiveTab("snapshot");
+                }}
                 size="lg"
                 className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
               >
@@ -401,7 +424,8 @@ function ClusterDetailScreen() {
                 <p className="mb-2 text-xs text-muted-foreground">
                   Position of <b>{cluster.name}</b> against all other clusters.
                 </p>
-                <QuadrantSnapshot mode="single" highlightId={cluster.id} />
+                {/* ── CHANGE: mode="single" + isStageComplete wired to snapshotRevealed ── */}
+                <QuadrantSnapshot mode="single" highlightId={cluster.id} isStageComplete={snapshotRevealed} />
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <ScoreTile label="Revenue" score={scores.revenue} />
@@ -412,8 +436,6 @@ function ClusterDetailScreen() {
             </div>
           )}
         </div>
-
-        {/* ── Persistent CTA — always visible outside tabs- Removed ── */}
       </div>
 
       <AddProspectSheet
@@ -437,7 +459,7 @@ function ClusterDetailScreen() {
   );
 }
 
-// ─── Sub-components (unchanged) ───────────────────────────────────────────────
+// ─── Sub-components ────────────────────────────────────────────────────────────
 
 function CollapsibleSub({
   value,
