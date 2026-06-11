@@ -96,7 +96,7 @@ function IntroScreen() {
       <div className="space-y-3 px-5 py-5">
         {props.map(({ icon: Icon, title, desc, to, count, countLabel, tourId }, idx) => {
           const isPlanCard = idx === 1;
-          const isNextStage = isPlanCard && highlightPlan;
+          const isNextStage = idx === nextStageIdx;
           return (
             <div key={title} className={cn("relative", isPlanCard && "pb-5")}>
               {isNextStage && (
