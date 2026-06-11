@@ -141,6 +141,7 @@ function PlanClusterScreen() {
   const eventEstimates = useAppStore((s) => s.plan.eventEstimatesByCluster);
   const setEventEstimate = useAppStore((s) => s.setEventEstimate);
   const unlockStage = useAppStore((s) => s.unlockStage);
+  const setMonthlyFocus = useAppStore((s) => s.setMonthlyFocus);
 
   const mainRef = useRef<HTMLElement>(null);
   const [step, setStep] = useState<PlanStep>(0);
@@ -184,6 +185,7 @@ function PlanClusterScreen() {
     });
     setConfirmOpen(false);
     unlockStage(3);
+    setMonthlyFocus(clusterId);
     // navigate({ to: "/" });
   };
 
