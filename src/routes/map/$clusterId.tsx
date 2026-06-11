@@ -454,7 +454,7 @@ function CollapsibleSub({
 }: {
   value: string;
   title: string;
-  hml: HML;
+  hml: HML | null;
   children: React.ReactNode;
 }) {
   return (
