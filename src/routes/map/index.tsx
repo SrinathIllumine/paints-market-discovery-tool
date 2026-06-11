@@ -66,6 +66,13 @@ function ClusterPotentialScreen() {
         <div className="space-y-0.5">
           <p className="font-display text-lg">Total clusters in your area: {totalClusters}</p>
         </div>
+        <div className="mt-6 rounded-2xl border border-border bg-card px-4 py-3 text-center shadow-sm">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Progress</p>
+          <p className="mt-0.5 font-display text-base">
+            <span className="font-bold text-critical">{mappedCount}</span>
+            <span className="text-muted-foreground"> of {totalClusters} clusters mapped so far</span>
+          </p>
+        </div>
         <div data-tour="map-clusters" className="grid grid-cols-2 gap-5 sm:grid-cols-3">
           {CLUSTERS.map((c) => (
             <BubbleCircle
@@ -74,14 +81,6 @@ function ClusterPotentialScreen() {
               onClick={() => navigate({ to: "/map/$clusterId", params: { clusterId: c.id } })}
             />
           ))}
-        </div>
-
-        <div className="mt-6 rounded-2xl border border-border bg-card px-4 py-3 text-center shadow-sm">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Progress</p>
-          <p className="mt-0.5 font-display text-base">
-            <span className="font-bold text-critical">{mappedCount}</span>
-            <span className="text-muted-foreground"> of {totalClusters} clusters mapped so far</span>
-          </p>
         </div>
       </div>
 
