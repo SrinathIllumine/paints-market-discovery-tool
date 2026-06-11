@@ -72,6 +72,7 @@ function ClusterDetailScreen() {
   const addProspect = useAppStore((s) => s.addProspect);
   const existingAssessment = useAppStore((s) => s.assessments[clusterId]);
   const setAssessment = useAppStore((s) => s.setAssessment);
+  const unlockStage = useAppStore((s) => s.unlockStage);
 
   // ── CHANGE 1: initialise from persisted answers if the user already visited ──
   const [accessAnswers, setAccessAnswers] = useState<("Y" | "N" | null)[]>(() => {
