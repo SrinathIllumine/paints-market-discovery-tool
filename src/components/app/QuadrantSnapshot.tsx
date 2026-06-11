@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ScatterChart,
   Scatter,
@@ -17,8 +17,25 @@ import { CLUSTERS } from "@/data/clusters";
 import { computeClusterScores } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
 
+// ── Types ──────────────────────────────────────────────────────────────────────
 type Point = { id: string; name: string; x: number; y: number; highlighted: boolean };
 
+/** "single" = a specific cluster's detail page (one dot, locked state, compare CTA)
+ *  "overview" = the "View my clusters" page (8 dots, no locked state, no compare CTA) */
+export type QuadrantMode = "single" | "overview";
+
+export interface QuadrantSnapshotProps {
+  /** The cluster to spotlight. Required in "single" mode. */
+  highlightId?: string;
+  mode?: QuadrantMode;
+  /**
+   * Whether the user has completed the "Calculate cluster potential" step.
+   * Only checked in "single" mode. Defaults to true so the overview is never blocked.
+   */
+  isPotentialCalculated?: boolean;
+}
+
+// ── Constants ──────────────────────────────────────────────────────────────────
 const COLOR_AXIS = "#1a1a1a";
 const COLOR_GRID = "rgba(0,0,0,0.08)";
 const COLOR_LABEL_MUTED = "#9ca3af";
@@ -34,6 +51,7 @@ const PAD = 10;
 const FONT_SIZE = 10;
 const MAX_NAME_CHARS = 26;
 
+// ── Helpers ────────────────────────────────────────────────────────────────────
 function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
 }
@@ -52,7 +70,6 @@ function isRequired(name: string) {
   return REQUIRED_NAMES.some((r) => name.toLowerCase().includes(r));
 }
 
-// ── pickEight: always include highlightId cluster even if outside default 8 ───
 function pickEight(all: Point[], highlightId?: string): Point[] {
   const quadrant = (p: Point) => (p.y >= 50 ? 2 : 0) + (p.x >= 50 ? 1 : 0);
   const buckets: Point[][] = [[], [], [], []];
@@ -61,7 +78,6 @@ function pickEight(all: Point[], highlightId?: string): Point[] {
   const chosen: Point[] = [];
   const ids = new Set<string>();
 
-  // 1. Always include the highlighted cluster first (even if not in default 8)
   if (highlightId) {
     const hi = all.find((p) => p.id === highlightId);
     if (hi && !ids.has(hi.id)) {
@@ -70,7 +86,6 @@ function pickEight(all: Point[], highlightId?: string): Point[] {
     }
   }
 
-  // 2. Always include required clusters
   for (const p of all) {
     if (isRequired(p.name) && !ids.has(p.id)) {
       chosen.push(p);
@@ -78,7 +93,6 @@ function pickEight(all: Point[], highlightId?: string): Point[] {
     }
   }
 
-  // 3. Fill each quadrant up to 2
   for (let q = 0; q < 4; q++) {
     let need = 2 - chosen.filter((p) => quadrant(p) === q).length;
     for (const p of buckets[q]) {
@@ -110,8 +124,8 @@ function computeLabelPos(
   angularNudge = 0,
 ): { lx: number; ly: number; anchor: "start" | "end" | "middle"; lineX2: number; lineY2: number } {
   const rad = (angularNudge * Math.PI) / 180;
-  let vx = cx - midPx;
-  let vy = cy - midPy;
+  let vx = cx - midPx,
+    vy = cy - midPy;
   if (angularNudge !== 0) {
     const cos = Math.cos(rad),
       sin = Math.sin(rad);
@@ -123,7 +137,6 @@ function computeLabelPos(
 
   const lineX2 = cx + nx * DOT_R;
   const lineY2 = cy + ny * DOT_R;
-
   let lx = cx + nx * (DOT_R + PAD);
   let ly = cy + ny * (DOT_R + PAD);
 
@@ -154,7 +167,7 @@ function assignNudges(points: Point[], midX: number, midY: number): Map<string, 
   return nudges;
 }
 
-// ── Dots + labels ──────────────────────────────────────────────────────────────
+// ── Sub-components ─────────────────────────────────────────────────────────────
 function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
   const xAxis = Object.values(xAxisMap ?? {})[0] as any;
   const yAxis = Object.values(yAxisMap ?? {})[0] as any;
@@ -184,8 +197,8 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
   );
 
   const renderPoint = (p: Point) => {
-    const cx = px(p.x);
-    const cy = py(p.y);
+    const cx = px(p.x),
+      cy = py(p.y);
     const label = truncate(p.name);
     const dotFill = p.highlighted ? COLOR_DOT_HI : COLOR_DOT_DIM;
     const nudge = nudges.get(p.id) ?? 0;
@@ -211,11 +224,10 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
           y2={ly}
           stroke={COLOR_LABEL_MUTED}
           strokeWidth={0.75}
-          strokeOpacity={0.5}
+          strokeOpacity={p.highlighted ? 0.5 : 0.25}
           strokeDasharray="2 2"
         />
-        <circle cx={cx} cy={cy} r={DOT_R} fill={dotFill} />
-        {/* White halo for legibility */}
+        <circle cx={cx} cy={cy} r={DOT_R} fill={dotFill} opacity={p.highlighted ? 1 : 0.45} />
         <text
           x={lx}
           y={ly}
@@ -227,6 +239,7 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
           strokeLinejoin="round"
           paintOrder="stroke"
           style={{ pointerEvents: "none", userSelect: "none" }}
+          opacity={p.highlighted ? 1 : 0.5}
         >
           {label}
         </text>
@@ -236,8 +249,9 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
           textAnchor={anchor}
           fontSize={FONT_SIZE}
           fontWeight={500}
-          fill={COLOR_CLUSTER_LBL}
+          fill={p.highlighted ? "#374151" : COLOR_CLUSTER_LBL}
           style={{ pointerEvents: "none", userSelect: "none" }}
+          opacity={p.highlighted ? 1 : 0.5}
         >
           {label}
         </text>
@@ -248,7 +262,6 @@ function DotsAndLabels({ xAxisMap, yAxisMap, highlighted, dim }: any) {
   return <>{all.map(renderPoint)}</>;
 }
 
-// ── Axis Low / High labels ─────────────────────────────────────────────────────
 function AxisLabels({ xAxisMap, yAxisMap }: any) {
   const xAxis = Object.values(xAxisMap ?? {})[0] as any;
   const yAxis = Object.values(yAxisMap ?? {})[0] as any;
@@ -258,8 +271,8 @@ function AxisLabels({ xAxisMap, yAxisMap }: any) {
     right = xAxis.x + xAxis.width;
   const top = yAxis.y,
     bottom = yAxis.y + yAxis.height;
-  const midX = (left + right) / 2;
-  const midY = (top + bottom) / 2;
+  const midX = (left + right) / 2,
+    midY = (top + bottom) / 2;
 
   const props = { fontSize: 10, fontWeight: 600, fill: COLOR_LABEL_MUTED } as const;
 
@@ -293,30 +306,183 @@ function AxisLabels({ xAxisMap, yAxisMap }: any) {
   );
 }
 
-// ── Main ───────────────────────────────────────────────────────────────────────
-export function QuadrantSnapshot({ highlightId }: { highlightId?: string }) {
+// ── Locked overlay (incomplete potential step) ─────────────────────────────────
+function LockedState() {
+  return (
+    <div className="h-[520px] w-full flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-gray-200 bg-gray-50">
+      {/* Lock icon */}
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm border border-gray-200">
+        <svg
+          className="h-5 w-5 text-gray-400"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+      </div>
+
+      <div className="text-center">
+        <p className="text-sm font-semibold text-gray-700">Cluster snapshot locked</p>
+        <p className="mt-1 max-w-[260px] text-xs leading-relaxed text-gray-400">
+          Complete the <span className="font-medium text-gray-500">Calculate cluster potential</span> step to unlock the
+          snapshot for this cluster.
+        </p>
+      </div>
+
+      {/* Step indicator strip */}
+      <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-sm border border-gray-100">
+        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500">
+          <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 12 12" fill="currentColor">
+            <path
+              d="M10 3L5 8.5 2 5.5"
+              stroke="white"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </svg>
+        </span>
+        <span className="text-xs text-gray-400">Map cluster</span>
+        <span className="text-gray-200">›</span>
+        <span className="flex h-4 w-4 items-center justify-center rounded-full border-2 border-dashed border-amber-400 bg-amber-50">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+        </span>
+        <span className="text-xs font-medium text-amber-600">Calculate potential</span>
+        <span className="text-gray-200">›</span>
+        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100">
+          <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
+        </span>
+        <span className="text-xs text-gray-300">View snapshot</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Compare CTA overlay (top-right cluster in single mode) ─────────────────────
+function CompareButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="
+        absolute top-3 right-3 z-10
+        flex items-center gap-1.5 rounded-lg
+        bg-white px-3 py-1.5 text-xs font-medium text-gray-600
+        shadow-sm border border-gray-200
+        hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800
+        transition-all duration-150
+      "
+    >
+      <svg className="h-3.5 w-3.5 text-red-400" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="4" cy="4" r="2.5" fill="#fca5a5" />
+        <circle cx="12" cy="4" r="2.5" fill="#d1d5db" />
+        <circle cx="4" cy="12" r="2.5" fill="#d1d5db" />
+        <circle cx="12" cy="12" r="2.5" fill="#d1d5db" />
+      </svg>
+      Compare with others
+    </button>
+  );
+}
+
+function ExitCompareButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="
+        absolute top-3 right-3 z-10
+        flex items-center gap-1.5 rounded-lg
+        bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600
+        shadow-sm border border-red-100
+        hover:bg-red-100 hover:border-red-200
+        transition-all duration-150
+      "
+    >
+      <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+      Exit compare
+    </button>
+  );
+}
+
+// ── Main export ────────────────────────────────────────────────────────────────
+export function QuadrantSnapshot({
+  highlightId,
+  mode = "overview",
+  isPotentialCalculated = true,
+}: QuadrantSnapshotProps) {
+  const [compareMode, setCompareMode] = useState(false);
   const clusterStates = useAppStore((s) => s.clusters);
 
-  const { highlighted, dim } = useMemo(() => {
-    const all: Point[] = CLUSTERS.map((c) => {
+  // ── Build points ─────────────────────────────────────────────────────────────
+  const allPoints = useMemo<Point[]>(() => {
+    return CLUSTERS.map((c) => {
       const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
       const sc = computeClusterScores(c, pc);
       const x = clamp(sc.accessRollupScore * 10 + jitter(c.id + "x", 2.5), 4, 96);
       const y = clamp(sc.potentialScore * 10 + jitter(c.id + "y", 2.5), 4, 96);
       return { id: c.id, name: c.name, x, y, highlighted: !highlightId || c.id === highlightId };
     });
+  }, [clusterStates, highlightId]);
 
-    // Pass highlightId so that cluster is always included even outside default 8
-    const eight = pickEight(all, highlightId);
+  // ── Is the highlighted cluster in the top-right quadrant? ────────────────────
+  const isTopRight = useMemo(() => {
+    if (!highlightId || mode !== "single") return false;
+    const p = allPoints.find((pt) => pt.id === highlightId);
+    return !!p && p.x >= 50 && p.y >= 50;
+  }, [allPoints, highlightId, mode]);
+
+  // ── Select which points to render ────────────────────────────────────────────
+  const { highlighted, dim } = useMemo(() => {
+    if (mode === "single" && !compareMode) {
+      // Only the single cluster
+      const solo = allPoints.find((p) => p.id === highlightId);
+      return {
+        highlighted: solo ? [{ ...solo, highlighted: true }] : [],
+        dim: [] as Point[],
+      };
+    }
+
+    // overview OR compare mode: show 8 clusters
+    // In compare mode, only the highlighted one stays red; all others are dim
+    const eight = pickEight(
+      compareMode ? allPoints.map((p) => ({ ...p, highlighted: p.id === highlightId })) : allPoints,
+      highlightId,
+    );
 
     return {
       highlighted: eight.filter((p) => p.highlighted),
       dim: eight.filter((p) => !p.highlighted),
     };
-  }, [clusterStates, highlightId]);
+  }, [allPoints, highlightId, mode, compareMode]);
 
+  // ── Guard: locked state ───────────────────────────────────────────────────────
+  if (mode === "single" && !isPotentialCalculated) {
+    return <LockedState />;
+  }
+
+  // ── Chart ─────────────────────────────────────────────────────────────────────
   return (
-    <div className="h-[520px] w-full">
+    <div className="relative h-[520px] w-full">
+      {/* Compare / Exit-compare button */}
+      {mode === "single" && isTopRight && !compareMode && <CompareButton onClick={() => setCompareMode(true)} />}
+      {mode === "single" && compareMode && <ExitCompareButton onClick={() => setCompareMode(false)} />}
+
+      {/* Compare-mode header */}
+      {compareMode && (
+        <div className="absolute top-3 left-0 right-0 z-10 flex justify-center pointer-events-none">
+          <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-500 shadow-sm border border-gray-100">
+            Showing <span className="font-semibold text-gray-700">your cluster</span> vs 7 others
+          </span>
+        </div>
+      )}
+
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 48, right: 48, bottom: 36, left: 8 }}>
           <CartesianGrid stroke={COLOR_GRID} strokeWidth={0.75} />
