@@ -514,6 +514,75 @@ function ScoreTile({ label, score }: { label: string; score: number }) {
   );
 }
 
+function AccessQuestions({
+  pluralLower,
+  singular,
+  answers,
+  onChange,
+  score,
+  allAnswered,
+}: {
+  pluralLower: string;
+  singular: string;
+  answers: ("Y" | "N" | null)[];
+  onChange: (next: ("Y" | "N" | null)[]) => void;
+  score: number;
+  allAnswered: boolean;
+}) {
+  const questions = [
+    `Do you have 2-3 major / leading ${pluralLower} that are your customers?`,
+    `Do you have any contractors who are loyal to JK and are deeply connected with this market?`,
+    `Do you have any touchpoints in the ${singular} community who is well-known?`,
+  ];
+  const set = (i: number, v: "Y" | "N") => {
+    const next = [...answers];
+    next[i] = v;
+    onChange(next);
+  };
+  return (
+    <div className="space-y-3">
+      <ul className="space-y-3">
+        {questions.map((q, i) => (
+          <li key={i} className="rounded-xl border border-border bg-background/40 p-3">
+            <p className="mb-2 text-sm leading-snug">{q}</p>
+            <div className="flex gap-2">
+              {(["Y", "N"] as const).map((v) => {
+                const active = answers[i] === v;
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => set(i, v)}
+                    className={cn(
+                      "flex-1 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors",
+                      active
+                        ? v === "Y"
+                          ? "border-green-400 bg-green-100 text-green-800"
+                          : "border-red-400 bg-red-100 text-red-800"
+                        : "border-border bg-card text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {v === "Y" ? "Yes" : "No"}
+                  </button>
+                );
+              })}
+            </div>
+          </li>
+        ))}
+      </ul>
+      <div className="rounded-xl border border-border bg-card p-3 text-sm">
+        {allAnswered ? (
+          <p>
+            Access score: <b>{score.toFixed(2)}</b> / 10
+          </p>
+        ) : (
+          <p className="text-muted-foreground">Answer all questions to see the access score.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 void CLUSTERS;
 void scoreFromHML;
 void scoreToHML;
