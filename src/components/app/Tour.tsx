@@ -51,24 +51,35 @@ export function Tour({ tourKey, steps }: { tourKey: string; steps: TourStep[] })
     if (!active) return;
     const step = steps[idx];
     if (!step) return;
-    const el = document.querySelector(step.selector) as HTMLElement | null;
-    if (!el) {
-      setRect(null);
-      return;
-    }
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    const update = () => setRect(el.getBoundingClientRect());
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
-    const interval = setInterval(update, 300);
+    // Fire side effect (e.g. switch tab) before locating the element.
+    step.onShow?.();
+    let cleanupFns: Array<() => void> = [];
+    const attach = () => {
+      const el = document.querySelector(step.selector) as HTMLElement | null;
+      if (!el) {
+        setRect(null);
+        return;
+      }
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      const update = () => setRect(el.getBoundingClientRect());
+      update();
+      const ro = new ResizeObserver(update);
+      ro.observe(el);
+      window.addEventListener("resize", update);
+      window.addEventListener("scroll", update, true);
+      const interval = setInterval(update, 300);
+      cleanupFns.push(() => {
+        ro.disconnect();
+        window.removeEventListener("resize", update);
+        window.removeEventListener("scroll", update, true);
+        clearInterval(interval);
+      });
+    };
+    // Wait a frame for the DOM to render after the side effect.
+    const t = setTimeout(attach, 60);
     return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update, true);
-      clearInterval(interval);
+      clearTimeout(t);
+      cleanupFns.forEach((fn) => fn());
     };
   }, [active, idx, steps]);
 
