@@ -128,7 +128,7 @@ function IntroScreen() {
                   </span>
                 )}
               </Link>
-              {isPlanCard && (
+              {/*{isPlanCard && (
                 <Link
                   to="/plan/past-roadmap"
                   className="absolute -bottom-1 right-4 inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-md transition-colors hover:bg-muted/40"
@@ -137,7 +137,7 @@ function IntroScreen() {
                   Review Past Engagements
                   <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
                 </Link>
-              )}
+              )}*/}
             </div>
           );
         })}
