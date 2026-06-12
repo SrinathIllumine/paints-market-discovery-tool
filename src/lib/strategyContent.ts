@@ -33,7 +33,7 @@ export const CONNECT_STRATEGY_OPTIONS: { key: ConnectStrategy; label: string; de
   },
   {
     key: "INFLUENCER",
-    label: "Influencer-driven",
+    label: "Influencer-connect",
     description: "Engage site supervisors, interior designers and architects who steer decisions.",
   },
 ];
