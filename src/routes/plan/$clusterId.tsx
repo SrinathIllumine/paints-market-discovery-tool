@@ -627,7 +627,7 @@ function MarketStep({
     <div className="space-y-4">
       {!hasStrategies && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
-          No customer engagement strategy selected yet. Go back to Stage 2 to pick one — the events below will update
+          No connect approach selected yet. Go back to Stage 2 to pick one — the events below will update
           accordingly.
         </div>
       )}
