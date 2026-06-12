@@ -340,7 +340,7 @@ function PlanClusterScreen() {
 function StageSectionTitle({ index, title }: { index: number; title: string }) {
   // Map index to the requested stage titles
   const displayTitle = 
-    index === 1 ? "Design Value" :
+    index === 1 ? "DESIGN VALUE PROPOSITION" :
     index === 2 ? "Select Connect Approach" :
     index === 3 ? "Plan Outreach Initiatives" :
     index === 4 ? "Create Action Plan" :
