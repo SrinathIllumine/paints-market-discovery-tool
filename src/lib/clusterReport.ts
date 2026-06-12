@@ -56,6 +56,14 @@ export function generateClusterReportPdf({
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 40;
+  const positionLabel =
+    highPotential && highAccess
+      ? "High Potential / High Access"
+      : highPotential && !highAccess
+        ? "High Potential / Low Access"
+        : !highPotential && highAccess
+          ? "Low Potential / High Access"
+          : "Low Potential / Low Access";
   let y = margin;
 
   // Header band
@@ -190,14 +198,6 @@ export function generateClusterReportPdf({
   // ── 3. Strategic insights ───────────────────────────────────
   const highPotential = potentialScore >= 5;
   const highAccess = accessRollupScore >= 5;
-  const positionLabel =
-    highPotential && highAccess
-      ? "High Potential / High Access"
-      : highPotential && !highAccess
-        ? "High Potential / Low Access"
-        : !highPotential && highAccess
-          ? "Low Potential / High Access"
-          : "Low Potential / Low Access";
 
   const strategicPoints =
     highPotential && highAccess
