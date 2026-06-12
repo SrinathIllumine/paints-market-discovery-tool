@@ -23,7 +23,7 @@ export const CONNECT_STRATEGY_OPTIONS: { key: ConnectStrategy; label: string; de
   },
   {
     key: "D2C",
-    label: "Direct-sales driven",
+    label: "Direct-sales connect",
     description: "Reach end customers directly via walk-ins, demos and digital channels.",
   },
   {
