@@ -309,7 +309,7 @@ function ProspectDetailPage() {
             onClick={() => setOpenOutcomes((v) => !v)}
             className="flex w-full items-center justify-between gap-2 text-left text-sm font-semibold"
           >
-            Add your notes
+            Your notes
             <span className="text-xs text-muted-foreground">{openOutcomes ? "Hide" : "Add"}</span>
           </button>
           {openOutcomes && (
