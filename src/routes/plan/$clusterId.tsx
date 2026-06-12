@@ -625,7 +625,7 @@ function MarketStep({
       )}
       <p className="text-xs text-muted-foreground">
         The contribution events below are tailored to your selected customer engagement{" "}
-        {customerStrategies.length === 1 ? "strategy" : "strategies"}. Pick the ones you'll run this month.
+        {customerStrategies.length === 1 ? "strategy" : "strategies"}. Pick the contribution events you want to run in this month.
       </p>
       <div className="space-y-2">
         {marketOptions.map((opt) => {
