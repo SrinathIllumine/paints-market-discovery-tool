@@ -56,6 +56,8 @@ export function generateClusterReportPdf({
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 40;
+  const highPotential = potentialScore >= 5;
+  const highAccess = accessRollupScore >= 5;
   const positionLabel =
     highPotential && highAccess
       ? "High Potential / High Access"
