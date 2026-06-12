@@ -227,7 +227,7 @@ function ClusterDetailScreen() {
     >
       <div className="flex min-h-full flex-col">
         {/* Tab bar */}
-        <div className="sticky top-0 z-10 flex shrink-0 bg-red-600">
+        <div className="sticky top-0 z-50 flex shrink-0 bg-red-600">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -279,7 +279,7 @@ function ClusterDetailScreen() {
                     boundary={PANVEL_BOUNDARY}
                   />
                   {loading && (
-                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/60">
+                    <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-background/60">
                       <Loader2 className="h-5 w-5 animate-spin text-navy" />
                     </div>
                   )}
