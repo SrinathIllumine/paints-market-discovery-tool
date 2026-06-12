@@ -198,7 +198,7 @@ export function generateClusterReportPdf({
   block("Revenue Potential", revenueHML, [
     `There are ${observedCount} prospects present in this cluster.`,
     `National average revenue per prospect: ${formatRupees(profile.avgRevenuePerProspect)}.`,
-    `Typical repainting cycle: ${cycleYears} year${cycleYears === 1 ? "" : "s"}.`,
+    `Repainting cycle: ${cycleYears} year${cycleYears === 1 ? "" : "s"}.`,
     `Total annual cluster revenue potential: ${formatRupees(annualRevenue)}.`,
   ]);
 
