@@ -28,7 +28,7 @@ export const CONNECT_STRATEGY_OPTIONS: { key: ConnectStrategy; label: string; de
   },
   {
     key: "RETAILER",
-    label: "Retailer-driven",
+    label: "Retailer-connect",
     description: "Drive sell-out via local retail counters, shade cards and visibility.",
   },
   {
