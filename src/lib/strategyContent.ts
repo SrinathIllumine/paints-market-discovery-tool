@@ -1,6 +1,3 @@
-// Engagement-plan connect strategies, cluster-specific value propositions,
-// per-strategy initiatives, contact tables and recommended actions with assets.
-
 import { getTopics } from "@/data/eventTopics";
 import { getDominantContractors } from "@/lib/clusterScoring";
 
@@ -121,60 +118,22 @@ export const MARKET_ENGAGEMENT_OPTIONS: MarketEngagementOption[] = [
   },
 ];
 
-// ── Strategy → preferred market option IDs per category ──────────────────────
-// Each strategy maps to one preferred option id per category.
-// These are shown first / selected by default when that strategy is active.
-
 const STRATEGY_MARKET_PREFERENCE: Record<ConnectStrategy, Record<MarketEngagementCategory, string>> = {
-  CONTRACTOR: {
-    Knowledge: "tech-workshop",
-    Service: "site-advisory",
-    Social: "community-csr",
-  },
-  INFLUENCER: {
-    Knowledge: "spec-clinic",
-    Service: "site-advisory",
-    Social: "influencer-social",
-  },
-  RETAILER: {
-    Knowledge: "retailer-knowledge",
-    Service: "retailer-service",
-    Social: "retailer-social",
-  },
-  D2C: {
-    Knowledge: "owner-awareness",
-    Service: "d2c-service",
-    Social: "festival-spon",
-  },
-  // Fallbacks for BRAND / OUTREACH
-  BRAND: {
-    Knowledge: "tech-workshop",
-    Service: "demo-drive",
-    Social: "festival-spon",
-  },
-  OUTREACH: {
-    Knowledge: "tech-workshop",
-    Service: "site-advisory",
-    Social: "community-csr",
-  },
+  CONTRACTOR: { Knowledge: "tech-workshop", Service: "site-advisory", Social: "community-csr" },
+  INFLUENCER: { Knowledge: "spec-clinic", Service: "site-advisory", Social: "influencer-social" },
+  RETAILER: { Knowledge: "retailer-knowledge", Service: "retailer-service", Social: "retailer-social" },
+  D2C: { Knowledge: "owner-awareness", Service: "d2c-service", Social: "festival-spon" },
+  BRAND: { Knowledge: "tech-workshop", Service: "demo-drive", Social: "festival-spon" },
+  OUTREACH: { Knowledge: "tech-workshop", Service: "site-advisory", Social: "community-csr" },
 };
 
-/**
- * Returns one MarketEngagementOption per category, chosen based on the
- * customer strategies selected. If multiple strategies are active, the first
- * one wins per category (priority order: CONTRACTOR > INFLUENCER > RETAILER > D2C).
- */
 export function getMarketOptionsForStrategies(customerStrategies: ConnectStrategy[]): MarketEngagementOption[] {
   const PRIORITY: ConnectStrategy[] = ["CONTRACTOR", "INFLUENCER", "RETAILER", "D2C", "BRAND", "OUTREACH"];
   const categories: MarketEngagementCategory[] = ["Knowledge", "Service", "Social"];
-
-  // Pick the highest-priority strategy that is selected
   const dominant = PRIORITY.find((s) => customerStrategies.includes(s)) ?? "CONTRACTOR";
-
   return categories.map((cat) => {
     const preferredId = STRATEGY_MARKET_PREFERENCE[dominant][cat];
     const found = MARKET_ENGAGEMENT_OPTIONS.find((o) => o.id === preferredId);
-    // Fallback: first option in that category
     return found ?? MARKET_ENGAGEMENT_OPTIONS.find((o) => o.category === cat)!;
   });
 }
@@ -209,8 +168,6 @@ export const D2C_CHANNELS = [
   "Local digital ads",
   "Site-visit demo campaign",
 ];
-
-/* ─────────────────────────── value propositions ─────────────────────────── */
 
 export type ValuePropositionCard = { title: string; body: string };
 
@@ -278,8 +235,6 @@ export function getValuePropositions(clusterId: string): string[] {
   return getValuePropositionCards(clusterId).map((c) => c.title);
 }
 
-/* ─────────────────────────── brand awareness initiatives ─────────────────── */
-
 const BRAND_INITIATIVES: Record<string, string[]> = {
   schools: [
     "Child-safe paint awareness drive at PTA meet",
@@ -312,8 +267,6 @@ export function getBrandInitiatives(clusterId: string): string[] {
   );
 }
 
-/* ─────────────────────────── contribution event suggestions ──────────────── */
-
 export function getContributionEvents(clusterId: string): string[] {
   const awareness = getTopics(clusterId, "Awareness");
   const workshops = getTopics(clusterId, "Workshop");
@@ -326,8 +279,6 @@ export function getContributionEvents(clusterId: string): string[] {
     "Painter / contractor felicitation event",
   ];
 }
-
-/* ─────────────────────────── direct sales initiatives ────────────────────── */
 
 const D2C_INITIATIVES: Record<string, string[]> = {
   schools: [
@@ -353,8 +304,6 @@ export function getD2cInitiatives(clusterId: string): string[] {
   );
 }
 
-/* ─────────────────────────── contractor pool re-export ───────────────────── */
-
 export function getContractorSuggestions(clusterId: string): ContactEntry[] {
   return getDominantContractors(clusterId).map((c, i) => ({
     id: `seed-${clusterId}-${i}`,
@@ -365,8 +314,6 @@ export function getContractorSuggestions(clusterId: string): ContactEntry[] {
   }));
 }
 
-/* ─────────────────────────── recommended actions per strategy + assets ───── */
-
 export type ActionAssetKind = "list" | "text" | "contacts" | "deck";
 export type ActionAsset = {
   label: string;
@@ -375,10 +322,7 @@ export type ActionAsset = {
   contacts?: ContactEntry[];
   body?: string;
 };
-export type ActionItem = {
-  text: string;
-  assets?: ActionAsset[];
-};
+export type ActionItem = { text: string; assets?: ActionAsset[] };
 
 function pamphletAsset(clusterId: string): ActionAsset {
   return {
@@ -438,6 +382,7 @@ export function getRecommendedActions(strategy: ConnectStrategy, clusterId: stri
       return [
         { text: "Activate retailer counters with shade cards and demo cans", assets: [pamphletAsset(clusterId)] },
         { text: "Run a retailer engagement event", assets: [pamphletAsset(clusterId)] },
+        { text: "Refresh shade cards and branding at retail counters", assets: [pamphletAsset(clusterId)] },
       ];
     case "INFLUENCER":
       return [
@@ -446,11 +391,10 @@ export function getRecommendedActions(strategy: ConnectStrategy, clusterId: stri
           assets: [contactsAsset(clusterId)],
         },
         { text: "Share a specification kit and follow up within 7 days", assets: [deckAsset()] },
+        { text: "Host an influencer / designer appreciation meet", assets: [deckAsset()] },
       ];
   }
 }
-
-/* ─────────────────────────── legacy stubs (kept for back-compat) ──────────── */
 
 export type ActionLinkKind = "popup-list" | "popup-text" | "popup-contacts" | "deck";
 export type ActionLink = {
@@ -466,7 +410,6 @@ export type ActionStep = { text: string; link?: ActionLink };
 export function getLocalCampaignSuggestions(clusterId: string): string[] {
   return getBrandInitiatives(clusterId);
 }
-
 export function generateActionPlan(
   clusterId: string,
   strategy: ConnectStrategy,

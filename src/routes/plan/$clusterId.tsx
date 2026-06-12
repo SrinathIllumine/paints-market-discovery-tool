@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, FileDown, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileDown, Plus, Star, Trash2 } from "lucide-react";
 import { generateMonthlyEngagementPlanPdf } from "@/lib/monthlyPlanReport";
 import {
   CONNECT_STRATEGY_OPTIONS,
@@ -23,7 +23,6 @@ import {
   MARKET_ENGAGEMENT_OPTIONS,
   getMarketOptionsForStrategies,
   getValuePropositionCards,
-  getD2cInitiatives,
   getRecommendedActions,
   type ActionAsset,
   type ConnectStrategy,
@@ -47,6 +46,12 @@ const CATEGORY_TONE: Record<MarketEngagementCategory, string> = {
   Social: "border-violet-200 bg-violet-50 text-violet-800",
 };
 
+const CATEGORY_BLURB: Record<MarketEngagementCategory, string> = {
+  Knowledge: "Share know-how",
+  Service: "Offer on-ground help",
+  Social: "Show up in the community",
+};
+
 const INFLUENCER_ROLES = ["Site supervisor", "Interior designer", "Architect", "Other"];
 
 /* ─────────────────────────────────────────────────────────────
@@ -56,7 +61,7 @@ const STEP_LABELS = [
   ["Design Value", "Proposition"],
   ["Select", "Connect", "Approach"],
   ["Plan", "Outreach", "Initiatives"],
-  ["Create", "Action", "Plans"],
+  ["Create", "Action", "Plan"],
 ];
 
 const ARROW_PX = 12;
@@ -68,13 +73,11 @@ function StepperBar({ current, onGoTo }: { current: PlanStep; onGoTo: (n: PlanSt
         const active = i <= current;
         const isFirst = i === 0;
         const isLast = i === STEP_LABELS.length - 1;
-
         const clipPath = isFirst
           ? `polygon(0 0, calc(100% - ${ARROW_PX}px) 0, 100% 50%, calc(100% - ${ARROW_PX}px) 100%, 0 100%)`
           : isLast
             ? `polygon(0 0, 100% 0, 100% 100%, 0 100%, ${ARROW_PX}px 50%)`
             : `polygon(0 0, calc(100% - ${ARROW_PX}px) 0, 100% 50%, calc(100% - ${ARROW_PX}px) 100%, 0 100%, ${ARROW_PX}px 50%)`;
-
         return (
           <button
             key={i}
@@ -147,14 +150,22 @@ function PlanClusterScreen() {
 
   const mainRef = useRef<HTMLElement>(null);
   const [step, setStep] = useState<PlanStep>(0);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [estimateEventId, setEstimateEventId] = useState<string | null>(null);
+
+  // Stage 4: starred items (local state — committed this month)
+  const [starredItems, setStarredItems] = useState<Set<string>>(new Set());
+  const toggleStar = (key: string) =>
+    setStarredItems((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
 
   const goTo = (n: PlanStep) => {
     setStep(n);
     mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
   };
-
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [estimateEventId, setEstimateEventId] = useState<string | null>(null);
 
   if (!cluster) {
     return (
@@ -170,7 +181,6 @@ function PlanClusterScreen() {
   }
 
   const vp = valuePropByCluster[clusterId];
-  // Stage 1 is now Customer Engagement (step === 1)
   const customerStrategies = selectedStrategies[clusterId] ?? [];
   const marketSelected = strategyItems[clusterId]?.[MARKET_BUCKET] ?? [];
   const marketContacts = strategyContacts[clusterId]?.[MARKET_BUCKET] ?? [];
@@ -190,7 +200,6 @@ function PlanClusterScreen() {
     setConfirmOpen(false);
     unlockStage(3);
     setMonthlyFocus(clusterId);
-    // navigate({ to: "/" });
   };
 
   const estimateEvent = estimateEventId ? MARKET_ENGAGEMENT_OPTIONS.find((m) => m.id === estimateEventId) : undefined;
@@ -214,19 +223,19 @@ function PlanClusterScreen() {
       <StepperBar current={step} onGoTo={goTo} />
 
       <div className="px-5 pb-8 space-y-4">
-        {/* ── Stage 1: Value Proposition ── */}
+        {/* Stage 1: Value Proposition */}
         {step === 0 && (
           <>
-            <StageSectionTitle index={1} title="Select your value proposition" />
+            <StageSectionTitle index={1} title="Design value proposition" />
             <ValueStep clusterId={clusterId} selected={vp} onSelect={(v) => setValueProposition(clusterId, v)} />
             <NavButtons onNext={() => goTo(1)} />
           </>
         )}
 
-        {/* ── Stage 2: Customer Engagement (was stage 3) ── */}
+        {/* Stage 2: Connect Approach */}
         {step === 1 && (
           <>
-            <StageSectionTitle index={2} title="Design your customer engagement strategy" />
+            <StageSectionTitle index={2} title="Select connect approach" />
             <CustomerStep
               clusterId={clusterId}
               strategies={customerStrategies}
@@ -238,37 +247,41 @@ function PlanClusterScreen() {
           </>
         )}
 
-        {/* ── Stage 3: Market Engagement — driven by customer strategies ── */}
+        {/* Stage 3: Outreach Initiatives */}
         {step === 2 && (
           <>
-            <StageSectionTitle index={3} title="Design your market engagement strategy" />
-            <MarketStep
+            <StageSectionTitle index={3} title="Plan outreach initiatives" />
+            <OutreachStep
+              clusterId={clusterId}
               customerStrategies={customerStrategies}
-              selected={marketSelected}
-              contacts={marketContacts}
-              onToggleItem={(it) => toggleStrategyItem(clusterId, MARKET_BUCKET, it)}
+              marketSelected={marketSelected}
+              marketContacts={marketContacts}
+              selectedActions={selectedActions[clusterId] ?? {}}
+              customActions={customActions[clusterId] ?? {}}
+              onToggleEvent={(it) => toggleStrategyItem(clusterId, MARKET_BUCKET, it)}
               onContactsChange={(list) => setStrategyContacts(clusterId, MARKET_BUCKET, list)}
+              onToggleAction={(s, a) => toggleSelectedAction(clusterId, s, a)}
+              onAddCustom={(s, t) => addCustomAction(clusterId, s, t)}
+              onRemoveCustom={(s, t) => removeCustomAction(clusterId, s, t)}
             />
             <NavButtons onBack={() => goTo(1)} onNext={() => goTo(3)} />
           </>
         )}
 
-        {/* ── Stage 4: Action Plan ── */}
+        {/* Stage 4: Action Plan */}
         {step === 3 && (
           <>
-            <StageSectionTitle index={4} title="Action plan" />
-            <ActionStep
+            <StageSectionTitle index={4} title="Create action plan" />
+            <ActionPlanStep
               clusterId={clusterId}
-              marketSelected={marketSelected}
               customerStrategies={customerStrategies}
+              marketSelected={marketSelected}
               selectedActions={selectedActions[clusterId] ?? {}}
               customActions={customActions[clusterId] ?? {}}
-              contactsByStrategy={strategyContacts[clusterId] ?? {}}
               eventEstimates={eventEstimates[clusterId] ?? {}}
-              onToggleAction={(s, a) => toggleSelectedAction(clusterId, s, a)}
-              onAddCustom={(s, t) => addCustomAction(clusterId, s, t)}
-              onRemoveCustom={(s, t) => removeCustomAction(clusterId, s, t)}
-              onOpenEstimate={(eventId) => setEstimateEventId(eventId)}
+              starredItems={starredItems}
+              onToggleStar={toggleStar}
+              onOpenEstimate={(id) => setEstimateEventId(id)}
             />
             <Button
               onClick={() => setConfirmOpen(true)}
@@ -281,6 +294,7 @@ function PlanClusterScreen() {
         )}
       </div>
 
+      {/* Confirm dialog */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -301,6 +315,7 @@ function PlanClusterScreen() {
         </DialogContent>
       </Dialog>
 
+      {/* Event estimate dialog */}
       <Dialog open={estimateEventId !== null} onOpenChange={(o) => !o && setEstimateEventId(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -338,21 +353,9 @@ function PlanClusterScreen() {
    Shared helpers
 ───────────────────────────────────────────────────────────── */
 function StageSectionTitle({ index, title }: { index: number; title: string }) {
-  // Map index to the requested stage titles
-  const displayTitle =
-    index === 1
-      ? "DESIGN VALUE PROPOSITION"
-      : index === 2
-        ? "Select Connect Approach"
-        : index === 3
-          ? "Plan Outreach Initiatives"
-          : index === 4
-            ? "Create Action Plan"
-            : title;
-
   return (
     <p className="text-[11px] font-bold uppercase tracking-widest text-foreground">
-      Stage {index}: {displayTitle}
+      Stage {index}: {title}
     </p>
   );
 }
@@ -428,9 +431,7 @@ function ValueStep({
                 onChange={() => onSelect(card.title)}
                 className="mt-1 h-4 w-4 shrink-0 accent-critical"
               />
-              <span className="min-w-0 leading-snug">
-                <span className="block font-semibold text-foreground">{card.title}</span>
-              </span>
+              <span className="block font-semibold text-foreground leading-snug">{card.title}</span>
             </label>
           );
         })}
@@ -486,7 +487,8 @@ function ValueStep({
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Stage 2: Customer engagement (moved from stage 3)
+   Stage 2: Connect approach — contact table for each strategy
+   D2C shows "Stakeholder Connects" instead of checklist
 ───────────────────────────────────────────────────────────── */
 function CustomerStep({
   clusterId,
@@ -504,11 +506,19 @@ function CustomerStep({
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
-        Pick one or more channels you'll lean on to reach the end customer. Multiple selections allowed.
+        Pick one or more channels. Add your key contacts for each selected approach.
       </p>
       <div className="space-y-3">
         {CONNECT_STRATEGY_OPTIONS.map((opt) => {
           const active = strategies.includes(opt.key);
+          const contactTitle =
+            opt.key === "D2C"
+              ? "Stakeholder Connects"
+              : opt.key === "CONTRACTOR"
+                ? "Contractor Contacts"
+                : opt.key === "RETAILER"
+                  ? "Retailer Contacts"
+                  : "Influencer Contacts";
           return (
             <div
               key={opt.key}
@@ -528,11 +538,11 @@ function CustomerStep({
               </label>
               {active && (
                 <div className="border-t border-border px-3 py-3">
-                  <StrategyDetails
-                    clusterId={clusterId}
-                    strategy={opt.key}
+                  <ContactTable
+                    title={contactTitle}
                     contacts={contactsByStrategy[opt.key] ?? []}
-                    onContactsChange={(list) => onContactsChange(opt.key, list)}
+                    onChange={(list) => onContactsChange(opt.key, list)}
+                    showRole={opt.key === "INFLUENCER"}
                   />
                 </div>
               )}
@@ -544,211 +554,271 @@ function CustomerStep({
   );
 }
 
-function StrategyDetails({
+/* ─────────────────────────────────────────────────────────────
+   Stage 3: Outreach initiatives
+   - Contribution events at top (from getMarketOptionsForStrategies)
+   - Connect actions per selected strategy (selectable)
+───────────────────────────────────────────────────────────── */
+function OutreachStep({
   clusterId,
-  strategy,
-  contacts,
+  customerStrategies,
+  marketSelected,
+  marketContacts,
+  selectedActions,
+  customActions,
+  onToggleEvent,
   onContactsChange,
+  onToggleAction,
+  onAddCustom,
+  onRemoveCustom,
 }: {
   clusterId: string;
-  strategy: ConnectStrategy;
-  contacts: ContactEntry[];
-  onContactsChange: (list: ContactEntry[]) => void;
-}) {
-  const strategyItems = useAppStore((s) => s.plan.strategyItemsByCluster);
-  const toggleStrategyItem = useAppStore((s) => s.toggleStrategyItem);
-
-  if (strategy === "D2C") {
-    const suggestions = getD2cInitiatives(clusterId);
-    const selectedD2c = strategyItems[clusterId]?.["D2C"] ?? [];
-    return (
-      <div className="space-y-1.5">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          SUGGESTED DIRECT-SALES STRATEGIES
-        </p>
-        <ul className="space-y-1">
-          {suggestions.map((s, i) => {
-            const active = selectedD2c.includes(s);
-            return (
-              <li key={i}>
-                <label className="flex cursor-pointer items-start gap-2 rounded-md border border-border bg-card px-2 py-1.5 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={active}
-                    onChange={() => toggleStrategyItem(clusterId, "D2C", s)}
-                    className="mt-0.5 h-3.5 w-3.5 accent-critical"
-                  />
-                  <span className="leading-snug">{s}</span>
-                </label>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    );
-  }
-
-  if (strategy === "INFLUENCER") {
-    return <ContactTable title="Influencer contacts" contacts={contacts} onChange={onContactsChange} showRole />;
-  }
-
-  const title =
-    strategy === "CONTRACTOR" ? "Contractor contacts" : strategy === "RETAILER" ? "Retailer contacts" : "Contacts";
-  return <ContactTable title={title} contacts={contacts} onChange={onContactsChange} />;
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Stage 3: Market engagement — options driven by customer strategies
-───────────────────────────────────────────────────────────── */
-function MarketStep({
-  customerStrategies,
-  selected,
-  contacts,
-  onToggleItem,
-  onContactsChange,
-}: {
   customerStrategies: ConnectStrategy[];
-  selected: string[];
-  contacts: ContactEntry[];
-  onToggleItem: (item: string) => void;
+  marketSelected: string[];
+  marketContacts: ContactEntry[];
+  selectedActions: Partial<Record<ConnectStrategy, string[]>>;
+  customActions: Partial<Record<ConnectStrategy, string[]>>;
+  onToggleEvent: (id: string) => void;
   onContactsChange: (list: ContactEntry[]) => void;
+  onToggleAction: (s: ConnectStrategy, a: string) => void;
+  onAddCustom: (s: ConnectStrategy, a: string) => void;
+  onRemoveCustom: (s: ConnectStrategy, a: string) => void;
 }) {
-  // Derive the 3 market options (one per category) based on chosen customer strategies
   const marketOptions: MarketEngagementOption[] = useMemo(
     () => getMarketOptionsForStrategies(customerStrategies.length > 0 ? customerStrategies : ["CONTRACTOR"]),
     [customerStrategies],
   );
-
-  const CATEGORY_BLURB: Record<MarketEngagementCategory, string> = {
-    Knowledge: "Share know-how",
-    Service: "Offer on-ground help",
-    Social: "Show up in the community",
-  };
-
-  const hasStrategies = customerStrategies.length > 0;
+  const [draftByStrategy, setDraftByStrategy] = useState<Partial<Record<ConnectStrategy, string>>>({});
 
   return (
     <div className="space-y-4">
-      {!hasStrategies && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
-          No connect approach selected yet. Go back to Stage 2 to pick one — the events below will update accordingly.
+      <p className="text-xs text-muted-foreground">
+        Select the contribution events and connect actions you plan to run this month.
+      </p>
+
+      {/* Contribution events */}
+      <div>
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Contribution Events
+        </p>
+        {!customerStrategies.length && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 mb-2">
+            No connect approach selected. Go back to Stage 2 to pick one.
+          </div>
+        )}
+        <div className="space-y-2">
+          {marketOptions.map((opt) => {
+            const active = marketSelected.includes(opt.id);
+            return (
+              <label
+                key={opt.id}
+                className={cn(
+                  "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm",
+                  active ? "border-critical bg-critical/5" : "border-border bg-card",
+                )}
+              >
+                <input
+                  type="checkbox"
+                  checked={active}
+                  onChange={() => onToggleEvent(opt.id)}
+                  className="mt-1 h-4 w-4 accent-critical"
+                />
+                <span className="min-w-0 flex-1 leading-snug">
+                  <span className="mb-1 flex flex-wrap items-center gap-2">
+                    <span
+                      className={cn(
+                        "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                        CATEGORY_TONE[opt.category],
+                      )}
+                    >
+                      {opt.category} · {CATEGORY_BLURB[opt.category]}
+                    </span>
+                  </span>
+                  <span className="block text-sm font-semibold">{opt.label}</span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">{opt.description}</span>
+                </span>
+              </label>
+            );
+          })}
         </div>
-      )}
-      <p className="text-xs text-muted-foreground">Pick the contribution events that you want to run in this month</p>
-      <div className="space-y-2">
-        {marketOptions.map((opt) => {
-          const active = selected.includes(opt.id);
-          return (
-            <label
-              key={opt.id}
-              className={cn(
-                "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm",
-                active ? "border-critical bg-critical/5" : "border-border bg-card",
-              )}
-            >
-              <input
-                type="checkbox"
-                checked={active}
-                onChange={() => onToggleItem(opt.id)}
-                className="mt-1 h-4 w-4 accent-critical"
-              />
-              <span className="min-w-0 flex-1 leading-snug">
-                {/* <span className="mb-1 flex flex-wrap items-center gap-2">
-                   <span
+      </div>
+
+      {/* Connect actions per strategy */}
+      {customerStrategies.map((s) => {
+        const actions = getRecommendedActions(s, clusterId);
+        const chosen = selectedActions[s] ?? [];
+        const customs = customActions[s] ?? [];
+        const draft = draftByStrategy[s] ?? "";
+        return (
+          <div key={s}>
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Connect Actions — {CONNECT_STRATEGY_LABEL[s]}
+            </p>
+            <div className="space-y-1.5">
+              {actions.map((a) => {
+                const on = chosen.includes(a.text);
+                return (
+                  <label
+                    key={a.text}
                     className={cn(
-                      "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-                      CATEGORY_TONE[opt.category],
+                      "flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm",
+                      on ? "border-critical bg-critical/5" : "border-border bg-card",
                     )}
                   >
-                    {opt.category} · {CATEGORY_BLURB[opt.category]}
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={() => onToggleAction(s, a.text)}
+                      className="mt-0.5 h-4 w-4 accent-critical"
+                    />
+                    <span className="leading-snug">{a.text}</span>
+                  </label>
+                );
+              })}
+              {customs.map((c, i) => (
+                <div
+                  key={`cust-${i}`}
+                  className="flex items-start justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm"
+                >
+                  <span className="flex items-start gap-2">
+                    <span className="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded border border-critical bg-critical/10 text-[10px] text-critical">
+                      +
+                    </span>
+                    <span className="leading-snug">{c}</span>
                   </span>
-                </span>*/}
-                <span className="block text-sm font-semibold">{opt.label}</span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">{opt.description}</span>
-              </span>
-            </label>
-          );
-        })}
-      </div>
-      <ContactTable title="Touchpoints / community contacts" contacts={contacts} onChange={onContactsChange} />
+                  <button
+                    type="button"
+                    onClick={() => onRemoveCustom(s, c)}
+                    className="rounded p-1 text-muted-foreground hover:bg-muted/40"
+                    aria-label="Remove"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 flex items-center gap-1.5">
+              <input
+                value={draft}
+                onChange={(e) => setDraftByStrategy((d) => ({ ...d, [s]: e.target.value }))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const t = draft.trim();
+                    if (t) {
+                      onAddCustom(s, t);
+                      setDraftByStrategy((d) => ({ ...d, [s]: "" }));
+                    }
+                  }
+                }}
+                placeholder="Add your own action…"
+                className="flex-1 rounded border border-border bg-background px-2 py-1 text-xs"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const t = draft.trim();
+                  if (t) {
+                    onAddCustom(s, t);
+                    setDraftByStrategy((d) => ({ ...d, [s]: "" }));
+                  }
+                }}
+                className="h-7 gap-1 text-xs"
+              >
+                <Plus className="h-3 w-3" /> Add
+              </Button>
+            </div>
+          </div>
+        );
+      })}
+
+      <ContactTable title="Touchpoints / community contacts" contacts={marketContacts} onChange={onContactsChange} />
     </div>
   );
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Stage 4: Action plan
+   Stage 4: Action plan — star items to commit for this month
 ───────────────────────────────────────────────────────────── */
-function ActionStep({
+function ActionPlanStep({
   clusterId,
-  marketSelected,
   customerStrategies,
+  marketSelected,
   selectedActions,
   customActions,
-  contactsByStrategy,
   eventEstimates,
-  onToggleAction,
-  onAddCustom,
-  onRemoveCustom,
+  starredItems,
+  onToggleStar,
   onOpenEstimate,
 }: {
   clusterId: string;
-  marketSelected: string[];
   customerStrategies: ConnectStrategy[];
+  marketSelected: string[];
   selectedActions: Partial<Record<ConnectStrategy, string[]>>;
   customActions: Partial<Record<ConnectStrategy, string[]>>;
-  contactsByStrategy: Partial<Record<ConnectStrategy, ContactEntry[]>>;
   eventEstimates: Record<string, { participants?: number; contractors?: number }>;
-  onToggleAction: (s: ConnectStrategy, a: string) => void;
-  onAddCustom: (s: ConnectStrategy, a: string) => void;
-  onRemoveCustom: (s: ConnectStrategy, a: string) => void;
+  starredItems: Set<string>;
+  onToggleStar: (key: string) => void;
   onOpenEstimate: (eventId: string) => void;
 }) {
   const chosenEvents = MARKET_ENGAGEMENT_OPTIONS.filter((m) => marketSelected.includes(m.id));
-  const [assetDlg, setAssetDlg] = useState<{ title: string; asset: ActionAsset; userContacts?: ContactEntry[] } | null>(
-    null,
-  );
-  const [draftByStrategy, setDraftByStrategy] = useState<Partial<Record<ConnectStrategy, string>>>({});
 
   return (
     <div className="space-y-5">
-      <p className="text-xs text-muted-foreground">
-        Plan the next concrete steps for each event and each connect approach.
-      </p>
+      <p className="text-xs text-muted-foreground">Star the items you're committing to take up this month.</p>
 
+      {/* Contribution events */}
       <section>
         <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Contribution &amp; brand events
+          Contribution Events
         </h4>
         {chosenEvents.length === 0 ? (
           <p className="text-xs text-muted-foreground">No events selected in Stage 3 yet.</p>
         ) : (
           <ul className="space-y-2">
             {chosenEvents.map((ev) => {
+              const key = `event-${ev.id}`;
+              const starred = starredItems.has(key);
               const est = eventEstimates[ev.id] ?? {};
               const filled = est.participants != null || est.contractors != null;
               return (
                 <li key={ev.id} className="rounded-lg border border-border bg-background p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium leading-tight">{ev.label}</p>
                       <p className="mt-0.5 text-[11px] text-muted-foreground">{ev.category}</p>
+                      {filled && (
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          Participants: <b className="text-foreground">{est.participants ?? "—"}</b>
+                          {" · "}
+                          Contractors: <b className="text-foreground">{est.contractors ?? "—"}</b>
+                        </p>
+                      )}
                     </div>
-                    <Button
-                      size="sm"
-                      variant={filled ? "outline" : "default"}
-                      onClick={() => onOpenEstimate(ev.id)}
-                      className={cn("h-8 shrink-0 text-xs", !filled && "bg-navy text-navy-foreground hover:bg-navy/90")}
-                    >
-                      {filled ? "Edit estimate" : "Plan event"}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant={filled ? "outline" : "default"}
+                        onClick={() => onOpenEstimate(ev.id)}
+                        className={cn(
+                          "h-7 shrink-0 text-xs",
+                          !filled && "bg-navy text-navy-foreground hover:bg-navy/90",
+                        )}
+                      >
+                        {filled ? "Edit" : "Plan"}
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => onToggleStar(key)}
+                        className="rounded p-1 hover:bg-muted/40"
+                        aria-label="Star"
+                      >
+                        <Star
+                          className={cn("h-5 w-5", starred ? "fill-amber-400 text-amber-400" : "text-muted-foreground")}
+                        />
+                      </button>
+                    </div>
                   </div>
-                  {filled && (
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">
-                      Participants: <b className="text-foreground">{est.participants ?? "—"}</b>
-                      {" · "}
-                      Contractors: <b className="text-foreground">{est.contractors ?? "—"}</b>
-                    </p>
-                  )}
                 </li>
               );
             })}
@@ -756,180 +826,53 @@ function ActionStep({
         )}
       </section>
 
-      <section>
-        <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Select connect approach
-        </h4>
-        {customerStrategies.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No connect approach selected in Stage 2 yet.</p>
-        ) : (
-          <div className="space-y-3">
-            {customerStrategies.map((s) => {
-              const actions = getRecommendedActions(s, clusterId);
-              const chosen = selectedActions[s] ?? [];
-              const customs = customActions[s] ?? [];
-              const draft = draftByStrategy[s] ?? "";
-              const userContacts = contactsByStrategy[s] ?? [];
-              return (
-                <div key={s} className="rounded-lg border border-border bg-background p-3">
-                  <p className="mb-1.5 text-sm font-semibold">{CONNECT_STRATEGY_LABEL[s]}</p>
-                  <ul className="space-y-1.5">
-                    {actions.map((a) => {
-                      const on = chosen.includes(a.text);
-                      return (
-                        <li key={a.text} className="flex items-start justify-between gap-2">
-                          <label className="flex flex-1 cursor-pointer items-start gap-2 text-sm">
-                            <input
-                              type="checkbox"
-                              checked={on}
-                              onChange={() => onToggleAction(s, a.text)}
-                              className="mt-0.5 h-4 w-4 accent-critical"
-                            />
-                            <span className="leading-snug">{a.text}</span>
-                          </label>
-                          {(a.assets ?? []).map((asset, ai) => (
-                            <button
-                              key={ai}
-                              type="button"
-                              onClick={() =>
-                                setAssetDlg({
-                                  title: a.text,
-                                  asset,
-                                  userContacts: asset.kind === "contacts" ? userContacts : undefined,
-                                })
-                              }
-                              className="shrink-0 rounded border border-border bg-card px-2 py-0.5 text-[10px] font-semibold text-navy hover:bg-muted/40"
-                            >
-                              {asset.kind === "contacts"
-                                ? "View contacts"
-                                : asset.kind === "deck"
-                                  ? "View PPT"
-                                  : "View pamphlets"}
-                            </button>
-                          ))}
-                        </li>
-                      );
-                    })}
-                    {customs.map((c, i) => (
-                      <li key={`cust-${i}`} className="flex items-start justify-between gap-2 text-sm">
-                        <span className="flex items-start gap-2">
-                          <span className="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded border border-critical bg-critical/10 text-[10px] text-critical">
-                            +
-                          </span>
-                          <span className="leading-snug">{c}</span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => onRemoveCustom(s, c)}
-                          className="rounded p-1 text-muted-foreground hover:bg-muted/40"
-                          aria-label="Remove"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <input
-                      value={draft}
-                      onChange={(e) => setDraftByStrategy((d) => ({ ...d, [s]: e.target.value }))}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          const t = draft.trim();
-                          if (t) {
-                            onAddCustom(s, t);
-                            setDraftByStrategy((d) => ({ ...d, [s]: "" }));
-                          }
-                        }
-                      }}
-                      placeholder="Add your own action…"
-                      className="flex-1 rounded border border-border bg-background px-2 py-1 text-xs"
-                    />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        const t = draft.trim();
-                        if (t) {
-                          onAddCustom(s, t);
-                          setDraftByStrategy((d) => ({ ...d, [s]: "" }));
-                        }
-                      }}
-                      className="h-7 gap-1 text-xs"
-                    >
-                      <Plus className="h-3 w-3" /> Add
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      <Dialog open={assetDlg !== null} onOpenChange={(o) => !o && setAssetDlg(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{assetDlg?.asset.label ?? "Resources"}</DialogTitle>
-            {assetDlg && <DialogDescription>{assetDlg.title}</DialogDescription>}
-          </DialogHeader>
-          {assetDlg && (
-            <div className="space-y-2 text-sm">
-              {assetDlg.asset.kind === "list" && (
-                <ul className="list-disc space-y-1 pl-5 text-sm marker:text-critical">
-                  {(assetDlg.asset.items ?? []).map((it: string, i: number) => (
-                    <li key={i} className="flex items-center justify-between gap-2">
-                      <span>{it}</span>
-                      <a
-                        href="#"
-                        onClick={(e) => e.preventDefault()}
-                        className="text-[11px] font-semibold text-navy underline"
-                      >
-                        Download
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {assetDlg.asset.kind === "deck" && (
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">{assetDlg.asset.body}</p>
-                  <a
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
-                    className="inline-flex items-center gap-1 rounded border border-border bg-card px-3 py-1.5 text-xs font-semibold text-navy hover:bg-muted/40"
+      {/* Connect actions per strategy */}
+      {customerStrategies.map((s) => {
+        const allActions = [
+          ...getRecommendedActions(s, clusterId)
+            .filter((a) => (selectedActions[s] ?? []).includes(a.text))
+            .map((a) => a.text),
+          ...(customActions[s] ?? []),
+        ];
+        if (allActions.length === 0) return null;
+        return (
+          <section key={s}>
+            <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {CONNECT_STRATEGY_LABEL[s]} Actions
+            </h4>
+            <ul className="space-y-2">
+              {allActions.map((text) => {
+                const key = `action-${s}-${text}`;
+                const starred = starredItems.has(key);
+                return (
+                  <li
+                    key={key}
+                    className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5"
                   >
-                    Open deck.pptx
-                  </a>
-                </div>
-              )}
-              {assetDlg.asset.kind === "contacts" && (
-                <>
-                  {(assetDlg.userContacts && assetDlg.userContacts.length > 0
-                    ? assetDlg.userContacts
-                    : (assetDlg.asset.contacts ?? [])
-                  ).map((c: ContactEntry) => (
-                    <div key={c.id} className="rounded-md border border-border bg-background p-2 text-xs">
-                      <div className="font-semibold">{c.name || "—"}</div>
-                      <div className="text-muted-foreground">
-                        {[c.phone, c.area, c.role, c.brandPreference].filter(Boolean).join(" · ") || "—"}
-                      </div>
-                    </div>
-                  ))}
-                  {(assetDlg.userContacts?.length ?? 0) === 0 && (assetDlg.asset.contacts?.length ?? 0) === 0 && (
-                    <p className="text-xs text-muted-foreground">No contacts added yet.</p>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-          <DialogFooter>
-            <Button onClick={() => setAssetDlg(null)} variant="outline">
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                    <span className="flex-1 text-sm leading-snug">{text}</span>
+                    <button
+                      type="button"
+                      onClick={() => onToggleStar(key)}
+                      className="rounded p-1 hover:bg-muted/40 shrink-0"
+                      aria-label="Star"
+                    >
+                      <Star
+                        className={cn("h-5 w-5", starred ? "fill-amber-400 text-amber-400" : "text-muted-foreground")}
+                      />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+      })}
+
+      {customerStrategies.length === 0 && chosenEvents.length === 0 && (
+        <p className="text-xs text-muted-foreground">
+          Nothing selected yet. Go back to Stage 3 to select your initiatives.
+        </p>
+      )}
     </div>
   );
 }
