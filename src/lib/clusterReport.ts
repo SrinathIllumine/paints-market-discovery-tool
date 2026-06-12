@@ -64,7 +64,13 @@ export function generateClusterReportPdf({
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text(clean(`Cluster Report for ${cluster.name}`), margin, 36);
+
+  const titleLines = doc.splitTextToSize(
+    clean(`Cluster Report for ${cluster.name}`),
+    pageWidth - margin * 2 - 120, // leave some room for DG details on right
+  );
+
+  doc.text(titleLines, margin, 36);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
