@@ -442,7 +442,6 @@ function ClusterDetailScreen() {
               {/* Strategic insights — above chart */}
               {allAnswered && (
                 <StrategicInsights
-                  clusterName={cluster.name}
                   potentialScore={scores.potentialScore}
                   accessRollupScore={scores.accessRollupScore}
                 />
