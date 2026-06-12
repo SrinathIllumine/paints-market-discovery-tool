@@ -53,10 +53,10 @@ const INFLUENCER_ROLES = ["Site supervisor", "Interior designer", "Architect", "
    Stepper bar
 ───────────────────────────────────────────────────────────── */
 const STEP_LABELS = [
-  ["Value", "Proposition"],
-  ["Customer", "Engagement", "Strategy"],
-  ["Market", "Engagement", "Strategy"],
-  ["Action", "Plans"],
+  ["Design", "Value"],
+  ["Select", "Connect", "Approach"],
+  ["Plan", "Outreach", "Initiatives"],
+  ["Create", "Action", "Plans"],
 ];
 
 const ARROW_PX = 12;
@@ -200,7 +200,7 @@ function PlanClusterScreen() {
     <AppShell
       ref={mainRef}
       bottom={<BottomNav />}
-      header={<StageHeader eyebrow="STAGE 2 OF 3 · MY ENGAGEMENT PLAN" title="My Engagement Plan" backTo="/plan" />}
+      header={<StageHeader eyebrow="STAGE 2 OF 3 · MY ACTION PLAN" title="My Action Plan" backTo="/plan" />}
     >
       <div className="space-y-4 px-5 py-5">
         <div className="space-y-0.5">
@@ -338,9 +338,17 @@ function PlanClusterScreen() {
    Shared helpers
 ───────────────────────────────────────────────────────────── */
 function StageSectionTitle({ index, title }: { index: number; title: string }) {
+  // Map index to the requested stage titles
+  const displayTitle = 
+    index === 1 ? "Design Value" :
+    index === 2 ? "Select Connect Approach" :
+    index === 3 ? "Plan Outreach Initiatives" :
+    index === 4 ? "Create Action Plan" :
+    title;
+
   return (
     <p className="text-xs font-bold uppercase tracking-widest text-foreground">
-      Stage {index}: {title}
+      Stage {index}: {displayTitle}
     </p>
   );
 }
@@ -619,7 +627,7 @@ function MarketStep({
     <div className="space-y-4">
       {!hasStrategies && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
-          No customer engagement strategy selected yet. Go back to Stage 2 to pick one — the events below will update
+          No connect approach selected yet. Go back to Stage 2 to pick one — the events below will update
           accordingly.
         </div>
       )}
@@ -703,7 +711,7 @@ function ActionStep({
   return (
     <div className="space-y-5">
       <p className="text-xs text-muted-foreground">
-        Plan the next concrete steps for each event and each customer engagement strategy.
+        Plan the next concrete steps for each event and each connect approach.
       </p>
 
       <section>
@@ -749,10 +757,10 @@ function ActionStep({
 
       <section>
         <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Customer engagement strategies
+          Select connect approach
         </h4>
         {customerStrategies.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No customer engagement strategies selected in Stage 2 yet.</p>
+          <p className="text-xs text-muted-foreground">No connect approach selected in Stage 2 yet.</p>
         ) : (
           <div className="space-y-3">
             {customerStrategies.map((s) => {

@@ -8,32 +8,32 @@ export type ConnectStrategy = "BRAND" | "CONTRACTOR" | "OUTREACH" | "D2C" | "RET
 
 export const CONNECT_STRATEGY_LABEL: Record<ConnectStrategy, string> = {
   BRAND: "Brand Awareness",
-  CONTRACTOR: "Contractor-driven",
-  OUTREACH: "Outreach-Driven",
-  D2C: "Direct-sales driven",
-  RETAILER: "Retailer-driven",
-  INFLUENCER: "Influencer-driven",
+  CONTRACTOR: "Contractor-connect",
+  OUTREACH: "Outreach-connect",
+  D2C: "Direct-sales connect",
+  RETAILER: "Retailer-connect",
+  INFLUENCER: "Influencer-connect",
 };
 
 export const CONNECT_STRATEGY_OPTIONS: { key: ConnectStrategy; label: string; description: string }[] = [
   {
     key: "CONTRACTOR",
-    label: "Contractor-driven",
+    label: "Contractor-connect",
     description: "Activate the contractor network operating in this cluster.",
   },
   {
     key: "D2C",
-    label: "Direct-sales driven",
+    label: "Direct-sales connect",
     description: "Reach end customers directly via walk-ins, demos and digital channels.",
   },
   {
     key: "RETAILER",
-    label: "Retailer-driven",
+    label: "Retailer-connect",
     description: "Drive sell-out via local retail counters, shade cards and visibility.",
   },
   {
     key: "INFLUENCER",
-    label: "Influencer-driven",
+    label: "Influencer-connect",
     description: "Engage site supervisors, interior designers and architects who steer decisions.",
   },
 ];
