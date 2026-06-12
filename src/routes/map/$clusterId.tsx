@@ -15,7 +15,8 @@ import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, MapPin, Home } from "lucide-react";
+import { Plus, Loader2, MapPin, Home, FileDown } from "lucide-react";
+import { generateClusterReportPdf } from "@/lib/clusterReport";
 import {
   computeClusterScores,
   getRevenueProfile,
