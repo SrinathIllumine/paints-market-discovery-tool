@@ -80,6 +80,7 @@ function IntroScreen() {
             </p>
             <h1 className="mt-2 font-display text-3xl leading-tight">Market Discovery Tool</h1>
             <p className="mt-2 text-sm text-white/75">Welcome Sunil Kumar</p>
+            <p className="mt-2 text-sm text-white/75">Area: Panvel</p>
           </div>
           <Link
             to="/dashboard"
