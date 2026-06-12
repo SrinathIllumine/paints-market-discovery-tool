@@ -711,7 +711,7 @@ function ActionStep({
   return (
     <div className="space-y-5">
       <p className="text-xs text-muted-foreground">
-        Plan the next concrete steps for each event and each customer engagement strategy.
+        Plan the next concrete steps for each event and each connect approach.
       </p>
 
       <section>
