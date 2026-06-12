@@ -16,10 +16,26 @@ export const CONNECT_STRATEGY_LABEL: Record<ConnectStrategy, string> = {
 };
 
 export const CONNECT_STRATEGY_OPTIONS: { key: ConnectStrategy; label: string; description: string }[] = [
-  { key: "CONTRACTOR", label: "Contractor-driven",   description: "Activate the contractor network operating in this cluster." },
-  { key: "D2C",        label: "Direct-sales driven", description: "Reach end customers directly via walk-ins, demos and digital channels." },
-  { key: "RETAILER",   label: "Retailer-driven",     description: "Drive sell-out via local retail counters, shade cards and visibility." },
-  { key: "INFLUENCER", label: "Influencer-driven",   description: "Engage site supervisors, interior designers and architects who steer decisions." },
+  {
+    key: "CONTRACTOR",
+    label: "Contractor-driven",
+    description: "Activate the contractor network operating in this cluster.",
+  },
+  {
+    key: "D2C",
+    label: "Direct-sales driven",
+    description: "Reach end customers directly via walk-ins, demos and digital channels.",
+  },
+  {
+    key: "RETAILER",
+    label: "Retailer-driven",
+    description: "Drive sell-out via local retail counters, shade cards and visibility.",
+  },
+  {
+    key: "INFLUENCER",
+    label: "Influencer-driven",
+    description: "Engage site supervisors, interior designers and architects who steer decisions.",
+  },
 ];
 
 export type MarketEngagementCategory = "Knowledge" | "Service" | "Social";
@@ -31,14 +47,137 @@ export type MarketEngagementOption = {
 };
 
 export const MARKET_ENGAGEMENT_OPTIONS: MarketEngagementOption[] = [
-  { id: "tech-workshop", category: "Knowledge", label: "Technical workshop for painters & contractors", description: "Surface-prep, application & finish know-how with live demo." },
-  { id: "spec-clinic",   category: "Knowledge", label: "Specification clinic for architects / engineers", description: "Help specifiers pick the right SKU mix for the cluster's brief." },
-  { id: "site-advisory", category: "Service",   label: "Free on-site advisory & shade consultation", description: "Walk the site, recommend system, leave a written estimate." },
-  { id: "demo-drive",    category: "Service",   label: "Product demo & sampling drive",              description: "Hands-on demo at retailer counters, sites or association meets." },
-  { id: "community-csr", category: "Social",    label: "Community contribution event (school / NGO repaint)", description: "Sponsor a visible local cause with branded contribution." },
-  { id: "festival-spon", category: "Social",    label: "Festival / association sponsorship",         description: "Partner with a local festival or trade body for visibility." },
+  {
+    id: "tech-workshop",
+    category: "Knowledge",
+    label: "Technical workshop for painters & contractors",
+    description: "Surface-prep, application & finish know-how with live demo.",
+  },
+  {
+    id: "spec-clinic",
+    category: "Knowledge",
+    label: "Specification clinic for architects / engineers",
+    description: "Help specifiers pick the right SKU mix for the cluster's brief.",
+  },
+  {
+    id: "owner-awareness",
+    category: "Knowledge",
+    label: "Owner awareness session on paint quality & value",
+    description: "Educate end-customers on why quality paint protects their investment.",
+  },
+  {
+    id: "retailer-knowledge",
+    category: "Knowledge",
+    label: "Retailer product knowledge session",
+    description: "Upskill retailer staff on product range, benefits and selling points.",
+  },
+  {
+    id: "site-advisory",
+    category: "Service",
+    label: "Free on-site advisory & shade consultation",
+    description: "Walk the site, recommend system, leave a written estimate.",
+  },
+  {
+    id: "demo-drive",
+    category: "Service",
+    label: "Product demo & sampling drive",
+    description: "Hands-on demo at retailer counters, sites or association meets.",
+  },
+  {
+    id: "d2c-service",
+    category: "Service",
+    label: "Direct customer service visit & consultation",
+    description: "Visit end-customers directly to advise on repaint scope and products.",
+  },
+  {
+    id: "retailer-service",
+    category: "Service",
+    label: "Retailer counter activation & display refresh",
+    description: "Refresh shade cards, demo cans and branding at retail counters.",
+  },
+  {
+    id: "community-csr",
+    category: "Social",
+    label: "Community contribution event (school / NGO repaint)",
+    description: "Sponsor a visible local cause with branded contribution.",
+  },
+  {
+    id: "festival-spon",
+    category: "Social",
+    label: "Festival / association sponsorship",
+    description: "Partner with a local festival or trade body for visibility.",
+  },
+  {
+    id: "influencer-social",
+    category: "Social",
+    label: "Influencer / designer appreciation meet",
+    description: "Host a curated meet for interior designers, architects and site supervisors.",
+  },
+  {
+    id: "retailer-social",
+    category: "Social",
+    label: "Retailer felicitation & loyalty event",
+    description: "Recognise top-performing retailers and build long-term loyalty.",
+  },
 ];
 
+// ── Strategy → preferred market option IDs per category ──────────────────────
+// Each strategy maps to one preferred option id per category.
+// These are shown first / selected by default when that strategy is active.
+
+const STRATEGY_MARKET_PREFERENCE: Record<ConnectStrategy, Record<MarketEngagementCategory, string>> = {
+  CONTRACTOR: {
+    Knowledge: "tech-workshop",
+    Service: "site-advisory",
+    Social: "community-csr",
+  },
+  INFLUENCER: {
+    Knowledge: "spec-clinic",
+    Service: "site-advisory",
+    Social: "influencer-social",
+  },
+  RETAILER: {
+    Knowledge: "retailer-knowledge",
+    Service: "retailer-service",
+    Social: "retailer-social",
+  },
+  D2C: {
+    Knowledge: "owner-awareness",
+    Service: "d2c-service",
+    Social: "festival-spon",
+  },
+  // Fallbacks for BRAND / OUTREACH
+  BRAND: {
+    Knowledge: "tech-workshop",
+    Service: "demo-drive",
+    Social: "festival-spon",
+  },
+  OUTREACH: {
+    Knowledge: "tech-workshop",
+    Service: "site-advisory",
+    Social: "community-csr",
+  },
+};
+
+/**
+ * Returns one MarketEngagementOption per category, chosen based on the
+ * customer strategies selected. If multiple strategies are active, the first
+ * one wins per category (priority order: CONTRACTOR > INFLUENCER > RETAILER > D2C).
+ */
+export function getMarketOptionsForStrategies(customerStrategies: ConnectStrategy[]): MarketEngagementOption[] {
+  const PRIORITY: ConnectStrategy[] = ["CONTRACTOR", "INFLUENCER", "RETAILER", "D2C", "BRAND", "OUTREACH"];
+  const categories: MarketEngagementCategory[] = ["Knowledge", "Service", "Social"];
+
+  // Pick the highest-priority strategy that is selected
+  const dominant = PRIORITY.find((s) => customerStrategies.includes(s)) ?? "CONTRACTOR";
+
+  return categories.map((cat) => {
+    const preferredId = STRATEGY_MARKET_PREFERENCE[dominant][cat];
+    const found = MARKET_ENGAGEMENT_OPTIONS.find((o) => o.id === preferredId);
+    // Fallback: first option in that category
+    return found ?? MARKET_ENGAGEMENT_OPTIONS.find((o) => o.category === cat)!;
+  });
+}
 
 export type ContactEntry = {
   id: string;
@@ -71,89 +210,58 @@ export const D2C_CHANNELS = [
   "Site-visit demo campaign",
 ];
 
-/* ─────────────────────────── value propositions
-
-   Two-pronged pitch per cluster:
-   [0] customer / end-user value-centric pitch — why the repaint itself is a
-       business win for the owner, plus how JK Maxx is superior to other brands.
-   [1] contractor / product-centric pitch — attractive contractor benefits,
-       confidence boosters, and product superiority over competitors.
-*/
+/* ─────────────────────────── value propositions ─────────────────────────── */
 
 export type ValuePropositionCard = { title: string; body: string };
 
 const VALUE_PROP_LIBRARY: Record<string, ValuePropositionCard[]> = {
   schools: [
     {
-      title:
-        "How school repainting and a fresh design can become an attractive proposition for new admissions",
+      title: "How school repainting and a fresh design can become an attractive proposition for new admissions",
       body: "\n",
     },
     {
-      title:
-        "Attractive benefits for the contractor + why JK Maxx improves brand confidence over competitors",
+      title: "Attractive benefits for the contractor + why JK Maxx improves brand confidence over competitors",
       body: "\n",
     },
   ],
   hospitals: [
     {
-      title:
-        "How a hygienic repaint becomes an attractive proposition for patient trust and inspection scores",
+      title: "How a hygienic repaint becomes an attractive proposition for patient trust and inspection scores",
       body: "\n",
     },
     {
-      title:
-        "Attractive contractor benefits + why JK Maxx wins confidence over competitors in healthcare",
+      title: "Attractive contractor benefits + why JK Maxx wins confidence over competitors in healthcare",
       body: "\n",
     },
   ],
   "mid-apartments": [
     {
-      title:
-        "How a society repaint becomes an attractive proposition for committee re-election and property value",
+      title: "How a society repaint becomes an attractive proposition for committee re-election and property value",
       body: "\n",
     },
-    {
-      title:
-        "Attractive contractor benefits + why JK Maxx beats competitors on society jobs",
-      body: "\n",
-    },
+    { title: "Attractive contractor benefits + why JK Maxx beats competitors on society jobs", body: "\n" },
   ],
   midc: [
     {
-      title:
-        "How an industrial coating refresh becomes an attractive proposition for plant uptime and safety audits",
+      title: "How an industrial coating refresh becomes an attractive proposition for plant uptime and safety audits",
       body: "\n",
     },
-    {
-      title:
-        "Attractive contractor benefits + why JK Maxx improves credibility with plant engineers",
-      body: "\n",
-    },
+    { title: "Attractive contractor benefits + why JK Maxx improves credibility with plant engineers", body: "\n" },
   ],
   hotels: [
     {
-      title:
-        "How a refresh repaint becomes an attractive proposition for guest reviews and brand-standard audits",
+      title: "How a refresh repaint becomes an attractive proposition for guest reviews and brand-standard audits",
       body: "\n",
     },
-    {
-      title:
-        "Attractive contractor benefits + why JK Maxx wins over competitors on hospitality jobs",
-      body: "\n",
-    },
+    { title: "Attractive contractor benefits + why JK Maxx wins over competitors on hospitality jobs", body: "\n" },
   ],
   restaurants: [
     {
-      title:
-        "How a themed repaint becomes an attractive proposition for footfall and Instagrammable interiors",
+      title: "How a themed repaint becomes an attractive proposition for footfall and Instagrammable interiors",
       body: "\n",
     },
-    {
-      title:
-        "Attractive contractor benefits + why JK Maxx beats competitors on F&B refits",
-      body: "\n",
-    },
+    { title: "Attractive contractor benefits + why JK Maxx beats competitors on F&B refits", body: "\n" },
   ],
 };
 
@@ -161,15 +269,8 @@ export function getValuePropositionCards(clusterId: string): ValuePropositionCar
   if (VALUE_PROP_LIBRARY[clusterId]) return VALUE_PROP_LIBRARY[clusterId];
   const ctx = clusterId.replace(/-/g, " ");
   return [
-    {
-      title: `How a quality repaint becomes an attractive proposition for ${ctx} owners and end-users`,
-      body: "\n",
-    },
-    {
-      title:
-        "Attractive contractor benefits + why JK Maxx improves brand confidence over competitors",
-      body: "\n",
-    },
+    { title: `How a quality repaint becomes an attractive proposition for ${ctx} owners and end-users`, body: "\n" },
+    { title: "Attractive contractor benefits + why JK Maxx improves brand confidence over competitors", body: "\n" },
   ];
 }
 
@@ -177,7 +278,7 @@ export function getValuePropositions(clusterId: string): string[] {
   return getValuePropositionCards(clusterId).map((c) => c.title);
 }
 
-/* ─────────────────────────── brand awareness initiatives */
+/* ─────────────────────────── brand awareness initiatives ─────────────────── */
 
 const BRAND_INITIATIVES: Record<string, string[]> = {
   schools: [
@@ -211,10 +312,9 @@ export function getBrandInitiatives(clusterId: string): string[] {
   );
 }
 
-/* ─────────────────────────── contribution event suggestions */
+/* ─────────────────────────── contribution event suggestions ──────────────── */
 
 export function getContributionEvents(clusterId: string): string[] {
-  // Use the awareness topics from eventTopics if present, else generic.
   const awareness = getTopics(clusterId, "Awareness");
   const workshops = getTopics(clusterId, "Workshop");
   const out = [...awareness, ...workshops].slice(0, 4);
@@ -227,7 +327,7 @@ export function getContributionEvents(clusterId: string): string[] {
   ];
 }
 
-/* ─────────────────────────── direct sales initiatives */
+/* ─────────────────────────── direct sales initiatives ────────────────────── */
 
 const D2C_INITIATIVES: Record<string, string[]> = {
   schools: [
@@ -253,7 +353,7 @@ export function getD2cInitiatives(clusterId: string): string[] {
   );
 }
 
-/* ─────────────────────────── contractor pool re-export */
+/* ─────────────────────────── contractor pool re-export ───────────────────── */
 
 export function getContractorSuggestions(clusterId: string): ContactEntry[] {
   return getDominantContractors(clusterId).map((c, i) => ({
@@ -265,7 +365,7 @@ export function getContractorSuggestions(clusterId: string): ContactEntry[] {
   }));
 }
 
-/* ─────────────────────────── recommended actions per strategy + assets */
+/* ─────────────────────────── recommended actions per strategy + assets ───── */
 
 export type ActionAssetKind = "list" | "text" | "contacts" | "deck";
 export type ActionAsset = {
@@ -296,8 +396,7 @@ function deckAsset(): ActionAsset {
   return {
     label: "View customized proposal deck",
     kind: "deck",
-    body:
-      "12-slide deck: site context, recommended SKU mix, timeline, warranty, commercials, and references from similar clusters.",
+    body: "12-slide deck: site context, recommended SKU mix, timeline, warranty, commercials, and references from similar clusters.",
   };
 }
 
@@ -342,14 +441,16 @@ export function getRecommendedActions(strategy: ConnectStrategy, clusterId: stri
       ];
     case "INFLUENCER":
       return [
-        { text: "Meet site supervisors / interior designers / architects active in this cluster", assets: [contactsAsset(clusterId)] },
+        {
+          text: "Meet site supervisors / interior designers / architects active in this cluster",
+          assets: [contactsAsset(clusterId)],
+        },
         { text: "Share a specification kit and follow up within 7 days", assets: [deckAsset()] },
       ];
   }
 }
 
-
-/* ─────────────────────────── legacy stubs (kept for back-compat) */
+/* ─────────────────────────── legacy stubs (kept for back-compat) ──────────── */
 
 export type ActionLinkKind = "popup-list" | "popup-text" | "popup-contacts" | "deck";
 export type ActionLink = {
@@ -374,8 +475,12 @@ export function generateActionPlan(
   return getRecommendedActions(strategy, clusterId).map((a) => ({ text: a.text }));
 }
 
-// Commitment fields are no longer rendered, kept for type imports.
 export type CommitmentField = { key: string; label: string; type: "number" | "text"; placeholder?: string };
 export const COMMITMENT_FIELDS: Record<ConnectStrategy, CommitmentField[]> = {
-  BRAND: [], CONTRACTOR: [], OUTREACH: [], D2C: [], RETAILER: [], INFLUENCER: [],
+  BRAND: [],
+  CONTRACTOR: [],
+  OUTREACH: [],
+  D2C: [],
+  RETAILER: [],
+  INFLUENCER: [],
 };

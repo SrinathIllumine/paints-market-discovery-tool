@@ -21,6 +21,7 @@ import {
   CONNECT_STRATEGY_OPTIONS,
   CONNECT_STRATEGY_LABEL,
   MARKET_ENGAGEMENT_OPTIONS,
+  getMarketOptionsForStrategies,
   getValuePropositionCards,
   getD2cInitiatives,
   getRecommendedActions,
@@ -49,12 +50,12 @@ const CATEGORY_TONE: Record<MarketEngagementCategory, string> = {
 const INFLUENCER_ROLES = ["Site supervisor", "Interior designer", "Architect", "Other"];
 
 /* ─────────────────────────────────────────────────────────────
-   Stepper bar — uses clip-path for clean chevron shapes
+   Stepper bar
 ───────────────────────────────────────────────────────────── */
 const STEP_LABELS = [
   ["Value", "Proposition"],
-  ["Market", "Engagement", "Strategy"],
   ["Customer", "Engagement", "Strategy"],
+  ["Market", "Engagement", "Strategy"],
   ["Action", "Plans"],
 ];
 
@@ -151,6 +152,7 @@ function PlanClusterScreen() {
     setStep(n);
     mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
   };
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [estimateEventId, setEstimateEventId] = useState<string | null>(null);
 
@@ -168,6 +170,7 @@ function PlanClusterScreen() {
   }
 
   const vp = valuePropByCluster[clusterId];
+  // Stage 1 is now Customer Engagement (step === 1)
   const customerStrategies = selectedStrategies[clusterId] ?? [];
   const marketSelected = strategyItems[clusterId]?.[MARKET_BUCKET] ?? [];
   const marketContacts = strategyContacts[clusterId]?.[MARKET_BUCKET] ?? [];
@@ -200,7 +203,6 @@ function PlanClusterScreen() {
       header={<StageHeader eyebrow="STAGE 2 OF 3 · MY ENGAGEMENT PLAN" title="My Engagement Plan" backTo="/plan" />}
     >
       <div className="space-y-4 px-5 py-5">
-        {/* cluster label */}
         <div className="space-y-0.5">
           <h2 className="font-display text-xl leading-tight">
             Selected Cluster: <span className="text-critical">{cluster.name}</span>
@@ -209,11 +211,10 @@ function PlanClusterScreen() {
         </div>
       </div>
 
-      {/* stepper — outside the scrollable padding block so it stays flush */}
       <StepperBar current={step} onGoTo={goTo} />
 
       <div className="px-5 pb-8 space-y-4">
-        {/* ── Stage 1 ── */}
+        {/* ── Stage 1: Value Proposition ── */}
         {step === 0 && (
           <>
             <StageSectionTitle index={1} title="Select your value proposition" />
@@ -222,24 +223,10 @@ function PlanClusterScreen() {
           </>
         )}
 
-        {/* ── Stage 2 ── */}
+        {/* ── Stage 2: Customer Engagement (was stage 3) ── */}
         {step === 1 && (
           <>
-            <StageSectionTitle index={2} title="Design your market engagement strategy" />
-            <MarketStep
-              selected={marketSelected}
-              contacts={marketContacts}
-              onToggleItem={(it) => toggleStrategyItem(clusterId, MARKET_BUCKET, it)}
-              onContactsChange={(list) => setStrategyContacts(clusterId, MARKET_BUCKET, list)}
-            />
-            <NavButtons onBack={() => goTo(0)} onNext={() => goTo(2)} />
-          </>
-        )}
-
-        {/* ── Stage 3 ── */}
-        {step === 2 && (
-          <>
-            <StageSectionTitle index={3} title="Design your customer engagement strategy" />
+            <StageSectionTitle index={2} title="Design your customer engagement strategy" />
             <CustomerStep
               clusterId={clusterId}
               strategies={customerStrategies}
@@ -247,11 +234,26 @@ function PlanClusterScreen() {
               onToggle={(s) => toggleSelectedStrategy(clusterId, s)}
               onContactsChange={(s, list) => setStrategyContacts(clusterId, s, list)}
             />
+            <NavButtons onBack={() => goTo(0)} onNext={() => goTo(2)} />
+          </>
+        )}
+
+        {/* ── Stage 3: Market Engagement — driven by customer strategies ── */}
+        {step === 2 && (
+          <>
+            <StageSectionTitle index={3} title="Design your market engagement strategy" />
+            <MarketStep
+              customerStrategies={customerStrategies}
+              selected={marketSelected}
+              contacts={marketContacts}
+              onToggleItem={(it) => toggleStrategyItem(clusterId, MARKET_BUCKET, it)}
+              onContactsChange={(list) => setStrategyContacts(clusterId, MARKET_BUCKET, list)}
+            />
             <NavButtons onBack={() => goTo(1)} onNext={() => goTo(3)} />
           </>
         )}
 
-        {/* ── Stage 4 ── */}
+        {/* ── Stage 4: Action Plan ── */}
         {step === 3 && (
           <>
             <StageSectionTitle index={4} title="Action plan" />
@@ -268,20 +270,17 @@ function PlanClusterScreen() {
               onRemoveCustom={(s, t) => removeCustomAction(clusterId, s, t)}
               onOpenEstimate={(eventId) => setEstimateEventId(eventId)}
             />
-
             <Button
               onClick={() => setConfirmOpen(true)}
               className="h-12 w-full gap-2 bg-navy text-base font-semibold text-navy-foreground hover:bg-navy/90 mt-4"
             >
               <FileDown className="h-4 w-4" /> Generate Monthly Cluster Engagement Plan
             </Button>
-
             <NavButtons onBack={() => goTo(2)} />
           </>
         )}
       </div>
 
-      {/* Confirm generate dialog */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -302,7 +301,6 @@ function PlanClusterScreen() {
         </DialogContent>
       </Dialog>
 
-      {/* Event estimate dialog */}
       <Dialog open={estimateEventId !== null} onOpenChange={(o) => !o && setEstimateEventId(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -316,20 +314,12 @@ function PlanClusterScreen() {
               <NumberField
                 label="Participants estimated"
                 value={estimateValue.participants}
-                onChange={(v) =>
-                  setEventEstimate(clusterId, estimateEventId, {
-                    participants: v,
-                  })
-                }
+                onChange={(v) => setEventEstimate(clusterId, estimateEventId, { participants: v })}
               />
               <NumberField
                 label="Contractors estimated"
                 value={estimateValue.contractors}
-                onChange={(v) =>
-                  setEventEstimate(clusterId, estimateEventId, {
-                    contractors: v,
-                  })
-                }
+                onChange={(v) => setEventEstimate(clusterId, estimateEventId, { contractors: v })}
               />
             </div>
           )}
@@ -345,7 +335,7 @@ function PlanClusterScreen() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Shared: tiny helpers
+   Shared helpers
 ───────────────────────────────────────────────────────────── */
 function StageSectionTitle({ index, title }: { index: number; title: string }) {
   return (
@@ -373,7 +363,7 @@ function NavButtons({ onBack, onNext }: { onBack?: () => void; onNext?: () => vo
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Stage 1: value proposition
+   Stage 1: Value proposition
 ───────────────────────────────────────────────────────────── */
 function ValueStep({
   clusterId,
@@ -384,10 +374,7 @@ function ValueStep({
   selected?: string;
   onSelect: (v: string) => void;
 }) {
-  const baseCards: ValuePropositionCard[] = useMemo(
-    () => getValuePropositionCards(clusterId).slice(0, 2),
-    [clusterId],
-  );
+  const baseCards: ValuePropositionCard[] = useMemo(() => getValuePropositionCards(clusterId).slice(0, 2), [clusterId]);
   const baseTitles = baseCards.map((c) => c.title);
   const [customs, setCustoms] = useState<string[]>(() => {
     if (selected && !baseTitles.includes(selected)) return [selected];
@@ -402,9 +389,7 @@ function ValueStep({
       setAdding(false);
       return;
     }
-    if (!baseTitles.includes(t) && !customs.includes(t)) {
-      setCustoms((c) => [...c, t]);
-    }
+    if (!baseTitles.includes(t) && !customs.includes(t)) setCustoms((c) => [...c, t]);
     onSelect(t);
     setDraft("");
     setAdding(false);
@@ -412,9 +397,7 @@ function ValueStep({
 
   return (
     <div>
-      <p className="mb-2 text-xs text-muted-foreground">
-        Pick one value proposition to carry through your plan
-      </p>
+      <p className="mb-2 text-xs text-muted-foreground">Pick one value proposition to carry through your plan.</p>
       <div className="space-y-2">
         {baseCards.map((card) => {
           const active = selected === card.title;
@@ -439,7 +422,6 @@ function ValueStep({
             </label>
           );
         })}
-
         {customs.map((opt) => {
           const active = selected === opt;
           return (
@@ -461,7 +443,6 @@ function ValueStep({
             </label>
           );
         })}
-
         {adding ? (
           <div className="flex items-start gap-1.5 rounded-lg border border-dashed border-border bg-background p-2">
             <input
@@ -493,77 +474,7 @@ function ValueStep({
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Stage 2: market engagement
-───────────────────────────────────────────────────────────── */
-function MarketStep({
-  selected,
-  contacts,
-  onToggleItem,
-  onContactsChange,
-}: {
-  selected: string[];
-  contacts: ContactEntry[];
-  onToggleItem: (item: string) => void;
-  onContactsChange: (list: ContactEntry[]) => void;
-}) {
-  const firstPerCategory: MarketEngagementOption[] = (["Knowledge", "Service", "Social"] as MarketEngagementCategory[])
-    .map((cat) => MARKET_ENGAGEMENT_OPTIONS.find((o) => o.category === cat))
-    .filter((o): o is MarketEngagementOption => Boolean(o));
-
-  const CATEGORY_BLURB: Record<MarketEngagementCategory, string> = {
-    Knowledge: "Share know-how",
-    Service: "Offer on-ground help",
-    Social: "Show up in the community",
-  };
-
-  return (
-    <div className="space-y-4">
-      <p className="text-xs text-muted-foreground">
-        Pick the contribution events you'll run this month. One suggestion is shown for each type — Knowledge, Service
-        and Social.
-      </p>
-      <div className="space-y-2">
-        {firstPerCategory.map((opt) => {
-          const active = selected.includes(opt.id);
-          return (
-            <label
-              key={opt.id}
-              className={cn(
-                "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm",
-                active ? "border-critical bg-critical/5" : "border-border bg-card",
-              )}
-            >
-              <input
-                type="checkbox"
-                checked={active}
-                onChange={() => onToggleItem(opt.id)}
-                className="mt-1 h-4 w-4 accent-critical"
-              />
-              <span className="min-w-0 flex-1 leading-snug">
-                <span className="mb-1 flex flex-wrap items-center gap-2">
-                  <span
-                    className={cn(
-                      "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-                      CATEGORY_TONE[opt.category],
-                    )}
-                  >
-                    {opt.category} · {CATEGORY_BLURB[opt.category]}
-                  </span>
-                </span>
-                <span className="block text-sm font-semibold">{opt.label}</span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">{opt.description}</span>
-              </span>
-            </label>
-          );
-        })}
-      </div>
-      <ContactTable title="Touchpoints / community contacts" contacts={contacts} onChange={onContactsChange} />
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Stage 3: customer engagement
+   Stage 2: Customer engagement (moved from stage 3)
 ───────────────────────────────────────────────────────────── */
 function CustomerStep({
   clusterId,
@@ -671,12 +582,93 @@ function StrategyDetails({
 
   const title =
     strategy === "CONTRACTOR" ? "Contractor contacts" : strategy === "RETAILER" ? "Retailer contacts" : "Contacts";
-
   return <ContactTable title={title} contacts={contacts} onChange={onContactsChange} />;
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Stage 4: action plan
+   Stage 3: Market engagement — options driven by customer strategies
+───────────────────────────────────────────────────────────── */
+function MarketStep({
+  customerStrategies,
+  selected,
+  contacts,
+  onToggleItem,
+  onContactsChange,
+}: {
+  customerStrategies: ConnectStrategy[];
+  selected: string[];
+  contacts: ContactEntry[];
+  onToggleItem: (item: string) => void;
+  onContactsChange: (list: ContactEntry[]) => void;
+}) {
+  // Derive the 3 market options (one per category) based on chosen customer strategies
+  const marketOptions: MarketEngagementOption[] = useMemo(
+    () => getMarketOptionsForStrategies(customerStrategies.length > 0 ? customerStrategies : ["CONTRACTOR"]),
+    [customerStrategies],
+  );
+
+  const CATEGORY_BLURB: Record<MarketEngagementCategory, string> = {
+    Knowledge: "Share know-how",
+    Service: "Offer on-ground help",
+    Social: "Show up in the community",
+  };
+
+  const hasStrategies = customerStrategies.length > 0;
+
+  return (
+    <div className="space-y-4">
+      {!hasStrategies && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
+          No customer engagement strategy selected yet. Go back to Stage 2 to pick one — the events below will update
+          accordingly.
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">
+        The contribution events below are tailored to your selected customer engagement{" "}
+        {customerStrategies.length === 1 ? "strategy" : "strategies"}. Pick the ones you'll run this month.
+      </p>
+      <div className="space-y-2">
+        {marketOptions.map((opt) => {
+          const active = selected.includes(opt.id);
+          return (
+            <label
+              key={opt.id}
+              className={cn(
+                "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm",
+                active ? "border-critical bg-critical/5" : "border-border bg-card",
+              )}
+            >
+              <input
+                type="checkbox"
+                checked={active}
+                onChange={() => onToggleItem(opt.id)}
+                className="mt-1 h-4 w-4 accent-critical"
+              />
+              <span className="min-w-0 flex-1 leading-snug">
+                <span className="mb-1 flex flex-wrap items-center gap-2">
+                  <span
+                    className={cn(
+                      "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                      CATEGORY_TONE[opt.category],
+                    )}
+                  >
+                    {opt.category} · {CATEGORY_BLURB[opt.category]}
+                  </span>
+                </span>
+                <span className="block text-sm font-semibold">{opt.label}</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">{opt.description}</span>
+              </span>
+            </label>
+          );
+        })}
+      </div>
+      <ContactTable title="Touchpoints / community contacts" contacts={contacts} onChange={onContactsChange} />
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Stage 4: Action plan
 ───────────────────────────────────────────────────────────── */
 function ActionStep({
   clusterId,
@@ -704,11 +696,9 @@ function ActionStep({
   onOpenEstimate: (eventId: string) => void;
 }) {
   const chosenEvents = MARKET_ENGAGEMENT_OPTIONS.filter((m) => marketSelected.includes(m.id));
-  const [assetDlg, setAssetDlg] = useState<{
-    title: string;
-    asset: ActionAsset;
-    userContacts?: ContactEntry[];
-  } | null>(null);
+  const [assetDlg, setAssetDlg] = useState<{ title: string; asset: ActionAsset; userContacts?: ContactEntry[] } | null>(
+    null,
+  );
   const [draftByStrategy, setDraftByStrategy] = useState<Partial<Record<ConnectStrategy, string>>>({});
 
   return (
@@ -717,13 +707,12 @@ function ActionStep({
         Plan the next concrete steps for each event and each customer engagement strategy.
       </p>
 
-      {/* Events */}
       <section>
         <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Contribution &amp; brand events
         </h4>
         {chosenEvents.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No events selected in Stage 2 yet.</p>
+          <p className="text-xs text-muted-foreground">No events selected in Stage 3 yet.</p>
         ) : (
           <ul className="space-y-2">
             {chosenEvents.map((ev) => {
@@ -759,13 +748,12 @@ function ActionStep({
         )}
       </section>
 
-      {/* Customer strategies */}
       <section>
         <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Customer engagement strategies
         </h4>
         {customerStrategies.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No customer engagement strategies selected in Stage 3 yet.</p>
+          <p className="text-xs text-muted-foreground">No customer engagement strategies selected in Stage 2 yet.</p>
         ) : (
           <div className="space-y-3">
             {customerStrategies.map((s) => {
@@ -836,12 +824,7 @@ function ActionStep({
                   <div className="mt-2 flex items-center gap-1.5">
                     <input
                       value={draft}
-                      onChange={(e) =>
-                        setDraftByStrategy((d) => ({
-                          ...d,
-                          [s]: e.target.value,
-                        }))
-                      }
+                      onChange={(e) => setDraftByStrategy((d) => ({ ...d, [s]: e.target.value }))}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           const t = draft.trim();
@@ -876,7 +859,6 @@ function ActionStep({
         )}
       </section>
 
-      {/* Asset dialog */}
       <Dialog open={assetDlg !== null} onOpenChange={(o) => !o && setAssetDlg(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
