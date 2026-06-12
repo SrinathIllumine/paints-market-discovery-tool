@@ -44,8 +44,8 @@ export type RevenueProfile = {
 
 const RUPEE = (n: number) => `₹${formatInr(n)}`;
 function formatInr(n: number): string {
-  if (n >= 1_00_00_000) return `${(n / 1_00_00_000).toFixed(2)} Cr`;
-  if (n >= 1_00_000) return `${(n / 1_00_000).toFixed(1)} L`;
+  if (n >= 1_00_00_000) return `${(n / 1_00_00_000).toFixed(0)} Cr`;
+  if (n >= 1_00_000) return `${(n / 1_00_000).toFixed(0)} L`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(0)} K`;
   return String(n);
 }
