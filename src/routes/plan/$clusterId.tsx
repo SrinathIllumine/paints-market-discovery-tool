@@ -338,9 +338,17 @@ function PlanClusterScreen() {
    Shared helpers
 ───────────────────────────────────────────────────────────── */
 function StageSectionTitle({ index, title }: { index: number; title: string }) {
+  // Map index to the requested stage titles
+  const displayTitle = 
+    index === 1 ? "Design Value" :
+    index === 2 ? "Select Connect Approach" :
+    index === 3 ? "Plan Outreach Initiatives" :
+    index === 4 ? "Create Action Plan" :
+    title;
+
   return (
     <p className="text-xs font-bold uppercase tracking-widest text-foreground">
-      Stage {index}: {title}
+      Stage {index}: {displayTitle}
     </p>
   );
 }
