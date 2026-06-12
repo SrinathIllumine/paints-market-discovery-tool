@@ -62,16 +62,16 @@ function ClusterPotentialScreen() {
           </div>
         )}
 
-        <div className="mt-2 mb-2 rounded-2xl border border-border bg-card px-4 py-3 text-center shadow-sm">
-          <p className="font-display text-base">
-            <span className="text-foreground">Total Number of Clusters in Panvel: {totalClusters}</span>
+        <div className="mt-2 mb-2 rounded-2xl bg-critical px-4 py-3 text-center">
+          <p className="text-base font-bold text-white" style={{ fontFamily: "'Open Sans', sans-serif" }}>
+            Total Number of Clusters in Panvel: {totalClusters}
           </p>
         </div>
         <div className="mb-3 flex justify-center">
           <Link
             to="/market-potential"
             data-tour="map-view-button"
-            className="inline-flex h-7 items-center justify-center gap-1 rounded-md bg-critical/20 px-3 text-[11px] font-semibold text-critical shadow-sm"
+            className="inline-flex h-7 items-center justify-center gap-1 rounded-md border border-border bg-white px-3 text-[11px] font-medium text-muted-foreground shadow-sm"
           >
             View my Cluster Map
             <ArrowRight className="h-3.5 w-3.5" />
