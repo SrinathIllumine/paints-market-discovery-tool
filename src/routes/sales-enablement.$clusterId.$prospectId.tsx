@@ -328,7 +328,7 @@ function ProspectDetailPage() {
                 disabled={outcome.trim().length === 0}
                 className="mt-2 bg-navy text-navy-foreground hover:bg-navy/90"
               >
-                Save outcome
+                Save notes
               </Button>
             </div>
           )}
