@@ -33,7 +33,7 @@ type CardDef = {
 function IntroScreen() {
   const assessments = useAppStore((s) => s.assessments);
   const valueProps = useAppStore((s) => s.plan.valuePropositionByCluster);
-  const unlockedStage = useAppStore((s) => s.unlockedStage);
+  var unlockedStage = useAppStore((s) => s.unlockedStage);
 
   const mappedCount = Object.keys(assessments).length;
   const plannedCount = Object.values(valueProps).filter((v) => v && v.trim().length > 0).length;
