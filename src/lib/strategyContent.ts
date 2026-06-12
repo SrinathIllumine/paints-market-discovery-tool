@@ -87,14 +87,12 @@ const VALUE_PROP_LIBRARY: Record<string, ValuePropositionCard[]> = {
     {
       title:
         "How school repainting and a fresh design can become an attractive proposition for new admissions",
-      body:
-        "Pitch a vacation-window repaint as an admission-season upgrade: bright, child-safe walls, anti-fungal exteriors that survive monsoon, and corridors that look new in parent walk-throughs. Versus Asian Paints / Berger / Dulux, JK Maxx delivers comparable finish at a sharper trustee budget — with a 7-year warranty trustees can show parents.",
+      body: "\n",
     },
     {
       title:
         "Attractive benefits for the contractor + why JK Maxx improves brand confidence over competitors",
-      body:
-        "Higher per-litre margin than Asian Paints / Berger on the same school spec, faster site delivery from depot, free painter training and on-site supervision. Coverage matches Dulux Weathershield while costing less per sq.ft — easier to close trustees and protect the contractor's reputation on the next school in the cluster.",
+      body: "\n",
     },
   ],
   hospitals: [
