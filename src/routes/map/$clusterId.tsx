@@ -367,18 +367,18 @@ function ClusterDetailScreen() {
                       present in this cluster.
                     </Bullet>
                     <Bullet>
-                      The national avg. revenue per society is{" "}
-                      <b>₹18 L</b>.
+                      The national average revenue per {singular} is{" "}
+                      <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
                     </Bullet>
                     <Bullet>
-                      Repainting cycle time for societies is{" "}
+                      Typical repainting cycle time for {pluralCap.toLowerCase()} is{" "}
                       <b>
-                        {cycleYears} yr{cycleYears === 1 ? "" : "s"}
+                        {cycleYears} year{cycleYears === 1 ? "" : "s"}
                       </b>
                       .
                     </Bullet>
                     <Bullet>
-                      Total annual cluster revenue potential is{" "}
+                      Total cluster revenue potential per year is{" "}
                       <b className="text-critical">{formatRupees(annualRevenue)}</b>.
                     </Bullet>
                   </ul>
