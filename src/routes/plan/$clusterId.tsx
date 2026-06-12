@@ -21,7 +21,7 @@ import {
   CONNECT_STRATEGY_OPTIONS,
   CONNECT_STRATEGY_LABEL,
   MARKET_ENGAGEMENT_OPTIONS,
-  getValuePropositions,
+  getValuePropositionCards,
   getD2cInitiatives,
   getRecommendedActions,
   type ActionAsset,
@@ -29,6 +29,7 @@ import {
   type ContactEntry,
   type MarketEngagementCategory,
   type MarketEngagementOption,
+  type ValuePropositionCard,
 } from "@/lib/strategyContent";
 
 export const Route = createFileRoute("/plan/$clusterId")({
