@@ -540,7 +540,7 @@ export const useAppStore = create<State & Actions>()(
 
       unlockStage: (n) => set({ unlockedStage: n }),
     }),
-    { name: "sed.v10" },
+    { name: "sed.v11" },
   ),
 );
 
