@@ -459,12 +459,7 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
       {mode === "single" && isStageComplete && (
         <div className="flex items-center justify-between gap-2 mb-2 min-h-[32px]">
           {quadrantLabel && targetName ? (
-            <p className="text-sm text-gray-600 leading-snug">
-              <span className="font-semibold text-gray-800">{targetName} cluster</span>
-              {" is in "}
-              <span className="font-semibold text-red-600">{quadrantLabel}</span>
-              {" Quadrant"}
-            </p>
+    
           ) : (
             <span />
           )}
