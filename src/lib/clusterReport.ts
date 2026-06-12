@@ -198,8 +198,6 @@ export function generateClusterReportPdf({
   );
 
   // ── 3. Strategic insights ───────────────────────────────────
-  const highPotential = potentialScore >= 5;
-  const highAccess = accessRollupScore >= 5;
 
   const strategicPoints =
     highPotential && highAccess
