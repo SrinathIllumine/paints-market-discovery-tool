@@ -87,7 +87,7 @@ function ClusterPotentialScreen() {
               <Layers className="h-4 w-4 text-emerald-800" />
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Clusters</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Total Clusters</p>
               <p className="text-sm font-medium text-foreground">{totalClusters}</p>
             </div>
           </div>
