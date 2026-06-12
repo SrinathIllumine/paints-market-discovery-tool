@@ -760,7 +760,7 @@ function ActionStep({
           Select connect approach
         </h4>
         {customerStrategies.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No customer engagement strategies selected in Stage 2 yet.</p>
+          <p className="text-xs text-muted-foreground">No connect approach selected in Stage 2 yet.</p>
         ) : (
           <div className="space-y-3">
             {customerStrategies.map((s) => {
