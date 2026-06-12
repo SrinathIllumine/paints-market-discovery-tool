@@ -458,11 +458,8 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
       {/* FIX 1: flex row keeps label and button on the same line without overlap */}
       {mode === "single" && isStageComplete && (
         <div className="flex items-center justify-between gap-2 mb-2 min-h-[32px]">
-          {quadrantLabel && targetName ? (
-    
-          ) : (
-            <span />
-          )}
+          <span />
+
           {showCompareButton && <CompareButton isComparing={isComparing} onToggle={() => setIsComparing((v) => !v)} />}
         </div>
       )}
