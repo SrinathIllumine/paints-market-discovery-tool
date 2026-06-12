@@ -372,7 +372,7 @@ function ClusterDetailScreen() {
                     <Bullet>
                       Repainting cycle time for {pluralCap.toLowerCase()} is{" "}
                       <b>
-                        {cycleYears} year{cycleYears === 1 ? "" : "s"}
+                        {cycleYears} yr{cycleYears === 1 ? "" : "s"}
                       </b>
                       .
                     </Bullet>
