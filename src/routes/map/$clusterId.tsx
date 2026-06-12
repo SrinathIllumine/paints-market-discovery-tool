@@ -463,18 +463,37 @@ function ClusterDetailScreen() {
               </div>*/}
 
               {allAnswered && (
-                <Button
-                  data-tour="cluster-next-stage"
-                  onClick={() => {
-                    unlockStage(2);
-                    navigate({ to: "/" });
-                  }}
-                  size="lg"
-                  className="w-full gap-2 bg-critical text-critical-foreground hover:bg-critical/90"
-                >
-                  <Home className="h-4 w-4" />
-                  Go to the next stage
-                </Button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    onClick={() =>
+                      generateClusterReportPdf({
+                        clusterId,
+                        prospects,
+                        accessHML: dynamicAccessHML ?? intel.accessHML,
+                        potentialScore: scores.potentialScore,
+                        accessRollupScore: scores.accessRollupScore,
+                      })
+                    }
+                    size="lg"
+                    variant="outline"
+                    className="w-full gap-2 border-navy text-navy hover:bg-navy/5 sm:flex-1"
+                  >
+                    <FileDown className="h-4 w-4" />
+                    Generate cluster report
+                  </Button>
+                  <Button
+                    data-tour="cluster-next-stage"
+                    onClick={() => {
+                      unlockStage(2);
+                      navigate({ to: "/" });
+                    }}
+                    size="lg"
+                    className="w-full gap-2 bg-critical text-critical-foreground hover:bg-critical/90 sm:flex-1"
+                  >
+                    <Home className="h-4 w-4" />
+                    Go to the next stage
+                  </Button>
+                </div>
               )}
             </div>
           )}
