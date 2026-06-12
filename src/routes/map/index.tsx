@@ -74,7 +74,7 @@ function ClusterPotentialScreen() {
         <div className="mt-6 mb-6 rounded-2xl border border-border bg-card px-4 py-3 text-center shadow-sm">
           <p className="mt-0.5 font-display text-base">
             <span className="font-bold text-critical">Area: Panvel</span>
-            <span className="text-muted-foreground"> Number of Clusterss: {totalClusters}</span>
+            <span className="text-muted-foreground"> Number of Clusters: {totalClusters}</span>
           </p>
         </div>
 
