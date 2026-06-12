@@ -624,7 +624,7 @@ function OutreachStep({
                   className="mt-1 h-4 w-4 accent-critical"
                 />
                 <span className="min-w-0 flex-1 leading-snug">
-                  <span className="mb-1 flex flex-wrap items-center gap-2">
+                  {/*<span className="mb-1 flex flex-wrap items-center gap-2">
                     <span
                       className={cn(
                         "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
@@ -633,7 +633,7 @@ function OutreachStep({
                     >
                       {opt.category} · {CATEGORY_BLURB[opt.category]}
                     </span>
-                  </span>
+                  </span>*/}
                   <span className="block text-sm font-semibold">{opt.label}</span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">{opt.description}</span>
                 </span>
