@@ -413,8 +413,7 @@ function ValueStep({
   return (
     <div>
       <p className="mb-2 text-xs text-muted-foreground">
-        Pick one value proposition to carry through your plan — one is value-centric (why the customer should say yes),
-        the other is product- and contractor-centric (why JK Maxx wins over competitors).
+        Pick one value proposition to carry through your plan
       </p>
       <div className="space-y-2">
         {baseCards.map((card) => {
