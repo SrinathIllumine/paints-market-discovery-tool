@@ -18,7 +18,7 @@ export const CONNECT_STRATEGY_LABEL: Record<ConnectStrategy, string> = {
 export const CONNECT_STRATEGY_OPTIONS: { key: ConnectStrategy; label: string; description: string }[] = [
   {
     key: "CONTRACTOR",
-    label: "Contractor-driven",
+    label: "Contractor-connect",
     description: "Activate the contractor network operating in this cluster.",
   },
   {
