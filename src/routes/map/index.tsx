@@ -62,20 +62,17 @@ function ClusterPotentialScreen() {
           </div>
         )}
 
-        <div className="mt-6 mb-6 rounded-2xl border border-border bg-card px-4 py-3 text-center shadow-sm">
-          <p className="mt-0.5 font-display text-base">
-            {/*<span className="font-bold text-critical">Area: Panvel</span>*/}
-            <span className="text-muted-foreground"> Total Number of Clusters in Panvel: {totalClusters}</span>
-          </p>
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Panvel · {totalClusters} clusters</span>
+          <Link
+            to="/market-potential"
+            data-tour="map-view-button"
+            className="inline-flex h-7 items-center justify-center gap-1 rounded-md bg-critical/20 px-3 text-[11px] font-semibold text-critical shadow-sm"
+          >
+            View my Cluster Map
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
-        <Link
-          to="/market-potential"
-          data-tour="map-view-button"
-          className="mb-5 mx-auto inline-flex h-7 items-center justify-center gap-1 rounded-md bg-critical/20 px-3 text-[11px] font-semibold text-critical shadow-sm"
-        >
-          View my Cluster Map
-          <ArrowRight className="h-4 w-4" />
-        </Link>
 
         <div data-tour="map-clusters" className="grid grid-cols-2 gap-5 sm:grid-cols-3">
           {CLUSTERS.map((c) => (
