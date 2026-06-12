@@ -8,7 +8,7 @@ import { Tour } from "@/components/app/Tour";
 import { CLUSTERS } from "@/data/clusters";
 import { useAppStore } from "@/store/appStore";
 
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight, ChevronDown, MapPin, Layers } from "lucide-react";
 
 export const Route = createFileRoute("/map/")({
   head: () => ({
