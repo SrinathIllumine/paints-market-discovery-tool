@@ -339,12 +339,16 @@ function PlanClusterScreen() {
 ───────────────────────────────────────────────────────────── */
 function StageSectionTitle({ index, title }: { index: number; title: string }) {
   // Map index to the requested stage titles
-  const displayTitle = 
-    index === 1 ? "DESIGN VALUE PROPOSITION" :
-    index === 2 ? "Select Connect Approach" :
-    index === 3 ? "Plan Outreach Initiatives" :
-    index === 4 ? "Create Action Plan" :
-    title;
+  const displayTitle =
+    index === 1
+      ? "DESIGN VALUE PROPOSITION"
+      : index === 2
+        ? "Select Connect Approach"
+        : index === 3
+          ? "Plan Outreach Initiatives"
+          : index === 4
+            ? "Create Action Plan"
+            : title;
 
   return (
     <p className="text-[11px] font-bold uppercase tracking-widest text-foreground">
@@ -627,13 +631,10 @@ function MarketStep({
     <div className="space-y-4">
       {!hasStrategies && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
-          No connect approach selected yet. Go back to Stage 2 to pick one — the events below will update
-          accordingly.
+          No connect approach selected yet. Go back to Stage 2 to pick one — the events below will update accordingly.
         </div>
       )}
-      <p className="text-xs text-muted-foreground">
-        Pick the contribution events that you want to run in this month
-      </p>
+      <p className="text-xs text-muted-foreground">Pick the contribution events that you want to run in this month</p>
       <div className="space-y-2">
         {marketOptions.map((opt) => {
           const active = selected.includes(opt.id);
@@ -652,8 +653,8 @@ function MarketStep({
                 className="mt-1 h-4 w-4 accent-critical"
               />
               <span className="min-w-0 flex-1 leading-snug">
-                <span className="mb-1 flex flex-wrap items-center gap-2">
-                  <span
+                {/* <span className="mb-1 flex flex-wrap items-center gap-2">
+                   <span
                     className={cn(
                       "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
                       CATEGORY_TONE[opt.category],
@@ -661,7 +662,7 @@ function MarketStep({
                   >
                     {opt.category} · {CATEGORY_BLURB[opt.category]}
                   </span>
-                </span>
+                </span>*/}
                 <span className="block text-sm font-semibold">{opt.label}</span>
                 <span className="mt-0.5 block text-xs text-muted-foreground">{opt.description}</span>
               </span>
