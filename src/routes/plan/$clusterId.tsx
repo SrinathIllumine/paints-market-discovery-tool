@@ -53,7 +53,7 @@ const INFLUENCER_ROLES = ["Site supervisor", "Interior designer", "Architect", "
    Stepper bar
 ───────────────────────────────────────────────────────────── */
 const STEP_LABELS = [
-  ["Design", "Value"],
+  ["Design Value", "Proposition"],
   ["Select", "Connect", "Approach"],
   ["Plan", "Outreach", "Initiatives"],
   ["Create", "Action", "Plans"],
