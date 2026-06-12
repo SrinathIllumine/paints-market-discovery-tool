@@ -5,6 +5,7 @@ import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { GoogleMap } from "@/components/maps/GoogleMap";
 import { AddProspectSheet } from "@/components/maps/AddProspectSheet";
 import { CLUSTERS, getCluster, prospectPlural } from "@/data/clusters";
@@ -15,7 +16,7 @@ import { groupIntoRegions } from "@/lib/regions";
 import { useAppStore, type Prospect } from "@/store/appStore";
 import { searchPlacesForCluster } from "@/lib/places.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, MapPin, Home, FileDown } from "lucide-react";
+import { Plus, Loader2, MapPin, Home, FileDown, Info } from "lucide-react";
 import { generateClusterReportPdf } from "@/lib/clusterReport";
 import {
   computeClusterScores,
@@ -25,6 +26,8 @@ import {
   getCompetitiveInsights,
   getEaseInsights,
   getRepaintingCycleYears,
+  getRevenueSourceNotes,
+  getCompetitiveSourceNotes,
   highlightBrands,
   scoreRevenue,
   scoreToHML,
@@ -62,9 +65,7 @@ function ClusterDetailScreen() {
   const navigate = useNavigate();
   const { clusterId } = Route.useParams();
   const cluster = useMemo(() => getCluster(clusterId), [clusterId]);
-
   const [activeTab, setActiveTab] = useState<Tab>("prospects");
-
   const tabTopRef = useRef<HTMLDivElement>(null);
 
   const goToTab = (tab: Tab) => {
@@ -93,9 +94,7 @@ function ClusterDetailScreen() {
 
   const [accessAnswers, setAccessAnswers] = useState<("Y" | "N" | null)[]>(() => {
     const saved = existingAssessment?.accessAnswers3;
-    if (saved && saved.length === 3) {
-      return saved.map((v) => v ?? null) as ("Y" | "N" | null)[];
-    }
+    if (saved && saved.length === 3) return saved.map((v) => v ?? null) as ("Y" | "N" | null)[];
     return [null, null, null];
   });
 
@@ -104,6 +103,9 @@ function ClusterDetailScreen() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [pickingPin, setPickingPin] = useState(false);
   const [pendingLatLng, setPendingLatLng] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Info popup state
+  const [infoPopup, setInfoPopup] = useState<"revenue" | "competitive" | null>(null);
 
   useEffect(() => {
     ensureCluster(clusterId);
@@ -114,44 +116,30 @@ function ClusterDetailScreen() {
 
   const hasProspects = (state?.prospects.length ?? 0) > 0;
   useEffect(() => {
-    if (!cluster) return;
-    if (hasProspects) return;
-    if (loading) return;
-
-    const GRID = 4;
-    const STEP = 0.045;
-    const RADIUS_M = 6000;
+    if (!cluster || hasProspects || loading) return;
+    const GRID = 4,
+      STEP = 0.045,
+      RADIUS_M = 6000;
     const centers: Array<{ lat: number; lng: number }> = [];
     const offset = (GRID - 1) / 2;
-    for (let i = 0; i < GRID; i++) {
-      for (let j = 0; j < GRID; j++) {
-        centers.push({
-          lat: PANVEL_CENTER.lat + (i - offset) * STEP,
-          lng: PANVEL_CENTER.lng + (j - offset) * STEP,
-        });
-      }
-    }
-
+    for (let i = 0; i < GRID; i++)
+      for (let j = 0; j < GRID; j++)
+        centers.push({ lat: PANVEL_CENTER.lat + (i - offset) * STEP, lng: PANVEL_CENTER.lng + (j - offset) * STEP });
     setLoading(true);
     Promise.all(
       centers.map((c) =>
-        callPlaces({
-          data: {
-            textQuery: cluster.placesQuery,
-            lat: c.lat,
-            lng: c.lng,
-            radiusMeters: RADIUS_M,
+        callPlaces({ data: { textQuery: cluster.placesQuery, lat: c.lat, lng: c.lng, radiusMeters: RADIUS_M } }).catch(
+          (e) => {
+            console.error("Places sub-region failed", c, e);
+            return { places: [] as Awaited<ReturnType<typeof callPlaces>>["places"] };
           },
-        }).catch((e) => {
-          console.error("Places sub-region failed", c, e);
-          return { places: [] as Awaited<ReturnType<typeof callPlaces>>["places"] };
-        }),
+        ),
       ),
     )
       .then((results) => {
         const seen = new Set<string>();
         const mapped: Prospect[] = [];
-        for (const res of results) {
+        for (const res of results)
           for (const p of res.places) {
             if (seen.has(p.id)) continue;
             seen.add(p.id);
@@ -165,7 +153,6 @@ function ClusterDetailScreen() {
               source: "places",
             });
           }
-        }
         setProspects(clusterId, mapped);
       })
       .catch((e) => console.error(e))
@@ -212,6 +199,10 @@ function ClusterDetailScreen() {
       completedAt: Date.now(),
     });
   };
+
+  // Source notes (dynamic)
+  const revenueSourceNotes = getRevenueSourceNotes(clusterId, cycleYears, profile.avgRevenuePerProspect, pluralCap);
+  const competitiveSourceNotes = getCompetitiveSourceNotes();
 
   return (
     <AppShell
@@ -357,6 +348,7 @@ function ClusterDetailScreen() {
                 defaultValue={["revenue", "competitive", "access", "ease"]}
                 className="space-y-2"
               >
+                {/* Revenue */}
                 <CollapsibleSub value="revenue" title="Explore the Revenue Potential" hml={dynamicRevenueHML}>
                   <ul className="space-y-2 text-sm leading-relaxed">
                     <Bullet>
@@ -381,8 +373,18 @@ function ClusterDetailScreen() {
                       <b className="text-critical">{formatRupees(annualRevenue)}</b>.
                     </Bullet>
                   </ul>
+                  <div className="flex justify-end mt-3">
+                    <button
+                      type="button"
+                      onClick={() => setInfoPopup("revenue")}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-[11px] text-muted-foreground hover:bg-muted/60"
+                    >
+                      <Info className="h-3.5 w-3.5" /> Source
+                    </button>
+                  </div>
                 </CollapsibleSub>
 
+                {/* Competitive */}
                 <CollapsibleSub value="competitive" title="View the Competitive Strength" hml={intel.competitiveHML}>
                   <ul className="space-y-2 text-sm leading-relaxed">
                     {getCompetitiveInsights(clusterId)
@@ -391,8 +393,18 @@ function ClusterDetailScreen() {
                         <Bullet key={i}>{highlightBrands(line)}</Bullet>
                       ))}
                   </ul>
+                  <div className="flex justify-end mt-3">
+                    <button
+                      type="button"
+                      onClick={() => setInfoPopup("competitive")}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-[11px] text-muted-foreground hover:bg-muted/60"
+                    >
+                      <Info className="h-3.5 w-3.5" /> Source
+                    </button>
+                  </div>
                 </CollapsibleSub>
 
+                {/* Access */}
                 <CollapsibleSub
                   value="access"
                   title="Share Your Access Level in this Cluster"
@@ -408,6 +420,7 @@ function ClusterDetailScreen() {
                   />
                 </CollapsibleSub>
 
+                {/* Ease */}
                 <CollapsibleSub value="ease" title="View Ease of Sale in this Cluster" hml={intel.easeHML}>
                   <ul className="space-y-2 text-sm leading-relaxed">
                     {getEaseInsights(clusterId).map((line, i) => (
@@ -435,7 +448,6 @@ function ClusterDetailScreen() {
                 <h2 className="font-display text-2xl">Cluster snapshot</h2>
               </div>
 
-              {/* Strategic insights — above chart */}
               {allAnswered && (
                 <StrategicInsights
                   clusterName={cluster.name}
@@ -444,7 +456,6 @@ function ClusterDetailScreen() {
                 />
               )}
 
-              {/* Chart */}
               <div
                 data-tour="cluster-snapshot-graph"
                 className="rounded-2xl border border-border bg-card p-4 shadow-sm"
@@ -468,8 +479,7 @@ function ClusterDetailScreen() {
                     variant="outline"
                     className="w-full gap-2 border-navy text-navy hover:bg-navy/5"
                   >
-                    <FileDown className="h-4 w-4" />
-                    Generate cluster report
+                    <FileDown className="h-4 w-4" /> Generate cluster report
                   </Button>
                   <Button
                     data-tour="cluster-next-stage"
@@ -480,8 +490,7 @@ function ClusterDetailScreen() {
                     size="lg"
                     className="w-full gap-2 bg-critical text-critical-foreground hover:bg-critical/90"
                   >
-                    <Home className="h-4 w-4" />
-                    Go to the next stage
+                    <Home className="h-4 w-4" /> Go to the next stage
                   </Button>
                 </div>
               )}
@@ -490,6 +499,50 @@ function ClusterDetailScreen() {
         </div>
       </div>
 
+      {/* Revenue source popup */}
+      <Dialog open={infoPopup === "revenue"} onOpenChange={(o) => !o && setInfoPopup(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>About this estimate</DialogTitle>
+          </DialogHeader>
+          <ol className="space-y-3 list-none">
+            {revenueSourceNotes.map((note, i) => (
+              <li key={i} className="flex gap-2 text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground shrink-0">{i + 1}.</span>
+                <span>{note}</span>
+              </li>
+            ))}
+          </ol>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInfoPopup(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Competitive source popup */}
+      <Dialog open={infoPopup === "competitive"} onOpenChange={(o) => !o && setInfoPopup(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>About this estimate</DialogTitle>
+          </DialogHeader>
+          <ol className="space-y-3 list-none">
+            {competitiveSourceNotes.map((note, i) => (
+              <li key={i} className="flex gap-2 text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground shrink-0">{i + 1}.</span>
+                <span>{note}</span>
+              </li>
+            ))}
+          </ol>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInfoPopup(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <AddProspectSheet
         open={sheetOpen}
         onOpenChange={setSheetOpen}
@@ -497,14 +550,7 @@ function ClusterDetailScreen() {
         pendingLatLng={pendingLatLng}
         onClearPending={() => setPendingLatLng(null)}
         onSubmit={({ name, locality, lat, lng }) => {
-          addProspect(clusterId, {
-            id: `manual-${Date.now()}`,
-            name,
-            locality,
-            lat,
-            lng,
-            source: "manual",
-          });
+          addProspect(clusterId, { id: `manual-${Date.now()}`, name, locality, lat, lng, source: "manual" });
         }}
       />
     </AppShell>
@@ -564,20 +610,6 @@ function Bullet({ children }: { children: React.ReactNode }) {
       <span className="mt-0.5 text-critical">•</span>
       <span className="flex-1">{children}</span>
     </li>
-  );
-}
-
-function ScoreTile({ label, score }: { label: string; score: number }) {
-  const hi = score >= 6;
-  const cls = hi ? "border-green-300 bg-green-50 text-green-800" : "border-red-300 bg-red-50 text-red-800";
-  return (
-    <div className={cn("rounded-xl border p-2 text-center", cls)}>
-      <p className="text-[10px] uppercase tracking-wider opacity-80">{label}</p>
-      <p className="mt-0.5 font-display text-base leading-tight">
-        <span className="font-bold">{score}</span>
-        <span className="text-xs opacity-70">/10</span>
-      </p>
-    </div>
   );
 }
 
@@ -642,8 +674,6 @@ function AccessQuestions({
   );
 }
 
-// ── Strategic Insights ─────────────────────────────────────────────────────────
-
 function StrategicInsights({
   clusterName,
   potentialScore,
@@ -685,12 +715,12 @@ function StrategicInsights({
 
   const message =
     highPotential && highAccess
-      ? `${clusterName} cluster has high potential and high access. It is highly recommended to create an engagement plan for this cluster.`
+      ? `${clusterName} has high potential and high access. It is highly recommended to create an engagement plan for ${clusterName}.`
       : highPotential && !highAccess
-        ? `${clusterName} cluster has high potential but low access. It is recommended to create an engagement plan to build more connects for this cluster.`
+        ? `${clusterName} has high potential but low access. It is recommended to build more connects before creating an engagement plan for ${clusterName}.`
         : !highPotential && highAccess
-          ? `${clusterName} cluster has strong access but low overall potential. Conduct events to fully leverage the available market within this cluster.`
-          : `${clusterName} cluster has low potential and low access. It is not recommended to prioritise an engagement plan for this cluster.`;
+          ? `${clusterName} has strong access but low overall potential. Consider running events to maximise what is available for ${clusterName}.`
+          : `${clusterName} has low potential and low access. It is not recommended to prioritise an engagement plan for ${clusterName}.`;
 
   return (
     <div className={cn("rounded-2xl border p-4 space-y-3", wrapperCls)}>
@@ -710,4 +740,4 @@ function StrategicInsights({
 void CLUSTERS;
 void scoreFromHML;
 void scoreToHML;
-void ScoreTile;
+void HMLBadge;

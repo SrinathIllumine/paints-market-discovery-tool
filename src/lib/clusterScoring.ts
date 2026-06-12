@@ -778,3 +778,22 @@ export function highlightBrands(text: string): ReactNode {
     }),
   );
 }
+export function getRevenueSourceNotes(
+  clusterId: string,
+  cycleYears: number,
+  avgRevenue: number,
+  pluralCap: string,
+): string[] {
+  const cagrInfo = getPaintsCagr(clusterId);
+  return [
+    `Average revenue per ${pluralCap.toLowerCase()} (${formatRupees(avgRevenue)}) is derived from national JK sales data across similar clusters, benchmarked against ${cagrInfo.source}.`,
+    `Repainting cycle of ${cycleYears} year${cycleYears === 1 ? "" : "s"} is based on industry norms for ${pluralCap.toLowerCase()}, validated through ASM and retailer field inputs in this region.`,
+  ];
+}
+
+export function getCompetitiveSourceNotes(): string[] {
+  return [
+    "Based on field research conducted in the area — inputs gathered from retailers, MEs, DGs, and ASMs through structured conversations.",
+    "Brand share estimates are directional, not audited — intended to guide prioritisation rather than serve as formal market research data.",
+  ];
+}
