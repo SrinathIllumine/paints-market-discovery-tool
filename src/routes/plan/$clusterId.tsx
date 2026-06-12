@@ -384,14 +384,17 @@ function ValueStep({
   selected?: string;
   onSelect: (v: string) => void;
 }) {
-  const baseOptions = useMemo(() => getValuePropositions(clusterId).slice(0, 2), [clusterId]);
+  const baseCards: ValuePropositionCard[] = useMemo(
+    () => getValuePropositionCards(clusterId).slice(0, 2),
+    [clusterId],
+  );
+  const baseTitles = baseCards.map((c) => c.title);
   const [customs, setCustoms] = useState<string[]>(() => {
-    if (selected && !baseOptions.includes(selected)) return [selected];
+    if (selected && !baseTitles.includes(selected)) return [selected];
     return [];
   });
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
-  const allOptions = [...baseOptions, ...customs];
 
   const submitCustom = () => {
     const t = draft.trim();
@@ -399,7 +402,9 @@ function ValueStep({
       setAdding(false);
       return;
     }
-    if (!allOptions.includes(t)) setCustoms((c) => [...c, t]);
+    if (!baseTitles.includes(t) && !customs.includes(t)) {
+      setCustoms((c) => [...c, t]);
+    }
     onSelect(t);
     setDraft("");
     setAdding(false);
@@ -407,9 +412,37 @@ function ValueStep({
 
   return (
     <div>
-      <p className="mb-2 text-xs text-muted-foreground">Pick one value proposition to carry through your plan.</p>
+      <p className="mb-2 text-xs text-muted-foreground">
+        Pick one value proposition to carry through your plan — one is value-centric (why the customer should say yes),
+        the other is product- and contractor-centric (why JK Maxx wins over competitors).
+      </p>
       <div className="space-y-2">
-        {allOptions.map((opt) => {
+        {baseCards.map((card) => {
+          const active = selected === card.title;
+          return (
+            <label
+              key={card.title}
+              className={cn(
+                "flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2.5 text-sm",
+                active ? "border-critical bg-critical/5" : "border-border bg-card",
+              )}
+            >
+              <input
+                type="radio"
+                name="value-prop"
+                checked={active}
+                onChange={() => onSelect(card.title)}
+                className="mt-1 h-4 w-4 shrink-0 accent-critical"
+              />
+              <span className="min-w-0 leading-snug">
+                <span className="block font-semibold text-foreground">{card.title}</span>
+                <span className="mt-1 block text-xs text-muted-foreground">{card.body}</span>
+              </span>
+            </label>
+          );
+        })}
+
+        {customs.map((opt) => {
           const active = selected === opt;
           return (
             <label
@@ -424,7 +457,7 @@ function ValueStep({
                 name="value-prop"
                 checked={active}
                 onChange={() => onSelect(opt)}
-                className="mt-0.5 h-4 w-4 accent-critical"
+                className="mt-0.5 h-4 w-4 shrink-0 accent-critical"
               />
               <span className="leading-snug">{opt}</span>
             </label>
