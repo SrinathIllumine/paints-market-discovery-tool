@@ -435,7 +435,6 @@ function ValueStep({
               />
               <span className="min-w-0 leading-snug">
                 <span className="block font-semibold text-foreground">{card.title}</span>
-                <span className="mt-1 block text-xs text-muted-foreground">{card.body}</span>
               </span>
             </label>
           );

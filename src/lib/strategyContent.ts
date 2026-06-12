@@ -99,70 +99,60 @@ const VALUE_PROP_LIBRARY: Record<string, ValuePropositionCard[]> = {
     {
       title:
         "How a hygienic repaint becomes an attractive proposition for patient trust and inspection scores",
-      body:
-        "Position antimicrobial, washable finishes as a patient-trust upgrade — clean wards, odour-free application during phased work, and exteriors that hold up to disinfectant cleaning. Versus Asian Paints Royale Health Shield / Dulux Promise, JK Maxx hygienic range matches the antimicrobial claim at a better hospital-AMC price.",
+      body: "\n",
     },
     {
       title:
         "Attractive contractor benefits + why JK Maxx wins confidence over competitors in healthcare",
-      body:
-        "Low-VOC, low-odour systems mean fewer ward-shutdown complaints, faster recoat windows and stronger margins than Berger Silk Breathe. Free technical supervision, hospital-grade case references and a painter loyalty payout per project make JK Maxx the safer pitch for the contractor's reputation.",
+      body: "\n",
     },
   ],
   "mid-apartments": [
     {
       title:
         "How a society repaint becomes an attractive proposition for committee re-election and property value",
-      body:
-        "Frame the exterior repaint as a visible win for the managing committee — better street appeal, fewer monsoon leaks, higher resale/rent quotes for owners. Versus Asian Paints Apex Ultima / Berger WeatherCoat, JK Maxx exteriors offer the same 7-year warranty at a sharper society-bulk price.",
+      body: "\n",
     },
     {
       title:
         "Attractive contractor benefits + why JK Maxx beats competitors on society jobs",
-      body:
-        "Better per-litre margin than Asian Paints on bulk society tenders, faster delivery from local depot, painter loyalty rewards and on-site colour-consultation support. Coverage and weathering match Dulux Weathershield Max — the contractor wins the AGM with a stronger spec at a lower BOQ.",
+      body: "\n",
     },
   ],
   midc: [
     {
       title:
         "How an industrial coating refresh becomes an attractive proposition for plant uptime and safety audits",
-      body:
-        "Pitch shopfloor and tank-farm coatings as an uptime + safety story — clearer zone markings, corrosion control on exterior steel, faster shutdown-window turnaround. Versus Asian Paints Apcolite Industrial / Berger Protecton, JK Maxx industrial systems match chemical-resistance specs at a sharper plant-engineering budget.",
+      body: "\n",
     },
     {
       title:
         "Attractive contractor benefits + why JK Maxx improves credibility with plant engineers",
-      body:
-        "Higher project margin than Berger Protecton on the same scope, MIDC-cluster references the contractor can show, and free technical assistance from JK's coatings team during shutdown windows. Easier to defend the spec to a plant engineer who otherwise defaults to Asian Paints.",
+      body: "\n",
     },
   ],
   hotels: [
     {
       title:
         "How a refresh repaint becomes an attractive proposition for guest reviews and brand-standard audits",
-      body:
-        "Position the repaint as a review-score and OTA-ranking upgrade — refreshed lobbies, stain-resistant guest-room finishes, brand-standard exteriors. Versus Asian Paints Royale Luxury Emulsion / Dulux Velvet Touch, JK Maxx premium interiors deliver the same finish at a sharper refurbishment budget.",
+      body: "\n",
     },
     {
       title:
         "Attractive contractor benefits + why JK Maxx wins over competitors on hospitality jobs",
-      body:
-        "Stronger margin than Berger Silk Breathe on premium interiors, fast colour-consultation support, and a painter loyalty payout that helps the contractor retain crew across resorts. Lets the contractor pitch a brand-standard look without the Asian Paints price tag.",
+      body: "\n",
     },
   ],
   restaurants: [
     {
       title:
         "How a themed repaint becomes an attractive proposition for footfall and Instagrammable interiors",
-      body:
-        "Sell the repaint as a footfall and social-media play — vibrant accent walls, washable kitchen-back finishes, refreshed exteriors that pull in walk-ins. Versus Asian Paints Royale Play / Dulux Velvet Touch, JK Maxx designer range delivers the same wow at a smaller café budget.",
+      body: "\n",
     },
     {
       title:
         "Attractive contractor benefits + why JK Maxx beats competitors on F&B refits",
-      body:
-        "Better margin than Berger on designer finishes, fast turnaround during weekday-shutdown windows, and free shade-card / mock-up support. Helps the contractor close the owner without losing the job to a local Birla Opus pitch.",
+      body: "\n",
     },
   ],
 };
@@ -173,14 +163,12 @@ export function getValuePropositionCards(clusterId: string): ValuePropositionCar
   return [
     {
       title: `How a quality repaint becomes an attractive proposition for ${ctx} owners and end-users`,
-      body:
-        `Pitch the repaint as a visible business upgrade for ${ctx} — better customer perception, longer-lasting finish through monsoon and a sharper exterior. Versus Asian Paints, Berger and Dulux, JK Maxx delivers comparable finish and warranty at a sharper budget the owner can sign off quickly.`,
+      body: "\n",
     },
     {
       title:
         "Attractive contractor benefits + why JK Maxx improves brand confidence over competitors",
-      body:
-        `Better per-litre margin than Asian Paints / Berger on the same spec, faster delivery from local depot, painter loyalty rewards and free on-site technical support. Lets the contractor defend the brand confidently against Birla Opus or Dulux pitches in the ${ctx} cluster.`,
+      body: "\n",
     },
   ];
 }
