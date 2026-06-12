@@ -29,7 +29,7 @@ function ClusterPotentialScreen() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const assessments = useAppStore((s) => s.assessments);
-  const mappedCount = Object.keys(assessments).length;
+  // const mappedCount = Object.keys(assessments).length;
   const totalClusters = CLUSTERS.length;
 
   const dismissHint = () => setShowHint(false);
