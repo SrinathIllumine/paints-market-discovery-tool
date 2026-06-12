@@ -59,18 +59,39 @@ export function generateClusterReportPdf({
   let y = margin;
 
   // Header band
-  doc.setFillColor(15, 23, 42);
-  doc.rect(0, 0, pageWidth, 84, "F");
-  doc.setTextColor(255, 255, 255);
+
+  const titleText = clean(`Cluster Report for ${cluster.name}`);
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
 
   const titleLines = doc.splitTextToSize(
-    clean(`Cluster Report for ${cluster.name}`),
-    pageWidth - margin * 2 - 120, // leave some room for DG details on right
+    titleText,
+    pageWidth - margin * 2 - 140, // reserve space for DG/Area block
   );
 
-  doc.text(titleLines, margin, 36);
+  const titleY = 36;
+  const titleLineHeight = 18;
+  const titleHeight = titleLines.length * titleLineHeight;
+
+  const generatedDateY = titleY + titleHeight + 8;
+
+  const headerHeight = Math.max(
+    84,
+    generatedDateY + 28, // bottom padding
+  );
+
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, pageWidth, headerHeight, "F");
+
+  doc.setTextColor(255, 255, 255);
+
+  // Title
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text(titleLines, margin, titleY);
+
+  // Generated date
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
@@ -82,15 +103,25 @@ export function generateClusterReportPdf({
       })}`,
     ),
     margin,
-    56,
+    generatedDateY,
   );
+
+  // DG details
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text(clean(`DG: ${dgName}`), pageWidth - margin, 36, { align: "right" });
+  doc.text(clean(`DG: ${dgName}`), pageWidth - margin, 36, {
+    align: "right",
+  });
+
   doc.setFont("helvetica", "normal");
-  doc.text(clean(`Area: ${area}`), pageWidth - margin, 56, { align: "right" });
+  doc.text(clean(`Area: ${area}`), pageWidth - margin, 56, {
+    align: "right",
+  });
+
   doc.setTextColor(15, 23, 42);
-  y = 120;
+
+  // Start body below dynamic header
+  y = headerHeight + 36;
 
   const ensureSpace = (h: number) => {
     if (y + h > pageHeight - 40) {
