@@ -686,12 +686,12 @@ function StrategicInsights({
 
   const message =
     highPotential && highAccess
-      ? `${clusterName} has high potential and high access. It is highly recommended to create an engagement plan for ${clusterName}.`
+      ? `${clusterName} has high potential and high access. It is highly recommended to create an engagement plan for this cluster.`
       : highPotential && !highAccess
-        ? `${clusterName} has high potential but low access. It is recommended to build more connects before creating an engagement plan for ${clusterName}.`
+        ? `${clusterName} has high potential but low access. It is recommended to creating an engagement plan build more connects for this cluster.`
         : !highPotential && highAccess
-          ? `${clusterName} has strong access but low overall potential. Consider running events to maximise what is available for ${clusterName}.`
-          : `${clusterName} has low potential and low access. It is not recommended to prioritise an engagement plan for ${clusterName}.`;
+          ? `${clusterName} has strong access but low overall potential. Consider running events to maximise what is available for this cluster.`
+          : `${clusterName} has low potential and low access. It is not recommended to prioritise an engagement plan for this cluster.`;
 
   return (
     <div className={cn("rounded-2xl border p-4 space-y-3", wrapperCls)}>
