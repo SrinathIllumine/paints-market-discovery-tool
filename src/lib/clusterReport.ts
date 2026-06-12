@@ -56,16 +56,6 @@ export function generateClusterReportPdf({
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 40;
-  const highPotential = potentialScore >= 5;
-  const highAccess = accessRollupScore >= 5;
-  const positionLabel =
-    highPotential && highAccess
-      ? "High Potential / High Access"
-      : highPotential && !highAccess
-        ? "High Potential / Low Access"
-        : !highPotential && highAccess
-          ? "Low Potential / High Access"
-          : "Low Potential / Low Access";
   let y = margin;
 
   // Header band
@@ -75,9 +65,6 @@ export function generateClusterReportPdf({
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.text(clean(`Cluster Report for ${cluster.name}`), margin, 36);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text(clean(`Cluster position: ${positionLabel}`), margin, 36);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
@@ -198,6 +185,16 @@ export function generateClusterReportPdf({
   );
 
   // ── 3. Strategic insights ───────────────────────────────────
+  const highPotential = potentialScore >= 5;
+  const highAccess = accessRollupScore >= 5;
+  const positionLabel =
+    highPotential && highAccess
+      ? "High Potential / High Access"
+      : highPotential && !highAccess
+        ? "High Potential / Low Access"
+        : !highPotential && highAccess
+          ? "Low Potential / High Access"
+          : "Low Potential / Low Access";
 
   const strategicPoints =
     highPotential && highAccess
@@ -247,3 +244,5 @@ export function generateClusterReportPdf({
   const safeName = cluster.name.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "");
   doc.save(`JK-Cluster-Report-${safeName}-${today}.pdf`);
 }
+
+I'm getting build failed error 
