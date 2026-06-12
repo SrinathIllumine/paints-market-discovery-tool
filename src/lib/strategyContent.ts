@@ -10,9 +10,9 @@ export const CONNECT_STRATEGY_LABEL: Record<ConnectStrategy, string> = {
   BRAND: "Brand Awareness",
   CONTRACTOR: "Contractor-connect",
   OUTREACH: "Outreach-connect",
-  D2C: "Direct-sales driven",
-  RETAILER: "Retailer-driven",
-  INFLUENCER: "Influencer-driven",
+  D2C: "Direct-sales connect",
+  RETAILER: "Retailer-connect",
+  INFLUENCER: "Influencer-connect",
 };
 
 export const CONNECT_STRATEGY_OPTIONS: { key: ConnectStrategy; label: string; description: string }[] = [
