@@ -71,11 +71,26 @@ function ClusterPotentialScreen() {
           <ArrowRight className="h-4 w-4" />
         </Link>
 
-        <div className="mt-6 mb-6 rounded-2xl border border-border bg-card px-4 py-3 text-center shadow-sm">
-          <p className="mt-0.5 font-display text-base">
-            <span className="font-bold text-critical">Area: Panvel</span>
-            <span className="text-muted-foreground"> Number of Clusters: {totalClusters}</span>
-          </p>
+        <div className="mt-6 mb-6 flex items-center justify-center gap-6 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50">
+              <MapPin className="h-4 w-4 text-blue-800" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Area</p>
+              <p className="text-sm font-medium text-foreground">Panvel</p>
+            </div>
+          </div>
+          <div className="w-px self-stretch bg-border" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
+              <Layers className="h-4 w-4 text-emerald-800" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Clusters</p>
+              <p className="text-sm font-medium text-foreground">{totalClusters}</p>
+            </div>
+          </div>
         </div>
 
         <div data-tour="map-clusters" className="grid grid-cols-2 gap-5 sm:grid-cols-3">
