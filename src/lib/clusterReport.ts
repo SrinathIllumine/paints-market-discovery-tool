@@ -27,17 +27,15 @@ type Args = {
 const HML_FULL: Record<HML, string> = { H: "High", M: "Medium", L: "Low" };
 
 function clean(t: string): string {
-  return (
-    t
-      .replace(/[\u2018\u2019]/g, "'")
-      .replace(/[\u201C\u201D]/g, '"')
-      .replace(/[\u2013\u2014]/g, "-")
-      .replace(/[•·]/g, "-")
-      .replace(/→/g, "->")
-      .replace(/…/g, "...")
-      // strip any remaining non-Latin1 chars jsPDF helvetica can't render
-      .replace(/[^\x00-\xFF]/g, "")
-  );
+  return t
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2013\u2014]/g, "-")
+    .replace(/[•·]/g, "-")
+    .replace(/→/g, "->")
+    .replace(/…/g, "...")
+    // strip any remaining non-Latin1 chars jsPDF helvetica can't render
+    .replace(/[^\x00-\xFF]/g, "");
 }
 
 export function generateClusterReportPdf({
@@ -64,10 +62,7 @@ export function generateClusterReportPdf({
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text(clean(`Cluster Report fo ${cluster.name}`), margin, 36);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text(clean(`Cluster position: ${positionLabel}`), margin, 36);
+  doc.text(clean(`Cluster Report for - ${cluster.name}`), margin, 36);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
@@ -124,7 +119,8 @@ export function generateClusterReportPdf({
 
   // ── 1. Overview ─────────────────────────────────────────────
   const intel = getClusterIntel(clusterId, prospects.length);
-  const observedCount = intel.totalProspectsObserved || prospects.length || cluster.prospectCountEstimate;
+  const observedCount =
+    intel.totalProspectsObserved || prospects.length || cluster.prospectCountEstimate;
   const regions = groupIntoRegions(prospects);
 
   heading("Cluster Overview");
@@ -146,7 +142,8 @@ export function generateClusterReportPdf({
   // ── 2. Cluster scores ───────────────────────────────────────
   const profile = getRevenueProfile(clusterId);
   const cycleYears = getRepaintingCycleYears(clusterId);
-  const annualRevenue = (profile.avgRevenuePerProspect * observedCount) / cycleYears;
+  const annualRevenue =
+    (profile.avgRevenuePerProspect * observedCount) / cycleYears;
   const annualPerProspect = profile.avgRevenuePerProspect / cycleYears;
   const revenueHML: HML = scoreToHML(scoreRevenue(annualPerProspect));
 
@@ -184,7 +181,9 @@ export function generateClusterReportPdf({
   block(
     "Ease of Sale",
     intel.easeHML,
-    easeInsights.length > 0 ? easeInsights : ["Ease-of-sale intelligence not yet captured for this cluster."],
+    easeInsights.length > 0
+      ? easeInsights
+      : ["Ease-of-sale intelligence not yet captured for this cluster."],
   );
 
   // ── 3. Strategic insights ───────────────────────────────────
