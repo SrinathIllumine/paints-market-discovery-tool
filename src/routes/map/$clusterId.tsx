@@ -690,7 +690,7 @@ function StrategicInsights({
       : highPotential && !highAccess
         ? `${clusterName} has high potential but low access. It is recommended to creating an engagement plan build more connects for this cluster.`
         : !highPotential && highAccess
-          ? `${clusterName} has strong access but low overall potential. Consider running events to maximise what is available for this cluster.`
+          ? `${clusterName} has strong access but low overall potential. Conduct events to fully leverage the available market within the cluster.`
           : `${clusterName} has low potential and low access. It is not recommended to prioritise an engagement plan for this cluster.`;
 
   return (
