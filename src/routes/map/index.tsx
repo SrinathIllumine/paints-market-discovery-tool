@@ -65,7 +65,7 @@ function ClusterPotentialScreen() {
         <Link
           to="/market-potential"
           data-tour="map-view-button"
-          className="mb-5 mx-auto flex h-9 w-1/2 items-center justify-center gap-1.5 rounded-lg bg-critical text-xs font-semibold text-critical-foreground shadow-lg shadow-critical/20"
+          className="mb-5 mx-auto inline-flex h-7 items-center justify-center gap-1 rounded-md bg-critical/20 px-3 text-[11px] font-semibold text-critical shadow-sm"
         >
           View my Cluster Map
           <ArrowRight className="h-4 w-4" />
