@@ -347,7 +347,7 @@ function StageSectionTitle({ index, title }: { index: number; title: string }) {
     title;
 
   return (
-    <p className="text-xs font-bold uppercase tracking-widest text-foreground">
+    <p className="text-[11px] font-bold uppercase tracking-widest text-foreground">
       Stage {index}: {displayTitle}
     </p>
   );
