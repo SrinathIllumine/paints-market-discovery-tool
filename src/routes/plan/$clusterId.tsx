@@ -757,7 +757,7 @@ function ActionStep({
 
       <section>
         <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Customer engagement strategies
+          Select connect approach
         </h4>
         {customerStrategies.length === 0 ? (
           <p className="text-xs text-muted-foreground">No customer engagement strategies selected in Stage 2 yet.</p>
