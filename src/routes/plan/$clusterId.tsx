@@ -53,7 +53,7 @@ const INFLUENCER_ROLES = ["Site supervisor", "Interior designer", "Architect", "
    Stepper bar
 ───────────────────────────────────────────────────────────── */
 const STEP_LABELS = [
-  ["Design", "Value"],
+  ["Design Value", "Proposition"],
   ["Select", "Connect", "Approach"],
   ["Plan", "Outreach", "Initiatives"],
   ["Create", "Action", "Plans"],
@@ -340,14 +340,14 @@ function PlanClusterScreen() {
 function StageSectionTitle({ index, title }: { index: number; title: string }) {
   // Map index to the requested stage titles
   const displayTitle = 
-    index === 1 ? "Design Value" :
+    index === 1 ? "DESIGN VALUE PROPOSITION" :
     index === 2 ? "Select Connect Approach" :
     index === 3 ? "Plan Outreach Initiatives" :
     index === 4 ? "Create Action Plan" :
     title;
 
   return (
-    <p className="text-xs font-bold uppercase tracking-widest text-foreground">
+    <p className="text-[11px] font-bold uppercase tracking-widest text-foreground">
       Stage {index}: {displayTitle}
     </p>
   );
