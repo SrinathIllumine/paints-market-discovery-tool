@@ -244,5 +244,3 @@ export function generateClusterReportPdf({
   const safeName = cluster.name.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "");
   doc.save(`JK-Cluster-Report-${safeName}-${today}.pdf`);
 }
-
-I'm getting build failed error 
