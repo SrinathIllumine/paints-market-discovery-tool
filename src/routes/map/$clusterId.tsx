@@ -439,6 +439,15 @@ function ClusterDetailScreen() {
                 <h2 className="font-display text-2xl">Cluster snapshot</h2>
               </div>
 
+              {/* Strategic insights — above chart */}
+              {allAnswered && (
+                <StrategicInsights
+                  clusterName={cluster.name}
+                  potentialScore={scores.potentialScore}
+                  accessRollupScore={scores.accessRollupScore}
+                />
+              )}
+
               {/* Chart */}
               <div
                 data-tour="cluster-snapshot-graph"
@@ -446,14 +455,6 @@ function ClusterDetailScreen() {
               >
                 <QuadrantSnapshot mode="single" highlightId={cluster.id} isStageComplete={allAnswered} />
               </div>
-
-              {/* Strategic insights — only once access questions are done */}
-              {allAnswered && (
-                <StrategicInsights
-                  potentialScore={scores.potentialScore}
-                  accessRollupScore={scores.accessRollupScore}
-                />
-              )}
 
               {/* Score tiles */}
               {/* <div data-tour="cluster-scores" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
