@@ -65,7 +65,6 @@ function ClusterDetailScreen() {
 
   const [activeTab, setActiveTab] = useState<Tab>("prospects");
 
-  // ── Scroll-to-top sentinel ─────────────────────────────────────────────────
   const tabTopRef = useRef<HTMLDivElement>(null);
 
   const goToTab = (tab: Tab) => {
@@ -246,12 +245,10 @@ function ClusterDetailScreen() {
           ))}
         </div>
 
-        {/* Sentinel — scroll target on tab change */}
         <div ref={tabTopRef} />
 
-        {/* Tab body */}
         <div className="pb-8">
-          {/* ── TAB 1: Prospects by region ── */}
+          {/* TAB 1: Prospects by region */}
           {activeTab === "prospects" && (
             <div className="space-y-5 px-6 py-6">
               <div className="space-y-0.5">
@@ -348,7 +345,7 @@ function ClusterDetailScreen() {
             </div>
           )}
 
-          {/* ── TAB 2: Cluster Potential Mapping ── */}
+          {/* TAB 2: Cluster Potential Mapping */}
           {activeTab === "mapping" && (
             <div className="space-y-3 px-6 py-6">
               <div className="space-y-0.5">
@@ -432,7 +429,7 @@ function ClusterDetailScreen() {
             </div>
           )}
 
-          {/* ── TAB 3: Cluster Snapshot ── */}
+          {/* TAB 3: Cluster Snapshot */}
           {activeTab === "snapshot" && (
             <div className="space-y-4 px-6 py-6">
               <div className="space-y-0.5">
@@ -442,6 +439,7 @@ function ClusterDetailScreen() {
               {/* Strategic insights — above chart */}
               {allAnswered && (
                 <StrategicInsights
+                  clusterName={cluster.name}
                   potentialScore={scores.potentialScore}
                   accessRollupScore={scores.accessRollupScore}
                 />
@@ -455,17 +453,7 @@ function ClusterDetailScreen() {
                 <QuadrantSnapshot mode="single" highlightId={cluster.id} isStageComplete={allAnswered} />
               </div>
 
-              {/* Score tiles */}
-              {/* <div data-tour="cluster-scores" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {allAnswered && <ScoreTile label="Revenue" score={scores.revenue} />}
-                {allAnswered && <ScoreTile label="Competitive" score={scores.competitive} />}
-                {allAnswered && <ScoreTile label="Access" score={scores.access} />}
-                {allAnswered && <ScoreTile label="Ease of Sale" score={scores.ease} />}
-              </div>*/}
-
               {allAnswered && (
-                // ✅ FIX: removed sm:flex-row / sm:flex-1 — buttons stay stacked
-                // and full-width on all screen sizes to prevent overflow clipping.
                 <div className="flex flex-col gap-2">
                   <Button
                     onClick={() =>
@@ -658,88 +646,64 @@ function AccessQuestions({
 // ── Strategic Insights ─────────────────────────────────────────────────────────
 
 function StrategicInsights({
+  clusterName,
   potentialScore,
   accessRollupScore,
 }: {
+  clusterName: string;
   potentialScore: number;
   accessRollupScore: number;
 }) {
   const highPotential = potentialScore >= 5;
   const highAccess = accessRollupScore >= 5;
 
-  type Config = {
-    label: string;
-    wrapperCls: string;
-    badgeCls: string;
-    points: string[];
-  };
-
-  const config: Config =
+  const label =
     highPotential && highAccess
-      ? {
-          label: "High Potential · High Access",
-          wrapperCls: "border-green-200 bg-green-50",
-          badgeCls: "bg-green-100 text-green-800",
-          points: [
-            "This cluster already has high potential and you have strong access into it.",
-            "Plan contribution events with your ASM to penetrate more deeply into the cluster.",
-          ],
-        }
+      ? "High Potential · High Access"
       : highPotential && !highAccess
-        ? {
-            label: "High Potential · Low Access",
-            wrapperCls: "border-orange-200 bg-orange-50",
-            badgeCls: "bg-orange-100 text-orange-800",
-            points: [
-              "This cluster has high potential but your connect level here is low.",
-              "Create a plan in the next stage to increase your connects with contractors, site supervisors, etc.",
-              "Conduct more on-site visits to get in touch with more touchpoints.",
-            ],
-          }
+        ? "High Potential · Low Access"
         : !highPotential && highAccess
-          ? {
-              label: "Low Potential · High Access",
-              wrapperCls: "border-blue-200 bg-blue-50",
-              badgeCls: "bg-blue-100 text-blue-800",
-              points: [
-                "You have strong access into this cluster even though the overall potential is low.",
-                "Make use of your connects to conduct events and maximise the available potential.",
-              ],
-            }
-          : {
-              label: "Low Potential · Low Access",
-              wrapperCls: "border-red-200 bg-red-50",
-              badgeCls: "bg-red-100 text-red-800",
-              points: [
-                "Both the potential and your access into this cluster are low.",
-                "Don't prioritise this cluster as part of your engagement plans.",
-              ],
-            };
+          ? "Low Potential · High Access"
+          : "Low Potential · Low Access";
+
+  const wrapperCls =
+    highPotential && highAccess
+      ? "border-green-200 bg-green-50"
+      : highPotential && !highAccess
+        ? "border-orange-200 bg-orange-50"
+        : !highPotential && highAccess
+          ? "border-blue-200 bg-blue-50"
+          : "border-red-200 bg-red-50";
+
+  const badgeCls =
+    highPotential && highAccess
+      ? "bg-green-100 text-green-800"
+      : highPotential && !highAccess
+        ? "bg-orange-100 text-orange-800"
+        : !highPotential && highAccess
+          ? "bg-blue-100 text-blue-800"
+          : "bg-red-100 text-red-800";
+
+  const message =
+    highPotential && highAccess
+      ? `${clusterName} has high potential and high access. It is highly recommended to create an engagement plan for ${clusterName}.`
+      : highPotential && !highAccess
+        ? `${clusterName} has high potential but low access. It is recommended to build more connects before creating an engagement plan for ${clusterName}.`
+        : !highPotential && highAccess
+          ? `${clusterName} has strong access but low overall potential. Consider running events to maximise what is available for ${clusterName}.`
+          : `${clusterName} has low potential and low access. It is not recommended to prioritise an engagement plan for ${clusterName}.`;
 
   return (
-    <div className={cn("rounded-2xl border p-4 space-y-3", config.wrapperCls)}>
-      {/* Badge */}
+    <div className={cn("rounded-2xl border p-4 space-y-3", wrapperCls)}>
       <span
         className={cn(
           "inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-          config.badgeCls,
+          badgeCls,
         )}
       >
-        {config.label}
+        {label}
       </span>
-
-      {/* Header */}
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Strategic Insights</p>
-
-      {/* Points */}
-      <ul className="space-y-2">
-        {config.points.map((point, i) => (
-          <li key={i} className="flex gap-2 text-sm leading-snug">
-            <span className="mt-0.5 shrink-0 font-bold tabular-nums text-muted-foreground">{i + 1}.</span>
-            <span>{point}</span>
-          </li>
-        ))}
-      </ul>
+      <p className="text-sm leading-snug">{message}</p>
     </div>
   );
 }
@@ -747,3 +711,4 @@ function StrategicInsights({
 void CLUSTERS;
 void scoreFromHML;
 void scoreToHML;
+void ScoreTile;
