@@ -8,8 +8,8 @@ export type ConnectStrategy = "BRAND" | "CONTRACTOR" | "OUTREACH" | "D2C" | "RET
 
 export const CONNECT_STRATEGY_LABEL: Record<ConnectStrategy, string> = {
   BRAND: "Brand Awareness",
-  CONTRACTOR: "Contractor-driven",
-  OUTREACH: "Outreach-Driven",
+  CONTRACTOR: "Contractor-connect",
+  OUTREACH: "Outreach-connect",
   D2C: "Direct-sales driven",
   RETAILER: "Retailer-driven",
   INFLUENCER: "Influencer-driven",
