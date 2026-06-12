@@ -464,7 +464,9 @@ function ClusterDetailScreen() {
               </div>*/}
 
               {allAnswered && (
-                <div className="flex flex-col gap-2 sm:flex-row">
+                // ✅ FIX: removed sm:flex-row / sm:flex-1 — buttons stay stacked
+                // and full-width on all screen sizes to prevent overflow clipping.
+                <div className="flex flex-col gap-2">
                   <Button
                     onClick={() =>
                       generateClusterReportPdf({
@@ -477,7 +479,7 @@ function ClusterDetailScreen() {
                     }
                     size="lg"
                     variant="outline"
-                    className="w-full gap-2 border-navy text-navy hover:bg-navy/5 sm:flex-1"
+                    className="w-full gap-2 border-navy text-navy hover:bg-navy/5"
                   >
                     <FileDown className="h-4 w-4" />
                     Generate cluster report
@@ -489,7 +491,7 @@ function ClusterDetailScreen() {
                       navigate({ to: "/" });
                     }}
                     size="lg"
-                    className="w-full gap-2 bg-critical text-critical-foreground hover:bg-critical/90 sm:flex-1"
+                    className="w-full gap-2 bg-critical text-critical-foreground hover:bg-critical/90"
                   >
                     <Home className="h-4 w-4" />
                     Go to the next stage
