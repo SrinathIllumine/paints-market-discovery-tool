@@ -127,9 +127,9 @@ function PlanClusterScreen() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
-  }, [page]);
+ useEffect(() => {
+  mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
+}, [page]);
 
   // Inject Google Maps SDK once when this screen mounts
   useEffect(() => {
@@ -910,5 +910,5 @@ function FieldInput({
 <AppShell
   ref={mainRef}
   bottom={<BottomNav />}
-  header={<StageHeader ... />}
+  header={<StageHeader eyebrow="CLUSTER ENGAGEMENT PLAN" title="Cluster Engagement Plan" backTo="/plan" />}
 >
