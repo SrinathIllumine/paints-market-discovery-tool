@@ -1,12 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
 import { getCluster } from "@/data/clusters";
 import { useAppStore, type ReviewEntry } from "@/store/appStore";
 import { getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
-import { Lightbulb, ClipboardCheck, ArrowLeft, CalendarDays, HardHat, Building2, UserCheck, Star } from "lucide-react";
+import { Lightbulb, ChevronDown,ClipboardCheck, ArrowLeft, CalendarDays, HardHat, Building2, UserCheck, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/plan/$clusterId/review")({
@@ -266,7 +266,9 @@ function Section({ icon, iconBg, title, children }: { icon: React.ReactNode; ico
   );
 }
 
-function ReviewCard({
+function ReviewCard(
+  const [open, setOpen] = useState(false);
+{
   title, subtitle, starred, enablers, questions, values, onChange,
 }: {
   title: string;
@@ -279,17 +281,37 @@ function ReviewCard({
 }) {
   return (
     <div className={cn("overflow-hidden rounded-2xl border bg-card", starred ? "border-amber-400" : "border-border")}>
-      <div className="flex items-start justify-between gap-3 border-b border-border bg-muted/30 px-4 py-3">
-        <div className="min-w-0">
-          <p className="font-serif text-sm text-foreground">{title}</p>
-          {subtitle && <p className="mt-0.5 text-[11px] text-muted-foreground">{subtitle}</p>}
-        </div>
-        {starred && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
-            <Star className="h-3 w-3 fill-amber-500 text-amber-500" /> Priority
-          </span>
-        )}
-      </div>
+      <button
+  type="button"
+  onClick={() => setOpen(!open)}
+  className="flex w-full items-start justify-between gap-3 border-b border-border bg-muted/30 px-4 py-3 text-left"
+>
+  <div className="min-w-0 flex-1">
+    <p className="font-serif text-sm text-foreground">{title}</p>
+
+    {subtitle && (
+      <p className="mt-0.5 text-[11px] text-muted-foreground">
+        {subtitle}
+      </p>
+    )}
+  </div>
+
+  <div className="flex items-center gap-2">
+    {starred && (
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+        <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+        Priority
+      </span>
+    )}
+
+    <ChevronDown
+      className={cn(
+        "h-4 w-4 shrink-0 transition-transform",
+        open && "rotate-180"
+      )}
+    />
+  </div>
+</button>
 
       <div className="space-y-4 px-4 py-3">
         <div>
