@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { generateMonthlyEngagementPlanPdf } from "@/lib/monthlyPlanReport";
 import { getCustomerGroups, getValuePropsForGroup, getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
+import { getClusterValueProps } from "@/lib/engagementContent";
 
 export const Route = createFileRoute("/plan/$clusterId/")({
   component: PlanClusterScreen,
@@ -435,6 +436,7 @@ function PlanClusterScreen() {
   const handleGenerate = () => {
     generateMonthlyEngagementPlanPdf({
       focusClusterId: clusterId,
+      valueProps: getClusterValueProps(clusterId),
       customerGroups: selectedGroupObjs.map((g) => ({
         id: g.id,
         label: g.label,
