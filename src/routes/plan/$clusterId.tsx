@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { StageHeader } from "@/components/app/StageHeader";
 import { BottomNav } from "@/components/app/BottomNav";
@@ -20,19 +20,18 @@ import {
   BarChart2,
   Bolt,
   Building2,
-  CalendarDays,
   ChevronDown,
   ChevronRight,
   ChevronUp,
   FileDown,
   HardHat,
   ListChecks,
+  MapPin,
   Plus,
   Star,
   Trash2,
   UserCheck,
   Users,
-  X,
 } from "lucide-react";
 import { generateMonthlyEngagementPlanPdf } from "@/lib/monthlyPlanReport";
 import { getCustomerGroups, getValuePropsForGroup, getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
@@ -45,7 +44,6 @@ const CONTRACTOR_BUCKET = "CONTRACTOR" as const;
 const RETAILER_BUCKET = "RETAILER" as const;
 const STAKEHOLDER_BUCKET = "D2C" as const;
 
-// Stable empty refs — prevents React #185 infinite re-render
 const EMPTY_ARR: string[] = [];
 const EMPTY_REC: Record<string, string[]> = {};
 const EMPTY_CONTACTS: ContactEntry[] = [];
@@ -53,50 +51,53 @@ const EMPTY_SC: Record<string, Partial<Record<string, ContactEntry[]>>> = {};
 
 type Page = "hub" | "groups" | "valueprops" | "camps" | "contractors" | "retailers" | "stakeholders" | "actionplan";
 
-// Example institutions per cluster + group shown on the customer groups page
-const EXAMPLE_INSTITUTIONS: Record<string, Record<string, string[]>> = {
-  schools: {
-    "large-private": ["DPS Nerul", "Orchids International", "Podar International", "Ryan International"],
-    "small-private": ["Holy Cross School", "St. Anthony's High School", "New English School", "Saraswati Vidyalaya"],
-    international: ["Pathways World School", "Hiranandani Foundation School", "EuroSchool Navi Mumbai"],
-    "pre-schools": ["EuroKids Panvel", "Kidzee", "Podar Jumbo Kids", "Little Millennium"],
-    government: ["Zilla Parishad School No. 1", "Kendriya Vidyalaya Panvel", "Municipal School Panvel"],
-  },
-  hospitals: {
-    "multi-specialty": ["Reliance Hospital", "Apollo Spectra Navi Mumbai", "Fortis Hiranandani"],
-    "small-hospitals": ["Panvel Municipal Hospital", "City Care Hospital", "Life Care Hospital"],
-    "nursing-homes": ["Healing Touch Nursing Home", "Medicare Nursing Home", "Sunrise Nursing Home"],
-    "specialty-clinics": ["Panvel Eye Care", "Orthopedic Speciality Clinic", "Cardiology Clinic Panvel"],
-    "government-hospitals": ["Civil Hospital Panvel", "District Hospital Raigad"],
-  },
-  "mid-apartments": {
-    "premium-society": ["Hiranandani Estate", "Lodha Palava", "Rustomjee Urbania"],
-    "mid-society": ["Arihant Enclave", "Shree Ganesh CHS", "Siddharth Nagar CHS"],
-    "budget-society": ["Ganesh CHS Panvel", "Shivaji Nagar CHS", "Om Sai CHS"],
-    "redev-society": ["Navi Mumbai Redevelopment CHS", "Old Panvel CHS Redevelopment"],
-  },
-  midc: {
-    "large-mfg": ["Reliance Industries Taloja", "BPCL Navi Mumbai", "Hindustan Petroleum"],
-    "mid-mfg": ["Balaji Industries", "Supreme Industries", "Pidilite Taloja"],
-    "small-workshops": ["Panvel Engineering Works", "Sai Industries", "Vinayak Engineering"],
-    "warehouse-units": ["Mahindra Logistics Park", "DHL Warehouse Panvel", "Blue Dart Hub"],
-  },
-  restaurants: {
-    chains: ["McDonald's Panvel", "Subway Panvel", "Domino's Kharghar"],
-    "premium-standalone": ["Mainland China Navi Mumbai", "The Bohri Kitchen", "Spice Garden"],
-    "casual-dining": ["Café Coffee Day Panvel", "Barista Kharghar", "Chaayos"],
-    qsr: ["Biryani By Kilo", "Faasos", "Behrouz Biryani"],
-  },
-  hotels: {
-    "five-star": ["Novotel Navi Mumbai", "Marriott Courtyard Navi Mumbai"],
-    "three-star": ["Hotel Woodlands Panvel", "Hotel Sai Palace", "Hotel Residency"],
-    budget: ["Hotel Saffron Panvel", "Hotel Atithi", "Hotel Swagat"],
-    boutique: ["The Hutment", "Hotel New Comfort", "Nest Boutique Panvel"],
-  },
-};
+// ✅ AFTER: Derives query from cluster.placesQuery — no hardcoding
+function buildGroupQuery(groupLabel: string, clusterPlacesQuery: string): string {
+  // e.g. groupLabel="Large private schools", placesQuery="schools Panvel"
+  // Extract location: last word(s) that aren't the cluster type keyword
+  const words = clusterPlacesQuery.trim().split(/\s+/);
+  // Take the last word as area (e.g. "Panvel", "Kharghar")
+  const area = words.at(-1) ?? "";
+  return `${groupLabel} ${area}`.trim();
+}
 
-function getExampleInstitutions(clusterId: string, groupId: string): string[] {
-  return EXAMPLE_INSTITUTIONS[clusterId]?.[groupId] ?? [];
+// ✅ AFTER: Live hook — fetches real place names from Google Places per group
+function useGroupPlaces(groups: { id: string; label: string }[], clusterPlacesQuery: string, active: boolean) {
+  const [names, setNames] = useState<Record<string, string[]>>({});
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const fetched = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!active || groups.length === 0) return;
+
+    groups.forEach(async (g) => {
+      if (fetched.current.has(g.id)) return;
+      fetched.current.add(g.id);
+
+      setLoading((prev) => ({ ...prev, [g.id]: true }));
+
+      try {
+        const query = buildGroupQuery(g.label, clusterPlacesQuery);
+        const encoded = encodeURIComponent(query);
+        const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
+
+        const res = await fetch(
+          `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encoded}&key=${key}`,
+        );
+        const json = await res.json();
+
+        const placeNames: string[] = (json.results ?? []).slice(0, 5).map((r: { name: string }) => r.name);
+
+        setNames((prev) => ({ ...prev, [g.id]: placeNames }));
+      } catch {
+        setNames((prev) => ({ ...prev, [g.id]: [] }));
+      } finally {
+        setLoading((prev) => ({ ...prev, [g.id]: false }));
+      }
+    });
+  }, [active, groups, clusterPlacesQuery]);
+
+  return { names, loading };
 }
 
 function PlanClusterScreen() {
@@ -119,7 +120,6 @@ function PlanClusterScreen() {
 
   const [page, setPage] = useState<Page>("hub");
   const [q3Open, setQ3Open] = useState(false);
-  const [chartOpen, setChartOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const cluster = useMemo(() => {
@@ -148,6 +148,13 @@ function PlanClusterScreen() {
     }
   }, [clusterId, cluster]);
 
+  // ✅ AFTER: fetch real place names — only when groups page is active
+  const { names: groupPlaceNames, loading: groupPlacesLoading } = useGroupPlaces(
+    groups,
+    cluster?.placesQuery ?? "",
+    page === "groups",
+  );
+
   const contractors = strategyContacts[clusterId]?.[CONTRACTOR_BUCKET] ?? EMPTY_CONTACTS;
   const retailers = strategyContacts[clusterId]?.[RETAILER_BUCKET] ?? EMPTY_CONTACTS;
   const stakeholders = strategyContacts[clusterId]?.[STAKEHOLDER_BUCKET] ?? EMPTY_CONTACTS;
@@ -173,7 +180,6 @@ function PlanClusterScreen() {
     );
   }
 
-  // Auto-assign first value prop when toggling a group
   const handleGroupToggle = (groupId: string) => {
     const isSelected = customerGroups.includes(groupId);
     toggleCustomerGroup(clusterId, groupId);
@@ -181,11 +187,8 @@ function PlanClusterScreen() {
     if (!props[0]) return;
     const firstProp = props[0];
     const currentProps = groupValueProps[groupId] ?? [];
-    if (!isSelected && !currentProps.includes(firstProp)) {
-      toggleGroupValueProp(clusterId, groupId, firstProp);
-    } else if (isSelected && currentProps.includes(firstProp)) {
-      toggleGroupValueProp(clusterId, groupId, firstProp);
-    }
+    if (!isSelected && !currentProps.includes(firstProp)) toggleGroupValueProp(clusterId, groupId, firstProp);
+    else if (isSelected && currentProps.includes(firstProp)) toggleGroupValueProp(clusterId, groupId, firstProp);
   };
 
   const handleGenerate = () => {
@@ -197,11 +200,7 @@ function PlanClusterScreen() {
         pct: g.pct,
         valueProps: groupValueProps[g.id] ?? [],
       })),
-      camps: selectedCampObjs.map((c) => ({
-        id: c.id,
-        label: c.label,
-        starred: isStarred(`camp:${c.id}`),
-      })),
+      camps: selectedCampObjs.map((c) => ({ id: c.id, label: c.label, starred: isStarred(`camp:${c.id}`) })),
       contractors: contractors.map((c) => ({ ...c, starred: isStarred("group:contractors") })),
       retailers: retailers.map((c) => ({ ...c, starred: isStarred("group:retailers") })),
       stakeholders: stakeholders.map((c) => ({ ...c, starred: isStarred("group:stakeholders") })),
@@ -214,7 +213,6 @@ function PlanClusterScreen() {
   const goTo = (p: Page) => setPage(p);
   const goHub = () => setPage("hub");
 
-  // Badge helpers
   const badge = (count: number) =>
     count > 0 ? (
       <span className="shrink-0 rounded-full bg-green-50 px-2 py-0.5 text-[9px] font-medium text-green-700">
@@ -232,7 +230,6 @@ function PlanClusterScreen() {
       header={<StageHeader eyebrow="CLUSTER ENGAGEMENT PLAN" title="Cluster Engagement Plan" backTo="/plan" />}
     >
       <div className="flex min-h-full flex-col px-4 py-5 pb-24">
-        {/* ── HUB ── */}
         {page === "hub" && (
           <div className="flex flex-col gap-4">
             <div>
@@ -241,8 +238,6 @@ function PlanClusterScreen() {
               </h2>
               <p className="mt-0.5 text-xs text-muted-foreground">Tap any question to fill it in.</p>
             </div>
-
-            {/* Q1 */}
             <HubCard onClick={() => goTo("groups")}>
               <HubIcon bg="bg-red-50">
                 <Users className="h-4 w-4 text-critical" />
@@ -254,8 +249,6 @@ function PlanClusterScreen() {
               {badge(customerGroups.length)}
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </HubCard>
-
-            {/* Q2 */}
             <HubCard onClick={() => goTo("valueprops")}>
               <HubIcon bg="bg-blue-50">
                 <BarChart2 className="h-4 w-4 text-blue-700" />
@@ -275,8 +268,6 @@ function PlanClusterScreen() {
               )}
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </HubCard>
-
-            {/* Q3 — expandable */}
             <div className="overflow-hidden rounded-2xl border border-border bg-card">
               <button
                 type="button"
@@ -312,8 +303,7 @@ function PlanClusterScreen() {
                   />
                   <SubHubRow
                     dot="bg-amber-700"
-                    label="Retailers who can connect you to {cluster}"
-                    label2={`Retailers who can connect you to ${cluster.name.toLowerCase()}`}
+                    label={`Retailers who can connect you to ${cluster.name.toLowerCase()}`}
                     badge={badge(validRetailers.length)}
                     onClick={() => goTo("retailers")}
                   />
@@ -326,8 +316,6 @@ function PlanClusterScreen() {
                 </div>
               )}
             </div>
-
-            {/* Q4 */}
             <HubCard onClick={() => goTo("actionplan")}>
               <HubIcon bg="bg-purple-50">
                 <ListChecks className="h-4 w-4 text-purple-700" />
@@ -338,7 +326,6 @@ function PlanClusterScreen() {
               </div>
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </HubCard>
-
             <Button
               onClick={() => setConfirmOpen(true)}
               className="h-12 w-full gap-2 bg-navy font-serif text-base text-navy-foreground hover:bg-navy/90"
@@ -348,7 +335,7 @@ function PlanClusterScreen() {
           </div>
         )}
 
-        {/* ── GROUPS ── */}
+        {/* ✅ AFTER: Groups page — shows live Places results as chips */}
         {page === "groups" && (
           <SubPage
             title="Who are you targeting?"
@@ -358,7 +345,8 @@ function PlanClusterScreen() {
             <div className="space-y-3">
               {groups.map((g) => {
                 const selected = customerGroups.includes(g.id);
-                const examples = getExampleInstitutions(clusterId, g.id);
+                const places = groupPlaceNames[g.id] ?? [];
+                const isLoading = groupPlacesLoading[g.id] ?? false;
                 return (
                   <button
                     key={g.id}
@@ -369,14 +357,45 @@ function PlanClusterScreen() {
                       selected ? "border-critical bg-critical/5" : "border-border bg-card",
                     )}
                   >
-                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <div className="mb-2 flex items-center justify-between gap-2">
                       <span className="font-serif text-sm text-foreground">{g.label}</span>
                       <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground">
                         {g.pct}%
                       </span>
                     </div>
-                    {examples.length > 0 && (
-                      <p className="text-[11px] leading-relaxed text-muted-foreground">{examples.join(", ")}</p>
+
+                    {/* ✅ Loading skeleton */}
+                    {isLoading && (
+                      <div className="flex items-center gap-2">
+                        <div className="h-5 w-20 animate-pulse rounded-full bg-muted" />
+                        <div className="h-5 w-24 animate-pulse rounded-full bg-muted" />
+                        <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
+                      </div>
+                    )}
+
+                    {/* ✅ Real place name chips from Google Places */}
+                    {!isLoading && places.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {places.slice(0, 3).map((name) => (
+                          <span
+                            key={name}
+                            className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground"
+                          >
+                            <MapPin className="h-2.5 w-2.5 shrink-0" />
+                            {name}
+                          </span>
+                        ))}
+                        {places.length > 3 && (
+                          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground">
+                            +{places.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* No results fallback */}
+                    {!isLoading && places.length === 0 && groupPlaceNames[g.id] !== undefined && (
+                      <p className="text-[10px] text-muted-foreground">No results found nearby</p>
                     )}
                   </button>
                 );
@@ -385,7 +404,6 @@ function PlanClusterScreen() {
           </SubPage>
         )}
 
-        {/* ── VALUE PROPS ── */}
         {page === "valueprops" && (
           <SubPage
             title="Your value propositions"
@@ -413,7 +431,6 @@ function PlanClusterScreen() {
           </SubPage>
         )}
 
-        {/* ── CAMPS ── */}
         {page === "camps" && (
           <SubPage
             title="Camps & events you are planning"
@@ -450,7 +467,6 @@ function PlanClusterScreen() {
           </SubPage>
         )}
 
-        {/* ── CONTRACTORS ── */}
         {page === "contractors" && (
           <SubPage
             title="Contractors you are going to convert"
@@ -465,7 +481,6 @@ function PlanClusterScreen() {
           </SubPage>
         )}
 
-        {/* ── RETAILERS ── */}
         {page === "retailers" && (
           <SubPage
             title={`Retailers who can connect you to ${cluster.name.toLowerCase()}`}
@@ -480,7 +495,6 @@ function PlanClusterScreen() {
           </SubPage>
         )}
 
-        {/* ── STAKEHOLDERS ── */}
         {page === "stakeholders" && (
           <SubPage
             title={`Stakeholders of ${cluster.name.toLowerCase()} you will meet directly`}
@@ -495,7 +509,6 @@ function PlanClusterScreen() {
           </SubPage>
         )}
 
-        {/* ── ACTION PLAN ── */}
         {page === "actionplan" && (
           <SubPage
             title="Your action plan"
@@ -520,7 +533,6 @@ function PlanClusterScreen() {
               </p>
             ) : (
               <div className="space-y-6">
-                {/* Customer groups — read only */}
                 {selectedGroupObjs.length > 0 && (
                   <div>
                     <SectionLabel>Customer groups selected</SectionLabel>
@@ -536,8 +548,6 @@ function PlanClusterScreen() {
                     </div>
                   </div>
                 )}
-
-                {/* Camps — individual stars */}
                 {selectedCampObjs.length > 0 && (
                   <div>
                     <SectionLabel>Camps / events — star each to prioritize</SectionLabel>
@@ -569,8 +579,6 @@ function PlanClusterScreen() {
                     </div>
                   </div>
                 )}
-
-                {/* Contractors — group star */}
                 <GroupStarBlock
                   heading="Contractors — star group to prioritize"
                   icon={<HardHat className="h-4 w-4 text-green-700" />}
@@ -584,8 +592,6 @@ function PlanClusterScreen() {
                   starred={isStarred("group:contractors")}
                   onToggleStar={() => toggleStarred(clusterId, "group:contractors")}
                 />
-
-                {/* Retailers — group star */}
                 <GroupStarBlock
                   heading="Retailers — star group to prioritize"
                   icon={<Building2 className="h-4 w-4 text-amber-700" />}
@@ -599,8 +605,6 @@ function PlanClusterScreen() {
                   starred={isStarred("group:retailers")}
                   onToggleStar={() => toggleStarred(clusterId, "group:retailers")}
                 />
-
-                {/* Stakeholders — group star */}
                 <GroupStarBlock
                   heading="Stakeholders — star group to prioritize"
                   icon={<UserCheck className="h-4 w-4 text-red-800" />}
@@ -620,35 +624,6 @@ function PlanClusterScreen() {
         )}
       </div>
 
-      {/* Chart modal */}
-      {chartOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
-          onClick={() => setChartOpen(false)}
-        >
-          <div className="w-full max-w-sm rounded-2xl bg-background p-5" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between">
-              <p className="font-serif text-base text-foreground">Customer group distribution</p>
-              <button type="button" onClick={() => setChartOpen(false)} className="text-muted-foreground">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="space-y-2.5">
-              {groups.map((g) => (
-                <div key={g.id} className="flex items-center gap-3 text-xs">
-                  <span className="w-32 shrink-0 text-foreground">{g.label}</span>
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-navy" style={{ width: `${g.pct}%` }} />
-                  </div>
-                  <span className="w-8 shrink-0 text-right font-semibold text-foreground">{g.pct}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Generate dialog */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -672,9 +647,6 @@ function PlanClusterScreen() {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Shared layout primitives
-───────────────────────────────────────────────────────────── */
 function SubPage({
   title,
   subtitle,
@@ -702,8 +674,9 @@ function SubPage({
         <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
       </div>
       <div className="flex-1">{children}</div>
-      {footer && <div className="mt-4">{footer}</div>}
-      {!footer && (
+      {footer ? (
+        <div className="mt-4">{footer}</div>
+      ) : (
         <Button
           onClick={onBack}
           className="h-11 w-full gap-2 bg-navy font-serif text-sm text-navy-foreground hover:bg-navy/90"
@@ -714,7 +687,6 @@ function SubPage({
     </div>
   );
 }
-
 function HubCard({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
     <button
@@ -726,21 +698,17 @@ function HubCard({ onClick, children }: { onClick: () => void; children: React.R
     </button>
   );
 }
-
 function HubIcon({ bg, children }: { bg: string; children: React.ReactNode }) {
   return <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", bg)}>{children}</div>;
 }
-
 function SubHubRow({
   dot,
   label,
-  label2,
   badge,
   onClick,
 }: {
   dot: string;
   label: string;
-  label2?: string;
   badge: React.ReactNode;
   onClick: () => void;
 }) {
@@ -751,17 +719,15 @@ function SubHubRow({
       className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-muted/20"
     >
       <div className={cn("h-2 w-2 shrink-0 rounded-full", dot)} />
-      <p className="flex-1 text-[12px] font-medium text-foreground">{label2 ?? label}</p>
+      <p className="flex-1 text-[12px] font-medium text-foreground">{label}</p>
       {badge}
       <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
     </button>
   );
 }
-
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">{children}</p>;
 }
-
 function GroupStarBlock({
   heading,
   icon,
@@ -819,10 +785,6 @@ function GroupStarBlock({
     </div>
   );
 }
-
-/* ─────────────────────────────────────────────────────────────
-   Contact table
-───────────────────────────────────────────────────────────── */
 function ContactTable({
   contacts,
   onChange,
@@ -846,7 +808,6 @@ function ContactTable({
       },
     ]);
   const remove = (i: number) => onChange(contacts.filter((_, idx) => idx !== i));
-
   return (
     <div className="space-y-2.5">
       {contacts.length === 0 && emptyHint && <p className="text-[11px] text-muted-foreground">{emptyHint}</p>}
@@ -881,7 +842,6 @@ function ContactTable({
     </div>
   );
 }
-
 function FieldInput({
   value,
   placeholder,
