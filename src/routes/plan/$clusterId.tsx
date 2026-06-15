@@ -26,6 +26,8 @@ export const Route = createFileRoute("/plan/$clusterId")({
 const CONTRACTOR_BUCKET = "CONTRACTOR" as const;
 const RETAILER_BUCKET = "RETAILER" as const;
 const STAKEHOLDER_BUCKET = "D2C" as const;
+const EMPTY_ARR: never[] = [];
+const EMPTY_OBJ: Record<string, never> = {};
 
 function PlanClusterScreen() {
   const { clusterId } = Route.useParams();
