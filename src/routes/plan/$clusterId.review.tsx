@@ -226,10 +226,10 @@ function ReviewScreen() {
                 const key = `contractor:${c.id}`; */}
               return (
               <ReviewCard
-                key={key}
+                //key={key}
                 //title={c.name}
                 //subtitle={contactSubtitle(c)}
-                starred={isStarred(key) || isStarred("group:contractors")}
+                starred={isStarred("group:contractors")}
                 enablers={CONTRACTOR_ENABLERS}
                 questions={CONTRACTOR_QUESTIONS}
                 values={reviews[key] ?? {}}
