@@ -548,48 +548,52 @@ function PlanClusterScreen() {
           >
             <div className="space-y-2.5">
               {groups.map((g) => {
-               const selected = customerGroups.includes(g.id);
-const isRec = recommendedGroupIds.has(g.id);
-return (
-  <div
-    key={g.id}
-    className={cn(
-      "rounded-2xl border px-4 py-3 transition-colors",
-      selected ? "border-critical bg-critical/5" : "border-border bg-card",
-    )}
-  >
-    <div className="flex items-start gap-3">
-      <input
-        type="checkbox"
-        checked={selected}
-        onChange={() => handleGroupToggle(g.id)}
-        className="mt-1 h-4 w-4 shrink-0 accent-critical"
-      />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="font-serif text-sm text-foreground">{g.label}</span>
-          {isRec && (
-            <span className="rounded-full bg-green-50 px-1.5 py-0.5 text-[9px] font-medium text-green-700">
-              Recommended
-            </span>
-          )}
-          <span className="ml-auto shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground">
-            {g.pct}%
-          </span>
-        </div>
-      </div>
-    </div>
-    <div className="mt-2 flex justify-end">
-      <button
-        type="button"
-        onClick={() => setDetailGroup(g)}
-        className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-medium text-foreground hover:bg-muted"
-      >
-        <Info className="h-3 w-3" /> View details
-      </button>
-    </div>
-  </div>
-);
+                const selected = customerGroups.includes(g.id);
+                const isRec = recommendedGroupIds.has(g.id);
+                return (
+                  <div
+                    key={g.id}
+                    className={cn(
+                      "rounded-2xl border px-4 py-3 transition-colors",
+                      selected ? "border-critical bg-critical/5" : "border-border bg-card",
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() => handleGroupToggle(g.id)}
+                        className="mt-1 h-4 w-4 shrink-0 accent-critical"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-serif text-sm text-foreground">{g.label}</span>
+                          {isRec && (
+                            <span className="rounded-full bg-green-50 px-1.5 py-0.5 text-[9px] font-medium text-green-700">
+                              Recommended
+                            </span>
+                          )}
+                          <span className="ml-auto shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground">
+                            {g.pct}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setDetailGroup(g)}
+                        className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-medium text-foreground hover:bg-muted"
+                      >
+                        <Info className="h-3 w-3" /> View details
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </SubPage>
+        )}
 
         {/* ── VALUE PROPS per group ── */}
         {page === "valueprops" && (
