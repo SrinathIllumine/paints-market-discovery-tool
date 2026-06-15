@@ -338,7 +338,6 @@ function ReviewCard(
             <p className="text-[10px] font-semibold uppercase tracking-widest text-green-700">Review post meeting</p>
           </div>
           <div className="space-y-2.5">
-            )}
             {questions.map((q) => (
               <div key={q.id}>
                 <label className="mb-1 block text-[11px] font-medium text-foreground/80">{q.label}</label>
@@ -364,6 +363,7 @@ function ReviewCard(
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
