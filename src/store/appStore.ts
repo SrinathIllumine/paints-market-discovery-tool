@@ -612,6 +612,21 @@ export const useAppStore = create<State & Actions>()(
             plan: { ...state.plan, starredByCluster: { ...state.plan.starredByCluster, [clusterId]: next } },
           };
         }),
+
+      setReview: (clusterId, itemKey, patch) =>
+        set((state) => {
+          const cm = state.plan.reviewsByCluster[clusterId] ?? {};
+          const prev = cm[itemKey] ?? {};
+          return {
+            plan: {
+              ...state.plan,
+              reviewsByCluster: {
+                ...state.plan.reviewsByCluster,
+                [clusterId]: { ...cm, [itemKey]: { ...prev, ...patch } },
+              },
+            },
+          };
+        }),
     }),
     // AFTER
     {
