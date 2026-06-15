@@ -1,4 +1,6 @@
-import jsPDF from "jspdf";
+// jsPDF is imported dynamically inside the generator to keep it out of the
+// SSR bundle (it touches `window`/`self` at module load and crashes on
+// Cloudflare Workers).
 import { getCluster } from "@/data/clusters";
 import type { ContactEntry } from "@/lib/strategyContent";
 
