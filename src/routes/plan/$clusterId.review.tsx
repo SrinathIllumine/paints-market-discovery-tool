@@ -222,22 +222,21 @@ function ReviewScreen() {
         {orderedContractors.length > 0 && (
           <Section icon={<HardHat className="h-4 w-4 text-green-700" />} iconBg="bg-green-50" title="Contractors">
             <div className="space-y-3">
-              {orderedContractors.map((c) => {
-                const key = `contractor:${c.id}`;
-                return (
-                  <ReviewCard
-                    key={key}
-                    title={c.name}
-                    subtitle={contactSubtitle(c)}
-                    starred={isStarred(key) || isStarred("group:contractors")}
-                    enablers={CONTRACTOR_ENABLERS}
-                    questions={CONTRACTOR_QUESTIONS}
-                    values={reviews[key] ?? {}}
-                    onChange={(fid, v) => update(key, fid, v)}
-                  />
-                );
-              })}
-
+              {/* {orderedContractors.map((c) => {
+                const key = `contractor:${c.id}`; */}
+              return (
+              <ReviewCard
+                key={key}
+                title={c.name}
+                subtitle={contactSubtitle(c)}
+                starred={isStarred(key) || isStarred("group:contractors")}
+                enablers={CONTRACTOR_ENABLERS}
+                questions={CONTRACTOR_QUESTIONS}
+                values={reviews[key] ?? {}}
+                onChange={(fid, v) => update(key, fid, v)}
+              />
+              );
+              {/* })} */}
             </div>
           </Section>
         )}
@@ -337,12 +336,13 @@ function ReviewCard({
         onClick={() => setOpen(!open)}
         className="flex w-full items-start justify-between gap-3 border-b border-border bg-muted/30 px-4 py-3 text-left"
       >
-        <div className="min-w-0 flex-1">
-          <p className="font-serif text-sm text-foreground">{title}</p>
+        {title && (
+          <div className="min-w-0 flex-1">
+            <p className="font-serif text-sm text-foreground">{title}</p>
 
-          {subtitle && <p className="mt-0.5 text-[11px] text-muted-foreground">{subtitle}</p>}
-        </div>
-
+            {subtitle && <p className="mt-0.5 text-[11px] text-muted-foreground">{subtitle}</p>}
+          </div>
+        )}
         <div className="flex items-center gap-2">
           {starred && (
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
