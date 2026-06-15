@@ -54,9 +54,6 @@ function PlanScreen() {
     navigate({ to: "/plan/$clusterId", params: { clusterId } });
   };
 
-  const handleView = (clusterId: string) => {
-    navigate({ to: "/plan/$clusterId", params: { clusterId } });
-  };
 
   return (
     <AppShell
@@ -120,10 +117,17 @@ function PlanScreen() {
                   <div className="flex shrink-0 items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => handleView(c.id)}
+                      onClick={() => navigate({ to: "/plan/$clusterId", params: { clusterId: c.id } })}
+                      className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground hover:bg-muted/70"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate({ to: "/plan/$clusterId/review", params: { clusterId: c.id } })}
                       className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100"
                     >
-                      View
+                      Review
                     </button>
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
                       <Check className="h-4 w-4 text-green-700" />

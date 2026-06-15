@@ -82,6 +82,8 @@ export const EMPTY_STAGE_MAP: Record<string, SalesStage> = {};
 export type EventEstimate = { participants?: number; contractors?: number };
 export type PastEventFeedback = { attended?: number; leads?: number; challenges?: string };
 
+export type ReviewEntry = Record<string, string>;
+
 type State = {
   clusters: Record<string, ClusterState>;
   stakeholders: Record<string, Stakeholder[]>;
@@ -115,6 +117,8 @@ type State = {
     groupValuePropsByCluster: Record<string, Record<string, string[]>>;
     selectedCampsByCluster: Record<string, string[]>;
     starredByCluster: Record<string, string[]>;
+    // post-engagement reviews: per-cluster, per-item-key (e.g. camp:{id}, group:contractors)
+    reviewsByCluster: Record<string, Record<string, ReviewEntry>>;
   };
   assessments: Record<string, ClusterAssessment>;
   unlockedStage: 1 | 2 | 3;
@@ -169,6 +173,7 @@ type Actions = {
   toggleGroupValueProp: (clusterId: string, groupId: string, prop: string) => void;
   toggleSelectedCamp: (clusterId: string, campId: string) => void;
   toggleStarred: (clusterId: string, key: string) => void;
+  setReview: (clusterId: string, itemKey: string, patch: ReviewEntry) => void;
 };
 
 const emptyCluster = (): ClusterState => ({ jkShare: null, prospects: [], visited: false });
@@ -219,6 +224,7 @@ export const useAppStore = create<State & Actions>()(
         groupValuePropsByCluster: {},
         selectedCampsByCluster: {},
         starredByCluster: {},
+        reviewsByCluster: {},
       },
       sales: { prospectStages: {}, prospectActivity: {}, seededClusters: {} },
 
@@ -604,6 +610,21 @@ export const useAppStore = create<State & Actions>()(
           const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
           return {
             plan: { ...state.plan, starredByCluster: { ...state.plan.starredByCluster, [clusterId]: next } },
+          };
+        }),
+
+      setReview: (clusterId, itemKey, patch) =>
+        set((state) => {
+          const cm = state.plan.reviewsByCluster[clusterId] ?? {};
+          const prev = cm[itemKey] ?? {};
+          return {
+            plan: {
+              ...state.plan,
+              reviewsByCluster: {
+                ...state.plan.reviewsByCluster,
+                [clusterId]: { ...cm, [itemKey]: { ...prev, ...patch } },
+              },
+            },
           };
         }),
     }),
