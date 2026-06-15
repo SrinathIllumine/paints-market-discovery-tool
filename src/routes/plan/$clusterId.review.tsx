@@ -267,7 +267,7 @@ function Section({ icon, iconBg, title, children }: { icon: React.ReactNode; ico
 }
 
 function ReviewCard(
-  const [open, setOpen] = useState(false);
+  
 {
   title, subtitle, starred, enablers, questions, values, onChange,
 }: {
@@ -278,7 +278,8 @@ function ReviewCard(
   questions: Question[];
   values: ReviewEntry;
   onChange: (fieldId: string, value: string) => void;
-}) {
+}
+const [open, setOpen] = useState(false);) {
   return (
     <div className={cn("overflow-hidden rounded-2xl border bg-card", starred ? "border-amber-400" : "border-border")}>
       <button
