@@ -31,46 +31,54 @@ function PlanClusterScreen() {
   const { clusterId } = Route.useParams();
   const navigate = useNavigate();
 
-  // All hooks unconditionally first — no early returns before this block
   const customerGroups = useAppStore((s) => s.plan.customerGroupsByCluster[clusterId] ?? []);
   const groupValueProps = useAppStore((s) => s.plan.groupValuePropsByCluster[clusterId] ?? {});
-  const selectedCamps   = useAppStore((s) => s.plan.selectedCampsByCluster[clusterId] ?? []);
-  const starred         = useAppStore((s) => s.plan.starredByCluster[clusterId] ?? []);
+  const selectedCamps = useAppStore((s) => s.plan.selectedCampsByCluster[clusterId] ?? []);
+  const starred = useAppStore((s) => s.plan.starredByCluster[clusterId] ?? []);
   const strategyContacts = useAppStore((s) => s.plan.strategyContactsByCluster ?? {});
 
-  const toggleCustomerGroup  = useAppStore((s) => s.toggleCustomerGroup);
+  const toggleCustomerGroup = useAppStore((s) => s.toggleCustomerGroup);
   const toggleGroupValueProp = useAppStore((s) => s.toggleGroupValueProp);
-  const toggleSelectedCamp   = useAppStore((s) => s.toggleSelectedCamp);
-  const toggleStarred        = useAppStore((s) => s.toggleStarred);
-  const setStrategyContacts  = useAppStore((s) => s.setStrategyContacts);
-  const unlockStage          = useAppStore((s) => s.unlockStage);
-  const setMonthlyFocus      = useAppStore((s) => s.setMonthlyFocus);
+  const toggleSelectedCamp = useAppStore((s) => s.toggleSelectedCamp);
+  const toggleStarred = useAppStore((s) => s.toggleStarred);
+  const setStrategyContacts = useAppStore((s) => s.setStrategyContacts);
+  const unlockStage = useAppStore((s) => s.unlockStage);
+  const setMonthlyFocus = useAppStore((s) => s.setMonthlyFocus);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  // Safe data fetching — never throws, always returns []
   const cluster = useMemo(() => {
-    try { return getCluster(clusterId) ?? null; } catch { return null; }
+    try {
+      return getCluster(clusterId) ?? null;
+    } catch {
+      return null;
+    }
   }, [clusterId]);
 
   const groups = useMemo(() => {
     if (!cluster) return [];
-    try { return getCustomerGroups(clusterId) ?? []; } catch { return []; }
+    try {
+      return getCustomerGroups(clusterId) ?? [];
+    } catch {
+      return [];
+    }
   }, [clusterId, cluster]);
 
   const camps = useMemo(() => {
     if (!cluster) return [];
-    try { return getCampIdeas(clusterId) ?? []; } catch { return []; }
+    try {
+      return getCampIdeas(clusterId) ?? [];
+    } catch {
+      return [];
+    }
   }, [clusterId, cluster]);
 
-  // Derived — safe with nullish coalescing
-  const contractors  = strategyContacts[clusterId]?.[CONTRACTOR_BUCKET] ?? [];
-  const retailers    = strategyContacts[clusterId]?.[RETAILER_BUCKET]   ?? [];
+  const contractors = strategyContacts[clusterId]?.[CONTRACTOR_BUCKET] ?? [];
+  const retailers = strategyContacts[clusterId]?.[RETAILER_BUCKET] ?? [];
   const stakeholders = strategyContacts[clusterId]?.[STAKEHOLDER_BUCKET] ?? [];
 
   const isStarred = (key: string) => starred.includes(key);
 
-  // Now safe to early-return after all hooks
   if (!cluster) {
     return (
       <AppShell bottom={<BottomNav />}>
@@ -89,40 +97,7 @@ function PlanClusterScreen() {
       focusClusterId: clusterId,
       customerGroups: groups
         .filter((g) => customerGroups.includes(g.id))
-        .map((g) => ({
-          id: g.id,
-          label: g.label,
-          pct: g.pct,
-          valueProps: groupValueProps[g.id] ?? [],
-        })),
-      camps: camps
-        .filter((c) => selectedCamps.includes(c.id))
-        .map((c) => ({ id: c.id, label: c.label, starred: isStarred(`camp:${c.id}`) })),
-      contractors:  contractors.map((c) => ({ ...c, starred: isStarred(`contractor:${c.id}`) })),
-      retailers:    retailers.map((c)   => ({ ...c, starred: isStarred(`retailer:${c.id}`) })),
-      stakeholders: stakeholders.map((c) => ({ ...c, starred: isStarred(`stakeholder:${c.id}`) })),
-    });
-    setConfirmOpen(false);
-    unlockStage(3);
-    setMonthlyFocus(clusterId);
-  };
-
-  // ... rest of your JSX unchanged
-}
-
-  const isStarred = (key: string) => starred.includes(key);
-
-  const handleGenerate = () => {
-    generateMonthlyEngagementPlanPdf({
-      focusClusterId: clusterId,
-      customerGroups: groups
-        .filter((g) => customerGroups.includes(g.id))
-        .map((g) => ({
-          id: g.id,
-          label: g.label,
-          pct: g.pct,
-          valueProps: groupValueProps[g.id] ?? [],
-        })),
+        .map((g) => ({ id: g.id, label: g.label, pct: g.pct, valueProps: groupValueProps[g.id] ?? [] })),
       camps: camps
         .filter((c) => selectedCamps.includes(c.id))
         .map((c) => ({ id: c.id, label: c.label, starred: isStarred(`camp:${c.id}`) })),
@@ -148,7 +123,6 @@ function PlanClusterScreen() {
           <p className="text-sm text-muted-foreground">Design your quarterly engagement plan on one page</p>
         </div>
 
-        {/* Q1 — Value proposition by customer group */}
         <Section
           number="1"
           title={`What is your value proposition for ${cluster.name.toLowerCase()}?`}
@@ -227,13 +201,11 @@ function PlanClusterScreen() {
           </div>
         </Section>
 
-        {/* Q2 — Engagement actions */}
         <Section
           number="2"
           title="What actions are you doing to engage with this community?"
           subtitle="Plan camps / events and capture the key people you intend to reach out to."
         >
-          {/* 2.1 Camps / events */}
           <SubSection number="2.1" title="Are you planning to conduct any camps / events with the community?">
             <div className="space-y-2">
               {camps.map((c) => {
@@ -262,7 +234,6 @@ function PlanClusterScreen() {
             </div>
           </SubSection>
 
-          {/* 2.2 Contractors */}
           <SubSection number="2.2" title="Are you planning to reach out to any contractors?">
             <ContactTable
               emptyHint="Add contractors you plan to engage."
@@ -271,7 +242,6 @@ function PlanClusterScreen() {
             />
           </SubSection>
 
-          {/* 2.3 Retailers */}
           <SubSection
             number="2.3"
             title="Are you planning to reach out to any retailers who can connect you to the cluster?"
@@ -283,7 +253,6 @@ function PlanClusterScreen() {
             />
           </SubSection>
 
-          {/* 2.4 Direct stakeholders */}
           <SubSection
             number="2.4"
             title={`Are you planning to reach out directly to ${cluster.name.toLowerCase()} stakeholders?`}
@@ -296,7 +265,6 @@ function PlanClusterScreen() {
           </SubSection>
         </Section>
 
-        {/* Q3 — Action plan with starring */}
         <Section
           number="3"
           title="Create your action plan"
@@ -348,9 +316,7 @@ function PlanClusterScreen() {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Layout primitives
-───────────────────────────────────────────────────────────── */
+/* ── Layout primitives ── */
 function Section({
   number,
   title,
@@ -408,9 +374,7 @@ function InsightsCard({ cluster, children }: { cluster: string; children: React.
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Action plan review with starring
-───────────────────────────────────────────────────────────── */
+/* ── Action plan review ── */
 function ActionPlanReview({
   clusterId,
   groups,
@@ -457,7 +421,6 @@ function ActionPlanReview({
 
   return (
     <div className="space-y-4">
-      {/* Value propositions selected */}
       {selectedGroups.length > 0 && (
         <ReviewBlock title="Value propositions selected">
           <div className="space-y-2.5">
@@ -483,7 +446,6 @@ function ActionPlanReview({
           </div>
         </ReviewBlock>
       )}
-
       <ReviewBlock title="Engagement approach">
         <div className="space-y-3">
           <StarList
@@ -589,9 +551,7 @@ function StarList({
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Shared: contacts table
-───────────────────────────────────────────────────────────── */
+/* ── Contact table ── */
 function ContactTable({
   contacts,
   onChange,
