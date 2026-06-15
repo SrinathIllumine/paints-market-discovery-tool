@@ -30,31 +30,47 @@ const STAKEHOLDER_BUCKET = "D2C" as const;
 function PlanClusterScreen() {
   const { clusterId } = Route.useParams();
   const navigate = useNavigate();
-  const cluster = useMemo(() => getCluster(clusterId), [clusterId]);
 
+  // All hooks unconditionally first — no early returns before this block
   const customerGroups = useAppStore((s) => s.plan.customerGroupsByCluster[clusterId] ?? []);
   const groupValueProps = useAppStore((s) => s.plan.groupValuePropsByCluster[clusterId] ?? {});
-  const selectedCamps = useAppStore((s) => s.plan.selectedCampsByCluster[clusterId] ?? []);
-  const starred = useAppStore((s) => s.plan.starredByCluster[clusterId] ?? []);
-  const strategyContacts = useAppStore((s) => s.plan.strategyContactsByCluster);
+  const selectedCamps   = useAppStore((s) => s.plan.selectedCampsByCluster[clusterId] ?? []);
+  const starred         = useAppStore((s) => s.plan.starredByCluster[clusterId] ?? []);
+  const strategyContacts = useAppStore((s) => s.plan.strategyContactsByCluster ?? {});
 
-  const toggleCustomerGroup = useAppStore((s) => s.toggleCustomerGroup);
+  const toggleCustomerGroup  = useAppStore((s) => s.toggleCustomerGroup);
   const toggleGroupValueProp = useAppStore((s) => s.toggleGroupValueProp);
-  const toggleSelectedCamp = useAppStore((s) => s.toggleSelectedCamp);
-  const toggleStarred = useAppStore((s) => s.toggleStarred);
-  const setStrategyContacts = useAppStore((s) => s.setStrategyContacts);
-  const unlockStage = useAppStore((s) => s.unlockStage);
-  const setMonthlyFocus = useAppStore((s) => s.setMonthlyFocus);
-
-  const contractors = strategyContacts[clusterId]?.[CONTRACTOR_BUCKET] ?? [];
-  const retailers = strategyContacts[clusterId]?.[RETAILER_BUCKET] ?? [];
-  const stakeholders = strategyContacts[clusterId]?.[STAKEHOLDER_BUCKET] ?? [];
-
-  const groups = useMemo(() => (cluster ? getCustomerGroups(clusterId) : []), [clusterId, cluster]);
-  const camps = useMemo(() => (cluster ? getCampIdeas(clusterId) : []), [clusterId, cluster]);
+  const toggleSelectedCamp   = useAppStore((s) => s.toggleSelectedCamp);
+  const toggleStarred        = useAppStore((s) => s.toggleStarred);
+  const setStrategyContacts  = useAppStore((s) => s.setStrategyContacts);
+  const unlockStage          = useAppStore((s) => s.unlockStage);
+  const setMonthlyFocus      = useAppStore((s) => s.setMonthlyFocus);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
 
+  // Safe data fetching — never throws, always returns []
+  const cluster = useMemo(() => {
+    try { return getCluster(clusterId) ?? null; } catch { return null; }
+  }, [clusterId]);
+
+  const groups = useMemo(() => {
+    if (!cluster) return [];
+    try { return getCustomerGroups(clusterId) ?? []; } catch { return []; }
+  }, [clusterId, cluster]);
+
+  const camps = useMemo(() => {
+    if (!cluster) return [];
+    try { return getCampIdeas(clusterId) ?? []; } catch { return []; }
+  }, [clusterId, cluster]);
+
+  // Derived — safe with nullish coalescing
+  const contractors  = strategyContacts[clusterId]?.[CONTRACTOR_BUCKET] ?? [];
+  const retailers    = strategyContacts[clusterId]?.[RETAILER_BUCKET]   ?? [];
+  const stakeholders = strategyContacts[clusterId]?.[STAKEHOLDER_BUCKET] ?? [];
+
+  const isStarred = (key: string) => starred.includes(key);
+
+  // Now safe to early-return after all hooks
   if (!cluster) {
     return (
       <AppShell bottom={<BottomNav />}>
@@ -67,6 +83,32 @@ function PlanClusterScreen() {
       </AppShell>
     );
   }
+
+  const handleGenerate = () => {
+    generateMonthlyEngagementPlanPdf({
+      focusClusterId: clusterId,
+      customerGroups: groups
+        .filter((g) => customerGroups.includes(g.id))
+        .map((g) => ({
+          id: g.id,
+          label: g.label,
+          pct: g.pct,
+          valueProps: groupValueProps[g.id] ?? [],
+        })),
+      camps: camps
+        .filter((c) => selectedCamps.includes(c.id))
+        .map((c) => ({ id: c.id, label: c.label, starred: isStarred(`camp:${c.id}`) })),
+      contractors:  contractors.map((c) => ({ ...c, starred: isStarred(`contractor:${c.id}`) })),
+      retailers:    retailers.map((c)   => ({ ...c, starred: isStarred(`retailer:${c.id}`) })),
+      stakeholders: stakeholders.map((c) => ({ ...c, starred: isStarred(`stakeholder:${c.id}`) })),
+    });
+    setConfirmOpen(false);
+    unlockStage(3);
+    setMonthlyFocus(clusterId);
+  };
+
+  // ... rest of your JSX unchanged
+}
 
   const isStarred = (key: string) => starred.includes(key);
 
