@@ -125,6 +125,7 @@ function PlanClusterScreen() {
   const [page, setPage] = useState<Page>("hub");
   const [q3Open, setQ3Open] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -906,3 +907,8 @@ function FieldInput({
     />
   );
 }
+<AppShell
+  ref={mainRef}
+  bottom={<BottomNav />}
+  header={<StageHeader ... />}
+>
