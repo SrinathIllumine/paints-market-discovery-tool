@@ -1,25 +1,18 @@
 import jsPDF from "jspdf";
 import { getCluster } from "@/data/clusters";
-import {
-  CONNECT_STRATEGY_LABEL,
-  MARKET_ENGAGEMENT_OPTIONS,
-  getRecommendedActions,
-  type ConnectStrategy,
-  type ContactEntry,
-} from "@/lib/strategyContent";
+import type { ContactEntry } from "@/lib/strategyContent";
 
-type EventEstimate = { participants?: number; contractors?: number };
+type CustomerGroupOut = { id: string; label: string; pct: number; valueProps: string[] };
+type CampOut = { id: string; label: string; starred: boolean };
+type ContactOut = ContactEntry & { starred?: boolean };
 
 type Args = {
   focusClusterId: string;
-  valueProposition: string;
-  strategies: ConnectStrategy[];
-  strategyItems: Partial<Record<ConnectStrategy, string[]>>;
-  strategyContacts: Partial<Record<ConnectStrategy, ContactEntry[]>>;
-  selectedActions: Partial<Record<ConnectStrategy, string[]>>;
-  customActions: Partial<Record<ConnectStrategy, string[]>>;
-  marketSelected?: string[];
-  eventEstimates?: Record<string, EventEstimate>;
+  customerGroups: CustomerGroupOut[];
+  camps: CampOut[];
+  contractors: ContactOut[];
+  retailers: ContactOut[];
+  stakeholders: ContactOut[];
 };
 
 function normalisePdfText(text: string): string {
@@ -34,8 +27,12 @@ function normalisePdfText(text: string): string {
 }
 
 export function generateMonthlyEngagementPlanPdf({
-  focusClusterId, valueProposition, strategies, strategyItems, strategyContacts,
-  selectedActions, customActions, marketSelected = [], eventEstimates = {},
+  focusClusterId,
+  customerGroups,
+  camps,
+  contractors,
+  retailers,
+  stakeholders,
 }: Args) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -47,12 +44,13 @@ export function generateMonthlyEngagementPlanPdf({
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("Monthly Cluster Engagement Plan - June 2026", margin, 35);
+  doc.text("Quarterly Cluster Engagement Plan", margin, 35);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
     `Generated ${new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}`,
-    margin, 54,
+    margin,
+    54,
   );
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
@@ -63,7 +61,10 @@ export function generateMonthlyEngagementPlanPdf({
   y = 110;
 
   const ensureSpace = (h: number) => {
-    if (y + h > 780) { doc.addPage(); y = margin; }
+    if (y + h > 780) {
+      doc.addPage();
+      y = margin;
+    }
   };
 
   const heading = (text: string) => {
@@ -82,8 +83,8 @@ export function generateMonthlyEngagementPlanPdf({
 
   const wrapped = (text: string, indent = 0, bold = false) => {
     doc.setFont("helvetica", bold ? "bold" : "normal");
-    const safeText = normalisePdfText(text);
-    const lines = doc.splitTextToSize(safeText, pageWidth - margin * 2 - indent);
+    const safe = normalisePdfText(text);
+    const lines = doc.splitTextToSize(safe, pageWidth - margin * 2 - indent);
     ensureSpace(lines.length * 12 + 4);
     doc.text(lines, margin + indent, y);
     y += lines.length * 12;
@@ -96,87 +97,65 @@ export function generateMonthlyEngagementPlanPdf({
   wrapped(cluster?.name ?? focusClusterId, 0, true);
   y += 6;
 
-  // Value proposition — only show if selected
-  if (valueProposition && valueProposition.trim()) {
-    heading("Value proposition");
-    wrapped(valueProposition, 0);
-    y += 6;
-  }
-
-  // Market engagement events — only if user picked any
-  const chosenEvents = MARKET_ENGAGEMENT_OPTIONS.filter((m) => marketSelected.includes(m.id));
-  if (chosenEvents.length > 0) {
-    heading("Market engagement events");
-    for (const ev of chosenEvents) {
-      wrapped(`- ${ev.label}  [${ev.category}]`, 0, true);
-      const est = eventEstimates[ev.id];
-      if (est && (est.participants != null || est.contractors != null)) {
-        wrapped(
-          `Estimate - Participants: ${est.participants ?? "-"}, Contractors: ${est.contractors ?? "-"}`,
-          12,
-        );
-      }
-    }
-    y += 6;
-  }
-
-  // Customer engagement strategies — only if any selected
-  if (strategies.length > 0) {
-    heading("Customer engagement strategies");
-    for (const s of strategies) {
-      const items = strategyItems[s] ?? [];
-      const contacts = strategyContacts[s] ?? [];
-      if (items.length === 0 && contacts.length === 0) {
-        wrapped(CONNECT_STRATEGY_LABEL[s], 0, true);
-        wrapped("(no sub-items captured)", 12);
-        y += 4;
-        continue;
-      }
-      ensureSpace(40);
-      wrapped(CONNECT_STRATEGY_LABEL[s], 0, true);
-      for (const it of items) wrapped(`- ${it}`, 12);
-      if (contacts.length > 0) {
-        wrapped("Contacts:", 12, true);
-        for (const c of contacts) {
-          const line = [c.name, c.phone, c.area, c.role, c.brandPreference].filter(Boolean).join(" - ");
-          if (line) wrapped(`- ${line}`, 18);
-        }
+  if (customerGroups.length > 0) {
+    heading("Value propositions by customer group");
+    for (const g of customerGroups) {
+      wrapped(`${g.label} (${g.pct}%)`, 0, true);
+      if (g.valueProps.length === 0) {
+        wrapped("(no value proposition picked)", 12);
+      } else {
+        for (const p of g.valueProps) wrapped(`- ${p}`, 12);
       }
       y += 4;
     }
     y += 6;
   }
 
-  // Action plan — only render strategies that have selected/custom actions
-  const actionStrategies = strategies.filter((s) => {
-    const sel = selectedActions[s] ?? [];
-    const cust = customActions[s] ?? [];
-    return sel.length > 0 || cust.length > 0;
-  });
-  if (actionStrategies.length > 0) {
-    heading("Action plan");
-    for (const s of actionStrategies) {
-      const sel = selectedActions[s] ?? [];
-      const cust = customActions[s] ?? [];
-      const recommended = getRecommendedActions(s, focusClusterId);
-      ensureSpace(30);
-      wrapped(CONNECT_STRATEGY_LABEL[s], 0, true);
-      let idx = 1;
-      for (const a of sel) {
-        wrapped(`${idx}. ${a}`, 12);
-        const assets = recommended.find((r) => r.text === a)?.assets ?? [];
-        for (const asset of assets) {
-          wrapped(`- Resource: ${asset.label}`, 24);
-        }
-        idx++;
-      }
-      for (const a of cust) {
-        wrapped(`${idx}. ${a} (added by you)`, 12);
-        idx++;
-      }
-      y += 4;
-    }
+  heading("Engagement approach");
+
+  const starTag = (s: boolean) => (s ? " *" : "");
+
+  // Camps
+  if (camps.length > 0) {
+    wrapped("Camps / events planned:", 0, true);
+    for (const c of camps) wrapped(`- ${c.label}${starTag(c.starred)}`, 12);
+    y += 4;
   }
+
+  // Contractors
+  const validContractors = contractors.filter((c) => (c.name ?? "").trim());
+  if (validContractors.length > 0) {
+    wrapped("Contractors to be converted:", 0, true);
+    for (const c of validContractors) {
+      const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" - ");
+      wrapped(`- ${line}${starTag(!!c.starred)}`, 12);
+    }
+    y += 4;
+  }
+
+  // Retailers
+  const validRetailers = retailers.filter((c) => (c.name ?? "").trim());
+  if (validRetailers.length > 0) {
+    wrapped("Retailers who can connect:", 0, true);
+    for (const c of validRetailers) {
+      const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" - ");
+      wrapped(`- ${line}${starTag(!!c.starred)}`, 12);
+    }
+    y += 4;
+  }
+
+  // Stakeholders
+  const validStakeholders = stakeholders.filter((c) => (c.name ?? "").trim());
+  if (validStakeholders.length > 0) {
+    wrapped("Stakeholders to reach out directly:", 0, true);
+    for (const c of validStakeholders) {
+      const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" - ");
+      wrapped(`- ${line}${starTag(!!c.starred)}`, 12);
+    }
+    y += 4;
+  }
+
+  wrapped("* = prioritized for this quarter", 0);
 
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
@@ -184,7 +163,7 @@ export function generateMonthlyEngagementPlanPdf({
     doc.setFontSize(8);
     doc.setTextColor(150);
     doc.text(
-      `JK Cement - Monthly Cluster Engagement Plan - Page ${i} of ${pageCount}`,
+      `JK Cement - Quarterly Cluster Engagement Plan - Page ${i} of ${pageCount}`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 20,
       { align: "center" },
@@ -192,5 +171,5 @@ export function generateMonthlyEngagementPlanPdf({
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  doc.save(`JK-Monthly-Cluster-Engagement-Plan-${today}.pdf`);
+  doc.save(`JK-Quarterly-Cluster-Engagement-Plan-${today}.pdf`);
 }
