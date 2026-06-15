@@ -279,7 +279,7 @@ function ReviewCard(
   values: ReviewEntry;
   onChange: (fieldId: string, value: string) => void;
 }
-const [open, setOpen] = useState(false);) {
+) {const [open, setOpen] = useState(false);
   return (
     <div className={cn("overflow-hidden rounded-2xl border bg-card", starred ? "border-amber-400" : "border-border")}>
       <button
@@ -330,7 +330,7 @@ const [open, setOpen] = useState(false);) {
             ))}
           </ul>
         </div>
-)}
+
 
         <div className="border-t border-border pt-3">
           <div className="mb-2 flex items-center gap-1.5">
@@ -338,6 +338,7 @@ const [open, setOpen] = useState(false);) {
             <p className="text-[10px] font-semibold uppercase tracking-widest text-green-700">Review post meeting</p>
           </div>
           <div className="space-y-2.5">
+            )}
             {questions.map((q) => (
               <div key={q.id}>
                 <label className="mb-1 block text-[11px] font-medium text-foreground/80">{q.label}</label>
