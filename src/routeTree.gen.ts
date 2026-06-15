@@ -21,6 +21,7 @@ import { Route as PlanPastRoadmapRouteImport } from './routes/plan/past-roadmap'
 import { Route as PlanClusterIdRouteImport } from './routes/plan/$clusterId'
 import { Route as MapClusterIdRouteImport } from './routes/map/$clusterId'
 import { Route as SalesEnablementClusterIdIndexRouteImport } from './routes/sales-enablement.$clusterId.index'
+import { Route as PlanClusterIdIndexRouteImport } from './routes/plan/$clusterId.index'
 import { Route as SalesEnablementClusterIdProspectIdRouteImport } from './routes/sales-enablement.$clusterId.$prospectId'
 import { Route as PlanClusterIdReviewRouteImport } from './routes/plan/$clusterId.review'
 
@@ -85,6 +86,11 @@ const SalesEnablementClusterIdIndexRoute =
     path: '/$clusterId/',
     getParentRoute: () => SalesEnablementRoute,
   } as any)
+const PlanClusterIdIndexRoute = PlanClusterIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PlanClusterIdRoute,
+} as any)
 const SalesEnablementClusterIdProspectIdRoute =
   SalesEnablementClusterIdProspectIdRouteImport.update({
     id: '/$clusterId/$prospectId',
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/sales-enablement/': typeof SalesEnablementIndexRoute
   '/plan/$clusterId/review': typeof PlanClusterIdReviewRoute
   '/sales-enablement/$clusterId/$prospectId': typeof SalesEnablementClusterIdProspectIdRoute
+  '/plan/$clusterId/': typeof PlanClusterIdIndexRoute
   '/sales-enablement/$clusterId/': typeof SalesEnablementClusterIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -119,13 +126,13 @@ export interface FileRoutesByTo {
   '/market-potential': typeof MarketPotentialRoute
   '/network': typeof NetworkRoute
   '/map/$clusterId': typeof MapClusterIdRoute
-  '/plan/$clusterId': typeof PlanClusterIdRouteWithChildren
   '/plan/past-roadmap': typeof PlanPastRoadmapRoute
   '/map': typeof MapIndexRoute
   '/plan': typeof PlanIndexRoute
   '/sales-enablement': typeof SalesEnablementIndexRoute
   '/plan/$clusterId/review': typeof PlanClusterIdReviewRoute
   '/sales-enablement/$clusterId/$prospectId': typeof SalesEnablementClusterIdProspectIdRoute
+  '/plan/$clusterId': typeof PlanClusterIdIndexRoute
   '/sales-enablement/$clusterId': typeof SalesEnablementClusterIdIndexRoute
 }
 export interface FileRoutesById {
@@ -143,6 +150,7 @@ export interface FileRoutesById {
   '/sales-enablement/': typeof SalesEnablementIndexRoute
   '/plan/$clusterId/review': typeof PlanClusterIdReviewRoute
   '/sales-enablement/$clusterId/$prospectId': typeof SalesEnablementClusterIdProspectIdRoute
+  '/plan/$clusterId/': typeof PlanClusterIdIndexRoute
   '/sales-enablement/$clusterId/': typeof SalesEnablementClusterIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -161,6 +169,7 @@ export interface FileRouteTypes {
     | '/sales-enablement/'
     | '/plan/$clusterId/review'
     | '/sales-enablement/$clusterId/$prospectId'
+    | '/plan/$clusterId/'
     | '/sales-enablement/$clusterId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -169,13 +178,13 @@ export interface FileRouteTypes {
     | '/market-potential'
     | '/network'
     | '/map/$clusterId'
-    | '/plan/$clusterId'
     | '/plan/past-roadmap'
     | '/map'
     | '/plan'
     | '/sales-enablement'
     | '/plan/$clusterId/review'
     | '/sales-enablement/$clusterId/$prospectId'
+    | '/plan/$clusterId'
     | '/sales-enablement/$clusterId'
   id:
     | '__root__'
@@ -192,6 +201,7 @@ export interface FileRouteTypes {
     | '/sales-enablement/'
     | '/plan/$clusterId/review'
     | '/sales-enablement/$clusterId/$prospectId'
+    | '/plan/$clusterId/'
     | '/sales-enablement/$clusterId/'
   fileRoutesById: FileRoutesById
 }
@@ -294,6 +304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SalesEnablementClusterIdIndexRouteImport
       parentRoute: typeof SalesEnablementRoute
     }
+    '/plan/$clusterId/': {
+      id: '/plan/$clusterId/'
+      path: '/'
+      fullPath: '/plan/$clusterId/'
+      preLoaderRoute: typeof PlanClusterIdIndexRouteImport
+      parentRoute: typeof PlanClusterIdRoute
+    }
     '/sales-enablement/$clusterId/$prospectId': {
       id: '/sales-enablement/$clusterId/$prospectId'
       path: '/$clusterId/$prospectId'
@@ -330,10 +347,12 @@ const SalesEnablementRouteWithChildren = SalesEnablementRoute._addFileChildren(
 
 interface PlanClusterIdRouteChildren {
   PlanClusterIdReviewRoute: typeof PlanClusterIdReviewRoute
+  PlanClusterIdIndexRoute: typeof PlanClusterIdIndexRoute
 }
 
 const PlanClusterIdRouteChildren: PlanClusterIdRouteChildren = {
   PlanClusterIdReviewRoute: PlanClusterIdReviewRoute,
+  PlanClusterIdIndexRoute: PlanClusterIdIndexRoute,
 }
 
 const PlanClusterIdRouteWithChildren = PlanClusterIdRoute._addFileChildren(
