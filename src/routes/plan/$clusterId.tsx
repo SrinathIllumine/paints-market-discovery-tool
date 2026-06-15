@@ -163,7 +163,7 @@ service.textSearch({ query }, (results, status) => {
       : [];
   setNames((prev) => ({ ...prev, [g.id]: placeNames }));
   setLoading((prev) => ({ ...prev, [g.id]: false }));
-});;
+});
 
   const contractors = strategyContacts[clusterId]?.[CONTRACTOR_BUCKET] ?? EMPTY_CONTACTS;
   const retailers = strategyContacts[clusterId]?.[RETAILER_BUCKET] ?? EMPTY_CONTACTS;
