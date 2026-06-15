@@ -105,9 +105,6 @@ function useGroupPlaces(groups: { id: string; label: string }[], clusterPlacesQu
 }
 
 function PlanClusterScreen() {
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
-  }, [page]);
   const { clusterId } = Route.useParams();
   const navigate = useNavigate();
 
@@ -128,6 +125,10 @@ function PlanClusterScreen() {
   const [page, setPage] = useState<Page>("hub");
   const [q3Open, setQ3Open] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [page]);
 
   // Inject Google Maps SDK once when this screen mounts
   useEffect(() => {
