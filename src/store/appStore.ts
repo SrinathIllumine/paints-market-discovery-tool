@@ -553,8 +553,61 @@ export const useAppStore = create<State & Actions>()(
         }),
 
       unlockStage: (n) => set({ unlockedStage: n }),
+
+      toggleCustomerGroup: (clusterId, groupId) =>
+        set((state) => {
+          const prev = state.plan.customerGroupsByCluster[clusterId] ?? [];
+          const next = prev.includes(groupId) ? prev.filter((g) => g !== groupId) : [...prev, groupId];
+          return {
+            plan: {
+              ...state.plan,
+              customerGroupsByCluster: { ...state.plan.customerGroupsByCluster, [clusterId]: next },
+            },
+          };
+        }),
+
+      toggleGroupValueProp: (clusterId, groupId, prop) =>
+        set((state) => {
+          const byGroup = state.plan.groupValuePropsByCluster[clusterId] ?? {};
+          const prev = byGroup[groupId] ?? [];
+          const next = prev.includes(prop) ? prev.filter((p) => p !== prop) : [...prev, prop];
+          const updated = { ...byGroup, [groupId]: next };
+          // Maintain legacy summary string so home page count stays correct
+          const allProps = Object.values(updated).flat().filter(Boolean);
+          return {
+            plan: {
+              ...state.plan,
+              groupValuePropsByCluster: { ...state.plan.groupValuePropsByCluster, [clusterId]: updated },
+              valuePropositionByCluster: {
+                ...state.plan.valuePropositionByCluster,
+                [clusterId]: allProps.join(" • "),
+              },
+            },
+          };
+        }),
+
+      toggleSelectedCamp: (clusterId, campId) =>
+        set((state) => {
+          const prev = state.plan.selectedCampsByCluster[clusterId] ?? [];
+          const next = prev.includes(campId) ? prev.filter((c) => c !== campId) : [...prev, campId];
+          return {
+            plan: {
+              ...state.plan,
+              selectedCampsByCluster: { ...state.plan.selectedCampsByCluster, [clusterId]: next },
+            },
+          };
+        }),
+
+      toggleStarred: (clusterId, key) =>
+        set((state) => {
+          const prev = state.plan.starredByCluster[clusterId] ?? [];
+          const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+          return {
+            plan: { ...state.plan, starredByCluster: { ...state.plan.starredByCluster, [clusterId]: next } },
+          };
+        }),
     }),
-    { name: "sed.v11" },
+    { name: "sed.v12" },
   ),
 );
 
