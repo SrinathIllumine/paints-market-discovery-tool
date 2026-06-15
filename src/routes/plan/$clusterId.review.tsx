@@ -222,21 +222,22 @@ function ReviewScreen() {
         {orderedContractors.length > 0 && (
           <Section icon={<HardHat className="h-4 w-4 text-green-700" />} iconBg="bg-green-50" title="Contractors">
             <div className="space-y-3">
-              {/*{orderedContractors.map((c) => {
-                const key = `contractor:${c.id}`;*/}
-              return (
-              <ReviewCard
-                key={key}
-                //title={c.name}
-                //subtitle={contactSubtitle(c)}
-                starred={isStarred(key) || isStarred("group:contractors")}
-                enablers={CONTRACTOR_ENABLERS}
-                questions={CONTRACTOR_QUESTIONS}
-                values={reviews[key] ?? {}}
-                onChange={(fid, v) => update(key, fid, v)}
-              />
-              );
-              {/*}})}*/}
+              {orderedContractors.map((c) => {
+                const key = `contractor:${c.id}`;
+                return (
+                  <ReviewCard
+                    key={key}
+                    title={c.name}
+                    subtitle={contactSubtitle(c)}
+                    starred={isStarred(key) || isStarred("group:contractors")}
+                    enablers={CONTRACTOR_ENABLERS}
+                    questions={CONTRACTOR_QUESTIONS}
+                    values={reviews[key] ?? {}}
+                    onChange={(fid, v) => update(key, fid, v)}
+                  />
+                );
+              })}
+
             </div>
           </Section>
         )}
