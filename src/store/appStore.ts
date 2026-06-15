@@ -173,6 +173,7 @@ type Actions = {
   toggleGroupValueProp: (clusterId: string, groupId: string, prop: string) => void;
   toggleSelectedCamp: (clusterId: string, campId: string) => void;
   toggleStarred: (clusterId: string, key: string) => void;
+  setReview: (clusterId: string, itemKey: string, patch: ReviewEntry) => void;
 };
 
 const emptyCluster = (): ClusterState => ({ jkShare: null, prospects: [], visited: false });
