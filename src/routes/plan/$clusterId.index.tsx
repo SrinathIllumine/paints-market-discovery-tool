@@ -731,80 +731,60 @@ function PlanClusterScreen() {
                 Make selections in the other sections to see your action plan here.
               </p>
             ) : (
-              <div className="space-y-5">
-                {selectedCampObjs.length > 0 && (
-                  <div>
-                    <SectionLabel>Camps / events</SectionLabel>
-                    <div className="space-y-2">
-                      {selectedCampObjs.map((c) => {
-                        const key = `camp:${c.id}`;
-                        const enablers = getCampEnablers(c.id);
-                        return (
-                          <ApRow
-                            key={c.id}
-                            title={c.label}
-                            sub={c.description}
-                            starred={isStarred(key)}
-                            onToggleStar={() => toggleStarred(clusterId, key)}
-                            enablers={enablers}
-                            onEnablerClick={setActiveEnabler}
-                            onReview={() => navigate({ to: "/plan/$clusterId/review", params: { clusterId } })}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+              <div className="overflow-hidden rounded-2xl border border-border bg-card">
+  <div className="grid grid-cols-[1fr_64px_64px] border-b border-border bg-muted/40 px-3 py-2 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+    <span>Item</span>
+    <span className="text-center">Enablers</span>
+    <span className="text-center">Review</span>
+  </div>
 
-                {validContractors.length > 0 && (
-                  <div>
-                    <SectionLabel>Contractors</SectionLabel>
-                    <ApGroupRow
-                      title="Contractors to convert"
-                      contacts={validContractors}
-                      starred={isStarred("group:contractors")}
-                      onToggleStar={() => toggleStarred(clusterId, "group:contractors")}
-                      enablers={CONTRACTOR_GROUP_ENABLERS}
-                      onEnablerClick={setActiveEnabler}
-                      onReview={() => navigate({ to: "/plan/$clusterId/review", params: { clusterId } })}
-                    />
-                  </div>
-                )}
+  {selectedCampObjs.length > 0 && (
+    <>
+      <div className="border-b border-border bg-muted/20 px-3 py-1.5 text-[10.5px] font-semibold text-foreground">Events & camps</div>
+      {selectedCampObjs.map((c) => {
+        const key = `camp:${c.id}`;
+        return <ApRow key={c.id} title={c.label} sub={c.description}
+          starred={isStarred(key)} onToggleStar={() => toggleStarred(clusterId, key)}
+          enablers={getCampEnablers(c.id)}
+          onViewEnablers={() => setActiveEnablers({ title: c.label, items: getCampEnablers(c.id) })}
+          onReview={() => navigate({ to: "/plan/$clusterId/review", params: { clusterId } })} />;
+      })}
+    </>
+  )}
 
-                {validRetailers.length > 0 && (
-                  <div>
-                    <SectionLabel>Retailers</SectionLabel>
-                    <ApGroupRow
-                      title="Retailers who can connect"
-                      contacts={validRetailers}
-                      starred={isStarred("group:retailers")}
-                      onToggleStar={() => toggleStarred(clusterId, "group:retailers")}
-                      enablers={RETAILER_GROUP_ENABLERS}
-                      onEnablerClick={setActiveEnabler}
-                      onReview={() => navigate({ to: "/plan/$clusterId/review", params: { clusterId } })}
-                    />
-                  </div>
-                )}
+  {validContractors.length > 0 && (
+    <>
+      <div className="border-b border-border bg-muted/20 px-3 py-1.5 text-[10.5px] font-semibold text-foreground">Contractors</div>
+      <ApGroupRow title="Contractors to convert" contacts={validContractors}
+        starred={isStarred("group:contractors")} onToggleStar={() => toggleStarred(clusterId, "group:contractors")}
+        enablers={CONTRACTOR_GROUP_ENABLERS}
+        onViewEnablers={() => setActiveEnablers({ title: "Contractors to convert", items: CONTRACTOR_GROUP_ENABLERS })}
+        onReview={() => navigate({ to: "/plan/$clusterId/review", params: { clusterId } })} />
+    </>
+  )}
 
-                {validStakeholders.length > 0 && (
-                  <div>
-                    <SectionLabel>Stakeholders</SectionLabel>
-                    <ApGroupRow
-                      title="Stakeholders to meet directly"
-                      contacts={validStakeholders}
-                      starred={isStarred("group:stakeholders")}
-                      onToggleStar={() => toggleStarred(clusterId, "group:stakeholders")}
-                      enablers={STAKEHOLDER_GROUP_ENABLERS}
-                      onEnablerClick={setActiveEnabler}
-                      onReview={() => navigate({ to: "/plan/$clusterId/review", params: { clusterId } })}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-          </SubPage>
-        )}
-      </div>
+  {validRetailers.length > 0 && (
+    <>
+      <div className="border-b border-border bg-muted/20 px-3 py-1.5 text-[10.5px] font-semibold text-foreground">Retailers</div>
+      <ApGroupRow title="Retailers who can connect" contacts={validRetailers}
+        starred={isStarred("group:retailers")} onToggleStar={() => toggleStarred(clusterId, "group:retailers")}
+        enablers={RETAILER_GROUP_ENABLERS}
+        onViewEnablers={() => setActiveEnablers({ title: "Retailers who can connect", items: RETAILER_GROUP_ENABLERS })}
+        onReview={() => navigate({ to: "/plan/$clusterId/review", params: { clusterId } })} />
+    </>
+  )}
+
+  {validStakeholders.length > 0 && (
+    <>
+      <div className="border-b border-border bg-muted/20 px-3 py-1.5 text-[10.5px] font-semibold text-foreground">Stakeholders</div>
+      <ApGroupRow title="Stakeholders to meet directly" contacts={validStakeholders}
+        starred={isStarred("group:stakeholders")} onToggleStar={() => toggleStarred(clusterId, "group:stakeholders")}
+        enablers={STAKEHOLDER_GROUP_ENABLERS}
+        onViewEnablers={() => setActiveEnablers({ title: "Stakeholders to meet directly", items: STAKEHOLDER_GROUP_ENABLERS })}
+        onReview={() => navigate({ to: "/plan/$clusterId/review", params: { clusterId } })} />
+    </>
+  )}
+</div>
 
       {/* ── Group detail popup ── */}
       {detailGroup &&
