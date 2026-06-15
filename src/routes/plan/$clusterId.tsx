@@ -17,12 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp, FileDown, Info, Plus, Star, Trash2 } from "lucide-react";
 import { generateMonthlyEngagementPlanPdf } from "@/lib/monthlyPlanReport";
-import {
-  getCustomerGroups,
-  getValuePropsForGroup,
-  getCampIdeas,
-  type ContactEntry,
-} from "@/lib/strategyContent";
+import { getCustomerGroups, getValuePropsForGroup, getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
 
 export const Route = createFileRoute("/plan/$clusterId")({
   component: PlanClusterScreen,
@@ -55,8 +50,8 @@ function PlanClusterScreen() {
   const retailers = strategyContacts[clusterId]?.[RETAILER_BUCKET] ?? [];
   const stakeholders = strategyContacts[clusterId]?.[STAKEHOLDER_BUCKET] ?? [];
 
-  const groups = useMemo(() => getCustomerGroups(clusterId), [clusterId]);
-  const camps = useMemo(() => getCampIdeas(clusterId), [clusterId]);
+  const groups = useMemo(() => (cluster ? getCustomerGroups(clusterId) : []), [clusterId, cluster]);
+  const camps = useMemo(() => (cluster ? getCampIdeas(clusterId) : []), [clusterId, cluster]);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -197,10 +192,7 @@ function PlanClusterScreen() {
           subtitle="Plan camps / events and capture the key people you intend to reach out to."
         >
           {/* 2.1 Camps / events */}
-          <SubSection
-            number="2.1"
-            title="Are you planning to conduct any camps / events with the community?"
-          >
+          <SubSection number="2.1" title="Are you planning to conduct any camps / events with the community?">
             <div className="space-y-2">
               {camps.map((c) => {
                 const on = selectedCamps.includes(c.id);
@@ -340,15 +332,7 @@ function Section({
   );
 }
 
-function SubSection({
-  number,
-  title,
-  children,
-}: {
-  number: string;
-  title: string;
-  children: React.ReactNode;
-}) {
+function SubSection({ number, title, children }: { number: string; title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
   return (
     <div className="rounded-lg border border-border bg-card">
