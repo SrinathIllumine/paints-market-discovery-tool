@@ -427,3 +427,185 @@ export const COMMITMENT_FIELDS: Record<ConnectStrategy, CommitmentField[]> = {
   RETAILER: [],
   INFLUENCER: [],
 };
+
+/* ─────────────────────────────────────────────────────────────
+   Customer groups, per-group value props, camp/event ideas
+   (used by the single-page Cluster Engagement Plan)
+───────────────────────────────────────────────────────────── */
+
+export type CustomerGroup = { id: string; label: string; pct: number };
+
+const CUSTOMER_GROUPS: Record<string, CustomerGroup[]> = {
+  schools: [
+    { id: "large-private", label: "Large private schools", pct: 25 },
+    { id: "small-private", label: "Small individual private schools", pct: 35 },
+    { id: "international", label: "Large international schools", pct: 10 },
+    { id: "pre-schools", label: "Pre-schools", pct: 15 },
+    { id: "government", label: "Government schools", pct: 15 },
+  ],
+  hospitals: [
+    { id: "multi-specialty", label: "Multi-specialty hospitals", pct: 20 },
+    { id: "small-hospitals", label: "Small private hospitals", pct: 30 },
+    { id: "nursing-homes", label: "Nursing homes & day-care", pct: 25 },
+    { id: "specialty-clinics", label: "Specialty clinics", pct: 15 },
+    { id: "government-hospitals", label: "Government hospitals", pct: 10 },
+  ],
+  "mid-apartments": [
+    { id: "premium-society", label: "Premium gated societies", pct: 20 },
+    { id: "mid-society", label: "Mid-budget societies", pct: 45 },
+    { id: "budget-society", label: "Budget / older societies", pct: 25 },
+    { id: "redev-society", label: "Redevelopment projects", pct: 10 },
+  ],
+  midc: [
+    { id: "large-mfg", label: "Large manufacturing units", pct: 25 },
+    { id: "mid-mfg", label: "Mid-size factories", pct: 35 },
+    { id: "small-workshops", label: "Small workshops", pct: 25 },
+    { id: "warehouse-units", label: "Warehouse / storage units", pct: 15 },
+  ],
+  hotels: [
+    { id: "five-star", label: "5-star hotels & resorts", pct: 15 },
+    { id: "three-star", label: "3-4 star hotels", pct: 30 },
+    { id: "budget", label: "Budget hotels & lodges", pct: 40 },
+    { id: "boutique", label: "Boutique / themed properties", pct: 15 },
+  ],
+  restaurants: [
+    { id: "chains", label: "Restaurant chains", pct: 20 },
+    { id: "premium-standalone", label: "Premium standalone restaurants", pct: 25 },
+    { id: "casual-dining", label: "Casual dining & cafés", pct: 35 },
+    { id: "qsr", label: "QSR & cloud kitchens", pct: 20 },
+  ],
+};
+
+export function getCustomerGroups(clusterId: string): CustomerGroup[] {
+  return (
+    CUSTOMER_GROUPS[clusterId] ?? [
+      { id: "large", label: "Large establishments", pct: 25 },
+      { id: "mid", label: "Mid-size establishments", pct: 40 },
+      { id: "small", label: "Small establishments", pct: 25 },
+      { id: "other", label: "Other / niche", pct: 10 },
+    ]
+  );
+}
+
+const VALUE_PROPS_BY_GROUP: Record<string, Record<string, string[]>> = {
+  schools: {
+    "large-private": [
+      "Premium child-safe finish that strengthens admission-season branding",
+      "7-year warranty trustees can show to parents at walk-throughs",
+      "Designer corridors and signage walls with curated shade palettes",
+    ],
+    "small-private": [
+      "Sharper trustee budget with comparable finish to Asian Paints / Berger",
+      "Vacation-window repaint package with on-site supervision",
+      "Bundled exteriors + interiors with single-window contractor coordination",
+    ],
+    international: [
+      "International-grade low-VOC, IGBC-friendly finish for global campuses",
+      "Designer shade palette curated for international-curriculum campuses",
+      "Brand-standard finish that matches global facility audits",
+    ],
+    "pre-schools": [
+      "Anti-microbial, washable walls that are safe for toddlers",
+      "Bright themed murals that delight parents during walk-throughs",
+      "Quick-turnaround vacation repaint with minimal disruption",
+    ],
+    government: [
+      "L1-friendly costing with anti-fungal exteriors that survive monsoon",
+      "Long-life budget repaint for corridors and classrooms",
+      "BIS-compliant SKU mix that clears panel-empanelment requirements",
+    ],
+  },
+};
+
+export function getValuePropsForGroup(clusterId: string, groupId: string): string[] {
+  const fromLib = VALUE_PROPS_BY_GROUP[clusterId]?.[groupId];
+  if (fromLib) return fromLib;
+  const ctx = clusterId.replace(/-/g, " ");
+  return [
+    `Tailored finish + warranty package for this ${ctx} segment`,
+    `Competitive contractor commercials with on-site supervision`,
+    `Comparable finish to Asian Paints / Berger at a sharper budget`,
+  ];
+}
+
+export type CampIdea = { id: string; label: string; description: string };
+
+const CAMP_IDEAS: Record<string, CampIdea[]> = {
+  schools: [
+    {
+      id: "principal-meet",
+      label: "Importance of odourless paints — meeting with the school principal",
+      description: "1-hour technical meet with principal and facility head, with samples.",
+    },
+    {
+      id: "pta-awareness",
+      label: "Vacation-window repaint awareness camp at PTA meet",
+      description: "Short slot at a PTA meeting with brochures and contractor referrals.",
+    },
+    {
+      id: "child-safe-demo",
+      label: "Child-safe paint live demo at annual day",
+      description: "Branded stall + demo for parents during the school's annual day.",
+    },
+    {
+      id: "facility-clinic",
+      label: "Anti-fungal & monsoon-ready repaint clinic for facility heads",
+      description: "Cluster-wide clinic for facility managers across nearby schools.",
+    },
+    {
+      id: "art-workshop",
+      label: "Sponsored mural / art workshop with students",
+      description: "Branded contribution event with students painting a school wall.",
+    },
+  ],
+  hospitals: [
+    {
+      id: "hygiene-session",
+      label: "Hygienic paint awareness session for hospital admin",
+      description: "Talk on antimicrobial finishes and inspection-ready surfaces.",
+    },
+    {
+      id: "ward-demo",
+      label: "Ward-wise repaint demo & sampling",
+      description: "On-site demo on a sample wall in a non-critical ward.",
+    },
+    {
+      id: "facility-meet",
+      label: "Facility head & maintenance team meet",
+      description: "Roundtable with maintenance teams across nearby hospitals.",
+    },
+    {
+      id: "trust-board",
+      label: "Trust-board proposal session",
+      description: "Direct proposal to the trust board with hygiene SKU mix.",
+    },
+  ],
+};
+
+export function getCampIdeas(clusterId: string): CampIdea[] {
+  return (
+    CAMP_IDEAS[clusterId] ?? [
+      {
+        id: "awareness",
+        label: `Awareness session for ${clusterId.replace(/-/g, " ")} decision-makers`,
+        description: "1-hour technical awareness session with samples.",
+      },
+      { id: "demo", label: "Product demo & sampling drive", description: "Hands-on demo at the site with shade cards." },
+      {
+        id: "association-meet",
+        label: "Sponsored association / community meet",
+        description: "Branded slot at the local cluster association meeting.",
+      },
+      {
+        id: "site-clinic",
+        label: "On-site advisory clinic",
+        description: "Walk the site, recommend system, leave a written estimate.",
+      },
+      {
+        id: "community",
+        label: "Community contribution event",
+        description: "Visible local cause with a branded contribution.",
+      },
+    ]
+  );
+}
