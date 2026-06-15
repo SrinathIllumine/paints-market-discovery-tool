@@ -540,7 +540,7 @@ function PlanClusterScreen() {
                       {selectedGroupObjs.map((g) => (
                         <div key={g.id} className="rounded-2xl border border-border bg-card px-4 py-3">
                           <p className="font-serif text-sm text-foreground">{g.label}</p>
-                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          <p className="mt-0.5 text-sm text-muted-foreground">
                             {(groupValueProps[g.id] ?? [])[0] ?? getValuePropsForGroup(clusterId, g.id)[0] ?? ""}
                           </p>
                         </div>
