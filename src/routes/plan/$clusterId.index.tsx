@@ -69,7 +69,16 @@ const EMPTY_REVIEWS: Record<string, Record<string, string>> = {};
 const EMPTY_CONTACTS: ContactEntry[] = [];
 const EMPTY_SC: Record<string, Partial<Record<string, ContactEntry[]>>> = {};
 
-type Page = "hub" | "groups" | "valueprops" | "actions" | "camps" | "contractors" | "retailers" | "stakeholders" | "actionplan";
+type Page =
+  | "hub"
+  | "groups"
+  | "valueprops"
+  | "actions"
+  | "camps"
+  | "contractors"
+  | "retailers"
+  | "stakeholders"
+  | "actionplan";
 
 declare global {
   interface Window {
@@ -532,34 +541,40 @@ function PlanClusterScreen() {
                     questions: EVENT_QUESTIONS,
                   })),
                   ...(validContractors.length > 0
-                    ? [{
-                        key: "group:contractors",
-                        section: "Contractors",
-                        title: `${validContractors.length} contractor${validContractors.length > 1 ? "s" : ""} to convert`,
-                        subtitle: validContractors.map((c) => c.name).join(", "),
-                        enablers: CONTRACTOR_ENABLERS,
-                        questions: CONTRACTOR_QUESTIONS,
-                      }]
+                    ? [
+                        {
+                          key: "group:contractors",
+                          section: "Contractors",
+                          title: `${validContractors.length} contractor${validContractors.length > 1 ? "s" : ""} to convert`,
+                          subtitle: validContractors.map((c) => c.name).join(", "),
+                          enablers: CONTRACTOR_ENABLERS,
+                          questions: CONTRACTOR_QUESTIONS,
+                        },
+                      ]
                     : []),
                   ...(validRetailers.length > 0
-                    ? [{
-                        key: "group:retailers",
-                        section: "Retailers",
-                        title: `${validRetailers.length} retailer${validRetailers.length > 1 ? "s" : ""} to engage`,
-                        subtitle: validRetailers.map((c) => c.name).join(", "),
-                        enablers: RETAILER_ENABLERS,
-                        questions: RETAILER_QUESTIONS,
-                      }]
+                    ? [
+                        {
+                          key: "group:retailers",
+                          section: "Retailers",
+                          title: `${validRetailers.length} retailer${validRetailers.length > 1 ? "s" : ""} to engage`,
+                          subtitle: validRetailers.map((c) => c.name).join(", "),
+                          enablers: RETAILER_ENABLERS,
+                          questions: RETAILER_QUESTIONS,
+                        },
+                      ]
                     : []),
                   ...(validStakeholders.length > 0
-                    ? [{
-                        key: "group:stakeholders",
-                        section: "Stakeholders",
-                        title: `${validStakeholders.length} stakeholder${validStakeholders.length > 1 ? "s" : ""} to meet`,
-                        subtitle: validStakeholders.map((c) => c.name).join(", "),
-                        enablers: STAKEHOLDER_ENABLERS,
-                        questions: STAKEHOLDER_QUESTIONS,
-                      }]
+                    ? [
+                        {
+                          key: "group:stakeholders",
+                          section: "Stakeholders",
+                          title: `${validStakeholders.length} stakeholder${validStakeholders.length > 1 ? "s" : ""} to meet`,
+                          subtitle: validStakeholders.map((c) => c.name).join(", "),
+                          enablers: STAKEHOLDER_ENABLERS,
+                          questions: STAKEHOLDER_QUESTIONS,
+                        },
+                      ]
                     : []),
                 ]}
                 starredKeys={starred}
@@ -712,25 +727,6 @@ function GroupsPage({
                       {g.pct}%
                     </span>
                   </div>
-                  {isLoading && (
-                    <div className="mt-2 flex items-center gap-2">
-                      <div className="h-5 w-20 animate-pulse rounded-full bg-muted" />
-                      <div className="h-5 w-24 animate-pulse rounded-full bg-muted" />
-                    </div>
-                  )}
-                  {!isLoading && places.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {places.slice(0, 3).map((name) => (
-                        <span
-                          key={name}
-                          className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground"
-                        >
-                          <MapPin className="h-2.5 w-2.5 shrink-0" />
-                          {name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
               <div className="mt-2 flex justify-end">
@@ -887,12 +883,7 @@ function ActionToggleRow({
 }) {
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-3 py-3">
-      <input
-        type="checkbox"
-        checked={count > 0}
-        readOnly
-        className="h-4 w-4 shrink-0 accent-critical"
-      />
+      <input type="checkbox" checked={count > 0} readOnly className="h-4 w-4 shrink-0 accent-critical" />
       <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", iconBg)}>{icon}</div>
       <button type="button" onClick={onOpen} className="flex-1 text-left">
         <p className="text-[13px] font-medium text-foreground">{label}</p>
@@ -970,15 +961,11 @@ function ActionPlanReport({
                   className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-muted/40"
                   aria-label="Prioritize"
                 >
-                  <Star
-                    className={cn("h-4 w-4", isStar ? "fill-amber-400 text-amber-400" : "text-muted-foreground")}
-                  />
+                  <Star className={cn("h-4 w-4", isStar ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
                 </button>
                 <div className="min-w-0">
                   <p className="truncate text-[12.5px] font-medium text-foreground">{row.title}</p>
-                  {row.subtitle && (
-                    <p className="truncate text-[10.5px] text-muted-foreground">{row.subtitle}</p>
-                  )}
+                  {row.subtitle && <p className="truncate text-[10.5px] text-muted-foreground">{row.subtitle}</p>}
                 </div>
                 <button
                   type="button"
