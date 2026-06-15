@@ -20,21 +20,40 @@ import {
   BarChart2,
   Bolt,
   Building2,
-  ChevronDown,
   ChevronRight,
-  ChevronUp,
+  ClipboardCheck,
+  Download,
   FileDown,
+  FileText,
   HardHat,
+  Info,
+  Lightbulb,
   ListChecks,
   MapPin,
+  Pencil,
   Plus,
   Star,
   Trash2,
   UserCheck,
   Users,
+  X,
 } from "lucide-react";
 import { generateMonthlyEngagementPlanPdf } from "@/lib/monthlyPlanReport";
-import { getCustomerGroups, getValuePropsForGroup, getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
+import { getCustomerGroups, getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
+import {
+  getClusterValueProps,
+  getCustomerGroupDetails,
+  EVENT_ENABLERS,
+  CONTRACTOR_ENABLERS,
+  RETAILER_ENABLERS,
+  STAKEHOLDER_ENABLERS,
+  EVENT_QUESTIONS,
+  CONTRACTOR_QUESTIONS,
+  RETAILER_QUESTIONS,
+  STAKEHOLDER_QUESTIONS,
+  type Enabler,
+  type Question,
+} from "@/lib/engagementContent";
 
 export const Route = createFileRoute("/plan/$clusterId/")({
   component: PlanClusterScreen,
