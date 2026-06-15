@@ -6,7 +6,10 @@ import { BottomNav } from "@/components/app/BottomNav";
 import { getCluster } from "@/data/clusters";
 import { useAppStore, type ReviewEntry } from "@/store/appStore";
 import { getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
-import { Lightbulb, ChevronDown,ClipboardCheck, ArrowLeft, CalendarDays, HardHat, Building2, UserCheck, Star } from "lucide-react";
+import {
+  Lightbulb, ChevronDown, ClipboardCheck, ArrowLeft, CalendarDays,
+  HardHat, Building2, UserCheck, Star, FileText, X, Download,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/plan/$clusterId/review")({
@@ -22,52 +25,166 @@ const EMPTY_CONTACTS: ContactEntry[] = [];
 const EMPTY_REVIEWS: Record<string, ReviewEntry> = {};
 
 type Question = { id: string; label: string; placeholder?: string; type?: "number" | "text" | "textarea" };
+type EnablerFile = { name: string; size: string };
+type Enabler = { label: string; description: string; files: EnablerFile[] };
 
-const EVENT_ENABLERS = [
-  "Walk in with a clear value statement: how J K's product solves a real pain point for attendees.",
-  "Carry visual samples, demo kits and a short success story to anchor conversations.",
-  "Pre-identify 3-5 high-intent attendees you must speak to and capture their contact details.",
+const EVENT_ENABLERS: Enabler[] = [
+  {
+    label: "Event pamphlets",
+    description: "Printable handouts to distribute at the venue.",
+    files: [
+      { name: "JK_Event_Pamphlet_A5.pdf", size: "1.2 MB" },
+      { name: "Product_Range_Flyer.pdf", size: "820 KB" },
+    ],
+  },
+  {
+    label: "Pitch deck",
+    description: "Short deck to anchor the stage / booth conversation.",
+    files: [
+      { name: "JK_Cluster_Pitch_v3.pptx", size: "4.6 MB" },
+      { name: "Customer_Success_Stories.pdf", size: "2.1 MB" },
+    ],
+  },
+  {
+    label: "Workshop materials",
+    description: "Demo kit checklist and live-demo script.",
+    files: [
+      { name: "Demo_Kit_Checklist.pdf", size: "210 KB" },
+      { name: "Live_Demo_Script.docx", size: "180 KB" },
+    ],
+  },
+  {
+    label: "Lead capture form",
+    description: "Printable + digital form to capture attendee interest.",
+    files: [
+      { name: "Lead_Capture_Sheet.pdf", size: "140 KB" },
+      { name: "QR_Digital_Form.png", size: "90 KB" },
+    ],
+  },
 ];
+
 const EVENT_QUESTIONS: Question[] = [
   { id: "attended", label: "How many participants attended?", type: "number", placeholder: "e.g. 42" },
   { id: "leads", label: "How many qualified leads did you generate?", type: "number", placeholder: "e.g. 8" },
+  { id: "samples", label: "How many product samples / demos given?", type: "number", placeholder: "e.g. 15" },
   { id: "rating", label: "How well did the engagement land (1-10)?", type: "number", placeholder: "e.g. 7" },
   { id: "takeaways", label: "What worked, what didn't, and what's the next step?", type: "textarea", placeholder: "Key takeaways and follow-ups" },
 ];
 
-const CONTRACTOR_ENABLERS = [
-  "Lead with margin, on-site support and product reliability — what makes the contractor's job easier and more profitable.",
-  "Carry a comparison sheet against the brand they currently use, with concrete coverage / finish / TCO numbers.",
-  "Be ready with a starter scheme (sample / loyalty / fast credit) they can act on in this meeting.",
-];
-const CONTRACTOR_QUESTIONS: Question[] = [
-  { id: "outcome", label: "How did the meeting go?", type: "text", placeholder: "e.g. interested / needs follow-up / not a fit" },
-  { id: "trial", label: "Did they commit to a trial or first order?", type: "text", placeholder: "Yes / No / Quantity" },
-  { id: "blockers", label: "Objections or blockers raised", type: "textarea" },
-  { id: "nextStep", label: "Next step & owner", type: "textarea" },
+const CONTRACTOR_ENABLERS: Enabler[] = [
+  {
+    label: "Contractor pamphlet",
+    description: "Margin, scheme and on-site support — one page.",
+    files: [
+      { name: "Contractor_Benefits_Pamphlet.pdf", size: "950 KB" },
+      { name: "Loyalty_Scheme_Onepager.pdf", size: "420 KB" },
+    ],
+  },
+  {
+    label: "Competitor comparison deck",
+    description: "Side-by-side on coverage, finish and TCO vs key brands.",
+    files: [
+      { name: "JK_vs_Competitors.pptx", size: "3.1 MB" },
+      { name: "Coverage_TCO_Calculator.xlsx", size: "260 KB" },
+    ],
+  },
+  {
+    label: "Product technical sheets",
+    description: "TDS and application guides to share on WhatsApp.",
+    files: [
+      { name: "TDS_Bundle.pdf", size: "5.4 MB" },
+      { name: "Application_Guide.pdf", size: "1.8 MB" },
+    ],
+  },
+  {
+    label: "Trial order form",
+    description: "Ready-to-fill starter order with pricing.",
+    files: [{ name: "Trial_Order_Form.pdf", size: "180 KB" }],
+  },
 ];
 
-const RETAILER_ENABLERS = [
-  "Frame the visit around demand you can drive into their shop — not just shelf-space asks.",
-  "Bring data: which contractors / projects in their catchment are already asking for J K.",
-  "Offer a clear next step: intro to a specific contractor, a joint site visit, or a sampling activity.",
+const CONTRACTOR_QUESTIONS: Question[] = [
+  { id: "metVisited", label: "Contractors met / visited", type: "number", placeholder: "e.g. 12" },
+  { id: "interested", label: "Contractors who showed serious interest", type: "number", placeholder: "e.g. 5" },
+  { id: "trialOrders", label: "Trial orders booked", type: "number", placeholder: "e.g. 3" },
+  { id: "trialVolume", label: "Total trial order volume (bags / units)", type: "number", placeholder: "e.g. 80" },
+  { id: "samplesGiven", label: "Samples / demo kits distributed", type: "number", placeholder: "e.g. 15" },
+  { id: "blockers", label: "Top objections or blockers raised", type: "textarea" },
 ];
+
+const RETAILER_ENABLERS: Enabler[] = [
+  {
+    label: "Retailer scheme sheet",
+    description: "Slab-wise margin and rotation scheme for the quarter.",
+    files: [
+      { name: "Retailer_Scheme_Q.pdf", size: "640 KB" },
+      { name: "Display_Norms.pdf", size: "310 KB" },
+    ],
+  },
+  {
+    label: "Catchment demand sheet",
+    description: "Contractors / projects in their area asking for J K.",
+    files: [{ name: "Catchment_Demand_Snapshot.pdf", size: "720 KB" }],
+  },
+  {
+    label: "Branding & POSM kit",
+    description: "Shop branding, danglers and shelf-talkers.",
+    files: [
+      { name: "POSM_Kit_Preview.pdf", size: "2.4 MB" },
+      { name: "Shop_Branding_Mockup.png", size: "1.1 MB" },
+    ],
+  },
+  {
+    label: "Joint activity ideas",
+    description: "Sampling drive / contractor meet at the shop.",
+    files: [{ name: "Joint_Activity_Playbook.pdf", size: "880 KB" }],
+  },
+];
+
 const RETAILER_QUESTIONS: Question[] = [
-  { id: "outcome", label: "How did the meeting go?", type: "text" },
-  { id: "intros", label: "Introductions / referrals committed", type: "number" },
-  { id: "newLeads", label: "New contractor / project leads collected", type: "number" },
+  { id: "metVisited", label: "Retailers met / visited", type: "number", placeholder: "e.g. 8" },
+  { id: "newOnboard", label: "New retailers willing to stock J K", type: "number", placeholder: "e.g. 2" },
+  { id: "intros", label: "Contractor / project introductions committed", type: "number", placeholder: "e.g. 6" },
+  { id: "shelfShare", label: "Avg. shelf-share commitment (%)", type: "number", placeholder: "e.g. 25" },
+  { id: "orderValue", label: "Indicative order value committed (Rs.)", type: "number", placeholder: "e.g. 75000" },
   { id: "feedback", label: "Feedback on pricing, scheme and product fit", type: "textarea" },
 ];
 
-const STAKEHOLDER_ENABLERS = [
-  "Open with an insight specific to their site / institution — show you've done the homework.",
-  "Tie J K's offer to the outcome they care about (cost, durability, downtime, aesthetics).",
-  "Close with a concrete ask: site visit, spec inclusion, pilot, or a written next step.",
+const STAKEHOLDER_ENABLERS: Enabler[] = [
+  {
+    label: "Institutional deck",
+    description: "Credentials, marquee projects and case studies.",
+    files: [
+      { name: "JK_Institutional_Deck.pptx", size: "6.2 MB" },
+      { name: "Marquee_Projects_Booklet.pdf", size: "3.7 MB" },
+    ],
+  },
+  {
+    label: "Spec / approval kit",
+    description: "BOQ-ready specs, test certificates and approvals.",
+    files: [
+      { name: "BOQ_Spec_Sheet.pdf", size: "540 KB" },
+      { name: "Test_Certificates_Bundle.pdf", size: "2.9 MB" },
+    ],
+  },
+  {
+    label: "Cost / durability calculator",
+    description: "Share lifecycle cost vs incumbent brand.",
+    files: [{ name: "Lifecycle_Cost_Calculator.xlsx", size: "320 KB" }],
+  },
+  {
+    label: "Site-visit / pilot proposal",
+    description: "Ready proposal for a pilot application on site.",
+    files: [{ name: "Pilot_Proposal_Template.docx", size: "210 KB" }],
+  },
 ];
+
 const STAKEHOLDER_QUESTIONS: Question[] = [
-  { id: "outcome", label: "How did the meeting go?", type: "text" },
-  { id: "decision", label: "Decision / spec influenced", type: "textarea" },
-  { id: "nextSteps", label: "Next steps they committed to", type: "textarea" },
+  { id: "metVisited", label: "Stakeholders met", type: "number", placeholder: "e.g. 4" },
+  { id: "specsInfluenced", label: "Specs / BOQs influenced", type: "number", placeholder: "e.g. 2" },
+  { id: "pilotsAgreed", label: "Site visits / pilots agreed", type: "number", placeholder: "e.g. 1" },
+  { id: "pipelineValue", label: "Indicative pipeline value unlocked (Rs.)", type: "number", placeholder: "e.g. 500000" },
+  { id: "decision", label: "Key decision / outcome", type: "textarea" },
   { id: "risks", label: "Risks or competing brands in play", type: "textarea" },
 ];
 
@@ -100,8 +217,6 @@ function ReviewScreen() {
   const selectedCampObjs = camps.filter((c) => selectedCamps.includes(c.id));
 
   const isStarred = (key: string) => starred.includes(key);
-
-  // Prioritized (starred-first) ordering
   const prioritize = <T,>(items: T[], keyFn: (item: T) => string): T[] =>
     [...items].sort((a, b) => Number(isStarred(keyFn(b))) - Number(isStarred(keyFn(a))));
 
@@ -121,7 +236,8 @@ function ReviewScreen() {
     );
   }
 
-  const update = (key: string, fieldId: string, value: string) => setReview(clusterId, key, { [fieldId]: value });
+  const update = (key: string, fieldId: string, value: string) =>
+    setReview(clusterId, key, { [fieldId]: value });
 
   const nothingPlanned =
     orderedCamps.length === 0 &&
@@ -129,9 +245,9 @@ function ReviewScreen() {
     orderedRetailers.length === 0 &&
     orderedStakeholders.length === 0;
 
-  const contactSubtitle = (c: ContactEntry) => {
+  const contactLine = (c: ContactEntry) => {
     const bits = [c.role, c.area, c.phone, c.brandPreference ? `Currently: ${c.brandPreference}` : ""].filter(Boolean);
-    return bits.join(" · ") || undefined;
+    return bits.join(" · ");
   };
 
   return (
@@ -186,67 +302,58 @@ function ReviewScreen() {
 
         {orderedContractors.length > 0 && (
           <Section icon={<HardHat className="h-4 w-4 text-green-700" />} iconBg="bg-green-50" title="Contractors">
-            <div className="space-y-3">
-              {orderedContractors.map((c) => {
-                const key = `contractor:${c.id}`;
-                return (
-                  <ReviewCard
-                    key={key}
-                    title={c.name}
-                    subtitle={contactSubtitle(c)}
-                    starred={isStarred(key) || isStarred("group:contractors")}
-                    enablers={CONTRACTOR_ENABLERS}
-                    questions={CONTRACTOR_QUESTIONS}
-                    values={reviews[key] ?? {}}
-                    onChange={(fid, v) => update(key, fid, v)}
-                  />
-                );
-              })}
-            </div>
+            <ReviewCard
+              title={`${orderedContractors.length} contractor${orderedContractors.length > 1 ? "s" : ""} to engage`}
+              subtitle="Consolidated review for all contractors planned this cycle."
+              starred={isStarred("group:contractors")}
+              contacts={orderedContractors.map((c) => ({
+                name: c.name,
+                line: contactLine(c),
+                starred: isStarred(`contractor:${c.id}`),
+              }))}
+              enablers={CONTRACTOR_ENABLERS}
+              questions={CONTRACTOR_QUESTIONS}
+              values={reviews["group:contractors"] ?? {}}
+              onChange={(fid, v) => update("group:contractors", fid, v)}
+            />
           </Section>
         )}
 
         {orderedRetailers.length > 0 && (
           <Section icon={<Building2 className="h-4 w-4 text-amber-700" />} iconBg="bg-amber-50" title="Retailers">
-            <div className="space-y-3">
-              {orderedRetailers.map((c) => {
-                const key = `retailer:${c.id}`;
-                return (
-                  <ReviewCard
-                    key={key}
-                    title={c.name}
-                    subtitle={contactSubtitle(c)}
-                    starred={isStarred(key) || isStarred("group:retailers")}
-                    enablers={RETAILER_ENABLERS}
-                    questions={RETAILER_QUESTIONS}
-                    values={reviews[key] ?? {}}
-                    onChange={(fid, v) => update(key, fid, v)}
-                  />
-                );
-              })}
-            </div>
+            <ReviewCard
+              title={`${orderedRetailers.length} retailer${orderedRetailers.length > 1 ? "s" : ""} to engage`}
+              subtitle="Consolidated review for all retailers planned this cycle."
+              starred={isStarred("group:retailers")}
+              contacts={orderedRetailers.map((c) => ({
+                name: c.name,
+                line: contactLine(c),
+                starred: isStarred(`retailer:${c.id}`),
+              }))}
+              enablers={RETAILER_ENABLERS}
+              questions={RETAILER_QUESTIONS}
+              values={reviews["group:retailers"] ?? {}}
+              onChange={(fid, v) => update("group:retailers", fid, v)}
+            />
           </Section>
         )}
 
         {orderedStakeholders.length > 0 && (
           <Section icon={<UserCheck className="h-4 w-4 text-red-800" />} iconBg="bg-red-50" title="Stakeholders">
-            <div className="space-y-3">
-              {orderedStakeholders.map((c) => {
-                const key = `stakeholder:${c.id}`;
-                return (
-                  <ReviewCard
-                    key={key}
-                    title={c.name}
-                    subtitle={contactSubtitle(c)}
-                    starred={isStarred(key) || isStarred("group:stakeholders")}
-                    enablers={STAKEHOLDER_ENABLERS}
-                    questions={STAKEHOLDER_QUESTIONS}
-                    values={reviews[key] ?? {}}
-                    onChange={(fid, v) => update(key, fid, v)}
-                  />
-                );
-              })}
-            </div>
+            <ReviewCard
+              title={`${orderedStakeholders.length} stakeholder${orderedStakeholders.length > 1 ? "s" : ""} to engage`}
+              subtitle="Consolidated review for all stakeholders planned this cycle."
+              starred={isStarred("group:stakeholders")}
+              contacts={orderedStakeholders.map((c) => ({
+                name: c.name,
+                line: contactLine(c),
+                starred: isStarred(`stakeholder:${c.id}`),
+              }))}
+              enablers={STAKEHOLDER_ENABLERS}
+              questions={STAKEHOLDER_QUESTIONS}
+              values={reviews["group:stakeholders"] ?? {}}
+              onChange={(fid, v) => update("group:stakeholders", fid, v)}
+            />
           </Section>
         )}
       </div>
@@ -266,104 +373,174 @@ function Section({ icon, iconBg, title, children }: { icon: React.ReactNode; ico
   );
 }
 
-function ReviewCard(
-  
-{
-  title, subtitle, starred, enablers, questions, values, onChange,
+type ContactLine = { name: string; line: string; starred?: boolean };
+
+function ReviewCard({
+  title, subtitle, starred, enablers, questions, values, onChange, contacts,
 }: {
   title: string;
   subtitle?: string;
   starred?: boolean;
-  enablers: string[];
+  enablers: Enabler[];
   questions: Question[];
   values: ReviewEntry;
   onChange: (fieldId: string, value: string) => void;
-}
-) {const [open, setOpen] = useState(false);
+  contacts?: ContactLine[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [activeEnabler, setActiveEnabler] = useState<Enabler | null>(null);
+
   return (
     <div className={cn("overflow-hidden rounded-2xl border bg-card", starred ? "border-amber-400" : "border-border")}>
       <button
-  type="button"
-  onClick={() => setOpen(!open)}
-  className="flex w-full items-start justify-between gap-3 border-b border-border bg-muted/30 px-4 py-3 text-left"
->
-  <div className="min-w-0 flex-1">
-    <p className="font-serif text-sm text-foreground">{title}</p>
-
-    {subtitle && (
-      <p className="mt-0.5 text-[11px] text-muted-foreground">
-        {subtitle}
-      </p>
-    )}
-  </div>
-
-  <div className="flex items-center gap-2">
-    {starred && (
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
-        <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-        Priority
-      </span>
-    )}
-
-    <ChevronDown
-      className={cn(
-        "h-4 w-4 shrink-0 transition-transform",
-        open && "rotate-180"
-      )}
-    />
-  </div>
-</button>
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-start justify-between gap-3 border-b border-border bg-muted/30 px-4 py-3 text-left"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="font-serif text-sm text-foreground">{title}</p>
+          {subtitle && <p className="mt-0.5 text-[11px] text-muted-foreground">{subtitle}</p>}
+        </div>
+        <div className="flex items-center gap-2">
+          {starred && (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+              <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+              Priority
+            </span>
+          )}
+          <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")} />
+        </div>
+      </button>
 
       {open && (
-  <div className="space-y-4 px-4 py-3">
-        <div>
-          <div className="mb-1.5 flex items-center gap-1.5">
-            <Lightbulb className="h-3.5 w-3.5 text-amber-600" />
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-700">Enablers before meeting</p>
-          </div>
-          <ul className="space-y-1.5">
-            {enablers.map((e, i) => (
-              <li key={i} className="flex gap-2 text-[12px] leading-relaxed text-foreground/80">
-                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-amber-500" />
-                <span>{e}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <div className="space-y-4 px-4 py-3">
+          {contacts && contacts.length > 0 && (
+            <div>
+              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Planned ({contacts.length})
+              </p>
+              <ul className="divide-y divide-border rounded-xl border border-border bg-background">
+                {contacts.map((c, i) => (
+                  <li key={i} className="flex items-start justify-between gap-2 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-[12px] font-medium text-foreground">{c.name}</p>
+                      {c.line && <p className="truncate text-[10.5px] text-muted-foreground">{c.line}</p>}
+                    </div>
+                    {c.starred && <Star className="mt-0.5 h-3 w-3 shrink-0 fill-amber-500 text-amber-500" />}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-
-        <div className="border-t border-border pt-3">
-          <div className="mb-2 flex items-center gap-1.5">
-            <ClipboardCheck className="h-3.5 w-3.5 text-green-700" />
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-green-700">Review post meeting</p>
+          <div>
+            <div className="mb-1.5 flex items-center gap-1.5">
+              <Lightbulb className="h-3.5 w-3.5 text-amber-600" />
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-700">Enablers before meeting</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {enablers.map((e, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setActiveEnabler(e)}
+                  className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-2.5 py-2 text-left transition hover:bg-amber-50"
+                >
+                  <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" />
+                  <div className="min-w-0">
+                    <p className="text-[11.5px] font-medium leading-tight text-foreground">{e.label}</p>
+                    <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-muted-foreground">{e.description}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="space-y-2.5">
-            {questions.map((q) => (
-              <div key={q.id}>
-                <label className="mb-1 block text-[11px] font-medium text-foreground/80">{q.label}</label>
-                {q.type === "textarea" ? (
-                  <textarea
-                    value={values[q.id] ?? ""}
-                    onChange={(e) => onChange(q.id, e.target.value)}
-                    placeholder={q.placeholder}
-                    rows={2}
-                    className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
-                  />
-                ) : (
-                  <input
-                    type={q.type === "number" ? "number" : "text"}
-                    value={values[q.id] ?? ""}
-                    onChange={(e) => onChange(q.id, e.target.value)}
-                    placeholder={q.placeholder}
-                    className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
-                  />
-                )}
-              </div>
-            ))}
+
+          <div className="border-t border-border pt-3">
+            <div className="mb-2 flex items-center gap-1.5">
+              <ClipboardCheck className="h-3.5 w-3.5 text-green-700" />
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-green-700">Review post meeting</p>
+            </div>
+            <div className="space-y-2.5">
+              {questions.map((q) => (
+                <div key={q.id}>
+                  <label className="mb-1 block text-[11px] font-medium text-foreground/80">{q.label}</label>
+                  {q.type === "textarea" ? (
+                    <textarea
+                      value={values[q.id] ?? ""}
+                      onChange={(e) => onChange(q.id, e.target.value)}
+                      placeholder={q.placeholder}
+                      rows={2}
+                      className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
+                    />
+                  ) : (
+                    <input
+                      type={q.type === "number" ? "number" : "text"}
+                      value={values[q.id] ?? ""}
+                      onChange={(e) => onChange(q.id, e.target.value)}
+                      placeholder={q.placeholder}
+                      className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
       )}
+
+      {activeEnabler && (
+        <EnablerModal enabler={activeEnabler} onClose={() => setActiveEnabler(null)} />
+      )}
+    </div>
+  );
+}
+
+function EnablerModal({ enabler, onClose }: { enabler: Enabler; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 sm:items-center"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md overflow-hidden rounded-2xl bg-card shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+          <div className="min-w-0">
+            <p className="font-serif text-base text-foreground">{enabler.label}</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">{enabler.description}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <ul className="divide-y divide-border">
+          {enabler.files.map((f, i) => (
+            <li key={i} className="flex items-center justify-between gap-3 px-4 py-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <FileText className="h-4 w-4 shrink-0 text-amber-700" />
+                <div className="min-w-0">
+                  <p className="truncate text-[12px] font-medium text-foreground">{f.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{f.size}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); alert(`Demo file: ${f.name}\n(Dummy link — not connected to a real file.)`); }}
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] text-foreground hover:bg-muted"
+              >
+                <Download className="h-3 w-3" /> Open
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
