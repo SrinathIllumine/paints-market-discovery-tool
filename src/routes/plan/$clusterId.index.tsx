@@ -65,6 +65,7 @@ const STAKEHOLDER_BUCKET = "D2C" as const;
 
 const EMPTY_ARR: string[] = [];
 const EMPTY_REC: Record<string, string[]> = {};
+const EMPTY_REVIEWS: Record<string, Record<string, string>> = {};
 const EMPTY_CONTACTS: ContactEntry[] = [];
 const EMPTY_SC: Record<string, Partial<Record<string, ContactEntry[]>>> = {};
 
@@ -132,7 +133,7 @@ function PlanClusterScreen() {
   const starred = useAppStore((s) => s.plan.starredByCluster[clusterId] ?? EMPTY_ARR);
   const strategyContacts = useAppStore((s) => s.plan.strategyContactsByCluster ?? EMPTY_SC);
   const customValueProps = useAppStore((s) => s.plan.customValuePropsByCluster?.[clusterId]);
-  const reviews = useAppStore((s) => s.plan.reviewsByCluster[clusterId] ?? {});
+  const reviews = useAppStore((s) => s.plan.reviewsByCluster[clusterId] ?? EMPTY_REVIEWS);
 
   const toggleCustomerGroup = useAppStore((s) => s.toggleCustomerGroup);
   const toggleSelectedCamp = useAppStore((s) => s.toggleSelectedCamp);
