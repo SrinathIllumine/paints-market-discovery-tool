@@ -7,8 +7,18 @@ import { getCluster } from "@/data/clusters";
 import { useAppStore, type ReviewEntry } from "@/store/appStore";
 import { getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
 import {
-  Lightbulb, ChevronDown, ClipboardCheck, ArrowLeft, CalendarDays,
-  HardHat, Building2, UserCheck, Star, FileText, X, Download,
+  Lightbulb,
+  ChevronDown,
+  ClipboardCheck,
+  ArrowLeft,
+  CalendarDays,
+  HardHat,
+  Building2,
+  UserCheck,
+  Star,
+  FileText,
+  X,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -68,7 +78,12 @@ const EVENT_QUESTIONS: Question[] = [
   { id: "leads", label: "How many qualified leads did you generate?", type: "number", placeholder: "e.g. 8" },
   { id: "samples", label: "How many product samples / demos given?", type: "number", placeholder: "e.g. 15" },
   { id: "rating", label: "How well did the engagement land (1-10)?", type: "number", placeholder: "e.g. 7" },
-  { id: "takeaways", label: "What worked, what didn't, and what's the next step?", type: "textarea", placeholder: "Key takeaways and follow-ups" },
+  {
+    id: "takeaways",
+    label: "What worked, what didn't, and what's the next step?",
+    type: "textarea",
+    placeholder: "Key takeaways and follow-ups",
+  },
 ];
 
 const CONTRACTOR_ENABLERS: Enabler[] = [
@@ -123,7 +138,7 @@ const RETAILER_ENABLERS: Enabler[] = [
   },
   {
     label: "Catchment demand sheet",
-    description: "Contractors / projects in their area asking for J K.",
+    description: "Contractors / projects in their area asking for JK.",
     files: [{ name: "Catchment_Demand_Snapshot.pdf", size: "720 KB" }],
   },
   {
@@ -143,7 +158,7 @@ const RETAILER_ENABLERS: Enabler[] = [
 
 const RETAILER_QUESTIONS: Question[] = [
   { id: "metVisited", label: "Retailers met / visited", type: "number", placeholder: "e.g. 8" },
-  { id: "newOnboard", label: "New retailers willing to stock J K", type: "number", placeholder: "e.g. 2" },
+  { id: "newOnboard", label: "New retailers willing to stock JK", type: "number", placeholder: "e.g. 2" },
   { id: "intros", label: "Contractor / project introductions committed", type: "number", placeholder: "e.g. 6" },
   { id: "shelfShare", label: "Avg. shelf-share commitment (%)", type: "number", placeholder: "e.g. 25" },
   { id: "orderValue", label: "Indicative order value committed (Rs.)", type: "number", placeholder: "e.g. 75000" },
@@ -183,7 +198,12 @@ const STAKEHOLDER_QUESTIONS: Question[] = [
   { id: "metVisited", label: "Stakeholders met", type: "number", placeholder: "e.g. 4" },
   { id: "specsInfluenced", label: "Specs / BOQs influenced", type: "number", placeholder: "e.g. 2" },
   { id: "pilotsAgreed", label: "Site visits / pilots agreed", type: "number", placeholder: "e.g. 1" },
-  { id: "pipelineValue", label: "Indicative pipeline value unlocked (Rs.)", type: "number", placeholder: "e.g. 500000" },
+  {
+    id: "pipelineValue",
+    label: "Indicative pipeline value unlocked (Rs.)",
+    type: "number",
+    placeholder: "e.g. 500000",
+  },
   { id: "decision", label: "Key decision / outcome", type: "textarea" },
   { id: "risks", label: "Risks or competing brands in play", type: "textarea" },
 ];
@@ -193,7 +213,11 @@ function ReviewScreen() {
   const navigate = useNavigate();
 
   const cluster = useMemo(() => {
-    try { return getCluster(clusterId) ?? null; } catch { return null; }
+    try {
+      return getCluster(clusterId) ?? null;
+    } catch {
+      return null;
+    }
   }, [clusterId]);
 
   const selectedCamps = useAppStore((s) => s.plan.selectedCampsByCluster[clusterId] ?? EMPTY_ARR);
@@ -204,7 +228,11 @@ function ReviewScreen() {
 
   const camps = useMemo(() => {
     if (!cluster) return [];
-    try { return getCampIdeas(clusterId); } catch { return []; }
+    try {
+      return getCampIdeas(clusterId);
+    } catch {
+      return [];
+    }
   }, [clusterId, cluster]);
 
   const contractors = strategyContacts?.[CONTRACTOR_BUCKET] ?? EMPTY_CONTACTS;
@@ -230,14 +258,15 @@ function ReviewScreen() {
       <AppShell bottom={<BottomNav />}>
         <div className="p-6 text-center text-muted-foreground">
           Cluster not found.{" "}
-          <button className="text-navy underline" onClick={() => navigate({ to: "/plan" })}>Go back</button>
+          <button className="text-navy underline" onClick={() => navigate({ to: "/plan" })}>
+            Go back
+          </button>
         </div>
       </AppShell>
     );
   }
 
-  const update = (key: string, fieldId: string, value: string) =>
-    setReview(clusterId, key, { [fieldId]: value });
+  const update = (key: string, fieldId: string, value: string) => setReview(clusterId, key, { [fieldId]: value });
 
   const nothingPlanned =
     orderedCamps.length === 0 &&
@@ -245,10 +274,8 @@ function ReviewScreen() {
     orderedRetailers.length === 0 &&
     orderedStakeholders.length === 0;
 
-  const contactLine = (c: ContactEntry) => {
-    const bits = [c.role, c.area, c.phone, c.brandPreference ? `Currently: ${c.brandPreference}` : ""].filter(Boolean);
-    return bits.join(" · ");
-  };
+  const contactLine = (c: ContactEntry) =>
+    [c.role, c.area, c.phone, c.brandPreference ? `Currently: ${c.brandPreference}` : ""].filter(Boolean).join(" · ");
 
   return (
     <AppShell
@@ -361,7 +388,18 @@ function ReviewScreen() {
   );
 }
 
-function Section({ icon, iconBg, title, children }: { icon: React.ReactNode; iconBg: string; title: string; children: React.ReactNode }) {
+/* ── Section ── */
+function Section({
+  icon,
+  iconBg,
+  title,
+  children,
+}: {
+  icon: React.ReactNode;
+  iconBg: string;
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="space-y-2.5">
       <div className="flex items-center gap-2">
@@ -375,8 +413,16 @@ function Section({ icon, iconBg, title, children }: { icon: React.ReactNode; ico
 
 type ContactLine = { name: string; line: string; starred?: boolean };
 
+/* ── ReviewCard ── */
 function ReviewCard({
-  title, subtitle, starred, enablers, questions, values, onChange, contacts,
+  title,
+  subtitle,
+  starred,
+  enablers,
+  questions,
+  values,
+  onChange,
+  contacts,
 }: {
   title: string;
   subtitle?: string;
@@ -388,10 +434,13 @@ function ReviewCard({
   contacts?: ContactLine[];
 }) {
   const [open, setOpen] = useState(false);
+  const [enablersOpen, setEnablersOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [activeEnabler, setActiveEnabler] = useState<Enabler | null>(null);
 
   return (
     <div className={cn("overflow-hidden rounded-2xl border bg-card", starred ? "border-amber-400" : "border-border")}>
+      {/* Card header — tap to expand/collapse */}
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -404,18 +453,20 @@ function ReviewCard({
         <div className="flex items-center gap-2">
           {starred && (
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
-              <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-              Priority
+              <Star className="h-3 w-3 fill-amber-500 text-amber-500" /> Priority
             </span>
           )}
-          <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")} />
+          <ChevronDown
+            className={cn("h-4 w-4 shrink-0 transition-transform text-muted-foreground", open && "rotate-180")}
+          />
         </div>
       </button>
 
       {open && (
-        <div className="space-y-4 px-4 py-3">
+        <div className="space-y-0 divide-y divide-border px-4 py-3">
+          {/* Contacts list */}
           {contacts && contacts.length > 0 && (
-            <div>
+            <div className="pb-3">
               <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                 Planned ({contacts.length})
               </p>
@@ -433,75 +484,101 @@ function ReviewCard({
             </div>
           )}
 
-          <div>
-            <div className="mb-1.5 flex items-center gap-1.5">
-              <Lightbulb className="h-3.5 w-3.5 text-amber-600" />
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-700">Enablers before meeting</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {enablers.map((e, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setActiveEnabler(e)}
-                  className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-2.5 py-2 text-left transition hover:bg-amber-50"
-                >
-                  <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" />
-                  <div className="min-w-0">
-                    <p className="text-[11.5px] font-medium leading-tight text-foreground">{e.label}</p>
-                    <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-muted-foreground">{e.description}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
+          {/* Enablers — collapsible */}
+          <div className="py-3">
+            <button
+              type="button"
+              onClick={() => setEnablersOpen((o) => !o)}
+              className="flex w-full items-center justify-between gap-2"
+            >
+              <div className="flex items-center gap-1.5">
+                <Lightbulb className="h-3.5 w-3.5 text-amber-600" />
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-700">
+                  Enablers before meeting
+                </p>
+              </div>
+              <ChevronDown
+                className={cn("h-4 w-4 text-muted-foreground transition-transform", enablersOpen && "rotate-180")}
+              />
+            </button>
+            {enablersOpen && (
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {enablers.map((e, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setActiveEnabler(e)}
+                    className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-2.5 py-2 text-left transition hover:bg-amber-50"
+                  >
+                    <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" />
+                    <div className="min-w-0">
+                      <p className="text-[11.5px] font-medium leading-tight text-foreground">{e.label}</p>
+                      <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-muted-foreground">
+                        {e.description}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="border-t border-border pt-3">
-            <div className="mb-2 flex items-center gap-1.5">
-              <ClipboardCheck className="h-3.5 w-3.5 text-green-700" />
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-green-700">Review post meeting</p>
-            </div>
-            <div className="space-y-2.5">
-              {questions.map((q) => (
-                <div key={q.id}>
-                  <label className="mb-1 block text-[11px] font-medium text-foreground/80">{q.label}</label>
-                  {q.type === "textarea" ? (
-                    <textarea
-                      value={values[q.id] ?? ""}
-                      onChange={(e) => onChange(q.id, e.target.value)}
-                      placeholder={q.placeholder}
-                      rows={2}
-                      className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
-                    />
-                  ) : (
-                    <input
-                      type={q.type === "number" ? "number" : "text"}
-                      value={values[q.id] ?? ""}
-                      onChange={(e) => onChange(q.id, e.target.value)}
-                      placeholder={q.placeholder}
-                      className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
+          {/* Review post meeting — collapsible */}
+          <div className="pt-3">
+            <button
+              type="button"
+              onClick={() => setReviewOpen((o) => !o)}
+              className="flex w-full items-center justify-between gap-2"
+            >
+              <div className="flex items-center gap-1.5">
+                <ClipboardCheck className="h-3.5 w-3.5 text-green-700" />
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-green-700">
+                  Review post meeting
+                </p>
+              </div>
+              <ChevronDown
+                className={cn("h-4 w-4 text-muted-foreground transition-transform", reviewOpen && "rotate-180")}
+              />
+            </button>
+            {reviewOpen && (
+              <div className="mt-2 space-y-2.5">
+                {questions.map((q) => (
+                  <div key={q.id}>
+                    <label className="mb-1 block text-[11px] font-medium text-foreground/80">{q.label}</label>
+                    {q.type === "textarea" ? (
+                      <textarea
+                        value={values[q.id] ?? ""}
+                        onChange={(e) => onChange(q.id, e.target.value)}
+                        placeholder={q.placeholder}
+                        rows={2}
+                        className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
+                      />
+                    ) : (
+                      <input
+                        type={q.type === "number" ? "number" : "text"}
+                        value={values[q.id] ?? ""}
+                        onChange={(e) => onChange(q.id, e.target.value)}
+                        placeholder={q.placeholder}
+                        className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {activeEnabler && (
-        <EnablerModal enabler={activeEnabler} onClose={() => setActiveEnabler(null)} />
-      )}
+      {activeEnabler && <EnablerModal enabler={activeEnabler} onClose={() => setActiveEnabler(null)} />}
     </div>
   );
 }
 
+/* ── EnablerModal ── */
 function EnablerModal({ enabler, onClose }: { enabler: Enabler; onClose: () => void }) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 sm:items-center"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 sm:items-center" onClick={onClose}>
       <div
         className="w-full max-w-md overflow-hidden rounded-2xl bg-card shadow-xl"
         onClick={(e) => e.stopPropagation()}
@@ -532,7 +609,7 @@ function EnablerModal({ enabler, onClose }: { enabler: Enabler; onClose: () => v
               </div>
               <button
                 type="button"
-                onClick={(e) => { e.preventDefault(); alert(`Demo file: ${f.name}\n(Dummy link — not connected to a real file.)`); }}
+                onClick={() => alert(`Demo file: ${f.name}\n(Dummy link — not connected to a real file.)`)}
                 className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] text-foreground hover:bg-muted"
               >
                 <Download className="h-3 w-3" /> Open
