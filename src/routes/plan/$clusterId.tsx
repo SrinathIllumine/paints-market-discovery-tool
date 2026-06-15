@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronUp, FileDown, Info, Plus, Star, Trash2 } from "lucide-react";
+import { BarChart2, ChevronDown, ChevronUp, FileDown, Plus, Star, Trash2, X } from "lucide-react";
 import { generateMonthlyEngagementPlanPdf } from "@/lib/monthlyPlanReport";
 import { getCustomerGroups, getValuePropsForGroup, getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
 
@@ -26,18 +26,22 @@ export const Route = createFileRoute("/plan/$clusterId")({
 const CONTRACTOR_BUCKET = "CONTRACTOR" as const;
 const RETAILER_BUCKET = "RETAILER" as const;
 const STAKEHOLDER_BUCKET = "D2C" as const;
-const EMPTY_ARR: never[] = [];
-const EMPTY_OBJ: Record<string, never> = {};
+
+// Stable empty references — prevents Zustand infinite re-render (React error #185)
+const EMPTY_ARR: string[] = [];
+const EMPTY_REC: Record<string, string[]> = {};
+const EMPTY_CONTACTS: ContactEntry[] = [];
+const EMPTY_SC: Record<string, Partial<Record<string, ContactEntry[]>>> = {};
 
 function PlanClusterScreen() {
   const { clusterId } = Route.useParams();
   const navigate = useNavigate();
 
-  const customerGroups = useAppStore((s) => s.plan.customerGroupsByCluster[clusterId]) ?? EMPTY_ARR;
-  const groupValueProps = useAppStore((s) => s.plan.groupValuePropsByCluster[clusterId]) ?? EMPTY_OBJ;
-  const selectedCamps = useAppStore((s) => s.plan.selectedCampsByCluster[clusterId]) ?? EMPTY_ARR;
-  const starred = useAppStore((s) => s.plan.starredByCluster[clusterId]) ?? EMPTY_ARR;
-  const strategyContacts = useAppStore((s) => s.plan.strategyContactsByCluster) ?? EMPTY_OBJ;
+  const customerGroups = useAppStore((s) => s.plan.customerGroupsByCluster[clusterId] ?? EMPTY_ARR);
+  const groupValueProps = useAppStore((s) => s.plan.groupValuePropsByCluster[clusterId] ?? EMPTY_REC);
+  const selectedCamps = useAppStore((s) => s.plan.selectedCampsByCluster[clusterId] ?? EMPTY_ARR);
+  const starred = useAppStore((s) => s.plan.starredByCluster[clusterId] ?? EMPTY_ARR);
+  const strategyContacts = useAppStore((s) => s.plan.strategyContactsByCluster ?? EMPTY_SC);
 
   const toggleCustomerGroup = useAppStore((s) => s.toggleCustomerGroup);
   const toggleGroupValueProp = useAppStore((s) => s.toggleGroupValueProp);
@@ -48,6 +52,14 @@ function PlanClusterScreen() {
   const setMonthlyFocus = useAppStore((s) => s.setMonthlyFocus);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [chartOpen, setChartOpen] = useState(false);
+  const [q1Open, setQ1Open] = useState(false);
+  const [q2Open, setQ2Open] = useState(false);
+  const [q3Open, setQ3Open] = useState(false);
+  const [campsOpen, setCampsOpen] = useState(false);
+  const [contractOpen, setContractOpen] = useState(false);
+  const [retailOpen, setRetailOpen] = useState(false);
+  const [stakeOpen, setStakeOpen] = useState(false);
 
   const cluster = useMemo(() => {
     try {
@@ -75,9 +87,9 @@ function PlanClusterScreen() {
     }
   }, [clusterId, cluster]);
 
-  const contractors = strategyContacts[clusterId]?.[CONTRACTOR_BUCKET] ?? [];
-  const retailers = strategyContacts[clusterId]?.[RETAILER_BUCKET] ?? [];
-  const stakeholders = strategyContacts[clusterId]?.[STAKEHOLDER_BUCKET] ?? [];
+  const contractors = strategyContacts[clusterId]?.[CONTRACTOR_BUCKET] ?? EMPTY_CONTACTS;
+  const retailers = strategyContacts[clusterId]?.[RETAILER_BUCKET] ?? EMPTY_CONTACTS;
+  const stakeholders = strategyContacts[clusterId]?.[STAKEHOLDER_BUCKET] ?? EMPTY_CONTACTS;
 
   const isStarred = (key: string) => starred.includes(key);
 
@@ -99,7 +111,12 @@ function PlanClusterScreen() {
       focusClusterId: clusterId,
       customerGroups: groups
         .filter((g) => customerGroups.includes(g.id))
-        .map((g) => ({ id: g.id, label: g.label, pct: g.pct, valueProps: groupValueProps[g.id] ?? [] })),
+        .map((g) => ({
+          id: g.id,
+          label: g.label,
+          pct: g.pct,
+          valueProps: groupValueProps[g.id] ?? [],
+        })),
       camps: camps
         .filter((c) => selectedCamps.includes(c.id))
         .map((c) => ({ id: c.id, label: c.label, starred: isStarred(`camp:${c.id}`) })),
@@ -112,189 +129,301 @@ function PlanClusterScreen() {
     setMonthlyFocus(clusterId);
   };
 
+  const selectedCampObjs = camps.filter((c) => selectedCamps.includes(c.id));
+  const selectedGroupObjs = groups.filter((g) => customerGroups.includes(g.id));
+  const validContractors = contractors.filter((c) => (c.name ?? "").trim());
+  const validRetailers = retailers.filter((c) => (c.name ?? "").trim());
+  const validStakeholders = stakeholders.filter((c) => (c.name ?? "").trim());
+
   return (
     <AppShell
       bottom={<BottomNav />}
       header={<StageHeader eyebrow="CLUSTER ENGAGEMENT PLAN" title="Cluster Engagement Plan" backTo="/plan" />}
     >
-      <div className="space-y-5 px-5 py-5 pb-24">
-        <div className="space-y-0.5">
-          <h2 className="font-display text-xl leading-tight">
-            Selected Cluster: <span className="text-critical">{cluster.name}</span>
+      <div className="space-y-4 px-4 py-5 pb-24">
+        {/* Title */}
+        <div>
+          <h2 className="font-serif text-xl leading-tight text-foreground">
+            Cluster: <span className="text-critical">{cluster.name}</span>
           </h2>
-          <p className="text-sm text-muted-foreground">Design your quarterly engagement plan on one page</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Design your quarterly engagement plan on one page</p>
         </div>
 
-        <Section
-          number="1"
+        {/* Question 1 */}
+        <Accordion
+          open={q1Open}
+          onToggle={() => setQ1Open((o) => !o)}
           title={`What is your value proposition for ${cluster.name.toLowerCase()}?`}
-          subtitle="Pick the customer groups you want to target, then select the value propositions for each."
         >
-          <InsightsCard cluster={cluster.name}>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              % distribution of customer groups
-            </p>
-            <div className="space-y-1.5">
-              {groups.map((g) => (
-                <div key={g.id} className="flex items-center gap-2 text-xs">
-                  <div className="w-28 shrink-0 text-foreground">{g.label}</div>
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full bg-navy" style={{ width: `${g.pct}%` }} />
-                  </div>
-                  <div className="w-8 shrink-0 text-right font-semibold text-foreground">{g.pct}%</div>
-                </div>
-              ))}
+          {/* Insights */}
+          <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-blue-700">Insights</p>
+                <ul className="space-y-1 text-[11px] leading-relaxed text-blue-900">
+                  <li>• Vacation windows (Apr–Jun, Oct) drive 70%+ of repaint decisions</li>
+                  <li>• Small private schools are the highest-volume segment (35%)</li>
+                  <li>• Committee approval needed — contractor + trustee connect works best</li>
+                </ul>
+              </div>
+              <button
+                type="button"
+                onClick={() => setChartOpen(true)}
+                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-blue-300 bg-white px-2.5 py-1.5 text-[10px] font-medium text-blue-700"
+              >
+                <BarChart2 className="h-3 w-3" />
+                Chart
+              </button>
             </div>
-          </InsightsCard>
+          </div>
 
-          <div className="space-y-2">
+          {/* Customer group cards */}
+          <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Select customer groups — tap a card to choose
+          </p>
+          <div className="space-y-2.5">
             {groups.map((g) => {
-              const selectedGroup = customerGroups.includes(g.id);
+              const selected = customerGroups.includes(g.id);
               const props = getValuePropsForGroup(clusterId, g.id);
-              const chosenProps = groupValueProps[g.id] ?? [];
+              const valueProp = props[0] ?? "";
               return (
-                <div
+                <button
                   key={g.id}
+                  type="button"
+                  onClick={() => {
+                    toggleCustomerGroup(clusterId, g.id);
+                    if (props[0]) toggleGroupValueProp(clusterId, g.id, props[0]);
+                  }}
                   className={cn(
-                    "rounded-lg border",
-                    selectedGroup ? "border-critical bg-critical/5" : "border-border bg-card",
+                    "w-full rounded-xl border px-3 py-2.5 text-left transition-colors",
+                    selected ? "border-critical bg-critical/5" : "border-border bg-card",
                   )}
                 >
-                  <label className="flex cursor-pointer items-center gap-2 px-3 py-2.5 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={selectedGroup}
-                      onChange={() => toggleCustomerGroup(clusterId, g.id)}
-                      className="h-4 w-4 accent-critical"
-                    />
-                    <span className="flex-1 font-semibold text-foreground">{g.label}</span>
-                    <span className="text-xs text-muted-foreground">{g.pct}%</span>
-                  </label>
-                  {selectedGroup && (
-                    <div className="space-y-1.5 border-t border-border px-3 py-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Value propositions for this group
-                      </p>
-                      {props.map((p) => {
-                        const on = chosenProps.includes(p);
-                        return (
-                          <label
-                            key={p}
-                            className={cn(
-                              "flex cursor-pointer items-start gap-2 rounded-md border px-2.5 py-2 text-sm",
-                              on ? "border-critical bg-critical/10" : "border-border bg-background",
-                            )}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={on}
-                              onChange={() => toggleGroupValueProp(clusterId, g.id, p)}
-                              className="mt-0.5 h-4 w-4 shrink-0 accent-critical"
-                            />
-                            <span className="leading-snug">{p}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="font-serif text-sm text-foreground">{g.label}</span>
+                    <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground">
+                      {g.pct}%
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">{valueProp}</p>
+                </button>
               );
             })}
           </div>
-        </Section>
+        </Accordion>
 
-        <Section
-          number="2"
+        {/* Question 2 */}
+        <Accordion
+          open={q2Open}
+          onToggle={() => setQ2Open((o) => !o)}
           title="What actions are you doing to engage with this community?"
-          subtitle="Plan camps / events and capture the key people you intend to reach out to."
         >
-          <SubSection number="2.1" title="Are you planning to conduct any camps / events with the community?">
-            <div className="space-y-2">
-              {camps.map((c) => {
-                const on = selectedCamps.includes(c.id);
-                return (
-                  <label
-                    key={c.id}
-                    className={cn(
-                      "flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2.5 text-sm",
-                      on ? "border-critical bg-critical/5" : "border-border bg-card",
-                    )}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={on}
-                      onChange={() => toggleSelectedCamp(clusterId, c.id)}
-                      className="mt-0.5 h-4 w-4 shrink-0 accent-critical"
+          <div className="space-y-2.5">
+            {/* Camps */}
+            <SubAccordion
+              open={campsOpen}
+              onToggle={() => setCampsOpen((o) => !o)}
+              title="Camps & events with the community"
+            >
+              <div className="space-y-2">
+                {camps.map((c) => {
+                  const on = selectedCamps.includes(c.id);
+                  return (
+                    <label
+                      key={c.id}
+                      className={cn(
+                        "flex cursor-pointer items-start gap-2.5 rounded-xl border px-3 py-2.5",
+                        on ? "border-critical bg-critical/5" : "border-border bg-card",
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        onChange={() => toggleSelectedCamp(clusterId, c.id)}
+                        className="mt-0.5 h-4 w-4 shrink-0 accent-critical"
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-foreground">{c.label}</span>
+                        <span className="mt-0.5 block text-[11px] text-muted-foreground">{c.description}</span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </SubAccordion>
+
+            {/* Contractors */}
+            <SubAccordion
+              open={contractOpen}
+              onToggle={() => setContractOpen((o) => !o)}
+              title="Contractors to reach out"
+            >
+              <ContactTable
+                emptyHint="Add contractors you plan to engage."
+                contacts={contractors}
+                onChange={(list) => setStrategyContacts(clusterId, CONTRACTOR_BUCKET, list)}
+              />
+            </SubAccordion>
+
+            {/* Retailers */}
+            <SubAccordion
+              open={retailOpen}
+              onToggle={() => setRetailOpen((o) => !o)}
+              title="Retailers who can connect to cluster"
+            >
+              <ContactTable
+                emptyHint="Add retailers who can introduce you to the cluster."
+                contacts={retailers}
+                onChange={(list) => setStrategyContacts(clusterId, RETAILER_BUCKET, list)}
+              />
+            </SubAccordion>
+
+            {/* Stakeholders */}
+            <SubAccordion open={stakeOpen} onToggle={() => setStakeOpen((o) => !o)} title="Direct stakeholder outreach">
+              <ContactTable
+                emptyHint="Add stakeholders / decision-makers you plan to meet directly."
+                contacts={stakeholders}
+                onChange={(list) => setStrategyContacts(clusterId, STAKEHOLDER_BUCKET, list)}
+              />
+            </SubAccordion>
+          </div>
+        </Accordion>
+
+        {/* Action plan */}
+        <Accordion open={q3Open} onToggle={() => setQ3Open((o) => !o)} title="Your action plan">
+          {selectedGroupObjs.length === 0 &&
+          selectedCampObjs.length === 0 &&
+          validContractors.length === 0 &&
+          validRetailers.length === 0 &&
+          validStakeholders.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Make selections above to see your action plan here.</p>
+          ) : (
+            <div className="space-y-5">
+              {/* Customer groups — read only */}
+              {selectedGroupObjs.length > 0 && (
+                <div>
+                  <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    Customer groups selected
+                  </p>
+                  <div className="space-y-1.5">
+                    {selectedGroupObjs.map((g) => (
+                      <div key={g.id} className="rounded-xl border border-border bg-card px-3 py-2">
+                        <p className="font-serif text-sm text-foreground">{g.label}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {(groupValueProps[g.id] ?? [])[0] ?? "No value proposition selected"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Camps — starrable */}
+              {selectedCampObjs.length > 0 && (
+                <StarSection heading="Camps / events — star to prioritize">
+                  {selectedCampObjs.map((c) => (
+                    <StarRow
+                      key={c.id}
+                      title={c.label}
+                      subtitle={c.description}
+                      starred={isStarred(`camp:${c.id}`)}
+                      onToggle={() => toggleStarred(clusterId, `camp:${c.id}`)}
                     />
-                    <span className="leading-snug">
-                      <span className="block font-semibold">{c.label}</span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">{c.description}</span>
-                    </span>
-                  </label>
-                );
-              })}
+                  ))}
+                </StarSection>
+              )}
+
+              {/* Contractors — starrable */}
+              <StarSection heading="Contractors — star to prioritize">
+                {validContractors.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground">No contractors added yet.</p>
+                ) : (
+                  validContractors.map((c) => (
+                    <StarRow
+                      key={c.id}
+                      title={c.name}
+                      subtitle={[c.phone, c.area, c.brandPreference].filter(Boolean).join(" · ")}
+                      starred={isStarred(`contractor:${c.id}`)}
+                      onToggle={() => toggleStarred(clusterId, `contractor:${c.id}`)}
+                    />
+                  ))
+                )}
+              </StarSection>
+
+              {/* Retailers — starrable */}
+              <StarSection heading="Retailers — star to prioritize">
+                {validRetailers.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground">No retailers added yet.</p>
+                ) : (
+                  validRetailers.map((c) => (
+                    <StarRow
+                      key={c.id}
+                      title={c.name}
+                      subtitle={[c.phone, c.area, c.brandPreference].filter(Boolean).join(" · ")}
+                      starred={isStarred(`retailer:${c.id}`)}
+                      onToggle={() => toggleStarred(clusterId, `retailer:${c.id}`)}
+                    />
+                  ))
+                )}
+              </StarSection>
+
+              {/* Stakeholders — starrable */}
+              <StarSection heading="Stakeholders — star to prioritize">
+                {validStakeholders.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground">No stakeholders added yet.</p>
+                ) : (
+                  validStakeholders.map((c) => (
+                    <StarRow
+                      key={c.id}
+                      title={c.name}
+                      subtitle={[c.phone, c.area, c.brandPreference].filter(Boolean).join(" · ")}
+                      starred={isStarred(`stakeholder:${c.id}`)}
+                      onToggle={() => toggleStarred(clusterId, `stakeholder:${c.id}`)}
+                    />
+                  ))
+                )}
+              </StarSection>
             </div>
-          </SubSection>
-
-          <SubSection number="2.2" title="Are you planning to reach out to any contractors?">
-            <ContactTable
-              emptyHint="Add contractors you plan to engage."
-              contacts={contractors}
-              onChange={(list) => setStrategyContacts(clusterId, CONTRACTOR_BUCKET, list)}
-            />
-          </SubSection>
-
-          <SubSection
-            number="2.3"
-            title="Are you planning to reach out to any retailers who can connect you to the cluster?"
-          >
-            <ContactTable
-              emptyHint="Add retailers who can introduce you to the cluster."
-              contacts={retailers}
-              onChange={(list) => setStrategyContacts(clusterId, RETAILER_BUCKET, list)}
-            />
-          </SubSection>
-
-          <SubSection
-            number="2.4"
-            title={`Are you planning to reach out directly to ${cluster.name.toLowerCase()} stakeholders?`}
-          >
-            <ContactTable
-              emptyHint="Add stakeholders / decision-makers you plan to meet directly."
-              contacts={stakeholders}
-              onChange={(list) => setStrategyContacts(clusterId, STAKEHOLDER_BUCKET, list)}
-            />
-          </SubSection>
-        </Section>
-
-        <Section
-          number="3"
-          title="Create your action plan"
-          subtitle="Review what you've selected and star the items to prioritize for this quarter."
-        >
-          <ActionPlanReview
-            clusterId={clusterId}
-            groups={groups}
-            customerGroups={customerGroups}
-            groupValueProps={groupValueProps}
-            camps={camps}
-            selectedCamps={selectedCamps}
-            contractors={contractors}
-            retailers={retailers}
-            stakeholders={stakeholders}
-            starred={starred}
-            onToggleStar={(k) => toggleStarred(clusterId, k)}
-          />
-        </Section>
+          )}
+        </Accordion>
 
         <Button
           onClick={() => setConfirmOpen(true)}
-          className="h-12 w-full gap-2 bg-navy text-base font-semibold text-navy-foreground hover:bg-navy/90"
+          className="h-12 w-full gap-2 bg-navy font-serif text-base text-navy-foreground hover:bg-navy/90"
         >
-          <FileDown className="h-4 w-4" /> Generate Quarterly Cluster Engagement Plan
+          <FileDown className="h-4 w-4" /> Generate quarterly cluster engagement plan
         </Button>
       </div>
 
+      {/* Chart popup */}
+      {chartOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
+          onClick={() => setChartOpen(false)}
+        >
+          <div className="w-full max-w-sm rounded-2xl bg-background p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <p className="font-serif text-base text-foreground">Customer group distribution</p>
+              <button type="button" onClick={() => setChartOpen(false)} className="text-muted-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-2.5">
+              {groups.map((g) => (
+                <div key={g.id} className="flex items-center gap-3 text-xs">
+                  <span className="w-32 shrink-0 text-foreground">{g.label}</span>
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-navy" style={{ width: `${g.pct}%` }} />
+                  </div>
+                  <span className="w-8 shrink-0 text-right font-semibold text-foreground">{g.pct}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Generate confirm dialog */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -318,46 +447,61 @@ function PlanClusterScreen() {
   );
 }
 
-/* ── Layout primitives ── */
-function Section({
-  number,
+/* ── Accordion ── */
+function Accordion({
+  open,
+  onToggle,
   title,
-  subtitle,
   children,
 }: {
-  number: string;
+  open: boolean;
+  onToggle: () => void;
   title: string;
-  subtitle?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-3">
-      <div className="space-y-0.5">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-critical">Q{number}</p>
-        <h3 className="text-base font-semibold leading-tight text-foreground">{title}</h3>
-        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-      </div>
-      <div className="space-y-3">{children}</div>
-    </section>
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-start justify-between gap-3 px-4 py-3.5 text-left"
+      >
+        <span className="font-serif text-sm leading-snug text-foreground">{title}</span>
+        {open ? (
+          <ChevronUp className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        ) : (
+          <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        )}
+      </button>
+      {open && <div className="border-t border-border px-4 py-4">{children}</div>}
+    </div>
   );
 }
 
-function SubSection({ number, title, children }: { number: string; title: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(true);
+/* ── SubAccordion ── */
+function SubAccordion({
+  open,
+  onToggle,
+  title,
+  children,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <div className="overflow-hidden rounded-xl border border-border bg-background">
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={onToggle}
         className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
       >
-        <span className="flex-1 text-sm font-semibold text-foreground">
-          <span className="mr-1 text-critical">{number}.</span> {title}
-        </span>
+        <span className="text-sm font-medium text-foreground">{title}</span>
         {open ? (
-          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+          <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
         ) : (
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
         )}
       </button>
       {open && <div className="border-t border-border px-3 py-3">{children}</div>}
@@ -365,195 +509,46 @@ function SubSection({ number, title, children }: { number: string; title: string
   );
 }
 
-function InsightsCard({ cluster, children }: { cluster: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
-      <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-blue-800">
-        <Info className="h-3.5 w-3.5" /> Insights · {cluster}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-/* ── Action plan review ── */
-function ActionPlanReview({
-  clusterId,
-  groups,
-  customerGroups,
-  groupValueProps,
-  camps,
-  selectedCamps,
-  contractors,
-  retailers,
-  stakeholders,
-  starred,
-  onToggleStar,
-}: {
-  clusterId: string;
-  groups: { id: string; label: string }[];
-  customerGroups: string[];
-  groupValueProps: Record<string, string[]>;
-  camps: { id: string; label: string }[];
-  selectedCamps: string[];
-  contractors: ContactEntry[];
-  retailers: ContactEntry[];
-  stakeholders: ContactEntry[];
-  starred: string[];
-  onToggleStar: (key: string) => void;
-}) {
-  const isStarred = (key: string) => starred.includes(key);
-  const selectedGroups = groups.filter((g) => customerGroups.includes(g.id));
-  const selectedCampObjs = camps.filter((c) => selectedCamps.includes(c.id));
-
-  const nothingSelected =
-    selectedGroups.length === 0 &&
-    selectedCampObjs.length === 0 &&
-    contractors.length === 0 &&
-    retailers.length === 0 &&
-    stakeholders.length === 0;
-
-  if (nothingSelected) {
-    return (
-      <p className="text-xs text-muted-foreground">
-        Make selections in Q1 and Q2 to see your action plan summary here.
-      </p>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      {selectedGroups.length > 0 && (
-        <ReviewBlock title="Value propositions selected">
-          <div className="space-y-2.5">
-            {selectedGroups.map((g) => {
-              const props = groupValueProps[g.id] ?? [];
-              return (
-                <div key={g.id} className="rounded-md border border-border bg-background p-2.5">
-                  <p className="text-xs font-semibold text-foreground">{g.label}</p>
-                  {props.length === 0 ? (
-                    <p className="mt-1 text-xs text-muted-foreground">No value propositions picked yet.</p>
-                  ) : (
-                    <ul className="mt-1 space-y-1">
-                      {props.map((p) => (
-                        <li key={p} className="text-xs leading-snug text-foreground">
-                          • {p}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </ReviewBlock>
-      )}
-      <ReviewBlock title="Engagement approach">
-        <div className="space-y-3">
-          <StarList
-            heading="Camps / events planned"
-            items={selectedCampObjs.map((c) => ({ key: `camp:${c.id}`, label: c.label }))}
-            isStarred={isStarred}
-            onToggleStar={onToggleStar}
-            empty="No camps / events selected in Q2.1."
-          />
-          <StarList
-            heading="Contractors to be converted"
-            items={contractors
-              .filter((c) => (c.name ?? "").trim())
-              .map((c) => ({
-                key: `contractor:${c.id}`,
-                label: [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · "),
-              }))}
-            isStarred={isStarred}
-            onToggleStar={onToggleStar}
-            empty="No contractors added in Q2.2."
-          />
-          <StarList
-            heading="Retailers who can help me connect"
-            items={retailers
-              .filter((c) => (c.name ?? "").trim())
-              .map((c) => ({
-                key: `retailer:${c.id}`,
-                label: [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · "),
-              }))}
-            isStarred={isStarred}
-            onToggleStar={onToggleStar}
-            empty="No retailers added in Q2.3."
-          />
-          <StarList
-            heading="Stakeholders to reach out directly"
-            items={stakeholders
-              .filter((c) => (c.name ?? "").trim())
-              .map((c) => ({
-                key: `stakeholder:${c.id}`,
-                label: [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · "),
-              }))}
-            isStarred={isStarred}
-            onToggleStar={onToggleStar}
-            empty="No stakeholders added in Q2.4."
-          />
-        </div>
-      </ReviewBlock>
-    </div>
-  );
-}
-
-function ReviewBlock({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border border-border bg-card p-3">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
-      {children}
-    </div>
-  );
-}
-
-function StarList({
-  heading,
-  items,
-  isStarred,
-  onToggleStar,
-  empty,
-}: {
-  heading: string;
-  items: { key: string; label: string }[];
-  isStarred: (key: string) => boolean;
-  onToggleStar: (key: string) => void;
-  empty: string;
-}) {
+/* ── StarSection + StarRow ── */
+function StarSection({ heading, children }: { heading: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-foreground">{heading}</p>
-      {items.length === 0 ? (
-        <p className="text-xs text-muted-foreground">{empty}</p>
-      ) : (
-        <ul className="space-y-1.5">
-          {items.map((it) => {
-            const on = isStarred(it.key);
-            return (
-              <li
-                key={it.key}
-                className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-2"
-              >
-                <span className="flex-1 text-xs leading-snug text-foreground">{it.label}</span>
-                <button
-                  type="button"
-                  onClick={() => onToggleStar(it.key)}
-                  className="rounded p-1 hover:bg-muted/40"
-                  aria-label="Prioritize"
-                >
-                  <Star className={cn("h-4 w-4", on ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">{heading}</p>
+      <div className="space-y-2">{children}</div>
     </div>
   );
 }
 
-/* ── Contact table ── */
+function StarRow({
+  title,
+  subtitle,
+  starred,
+  onToggle,
+}: {
+  title: string;
+  subtitle?: string;
+  starred: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5">
+      <div className="flex-1">
+        <p className="font-serif text-sm text-foreground">{title}</p>
+        {subtitle && <p className="text-[11px] text-muted-foreground">{subtitle}</p>}
+      </div>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="shrink-0 rounded-lg p-1.5 hover:bg-muted/40"
+        aria-label="Prioritize"
+      >
+        <Star className={cn("h-4 w-4", starred ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
+      </button>
+    </div>
+  );
+}
+
+/* ── ContactTable ── */
 function ContactTable({
   contacts,
   onChange,
@@ -580,17 +575,17 @@ function ContactTable({
 
   return (
     <div className="space-y-2">
-      {contacts.length === 0 && emptyHint && <p className="text-xs text-muted-foreground">{emptyHint}</p>}
+      {contacts.length === 0 && emptyHint && <p className="text-[11px] text-muted-foreground">{emptyHint}</p>}
       {contacts.map((c, i) => (
         <div
           key={c.id}
-          className="grid grid-cols-2 gap-1.5 rounded-md border border-border bg-background p-2 sm:grid-cols-4"
+          className="grid grid-cols-2 gap-1.5 rounded-xl border border-border bg-background p-2 sm:grid-cols-4"
         >
-          <Input value={c.name} placeholder="Name" onChange={(v) => update(i, { name: v })} />
-          <Input value={c.phone ?? ""} placeholder="Phone" onChange={(v) => update(i, { phone: v })} />
-          <Input value={c.area ?? ""} placeholder="Area" onChange={(v) => update(i, { area: v })} />
+          <FieldInput value={c.name} placeholder="Name" onChange={(v) => update(i, { name: v })} />
+          <FieldInput value={c.phone ?? ""} placeholder="Phone" onChange={(v) => update(i, { phone: v })} />
+          <FieldInput value={c.area ?? ""} placeholder="Area" onChange={(v) => update(i, { area: v })} />
           <div className="flex items-center gap-1">
-            <Input
+            <FieldInput
               value={c.brandPreference ?? ""}
               placeholder="Current brand"
               onChange={(v) => update(i, { brandPreference: v })}
@@ -613,7 +608,7 @@ function ContactTable({
   );
 }
 
-function Input({
+function FieldInput({
   value,
   placeholder,
   onChange,
@@ -627,7 +622,7 @@ function Input({
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded border border-border bg-background px-2 py-1 text-xs"
+      className="w-full rounded-lg border border-border bg-background px-2 py-1 text-xs"
     />
   );
 }
