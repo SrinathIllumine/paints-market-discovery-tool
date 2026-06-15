@@ -250,6 +250,7 @@ function PlanClusterScreen() {
 
   return (
     <AppShell
+      ref={mainRef}
       bottom={<BottomNav />}
       header={<StageHeader eyebrow="CLUSTER ENGAGEMENT PLAN" title="Cluster Engagement Plan" backTo="/plan" />}
     >
