@@ -607,7 +607,25 @@ export const useAppStore = create<State & Actions>()(
           };
         }),
     }),
-    { name: "sed.v12" },
+    // AFTER
+    {
+      name: "sed.v13", // bump version to bust stale cache
+      merge: (persisted: unknown, current: State & Actions) => {
+        const p = (persisted ?? {}) as Partial<State>;
+        return {
+          ...current,
+          ...p,
+          plan: {
+            ...current.plan, // all new keys get their defaults
+            ...(p.plan ?? {}), // then real saved data overwrites
+          },
+          sales: {
+            ...current.sales,
+            ...(p.sales ?? {}),
+          },
+        };
+      },
+    },
   ),
 );
 
