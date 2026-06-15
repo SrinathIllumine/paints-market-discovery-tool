@@ -223,6 +223,7 @@ export const useAppStore = create<State & Actions>()(
         groupValuePropsByCluster: {},
         selectedCampsByCluster: {},
         starredByCluster: {},
+        reviewsByCluster: {},
       },
       sales: { prospectStages: {}, prospectActivity: {}, seededClusters: {} },
 
