@@ -392,12 +392,6 @@ function PlanClusterScreen() {
 
   const recommendedGroupIds = useMemo(() => getRecommendedGroupIds(groups), [groups]);
 
-  const { names: groupPlaceNames, loading: groupPlacesLoading } = useGroupPlaces(
-    groups,
-    cluster?.placesQuery ?? "",
-    page === "groups",
-  );
-
   const contractors = strategyContacts[clusterId]?.[CONTRACTOR_BUCKET] ?? EMPTY_CONTACTS;
   const retailers = strategyContacts[clusterId]?.[RETAILER_BUCKET] ?? EMPTY_CONTACTS;
   const stakeholders = strategyContacts[clusterId]?.[STAKEHOLDER_BUCKET] ?? EMPTY_CONTACTS;
@@ -556,8 +550,7 @@ function PlanClusterScreen() {
             <div className="space-y-2.5">
               {groups.map((g) => {
                 const selected = customerGroups.includes(g.id);
-                const places = groupPlaceNames[g.id] ?? [];
-                const isLoading = groupPlacesLoading[g.id] ?? false;
+
                 const isRec = recommendedGroupIds.has(g.id);
                 return (
                   <div
