@@ -105,6 +105,9 @@ function useGroupPlaces(groups: { id: string; label: string }[], clusterPlacesQu
 }
 
 function PlanClusterScreen() {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [page]);
   const { clusterId } = Route.useParams();
   const navigate = useNavigate();
 
