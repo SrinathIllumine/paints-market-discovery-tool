@@ -785,6 +785,9 @@ function PlanClusterScreen() {
     </>
   )}
 </div>
+ )}
+          </SubPage>
+        )}
 
       {/* ── Group detail popup ── */}
       {detailGroup &&
@@ -819,7 +822,33 @@ function PlanClusterScreen() {
         })()}
 
       {/* ── Enabler file modal ── */}
-     {activeEnabler &&
+      {activeEnablers && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 px-4 pb-4" onClick={() => setActiveEnablers(null)}>
+          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-background" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <p className="font-serif text-base text-foreground">{activeEnablers.title}</p>
+              <button type="button" onClick={() => setActiveEnablers(null)} className="text-muted-foreground"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="divide-y divide-border">
+              {activeEnablers.items.map((e, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 shrink-0 text-amber-700" />
+                    <div>
+                      <p className="text-[12px] font-medium text-foreground">{e.label}</p>
+                      <p className="text-[10px] text-muted-foreground">{e.file.name} · {e.file.size}</p>
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => alert(`Demo: ${e.file.name}`)}
+                    className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-[11px] text-foreground hover:bg-muted">
+                    <Download className="h-3 w-3" /> Open
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Generate dialog ── */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
