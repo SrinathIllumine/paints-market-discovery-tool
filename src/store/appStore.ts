@@ -117,6 +117,8 @@ type State = {
     groupValuePropsByCluster: Record<string, Record<string, string[]>>;
     selectedCampsByCluster: Record<string, string[]>;
     starredByCluster: Record<string, string[]>;
+    // post-engagement reviews: per-cluster, per-item-key (e.g. camp:{id}, group:contractors)
+    reviewsByCluster: Record<string, Record<string, ReviewEntry>>;
   };
   assessments: Record<string, ClusterAssessment>;
   unlockedStage: 1 | 2 | 3;
