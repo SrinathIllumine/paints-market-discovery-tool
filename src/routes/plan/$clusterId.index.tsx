@@ -1229,11 +1229,11 @@ function ActionRow({
   const toggle = () => setOpen((o) => !o);
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
-      <div className="flex cursor-pointer items-center gap-3 px-4 py-3" onClick={toggle}>
+      <div className="flex cursor-pointer items-center gap-3 px-4 py-3" onClick={() => setOpen((o) => !o)}>
         <input
           type="checkbox"
-          checked={open}
-          onChange={toggle}
+          checked={checked}          {/* ← reflects real data, not open state */}
+          onChange={() => setOpen((o) => !o)}
           onClick={(e) => e.stopPropagation()}
           className="h-4 w-4 shrink-0 accent-critical"
         />
