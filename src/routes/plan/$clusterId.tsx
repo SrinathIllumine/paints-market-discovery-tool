@@ -150,10 +150,20 @@ function PlanClusterScreen() {
 
   // ✅ AFTER: fetch real place names — only when groups page is active
   const { names: groupPlaceNames, loading: groupPlacesLoading } = useGroupPlaces(
-    groups,
-    cluster?.placesQuery ?? "",
-    page === "groups",
-  );
+    const query = buildGroupQuery(g.label, clusterPlacesQuery);
+
+const service = new window.google.maps.places.PlacesService(
+  document.createElement("div"),
+);
+
+service.textSearch({ query }, (results, status) => {
+  const placeNames =
+    status === window.google.maps.places.PlacesServiceStatus.OK
+      ? (results ?? []).slice(0, 5).map((r) => r.name ?? "")
+      : [];
+  setNames((prev) => ({ ...prev, [g.id]: placeNames }));
+  setLoading((prev) => ({ ...prev, [g.id]: false }));
+});;
 
   const contractors = strategyContacts[clusterId]?.[CONTRACTOR_BUCKET] ?? EMPTY_CONTACTS;
   const retailers = strategyContacts[clusterId]?.[RETAILER_BUCKET] ?? EMPTY_CONTACTS;
