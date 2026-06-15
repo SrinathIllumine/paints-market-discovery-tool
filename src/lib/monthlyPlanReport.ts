@@ -1,4 +1,6 @@
-import jsPDF from "jspdf";
+// jsPDF is imported dynamically inside the generator to keep it out of the
+// SSR bundle (it touches `window`/`self` at module load and crashes on
+// Cloudflare Workers).
 import { getCluster } from "@/data/clusters";
 import type { ContactEntry } from "@/lib/strategyContent";
 
@@ -32,7 +34,7 @@ function normalisePdfText(text: string): string {
     .replace(/…/g, "...");
 }
 
-export function generateMonthlyEngagementPlanPdf({
+export async function generateMonthlyEngagementPlanPdf({
   focusClusterId,
   valueProps,
   customerGroups,
@@ -42,6 +44,7 @@ export function generateMonthlyEngagementPlanPdf({
   stakeholders,
   groupReview,
 }: Args) {
+  const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 40;
