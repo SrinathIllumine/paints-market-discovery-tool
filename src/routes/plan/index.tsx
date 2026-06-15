@@ -22,6 +22,8 @@ function PlanScreen() {
   const navigate = useNavigate();
   const focusIds = useAppStore((s) => s.plan.monthlyFocusIds);
   const clusterStates = useAppStore((s) => s.clusters);
+  const targetIds = useAppStore((s) => s.plan.targetClusterIds);
+  const assessments = useAppStore((s) => s.assessments);
 
   const scored = useMemo(() => {
     return CLUSTERS.map((c) => {
@@ -36,15 +38,16 @@ function PlanScreen() {
 
   const plannedIds = new Set(focusIds);
 
-  const mappedIds = new Set(
-    Object.keys(clusterStates).filter((id) => {
-      const s = clusterStates[id];
-      return s && s.prospects.length > 0;
-    }),
-  );
+  // Any cluster the user has interacted with (mapped prospects, assessed, or shortlisted)
+  // is eligible for planning.
+  const eligibleIds = new Set<string>([
+    ...Object.keys(clusterStates).filter((id) => (clusterStates[id]?.prospects.length ?? 0) > 0),
+    ...Object.keys(assessments),
+    ...targetIds,
+  ]);
 
-  const toplan = scored.filter(({ c }) => mappedIds.has(c.id) && !plannedIds.has(c.id));
-  const planned = scored.filter(({ c }) => mappedIds.has(c.id) && plannedIds.has(c.id));
+  const toplan = scored.filter(({ c }) => eligibleIds.has(c.id) && !plannedIds.has(c.id));
+  const planned = scored.filter(({ c }) => eligibleIds.has(c.id) && plannedIds.has(c.id));
 
   // Only navigates — setMonthlyFocus is called on the Generate button inside the detail page
   const handlePlan = (clusterId: string) => {
