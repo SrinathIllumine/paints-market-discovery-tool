@@ -227,8 +227,8 @@ function ReviewScreen() {
               return (
               <ReviewCard
                 key={key}
-                title={c.name}
-                subtitle={contactSubtitle(c)}
+                //title={c.name}
+                //subtitle={contactSubtitle(c)}
                 starred={isStarred(key) || isStarred("group:contractors")}
                 enablers={CONTRACTOR_ENABLERS}
                 questions={CONTRACTOR_QUESTIONS}
