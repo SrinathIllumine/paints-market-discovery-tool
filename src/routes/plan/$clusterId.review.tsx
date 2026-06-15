@@ -6,7 +6,17 @@ import { BottomNav } from "@/components/app/BottomNav";
 import { getCluster } from "@/data/clusters";
 import { useAppStore, type ReviewEntry } from "@/store/appStore";
 import { getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
-import { Lightbulb, ChevronDown,ClipboardCheck, ArrowLeft, CalendarDays, HardHat, Building2, UserCheck, Star } from "lucide-react";
+import {
+  Lightbulb,
+  ChevronDown,
+  ClipboardCheck,
+  ArrowLeft,
+  CalendarDays,
+  HardHat,
+  Building2,
+  UserCheck,
+  Star,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/plan/$clusterId/review")({
@@ -32,7 +42,12 @@ const EVENT_QUESTIONS: Question[] = [
   { id: "attended", label: "How many participants attended?", type: "number", placeholder: "e.g. 42" },
   { id: "leads", label: "How many qualified leads did you generate?", type: "number", placeholder: "e.g. 8" },
   { id: "rating", label: "How well did the engagement land (1-10)?", type: "number", placeholder: "e.g. 7" },
-  { id: "takeaways", label: "What worked, what didn't, and what's the next step?", type: "textarea", placeholder: "Key takeaways and follow-ups" },
+  {
+    id: "takeaways",
+    label: "What worked, what didn't, and what's the next step?",
+    type: "textarea",
+    placeholder: "Key takeaways and follow-ups",
+  },
 ];
 
 const CONTRACTOR_ENABLERS = [
@@ -41,8 +56,18 @@ const CONTRACTOR_ENABLERS = [
   "Be ready with a starter scheme (sample / loyalty / fast credit) they can act on in this meeting.",
 ];
 const CONTRACTOR_QUESTIONS: Question[] = [
-  { id: "outcome", label: "How did the meeting go?", type: "text", placeholder: "e.g. interested / needs follow-up / not a fit" },
-  { id: "trial", label: "Did they commit to a trial or first order?", type: "text", placeholder: "Yes / No / Quantity" },
+  {
+    id: "outcome",
+    label: "How did the meeting go?",
+    type: "text",
+    placeholder: "e.g. interested / needs follow-up / not a fit",
+  },
+  {
+    id: "trial",
+    label: "Did they commit to a trial or first order?",
+    type: "text",
+    placeholder: "Yes / No / Quantity",
+  },
   { id: "blockers", label: "Objections or blockers raised", type: "textarea" },
   { id: "nextStep", label: "Next step & owner", type: "textarea" },
 ];
@@ -76,7 +101,11 @@ function ReviewScreen() {
   const navigate = useNavigate();
 
   const cluster = useMemo(() => {
-    try { return getCluster(clusterId) ?? null; } catch { return null; }
+    try {
+      return getCluster(clusterId) ?? null;
+    } catch {
+      return null;
+    }
   }, [clusterId]);
 
   const selectedCamps = useAppStore((s) => s.plan.selectedCampsByCluster[clusterId] ?? EMPTY_ARR);
@@ -87,7 +116,11 @@ function ReviewScreen() {
 
   const camps = useMemo(() => {
     if (!cluster) return [];
-    try { return getCampIdeas(clusterId); } catch { return []; }
+    try {
+      return getCampIdeas(clusterId);
+    } catch {
+      return [];
+    }
   }, [clusterId, cluster]);
 
   const contractors = strategyContacts?.[CONTRACTOR_BUCKET] ?? EMPTY_CONTACTS;
@@ -115,7 +148,9 @@ function ReviewScreen() {
       <AppShell bottom={<BottomNav />}>
         <div className="p-6 text-center text-muted-foreground">
           Cluster not found.{" "}
-          <button className="text-navy underline" onClick={() => navigate({ to: "/plan" })}>Go back</button>
+          <button className="text-navy underline" onClick={() => navigate({ to: "/plan" })}>
+            Go back
+          </button>
         </div>
       </AppShell>
     );
@@ -187,21 +222,21 @@ function ReviewScreen() {
         {orderedContractors.length > 0 && (
           <Section icon={<HardHat className="h-4 w-4 text-green-700" />} iconBg="bg-green-50" title="Contractors">
             <div className="space-y-3">
-              {orderedContractors.map((c) => {
-                const key = `contractor:${c.id}`;
-                return (
-                  <ReviewCard
-                    key={key}
-                    title={c.name}
-                    subtitle={contactSubtitle(c)}
-                    starred={isStarred(key) || isStarred("group:contractors")}
-                    enablers={CONTRACTOR_ENABLERS}
-                    questions={CONTRACTOR_QUESTIONS}
-                    values={reviews[key] ?? {}}
-                    onChange={(fid, v) => update(key, fid, v)}
-                  />
-                );
-              })}
+              {/*{orderedContractors.map((c) => {
+                const key = `contractor:${c.id}`;*/}
+              return (
+              <ReviewCard
+                key={key}
+                //title={c.name}
+                //subtitle={contactSubtitle(c)}
+                starred={isStarred(key) || isStarred("group:contractors")}
+                enablers={CONTRACTOR_ENABLERS}
+                questions={CONTRACTOR_QUESTIONS}
+                values={reviews[key] ?? {}}
+                onChange={(fid, v) => update(key, fid, v)}
+              />
+              );
+              {/*}})}*/}
             </div>
           </Section>
         )}
@@ -254,7 +289,17 @@ function ReviewScreen() {
   );
 }
 
-function Section({ icon, iconBg, title, children }: { icon: React.ReactNode; iconBg: string; title: string; children: React.ReactNode }) {
+function Section({
+  icon,
+  iconBg,
+  title,
+  children,
+}: {
+  icon: React.ReactNode;
+  iconBg: string;
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="space-y-2.5">
       <div className="flex items-center gap-2">
@@ -266,10 +311,14 @@ function Section({ icon, iconBg, title, children }: { icon: React.ReactNode; ico
   );
 }
 
-function ReviewCard(
-  
-{
-  title, subtitle, starred, enablers, questions, values, onChange,
+function ReviewCard({
+  title,
+  subtitle,
+  starred,
+  enablers,
+  questions,
+  values,
+  onChange,
 }: {
   title: string;
   subtitle?: string;
@@ -278,91 +327,83 @@ function ReviewCard(
   questions: Question[];
   values: ReviewEntry;
   onChange: (fieldId: string, value: string) => void;
-}
-) {const [open, setOpen] = useState(false);
+}) {
+  const [open, setOpen] = useState(false);
   return (
     <div className={cn("overflow-hidden rounded-2xl border bg-card", starred ? "border-amber-400" : "border-border")}>
       <button
-  type="button"
-  onClick={() => setOpen(!open)}
-  className="flex w-full items-start justify-between gap-3 border-b border-border bg-muted/30 px-4 py-3 text-left"
->
-  <div className="min-w-0 flex-1">
-    <p className="font-serif text-sm text-foreground">{title}</p>
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-start justify-between gap-3 border-b border-border bg-muted/30 px-4 py-3 text-left"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="font-serif text-sm text-foreground">{title}</p>
 
-    {subtitle && (
-      <p className="mt-0.5 text-[11px] text-muted-foreground">
-        {subtitle}
-      </p>
-    )}
-  </div>
+          {subtitle && <p className="mt-0.5 text-[11px] text-muted-foreground">{subtitle}</p>}
+        </div>
 
-  <div className="flex items-center gap-2">
-    {starred && (
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
-        <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-        Priority
-      </span>
-    )}
+        <div className="flex items-center gap-2">
+          {starred && (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+              <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+              Priority
+            </span>
+          )}
 
-    <ChevronDown
-      className={cn(
-        "h-4 w-4 shrink-0 transition-transform",
-        open && "rotate-180"
-      )}
-    />
-  </div>
-</button>
+          <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")} />
+        </div>
+      </button>
 
       {open && (
-  <div className="space-y-4 px-4 py-3">
-        <div>
-          <div className="mb-1.5 flex items-center gap-1.5">
-            <Lightbulb className="h-3.5 w-3.5 text-amber-600" />
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-700">Enablers before meeting</p>
+        <div className="space-y-4 px-4 py-3">
+          <div>
+            <div className="mb-1.5 flex items-center gap-1.5">
+              <Lightbulb className="h-3.5 w-3.5 text-amber-600" />
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-700">
+                Enablers before meeting
+              </p>
+            </div>
+            <ul className="space-y-1.5">
+              {enablers.map((e, i) => (
+                <li key={i} className="flex gap-2 text-[12px] leading-relaxed text-foreground/80">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-amber-500" />
+                  <span>{e}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-          <ul className="space-y-1.5">
-            {enablers.map((e, i) => (
-              <li key={i} className="flex gap-2 text-[12px] leading-relaxed text-foreground/80">
-                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-amber-500" />
-                <span>{e}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
 
-
-        <div className="border-t border-border pt-3">
-          <div className="mb-2 flex items-center gap-1.5">
-            <ClipboardCheck className="h-3.5 w-3.5 text-green-700" />
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-green-700">Review post meeting</p>
-          </div>
-          <div className="space-y-2.5">
-            {questions.map((q) => (
-              <div key={q.id}>
-                <label className="mb-1 block text-[11px] font-medium text-foreground/80">{q.label}</label>
-                {q.type === "textarea" ? (
-                  <textarea
-                    value={values[q.id] ?? ""}
-                    onChange={(e) => onChange(q.id, e.target.value)}
-                    placeholder={q.placeholder}
-                    rows={2}
-                    className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
-                  />
-                ) : (
-                  <input
-                    type={q.type === "number" ? "number" : "text"}
-                    value={values[q.id] ?? ""}
-                    onChange={(e) => onChange(q.id, e.target.value)}
-                    placeholder={q.placeholder}
-                    className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
-                  />
-                )}
-              </div>
-            ))}
+          <div className="border-t border-border pt-3">
+            <div className="mb-2 flex items-center gap-1.5">
+              <ClipboardCheck className="h-3.5 w-3.5 text-green-700" />
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-green-700">Review post meeting</p>
+            </div>
+            <div className="space-y-2.5">
+              {questions.map((q) => (
+                <div key={q.id}>
+                  <label className="mb-1 block text-[11px] font-medium text-foreground/80">{q.label}</label>
+                  {q.type === "textarea" ? (
+                    <textarea
+                      value={values[q.id] ?? ""}
+                      onChange={(e) => onChange(q.id, e.target.value)}
+                      placeholder={q.placeholder}
+                      rows={2}
+                      className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
+                    />
+                  ) : (
+                    <input
+                      type={q.type === "number" ? "number" : "text"}
+                      value={values[q.id] ?? ""}
+                      onChange={(e) => onChange(q.id, e.target.value)}
+                      placeholder={q.placeholder}
+                      className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
       )}
     </div>
   );
