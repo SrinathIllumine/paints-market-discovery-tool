@@ -270,7 +270,7 @@ function PlanClusterScreen() {
                 <Users className="h-4 w-4 text-critical" />
               </HubIcon>
               <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Who are you targeting?</p>
+                <p className="text-sm font-medium text-foreground">Which customer groups you want to target?</p>
                 <p className="text-[11px] text-muted-foreground">Select your customer groups</p>
               </div>
               {badge(customerGroups.length)}
@@ -283,7 +283,7 @@ function PlanClusterScreen() {
               </HubIcon>
               <div className="flex-1">
                 <p className="text-sm font-medium text-foreground">What is your value proposition?</p>
-                <p className="text-[11px] text-muted-foreground">One proposition per selected group</p>
+                <p className="text-[11px] text-muted-foreground">View proposition for each selected group</p>
               </div>
               {customerGroups.length > 0 ? (
                 <span className="shrink-0 rounded-full bg-green-50 px-2 py-0.5 text-[9px] font-medium text-green-700">
@@ -307,7 +307,9 @@ function PlanClusterScreen() {
                   <Bolt className="h-4 w-4 text-violet-700" />
                 </HubIcon>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">What actions will you take to engage?</p>
+                  <p className="text-sm font-medium text-foreground">
+                    What actions will you take to engage with this cluster?
+                  </p>
                   <p className="text-[11px] text-muted-foreground">Camps, contractors, retailers, stakeholders</p>
                 </div>
                 {q3Open ? (
@@ -320,25 +322,25 @@ function PlanClusterScreen() {
                 <div className="divide-y divide-border border-t border-border bg-muted/30">
                   <SubHubRow
                     dot="bg-blue-600"
-                    label="Camps & events you are planning"
+                    label="Select the camps & events you are planning to conduct"
                     badge={badge(selectedCamps.length)}
                     onClick={() => goTo("camps")}
                   />
                   <SubHubRow
                     dot="bg-green-700"
-                    label="Contractors you are going to convert"
+                    label="List down the contractors you are going to convert"
                     badge={badge(validContractors.length)}
                     onClick={() => goTo("contractors")}
                   />
                   <SubHubRow
                     dot="bg-amber-700"
-                    label={`Retailers who can connect you to ${cluster.name.toLowerCase()}`}
+                    label={`List down the retailers who can connect you to ${cluster.name.toLowerCase()}`}
                     badge={badge(validRetailers.length)}
                     onClick={() => goTo("retailers")}
                   />
                   <SubHubRow
                     dot="bg-red-800"
-                    label={`Stakeholders of ${cluster.name.toLowerCase()} you will meet directly`}
+                    label={`List down the stakeholders of ${cluster.name.toLowerCase()} you will meet directly`}
                     badge={badge(validStakeholders.length)}
                     onClick={() => goTo("stakeholders")}
                   />
@@ -361,7 +363,7 @@ function PlanClusterScreen() {
               onClick={() => setConfirmOpen(true)}
               className="h-12 w-full gap-2 bg-navy font-serif text-base text-navy-foreground hover:bg-navy/90"
             >
-              <FileDown className="h-4 w-4" /> Generate quarterly plan
+              <FileDown className="h-4 w-4" /> Generate quarterly plan for this cluster
             </Button>
           </div>
         )}
@@ -369,7 +371,7 @@ function PlanClusterScreen() {
         {/* ── GROUPS ── */}
         {page === "groups" && (
           <SubPage
-            title="Who are you targeting?"
+            title="Which customer groups you want to target?"
             subtitle={`Select the customer groups within ${cluster.name} you plan to engage this quarter.`}
             onBack={goHub}
           >
