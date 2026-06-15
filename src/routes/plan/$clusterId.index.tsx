@@ -20,21 +20,40 @@ import {
   BarChart2,
   Bolt,
   Building2,
-  ChevronDown,
   ChevronRight,
-  ChevronUp,
+  ClipboardCheck,
+  Download,
   FileDown,
+  FileText,
   HardHat,
+  Info,
+  Lightbulb,
   ListChecks,
   MapPin,
+  Pencil,
   Plus,
   Star,
   Trash2,
   UserCheck,
   Users,
+  X,
 } from "lucide-react";
 import { generateMonthlyEngagementPlanPdf } from "@/lib/monthlyPlanReport";
-import { getCustomerGroups, getValuePropsForGroup, getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
+import { getCustomerGroups, getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
+import {
+  getClusterValueProps,
+  getCustomerGroupDetails,
+  EVENT_ENABLERS,
+  CONTRACTOR_ENABLERS,
+  RETAILER_ENABLERS,
+  STAKEHOLDER_ENABLERS,
+  EVENT_QUESTIONS,
+  CONTRACTOR_QUESTIONS,
+  RETAILER_QUESTIONS,
+  STAKEHOLDER_QUESTIONS,
+  type Enabler,
+  type Question,
+} from "@/lib/engagementContent";
 
 export const Route = createFileRoute("/plan/$clusterId/")({
   component: PlanClusterScreen,
@@ -49,7 +68,7 @@ const EMPTY_REC: Record<string, string[]> = {};
 const EMPTY_CONTACTS: ContactEntry[] = [];
 const EMPTY_SC: Record<string, Partial<Record<string, ContactEntry[]>>> = {};
 
-type Page = "hub" | "groups" | "valueprops" | "camps" | "contractors" | "retailers" | "stakeholders" | "actionplan";
+type Page = "hub" | "groups" | "valueprops" | "actions" | "camps" | "contractors" | "retailers" | "stakeholders" | "actionplan";
 
 declare global {
   interface Window {
@@ -109,21 +128,22 @@ function PlanClusterScreen() {
   const navigate = useNavigate();
 
   const customerGroups = useAppStore((s) => s.plan.customerGroupsByCluster[clusterId] ?? EMPTY_ARR);
-  const groupValueProps = useAppStore((s) => s.plan.groupValuePropsByCluster[clusterId] ?? EMPTY_REC);
   const selectedCamps = useAppStore((s) => s.plan.selectedCampsByCluster[clusterId] ?? EMPTY_ARR);
   const starred = useAppStore((s) => s.plan.starredByCluster[clusterId] ?? EMPTY_ARR);
   const strategyContacts = useAppStore((s) => s.plan.strategyContactsByCluster ?? EMPTY_SC);
+  const customValueProps = useAppStore((s) => s.plan.customValuePropsByCluster?.[clusterId]);
+  const reviews = useAppStore((s) => s.plan.reviewsByCluster[clusterId] ?? {});
 
   const toggleCustomerGroup = useAppStore((s) => s.toggleCustomerGroup);
-  const toggleGroupValueProp = useAppStore((s) => s.toggleGroupValueProp);
   const toggleSelectedCamp = useAppStore((s) => s.toggleSelectedCamp);
   const toggleStarred = useAppStore((s) => s.toggleStarred);
   const setStrategyContacts = useAppStore((s) => s.setStrategyContacts);
+  const setCustomValueProps = useAppStore((s) => s.setCustomValueProps);
+  const setReview = useAppStore((s) => s.setReview);
   const unlockStage = useAppStore((s) => s.unlockStage);
   const setMonthlyFocus = useAppStore((s) => s.setMonthlyFocus);
 
   const [page, setPage] = useState<Page>("hub");
-  const [q3Open, setQ3Open] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
 
@@ -200,34 +220,34 @@ function PlanClusterScreen() {
     );
   }
 
+  const valueProps = useMemo(
+    () => (customValueProps && customValueProps.length > 0 ? customValueProps : getClusterValueProps(clusterId)),
+    [clusterId, customValueProps],
+  );
+
   const handleGroupToggle = (groupId: string) => {
-    const isSelected = customerGroups.includes(groupId);
     toggleCustomerGroup(clusterId, groupId);
-    const props = getValuePropsForGroup(clusterId, groupId);
-    if (!props[0]) return;
-    const firstProp = props[0];
-    const currentProps = groupValueProps[groupId] ?? [];
-    if (!isSelected && !currentProps.includes(firstProp)) toggleGroupValueProp(clusterId, groupId, firstProp);
-    else if (isSelected && currentProps.includes(firstProp)) toggleGroupValueProp(clusterId, groupId, firstProp);
   };
 
   const handleGenerate = () => {
     generateMonthlyEngagementPlanPdf({
       focusClusterId: clusterId,
-      customerGroups: selectedGroupObjs.map((g) => ({
-        id: g.id,
-        label: g.label,
-        pct: g.pct,
-        valueProps: groupValueProps[g.id] ?? [],
-      })),
+      valueProps,
+      customerGroups: selectedGroupObjs.map((g) => ({ id: g.id, label: g.label, pct: g.pct })),
       camps: selectedCampObjs.map((c) => ({
         id: c.id,
         label: c.label,
         starred: isStarred(`camp:${c.id}`),
+        review: reviews[`camp:${c.id}`] ?? {},
       })),
       contractors: contractors.map((c) => ({ ...c, starred: isStarred("group:contractors") })),
       retailers: retailers.map((c) => ({ ...c, starred: isStarred("group:retailers") })),
       stakeholders: stakeholders.map((c) => ({ ...c, starred: isStarred("group:stakeholders") })),
+      groupReview: {
+        contractors: reviews["group:contractors"] ?? {},
+        retailers: reviews["group:retailers"] ?? {},
+        stakeholders: reviews["group:stakeholders"] ?? {},
+      },
     });
     setConfirmOpen(false);
     unlockStage(3);
@@ -297,56 +317,19 @@ function PlanClusterScreen() {
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </HubCard>
 
-            <div className="overflow-hidden rounded-2xl border border-border bg-card">
-              <button
-                type="button"
-                onClick={() => setQ3Open((o) => !o)}
-                className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
-              >
-                <HubIcon bg="bg-violet-50">
-                  <Bolt className="h-4 w-4 text-violet-700" />
-                </HubIcon>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">
-                    What actions will you take to engage with this cluster?
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">Camps, contractors, retailers, stakeholders</p>
-                </div>
-                {q3Open ? (
-                  <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                )}
-              </button>
-              {q3Open && (
-                <div className="divide-y divide-border border-t border-border bg-muted/30">
-                  <SubHubRow
-                    dot="bg-blue-600"
-                    label="Select the camps & events you are planning to conduct"
-                    badge={badge(selectedCamps.length)}
-                    onClick={() => goTo("camps")}
-                  />
-                  <SubHubRow
-                    dot="bg-green-700"
-                    label="List down the contractors you are going to convert"
-                    badge={badge(validContractors.length)}
-                    onClick={() => goTo("contractors")}
-                  />
-                  <SubHubRow
-                    dot="bg-amber-700"
-                    label={`List down the retailers who can connect you to ${cluster.name.toLowerCase()}`}
-                    badge={badge(validRetailers.length)}
-                    onClick={() => goTo("retailers")}
-                  />
-                  <SubHubRow
-                    dot="bg-red-800"
-                    label={`List down the stakeholders of ${cluster.name.toLowerCase()} you will meet directly`}
-                    badge={badge(validStakeholders.length)}
-                    onClick={() => goTo("stakeholders")}
-                  />
-                </div>
-              )}
-            </div>
+            <HubCard onClick={() => goTo("actions")}>
+              <HubIcon bg="bg-violet-50">
+                <Bolt className="h-4 w-4 text-violet-700" />
+              </HubIcon>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">
+                  What actions will you take to engage with this cluster?
+                </p>
+                <p className="text-[11px] text-muted-foreground">Camps, contractors, retailers, stakeholders</p>
+              </div>
+              {badge(selectedCamps.length + validContractors.length + validRetailers.length + validStakeholders.length)}
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </HubCard>
 
             <HubCard onClick={() => goTo("actionplan")}>
               <HubIcon bg="bg-purple-50">
@@ -370,95 +353,65 @@ function PlanClusterScreen() {
 
         {/* ── GROUPS ── */}
         {page === "groups" && (
-          <SubPage
-            title="Which customer groups you want to target?"
-            subtitle={`Select the customer groups within ${cluster.name} you plan to engage this quarter.`}
+          <GroupsPage
+            clusterName={cluster.name}
+            clusterId={clusterId}
+            groups={groups}
+            selected={customerGroups}
+            onToggle={handleGroupToggle}
+            groupPlaceNames={groupPlaceNames}
+            groupPlacesLoading={groupPlacesLoading}
             onBack={goHub}
-          >
-            <div className="space-y-3">
-              {groups.map((g) => {
-                const selected = customerGroups.includes(g.id);
-                const places = groupPlaceNames[g.id] ?? [];
-                const isLoading = groupPlacesLoading[g.id] ?? false;
-                return (
-                  <button
-                    key={g.id}
-                    type="button"
-                    onClick={() => handleGroupToggle(g.id)}
-                    className={cn(
-                      "w-full rounded-2xl border px-4 py-3 text-left transition-colors",
-                      selected ? "border-critical bg-critical/5" : "border-border bg-card",
-                    )}
-                  >
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <span className="font-serif text-sm text-foreground">{g.label}</span>
-                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground">
-                        {g.pct}%
-                      </span>
-                    </div>
-
-                    {isLoading && (
-                      <div className="flex items-center gap-2">
-                        <div className="h-5 w-20 animate-pulse rounded-full bg-muted" />
-                        <div className="h-5 w-24 animate-pulse rounded-full bg-muted" />
-                        <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
-                      </div>
-                    )}
-
-                    {!isLoading && places.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {places.slice(0, 3).map((name) => (
-                          <span
-                            key={name}
-                            className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground"
-                          >
-                            <MapPin className="h-2.5 w-2.5 shrink-0" />
-                            {name}
-                          </span>
-                        ))}
-                        {places.length > 3 && (
-                          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground">
-                            +{places.length - 3} more
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {!isLoading && places.length === 0 && groupPlaceNames[g.id] !== undefined && (
-                      <p className="text-[10px] text-muted-foreground">No results found nearby</p>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </SubPage>
+          />
         )}
 
         {/* ── VALUE PROPS ── */}
         {page === "valueprops" && (
+          <ValuePropsPage
+            clusterName={cluster.name}
+            valueProps={valueProps}
+            onSave={(props) => setCustomValueProps(clusterId, props)}
+            onBack={goHub}
+          />
+        )}
+
+        {/* ── ACTIONS HUB (camps/contractors/retailers/stakeholders) ── */}
+        {page === "actions" && (
           <SubPage
-            title="Your value propositions"
-            subtitle="One tailored proposition for each group you selected."
+            title="What actions will you take?"
+            subtitle="Tick the engagement levers you'll pull this quarter. Tap one to fill in details."
             onBack={goHub}
           >
-            {selectedGroupObjs.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Go back and select customer groups first.</p>
-            ) : (
-              <div className="space-y-3">
-                {selectedGroupObjs.map((g) => {
-                  const prop = (groupValueProps[g.id] ?? [])[0] ?? getValuePropsForGroup(clusterId, g.id)[0] ?? "";
-                  return (
-                    <div key={g.id} className="rounded-2xl border border-border bg-card px-4 py-3">
-                      <div className="mb-2 flex items-center gap-2">
-                        <div className="h-2 w-2 shrink-0 rounded-full bg-critical" />
-                        <p className="font-serif text-sm text-foreground">{g.label}</p>
-                      </div>
-                      <p className="pl-4 text-sm leading-relaxed text-muted-foreground">{prop}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <div className="space-y-2.5">
+              <ActionToggleRow
+                icon={<CalendarIcon />}
+                iconBg="bg-blue-50"
+                label="Camps & events you are planning to conduct"
+                count={selectedCamps.length}
+                onOpen={() => goTo("camps")}
+              />
+              <ActionToggleRow
+                icon={<HardHat className="h-4 w-4 text-green-700" />}
+                iconBg="bg-green-50"
+                label="Contractors you are going to convert"
+                count={validContractors.length}
+                onOpen={() => goTo("contractors")}
+              />
+              <ActionToggleRow
+                icon={<Building2 className="h-4 w-4 text-amber-700" />}
+                iconBg="bg-amber-50"
+                label={`Retailers who can connect you to ${cluster.name.toLowerCase()}`}
+                count={validRetailers.length}
+                onOpen={() => goTo("retailers")}
+              />
+              <ActionToggleRow
+                icon={<UserCheck className="h-4 w-4 text-red-800" />}
+                iconBg="bg-red-50"
+                label={`Stakeholders of ${cluster.name.toLowerCase()} you will meet directly`}
+                count={validStakeholders.length}
+                onOpen={() => goTo("stakeholders")}
+              />
+            </div>
           </SubPage>
         )}
 
@@ -548,7 +501,7 @@ function PlanClusterScreen() {
         {page === "actionplan" && (
           <SubPage
             title="Your action plan"
-            subtitle="Star items or groups to prioritize for this quarter."
+            subtitle="Star priorities. Open enablers to prep. Review once a starred item is done."
             onBack={goHub}
             footer={
               <Button
@@ -559,8 +512,7 @@ function PlanClusterScreen() {
               </Button>
             }
           >
-            {selectedGroupObjs.length === 0 &&
-            selectedCampObjs.length === 0 &&
+            {selectedCampObjs.length === 0 &&
             validContractors.length === 0 &&
             validRetailers.length === 0 &&
             validStakeholders.length === 0 ? (
@@ -568,97 +520,52 @@ function PlanClusterScreen() {
                 Make selections in the other sections to see your action plan here.
               </p>
             ) : (
-              <div className="space-y-6">
-                {selectedGroupObjs.length > 0 && (
-                  <div>
-                    <SectionLabel>Customer groups selected</SectionLabel>
-                    <div className="space-y-2">
-                      {selectedGroupObjs.map((g) => (
-                        <div key={g.id} className="rounded-2xl border border-border bg-card px-4 py-3">
-                          <p className="font-serif text-sm text-foreground">{g.label}</p>
-                          <p className="mt-0.5 text-sm text-muted-foreground">
-                            {(groupValueProps[g.id] ?? [])[0] ?? getValuePropsForGroup(clusterId, g.id)[0] ?? ""}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedCampObjs.length > 0 && (
-                  <div>
-                    <SectionLabel>Camps / events — star each to prioritize</SectionLabel>
-                    <div className="space-y-2">
-                      {selectedCampObjs.map((c) => (
-                        <div
-                          key={c.id}
-                          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3"
-                        >
-                          <div className="flex-1">
-                            <p className="font-serif text-sm text-foreground">{c.label}</p>
-                            <p className="text-[11px] text-muted-foreground">{c.description}</p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => toggleStarred(clusterId, `camp:${c.id}`)}
-                            className="shrink-0 rounded-lg p-1.5 hover:bg-muted/40"
-                            aria-label="Prioritize"
-                          >
-                            <Star
-                              className={cn(
-                                "h-4 w-4",
-                                isStarred(`camp:${c.id}`) ? "fill-amber-400 text-amber-400" : "text-muted-foreground",
-                              )}
-                            />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <GroupStarBlock
-                  heading="Contractors — star group to prioritize"
-                  icon={<HardHat className="h-4 w-4 text-green-700" />}
-                  iconBg="bg-green-50"
-                  label="Contractors to convert"
-                  count={validContractors.length}
-                  emptyText="No contractors added yet."
-                  items={validContractors.map((c) =>
-                    [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · "),
-                  )}
-                  starred={isStarred("group:contractors")}
-                  onToggleStar={() => toggleStarred(clusterId, "group:contractors")}
-                />
-
-                <GroupStarBlock
-                  heading="Retailers — star group to prioritize"
-                  icon={<Building2 className="h-4 w-4 text-amber-700" />}
-                  iconBg="bg-amber-50"
-                  label="Retailers who can connect"
-                  count={validRetailers.length}
-                  emptyText="No retailers added yet."
-                  items={validRetailers.map((c) =>
-                    [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · "),
-                  )}
-                  starred={isStarred("group:retailers")}
-                  onToggleStar={() => toggleStarred(clusterId, "group:retailers")}
-                />
-
-                <GroupStarBlock
-                  heading="Stakeholders — star group to prioritize"
-                  icon={<UserCheck className="h-4 w-4 text-red-800" />}
-                  iconBg="bg-red-50"
-                  label="Stakeholders to meet directly"
-                  count={validStakeholders.length}
-                  emptyText="No stakeholders added yet."
-                  items={validStakeholders.map((c) =>
-                    [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · "),
-                  )}
-                  starred={isStarred("group:stakeholders")}
-                  onToggleStar={() => toggleStarred(clusterId, "group:stakeholders")}
-                />
-              </div>
+              <ActionPlanReport
+                items={[
+                  ...selectedCampObjs.map((c) => ({
+                    key: `camp:${c.id}`,
+                    section: "Events & camps",
+                    title: c.label,
+                    subtitle: c.description,
+                    enablers: EVENT_ENABLERS,
+                    questions: EVENT_QUESTIONS,
+                  })),
+                  ...(validContractors.length > 0
+                    ? [{
+                        key: "group:contractors",
+                        section: "Contractors",
+                        title: `${validContractors.length} contractor${validContractors.length > 1 ? "s" : ""} to convert`,
+                        subtitle: validContractors.map((c) => c.name).join(", "),
+                        enablers: CONTRACTOR_ENABLERS,
+                        questions: CONTRACTOR_QUESTIONS,
+                      }]
+                    : []),
+                  ...(validRetailers.length > 0
+                    ? [{
+                        key: "group:retailers",
+                        section: "Retailers",
+                        title: `${validRetailers.length} retailer${validRetailers.length > 1 ? "s" : ""} to engage`,
+                        subtitle: validRetailers.map((c) => c.name).join(", "),
+                        enablers: RETAILER_ENABLERS,
+                        questions: RETAILER_QUESTIONS,
+                      }]
+                    : []),
+                  ...(validStakeholders.length > 0
+                    ? [{
+                        key: "group:stakeholders",
+                        section: "Stakeholders",
+                        title: `${validStakeholders.length} stakeholder${validStakeholders.length > 1 ? "s" : ""} to meet`,
+                        subtitle: validStakeholders.map((c) => c.name).join(", "),
+                        enablers: STAKEHOLDER_ENABLERS,
+                        questions: STAKEHOLDER_QUESTIONS,
+                      }]
+                    : []),
+                ]}
+                starredKeys={starred}
+                reviews={reviews}
+                onToggleStar={(key) => toggleStarred(clusterId, key)}
+                onReviewChange={(key, fid, v) => setReview(clusterId, key, { [fid]: v })}
+              />
             )}
           </SubPage>
         )}
@@ -746,89 +653,486 @@ function HubIcon({ bg, children }: { bg: string; children: React.ReactNode }) {
   return <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", bg)}>{children}</div>;
 }
 
-function SubHubRow({
-  dot,
-  label,
-  badge,
-  onClick,
+function CalendarIcon() {
+  return <Bolt className="h-4 w-4 text-blue-700" />;
+}
+
+/* ── Customer Groups page ── */
+function GroupsPage({
+  clusterName,
+  clusterId,
+  groups,
+  selected,
+  onToggle,
+  groupPlaceNames,
+  groupPlacesLoading,
+  onBack,
 }: {
-  dot: string;
-  label: string;
-  badge: React.ReactNode;
-  onClick: () => void;
+  clusterName: string;
+  clusterId: string;
+  groups: { id: string; label: string; pct: number }[];
+  selected: string[];
+  onToggle: (id: string) => void;
+  groupPlaceNames: Record<string, string[]>;
+  groupPlacesLoading: Record<string, boolean>;
+  onBack: () => void;
 }) {
+  const [detailsFor, setDetailsFor] = useState<{ id: string; label: string; pct: number } | null>(null);
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-muted/20"
+    <SubPage
+      title="Which customer groups you want to target?"
+      subtitle={`Select the customer groups within ${clusterName} you plan to engage this quarter.`}
+      onBack={onBack}
     >
-      <div className={cn("h-2 w-2 shrink-0 rounded-full", dot)} />
-      <p className="flex-1 text-[12px] font-medium text-foreground">{label}</p>
-      {badge}
-      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-    </button>
+      <div className="space-y-3">
+        {groups.map((g) => {
+          const isSelected = selected.includes(g.id);
+          const places = groupPlaceNames[g.id] ?? [];
+          const isLoading = groupPlacesLoading[g.id] ?? false;
+          return (
+            <div
+              key={g.id}
+              className={cn(
+                "rounded-2xl border px-4 py-3 transition-colors",
+                isSelected ? "border-critical bg-critical/5" : "border-border bg-card",
+              )}
+            >
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => onToggle(g.id)}
+                  className="mt-1 h-4 w-4 shrink-0 accent-critical"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-serif text-sm text-foreground">{g.label}</span>
+                    <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground">
+                      {g.pct}%
+                    </span>
+                  </div>
+                  {isLoading && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="h-5 w-20 animate-pulse rounded-full bg-muted" />
+                      <div className="h-5 w-24 animate-pulse rounded-full bg-muted" />
+                    </div>
+                  )}
+                  {!isLoading && places.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {places.slice(0, 3).map((name) => (
+                        <span
+                          key={name}
+                          className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground"
+                        >
+                          <MapPin className="h-2.5 w-2.5 shrink-0" />
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="mt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setDetailsFor(g)}
+                  className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-navy hover:bg-muted"
+                >
+                  <Info className="h-3 w-3" /> View details
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <Dialog open={!!detailsFor} onOpenChange={(o) => !o && setDetailsFor(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif">{detailsFor?.label}</DialogTitle>
+            <DialogDescription>Why this group matters for {clusterName}.</DialogDescription>
+          </DialogHeader>
+          {detailsFor && (
+            <ul className="mt-1 space-y-2.5">
+              {getCustomerGroupDetails(clusterId, detailsFor.id, {
+                label: detailsFor.label,
+                pct: detailsFor.pct,
+              }).map((point, i) => (
+                <li key={i} className="flex gap-2 text-sm text-foreground">
+                  <span className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-critical" />
+                  <span className="leading-snug">{point}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
+    </SubPage>
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">{children}</p>;
+/* ── Value Props page ── */
+function ValuePropsPage({
+  clusterName,
+  valueProps,
+  onSave,
+  onBack,
+}: {
+  clusterName: string;
+  valueProps: string[];
+  onSave: (props: string[]) => void;
+  onBack: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<string[]>(valueProps);
+
+  useEffect(() => {
+    if (!editing) setDraft(valueProps);
+  }, [valueProps, editing]);
+
+  const startEdit = () => {
+    setDraft(valueProps);
+    setEditing(true);
+  };
+  const save = () => {
+    onSave(draft.map((d) => d.trim()).filter(Boolean));
+    setEditing(false);
+  };
+  const updateAt = (i: number, v: string) => setDraft(draft.map((d, idx) => (idx === i ? v : d)));
+  const removeAt = (i: number) => setDraft(draft.filter((_, idx) => idx !== i));
+  const addOne = () => setDraft([...draft, ""]);
+
+  return (
+    <SubPage
+      title="Your value propositions"
+      subtitle={`What makes JK the right choice for ${clusterName}.`}
+      onBack={onBack}
+    >
+      <div className="mb-3 flex justify-end">
+        {!editing ? (
+          <Button size="sm" variant="outline" onClick={startEdit} className="h-8 gap-1.5 rounded-xl text-xs">
+            <Pencil className="h-3.5 w-3.5" /> Edit
+          </Button>
+        ) : (
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setEditing(false)} className="h-8 rounded-xl text-xs">
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={save}
+              className="h-8 rounded-xl bg-navy text-xs text-navy-foreground hover:bg-navy/90"
+            >
+              Save
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {!editing ? (
+        <div className="space-y-3">
+          {valueProps.map((p, i) => (
+            <div key={i} className="rounded-2xl border border-border bg-card px-4 py-3">
+              <div className="flex gap-2">
+                <span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-critical" />
+                <p className="text-sm leading-relaxed text-foreground">{p}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {draft.map((d, i) => (
+            <div key={i} className="flex items-start gap-2 rounded-2xl border border-border bg-card p-2.5">
+              <textarea
+                value={d}
+                onChange={(e) => updateAt(i, e.target.value)}
+                rows={2}
+                className="flex-1 rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
+                placeholder="Concrete, user-centric value proposition"
+              />
+              <button
+                type="button"
+                onClick={() => removeAt(i)}
+                className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-muted/40"
+                aria-label="Remove"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+          <Button size="sm" variant="outline" onClick={addOne} className="h-8 gap-1.5 rounded-xl text-xs">
+            <Plus className="h-3.5 w-3.5" /> Add value proposition
+          </Button>
+        </div>
+      )}
+    </SubPage>
+  );
 }
 
-function GroupStarBlock({
-  heading,
+/* ── Actions hub row ── */
+function ActionToggleRow({
   icon,
   iconBg,
   label,
   count,
-  emptyText,
-  items,
-  starred,
-  onToggleStar,
+  onOpen,
 }: {
-  heading: string;
   icon: React.ReactNode;
   iconBg: string;
   label: string;
   count: number;
-  emptyText: string;
-  items: string[];
-  starred: boolean;
-  onToggleStar: () => void;
+  onOpen: () => void;
 }) {
   return (
-    <div>
-      <SectionLabel>{heading}</SectionLabel>
-      {count === 0 ? (
-        <p className="text-[11px] text-muted-foreground">{emptyText}</p>
-      ) : (
-        <div className="overflow-hidden rounded-2xl border border-border bg-card">
-          <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-            <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", iconBg)}>{icon}</div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-foreground">{label}</p>
-              <p className="text-[11px] text-muted-foreground">
-                {count} {count === 1 ? "entry" : "entries"}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onToggleStar}
-              className="shrink-0 rounded-lg p-1.5 hover:bg-muted/40"
-              aria-label="Prioritize group"
-            >
-              <Star className={cn("h-5 w-5", starred ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
-            </button>
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-3 py-3">
+      <input
+        type="checkbox"
+        checked={count > 0}
+        readOnly
+        className="h-4 w-4 shrink-0 accent-critical"
+      />
+      <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", iconBg)}>{icon}</div>
+      <button type="button" onClick={onOpen} className="flex-1 text-left">
+        <p className="text-[13px] font-medium text-foreground">{label}</p>
+        <p className="text-[10.5px] text-muted-foreground">
+          {count > 0 ? `${count} added — tap to edit` : "Tap to add"}
+        </p>
+      </button>
+      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+    </div>
+  );
+}
+
+/* ── Action Plan report ── */
+type PlanRow = {
+  key: string;
+  section: string;
+  title: string;
+  subtitle?: string;
+  enablers: Enabler[];
+  questions: Question[];
+};
+
+function ActionPlanReport({
+  items,
+  starredKeys,
+  reviews,
+  onToggleStar,
+  onReviewChange,
+}: {
+  items: PlanRow[];
+  starredKeys: string[];
+  reviews: Record<string, Record<string, string>>;
+  onToggleStar: (key: string) => void;
+  onReviewChange: (key: string, fieldId: string, value: string) => void;
+}) {
+  const [enablerFor, setEnablerFor] = useState<{ row: PlanRow } | null>(null);
+  const [activeEnabler, setActiveEnabler] = useState<Enabler | null>(null);
+  const [reviewFor, setReviewFor] = useState<PlanRow | null>(null);
+
+  // Group rows by section, preserving order
+  const sections: { name: string; rows: PlanRow[] }[] = [];
+  for (const r of items) {
+    let bucket = sections.find((s) => s.name === r.section);
+    if (!bucket) {
+      bucket = { name: r.section, rows: [] };
+      sections.push(bucket);
+    }
+    bucket.rows.push(r);
+  }
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="grid grid-cols-[28px_1fr_84px_72px] items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[9.5px] font-semibold uppercase tracking-widest text-muted-foreground">
+        <span></span>
+        <span>Item</span>
+        <span className="text-center">Enablers</span>
+        <span className="text-center">Review</span>
+      </div>
+      {sections.map((sec) => (
+        <div key={sec.name}>
+          <div className="border-t border-border bg-muted/20 px-3 py-1.5 text-[10.5px] font-semibold text-foreground">
+            {sec.name}
           </div>
-          <div className="divide-y divide-border px-4">
-            {items.map((item, i) => (
-              <p key={i} className="py-2.5 text-sm text-foreground">
-                {item}
-              </p>
+          {sec.rows.map((row) => {
+            const isStar = starredKeys.includes(row.key);
+            const hasReview = Object.values(reviews[row.key] ?? {}).some((v) => (v ?? "").toString().trim());
+            return (
+              <div
+                key={row.key}
+                className="grid grid-cols-[28px_1fr_84px_72px] items-center gap-2 border-t border-border px-3 py-2.5"
+              >
+                <button
+                  type="button"
+                  onClick={() => onToggleStar(row.key)}
+                  className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-muted/40"
+                  aria-label="Prioritize"
+                >
+                  <Star
+                    className={cn("h-4 w-4", isStar ? "fill-amber-400 text-amber-400" : "text-muted-foreground")}
+                  />
+                </button>
+                <div className="min-w-0">
+                  <p className="truncate text-[12.5px] font-medium text-foreground">{row.title}</p>
+                  {row.subtitle && (
+                    <p className="truncate text-[10.5px] text-muted-foreground">{row.subtitle}</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEnablerFor({ row })}
+                  className="mx-auto inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-800 hover:bg-amber-100"
+                >
+                  <Lightbulb className="h-3 w-3" /> View
+                </button>
+                <button
+                  type="button"
+                  disabled={!isStar}
+                  onClick={() => setReviewFor(row)}
+                  className={cn(
+                    "mx-auto inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium",
+                    isStar
+                      ? hasReview
+                        ? "border border-green-200 bg-green-50 text-green-800 hover:bg-green-100"
+                        : "border border-border bg-background text-foreground hover:bg-muted"
+                      : "cursor-not-allowed border border-dashed border-border text-muted-foreground/60",
+                  )}
+                >
+                  <ClipboardCheck className="h-3 w-3" /> {hasReview ? "Done" : "Open"}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      {/* Enablers list popup */}
+      {enablerFor && !activeEnabler && (
+        <ModalShell title="Enablers before meeting" subtitle={enablerFor.row.title} onClose={() => setEnablerFor(null)}>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {enablerFor.row.enablers.map((e, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setActiveEnabler(e)}
+                className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-2.5 py-2 text-left hover:bg-amber-50"
+              >
+                <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" />
+                <div className="min-w-0">
+                  <p className="text-[11.5px] font-medium leading-tight text-foreground">{e.label}</p>
+                  <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-muted-foreground">{e.description}</p>
+                </div>
+              </button>
             ))}
           </div>
-        </div>
+        </ModalShell>
       )}
+
+      {activeEnabler && (
+        <ModalShell
+          title={activeEnabler.label}
+          subtitle={activeEnabler.description}
+          onClose={() => setActiveEnabler(null)}
+        >
+          <ul className="divide-y divide-border rounded-xl border border-border">
+            {activeEnabler.files.map((f, i) => (
+              <li key={i} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                <div className="flex min-w-0 items-center gap-2">
+                  <FileText className="h-4 w-4 shrink-0 text-amber-700" />
+                  <div className="min-w-0">
+                    <p className="truncate text-[12px] font-medium text-foreground">{f.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{f.size}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => alert(`Demo file: ${f.name}\n(Dummy link — not connected to a real file.)`)}
+                  className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] hover:bg-muted"
+                >
+                  <Download className="h-3 w-3" /> Open
+                </button>
+              </li>
+            ))}
+          </ul>
+        </ModalShell>
+      )}
+
+      {/* Review popup */}
+      {reviewFor && (
+        <ModalShell title="Review post meeting" subtitle={reviewFor.title} onClose={() => setReviewFor(null)}>
+          <div className="space-y-2.5">
+            {reviewFor.questions.map((q) => (
+              <div key={q.id}>
+                <label className="mb-1 block text-[11px] font-medium text-foreground/80">{q.label}</label>
+                {q.type === "textarea" ? (
+                  <textarea
+                    value={reviews[reviewFor.key]?.[q.id] ?? ""}
+                    onChange={(e) => onReviewChange(reviewFor.key, q.id, e.target.value)}
+                    placeholder={q.placeholder}
+                    rows={2}
+                    className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
+                  />
+                ) : (
+                  <input
+                    type={q.type === "number" ? "number" : "text"}
+                    value={reviews[reviewFor.key]?.[q.id] ?? ""}
+                    onChange={(e) => onReviewChange(reviewFor.key, q.id, e.target.value)}
+                    placeholder={q.placeholder}
+                    className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button
+              size="sm"
+              onClick={() => setReviewFor(null)}
+              className="h-8 rounded-xl bg-navy text-xs text-navy-foreground hover:bg-navy/90"
+            >
+              Done
+            </Button>
+          </div>
+        </ModalShell>
+      )}
+    </div>
+  );
+}
+
+function ModalShell({
+  title,
+  subtitle,
+  onClose,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 sm:items-center" onClick={onClose}>
+      <div
+        className="w-full max-w-md overflow-hidden rounded-2xl bg-card shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+          <div className="min-w-0">
+            <p className="font-serif text-base text-foreground">{title}</p>
+            {subtitle && <p className="mt-0.5 text-[11px] text-muted-foreground">{subtitle}</p>}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="max-h-[70vh] overflow-y-auto px-4 py-3">{children}</div>
+      </div>
     </div>
   );
 }

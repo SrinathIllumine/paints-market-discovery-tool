@@ -119,6 +119,8 @@ type State = {
     starredByCluster: Record<string, string[]>;
     // post-engagement reviews: per-cluster, per-item-key (e.g. camp:{id}, group:contractors)
     reviewsByCluster: Record<string, Record<string, ReviewEntry>>;
+    // user-edited cluster-level value propositions (overrides defaults from engagementContent)
+    customValuePropsByCluster: Record<string, string[]>;
   };
   assessments: Record<string, ClusterAssessment>;
   unlockedStage: 1 | 2 | 3;
@@ -174,6 +176,7 @@ type Actions = {
   toggleSelectedCamp: (clusterId: string, campId: string) => void;
   toggleStarred: (clusterId: string, key: string) => void;
   setReview: (clusterId: string, itemKey: string, patch: ReviewEntry) => void;
+  setCustomValueProps: (clusterId: string, props: string[]) => void;
 };
 
 const emptyCluster = (): ClusterState => ({ jkShare: null, prospects: [], visited: false });
@@ -225,6 +228,7 @@ export const useAppStore = create<State & Actions>()(
         selectedCampsByCluster: {},
         starredByCluster: {},
         reviewsByCluster: {},
+        customValuePropsByCluster: {},
       },
       sales: { prospectStages: {}, prospectActivity: {}, seededClusters: {} },
 
@@ -627,10 +631,21 @@ export const useAppStore = create<State & Actions>()(
             },
           };
         }),
+
+      setCustomValueProps: (clusterId, props) =>
+        set((state) => ({
+          plan: {
+            ...state.plan,
+            customValuePropsByCluster: {
+              ...state.plan.customValuePropsByCluster,
+              [clusterId]: props,
+            },
+          },
+        })),
     }),
     // AFTER
     {
-      name: "sed.v13", // bump version to bust stale cache
+      name: "sed.v14", // bump version to bust stale cache
       merge: (persisted: unknown, current: State & Actions) => {
         const p = (persisted ?? {}) as Partial<State>;
         return {

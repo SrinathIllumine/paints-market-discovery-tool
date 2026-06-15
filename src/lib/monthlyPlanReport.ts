@@ -2,17 +2,23 @@ import jsPDF from "jspdf";
 import { getCluster } from "@/data/clusters";
 import type { ContactEntry } from "@/lib/strategyContent";
 
-type CustomerGroupOut = { id: string; label: string; pct: number; valueProps: string[] };
-type CampOut = { id: string; label: string; starred: boolean };
+type CustomerGroupOut = { id: string; label: string; pct: number };
+type CampOut = { id: string; label: string; starred: boolean; review?: Record<string, string> };
 type ContactOut = ContactEntry & { starred?: boolean };
 
 type Args = {
   focusClusterId: string;
+  valueProps: string[];
   customerGroups: CustomerGroupOut[];
   camps: CampOut[];
   contractors: ContactOut[];
   retailers: ContactOut[];
   stakeholders: ContactOut[];
+  groupReview?: {
+    contractors?: Record<string, string>;
+    retailers?: Record<string, string>;
+    stakeholders?: Record<string, string>;
+  };
 };
 
 function normalisePdfText(text: string): string {
@@ -28,11 +34,13 @@ function normalisePdfText(text: string): string {
 
 export function generateMonthlyEngagementPlanPdf({
   focusClusterId,
+  valueProps,
   customerGroups,
   camps,
   contractors,
   retailers,
   stakeholders,
+  groupReview,
 }: Args) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -98,60 +106,73 @@ export function generateMonthlyEngagementPlanPdf({
   y += 6;
 
   if (customerGroups.length > 0) {
-    heading("Value propositions by customer group");
-    for (const g of customerGroups) {
-      wrapped(`${g.label} (${g.pct}%)`, 0, true);
-      if (g.valueProps.length === 0) {
-        wrapped("(no value proposition picked)", 12);
-      } else {
-        for (const p of g.valueProps) wrapped(`- ${p}`, 12);
-      }
-      y += 4;
-    }
+    heading("Customer groups targeted");
+    for (const g of customerGroups) wrapped(`- ${g.label} (${g.pct}%)`, 0);
     y += 6;
   }
 
-  heading("Engagement approach");
+  if (valueProps.length > 0) {
+    heading("Value propositions");
+    for (const vp of valueProps) wrapped(`- ${vp}`, 0);
+    y += 6;
+  }
+
+  heading("Action plan");
 
   const starTag = (s: boolean) => (s ? " *" : "");
+  const reviewLine = (rev?: Record<string, string>) => {
+    if (!rev) return "";
+    const entries = Object.entries(rev).filter(([, v]) => (v ?? "").toString().trim());
+    if (entries.length === 0) return "";
+    return entries.map(([k, v]) => `${k}: ${v}`).join("; ");
+  };
 
-  // Camps
   if (camps.length > 0) {
     wrapped("Camps / events planned:", 0, true);
-    for (const c of camps) wrapped(`- ${c.label}${starTag(c.starred)}`, 12);
+    for (const c of camps) {
+      wrapped(`- ${c.label}${starTag(c.starred)}`, 12);
+      const r = reviewLine(c.review);
+      if (r) wrapped(`Review — ${r}`, 24);
+    }
     y += 4;
   }
 
-  // Contractors
   const validContractors = contractors.filter((c) => (c.name ?? "").trim());
   if (validContractors.length > 0) {
-    wrapped("Contractors to be converted:", 0, true);
+    const grpStar = validContractors.some((c) => c.starred);
+    wrapped(`Contractors to be converted${grpStar ? " *" : ""}:`, 0, true);
     for (const c of validContractors) {
       const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" - ");
-      wrapped(`- ${line}${starTag(!!c.starred)}`, 12);
+      wrapped(`- ${line}`, 12);
     }
+    const r = reviewLine(groupReview?.contractors);
+    if (r) wrapped(`Review — ${r}`, 12);
     y += 4;
   }
 
-  // Retailers
   const validRetailers = retailers.filter((c) => (c.name ?? "").trim());
   if (validRetailers.length > 0) {
-    wrapped("Retailers who can connect:", 0, true);
+    const grpStar = validRetailers.some((c) => c.starred);
+    wrapped(`Retailers who can connect${grpStar ? " *" : ""}:`, 0, true);
     for (const c of validRetailers) {
       const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" - ");
-      wrapped(`- ${line}${starTag(!!c.starred)}`, 12);
+      wrapped(`- ${line}`, 12);
     }
+    const r = reviewLine(groupReview?.retailers);
+    if (r) wrapped(`Review — ${r}`, 12);
     y += 4;
   }
 
-  // Stakeholders
   const validStakeholders = stakeholders.filter((c) => (c.name ?? "").trim());
   if (validStakeholders.length > 0) {
-    wrapped("Stakeholders to reach out directly:", 0, true);
+    const grpStar = validStakeholders.some((c) => c.starred);
+    wrapped(`Stakeholders to reach out directly${grpStar ? " *" : ""}:`, 0, true);
     for (const c of validStakeholders) {
       const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" - ");
-      wrapped(`- ${line}${starTag(!!c.starred)}`, 12);
+      wrapped(`- ${line}`, 12);
     }
+    const r = reviewLine(groupReview?.stakeholders);
+    if (r) wrapped(`Review — ${r}`, 12);
     y += 4;
   }
 
