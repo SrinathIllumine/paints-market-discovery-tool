@@ -82,6 +82,8 @@ export const EMPTY_STAGE_MAP: Record<string, SalesStage> = {};
 export type EventEstimate = { participants?: number; contractors?: number };
 export type PastEventFeedback = { attended?: number; leads?: number; challenges?: string };
 
+export type ReviewEntry = Record<string, string>;
+
 type State = {
   clusters: Record<string, ClusterState>;
   stakeholders: Record<string, Stakeholder[]>;
