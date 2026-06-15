@@ -313,7 +313,8 @@ function ReviewCard(
   </div>
 </button>
 
-      <div className="space-y-4 px-4 py-3">
+      {open && (
+  <div className="space-y-4 px-4 py-3">
         <div>
           <div className="mb-1.5 flex items-center gap-1.5">
             <Lightbulb className="h-3.5 w-3.5 text-amber-600" />
@@ -328,6 +329,7 @@ function ReviewCard(
             ))}
           </ul>
         </div>
+)}
 
         <div className="border-t border-border pt-3">
           <div className="mb-2 flex items-center gap-1.5">
