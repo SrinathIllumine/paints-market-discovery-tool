@@ -164,6 +164,11 @@ type Actions = {
   addProspectOutcome: (prospectId: string, outcome: string) => void;
   markProspectNotInterested: (clusterId: string, prospectId: string) => void;
   unlockStage: (n: 1 | 2 | 3) => void;
+
+  toggleCustomerGroup: (clusterId: string, groupId: string) => void;
+  toggleGroupValueProp: (clusterId: string, groupId: string, prop: string) => void;
+  toggleSelectedCamp: (clusterId: string, campId: string) => void;
+  toggleStarred: (clusterId: string, key: string) => void;
 };
 
 const emptyCluster = (): ClusterState => ({ jkShare: null, prospects: [], visited: false });
