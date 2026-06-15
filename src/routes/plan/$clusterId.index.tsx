@@ -66,9 +66,9 @@ declare global {
 
 /* ─── Recommended groups (2/3 of total flagged) ─── */
 function getRecommendedGroupIds(groups: { id: string; pct: number }[]): Set<string> {
-  const sorted = [...groups].sort((a, b) => b.pct - a.pct);
-  const count = Math.ceil((sorted.length * 2) / 3);
-  return new Set(sorted.slice(0, count).map((g) => g.id));
+  if (groups.length === 0) return new Set();
+  const avg = groups.reduce((sum, g) => sum + g.pct, 0) / groups.length;
+  return new Set(groups.filter((g) => g.pct >= avg).map((g) => g.id));
 }
 
 /* ─── Group detail points ─── */
