@@ -775,7 +775,7 @@ function GroupStarBlock({
           </div>
           <div className="divide-y divide-border px-4">
             {items.map((item, i) => (
-              <p key={i} className="py-2.5 text-[11px] text-muted-foreground">
+              <p key={i} className="py-2.5 text-sm text-foreground">
                 {item}
               </p>
             ))}
