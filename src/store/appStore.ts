@@ -110,6 +110,11 @@ type State = {
     // past-roadmap feedback per cluster + event id
     pastEventFeedbackByCluster: Record<string, Record<string, PastEventFeedback>>;
     roadmapCompletion: RoadmapCompletion;
+    // single-page engagement plan (per-cluster)
+    customerGroupsByCluster: Record<string, string[]>;
+    groupValuePropsByCluster: Record<string, Record<string, string[]>>;
+    selectedCampsByCluster: Record<string, string[]>;
+    starredByCluster: Record<string, string[]>;
   };
   assessments: Record<string, ClusterAssessment>;
   unlockedStage: 1 | 2 | 3;
