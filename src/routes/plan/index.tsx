@@ -54,9 +54,6 @@ function PlanScreen() {
     navigate({ to: "/plan/$clusterId", params: { clusterId } });
   };
 
-  const handleView = (clusterId: string) => {
-    navigate({ to: "/plan/$clusterId", params: { clusterId } });
-  };
 
   return (
     <AppShell
