@@ -31,11 +31,11 @@ function PlanClusterScreen() {
   const { clusterId } = Route.useParams();
   const navigate = useNavigate();
 
-  const customerGroups = useAppStore((s) => s.plan.customerGroupsByCluster[clusterId] ?? []);
-  const groupValueProps = useAppStore((s) => s.plan.groupValuePropsByCluster[clusterId] ?? {});
-  const selectedCamps = useAppStore((s) => s.plan.selectedCampsByCluster[clusterId] ?? []);
-  const starred = useAppStore((s) => s.plan.starredByCluster[clusterId] ?? []);
-  const strategyContacts = useAppStore((s) => s.plan.strategyContactsByCluster ?? {});
+  const customerGroups = useAppStore((s) => s.plan.customerGroupsByCluster[clusterId]) ?? EMPTY_ARR;
+  const groupValueProps = useAppStore((s) => s.plan.groupValuePropsByCluster[clusterId]) ?? EMPTY_OBJ;
+  const selectedCamps = useAppStore((s) => s.plan.selectedCampsByCluster[clusterId]) ?? EMPTY_ARR;
+  const starred = useAppStore((s) => s.plan.starredByCluster[clusterId]) ?? EMPTY_ARR;
+  const strategyContacts = useAppStore((s) => s.plan.strategyContactsByCluster) ?? EMPTY_OBJ;
 
   const toggleCustomerGroup = useAppStore((s) => s.toggleCustomerGroup);
   const toggleGroupValueProp = useAppStore((s) => s.toggleGroupValueProp);
