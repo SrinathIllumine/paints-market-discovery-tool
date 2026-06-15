@@ -68,7 +68,7 @@ const EMPTY_REC: Record<string, string[]> = {};
 const EMPTY_CONTACTS: ContactEntry[] = [];
 const EMPTY_SC: Record<string, Partial<Record<string, ContactEntry[]>>> = {};
 
-type Page = "hub" | "groups" | "valueprops" | "camps" | "contractors" | "retailers" | "stakeholders" | "actionplan";
+type Page = "hub" | "groups" | "valueprops" | "actions" | "camps" | "contractors" | "retailers" | "stakeholders" | "actionplan";
 
 declare global {
   interface Window {
@@ -128,21 +128,22 @@ function PlanClusterScreen() {
   const navigate = useNavigate();
 
   const customerGroups = useAppStore((s) => s.plan.customerGroupsByCluster[clusterId] ?? EMPTY_ARR);
-  const groupValueProps = useAppStore((s) => s.plan.groupValuePropsByCluster[clusterId] ?? EMPTY_REC);
   const selectedCamps = useAppStore((s) => s.plan.selectedCampsByCluster[clusterId] ?? EMPTY_ARR);
   const starred = useAppStore((s) => s.plan.starredByCluster[clusterId] ?? EMPTY_ARR);
   const strategyContacts = useAppStore((s) => s.plan.strategyContactsByCluster ?? EMPTY_SC);
+  const customValueProps = useAppStore((s) => s.plan.customValuePropsByCluster?.[clusterId]);
+  const reviews = useAppStore((s) => s.plan.reviewsByCluster[clusterId] ?? {});
 
   const toggleCustomerGroup = useAppStore((s) => s.toggleCustomerGroup);
-  const toggleGroupValueProp = useAppStore((s) => s.toggleGroupValueProp);
   const toggleSelectedCamp = useAppStore((s) => s.toggleSelectedCamp);
   const toggleStarred = useAppStore((s) => s.toggleStarred);
   const setStrategyContacts = useAppStore((s) => s.setStrategyContacts);
+  const setCustomValueProps = useAppStore((s) => s.setCustomValueProps);
+  const setReview = useAppStore((s) => s.setReview);
   const unlockStage = useAppStore((s) => s.unlockStage);
   const setMonthlyFocus = useAppStore((s) => s.setMonthlyFocus);
 
   const [page, setPage] = useState<Page>("hub");
-  const [q3Open, setQ3Open] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
 
@@ -219,34 +220,34 @@ function PlanClusterScreen() {
     );
   }
 
+  const valueProps = useMemo(
+    () => (customValueProps && customValueProps.length > 0 ? customValueProps : getClusterValueProps(clusterId)),
+    [clusterId, customValueProps],
+  );
+
   const handleGroupToggle = (groupId: string) => {
-    const isSelected = customerGroups.includes(groupId);
     toggleCustomerGroup(clusterId, groupId);
-    const props = getValuePropsForGroup(clusterId, groupId);
-    if (!props[0]) return;
-    const firstProp = props[0];
-    const currentProps = groupValueProps[groupId] ?? [];
-    if (!isSelected && !currentProps.includes(firstProp)) toggleGroupValueProp(clusterId, groupId, firstProp);
-    else if (isSelected && currentProps.includes(firstProp)) toggleGroupValueProp(clusterId, groupId, firstProp);
   };
 
   const handleGenerate = () => {
     generateMonthlyEngagementPlanPdf({
       focusClusterId: clusterId,
-      customerGroups: selectedGroupObjs.map((g) => ({
-        id: g.id,
-        label: g.label,
-        pct: g.pct,
-        valueProps: groupValueProps[g.id] ?? [],
-      })),
+      valueProps,
+      customerGroups: selectedGroupObjs.map((g) => ({ id: g.id, label: g.label, pct: g.pct })),
       camps: selectedCampObjs.map((c) => ({
         id: c.id,
         label: c.label,
         starred: isStarred(`camp:${c.id}`),
+        review: reviews[`camp:${c.id}`] ?? {},
       })),
       contractors: contractors.map((c) => ({ ...c, starred: isStarred("group:contractors") })),
       retailers: retailers.map((c) => ({ ...c, starred: isStarred("group:retailers") })),
       stakeholders: stakeholders.map((c) => ({ ...c, starred: isStarred("group:stakeholders") })),
+      groupReview: {
+        contractors: reviews["group:contractors"] ?? {},
+        retailers: reviews["group:retailers"] ?? {},
+        stakeholders: reviews["group:stakeholders"] ?? {},
+      },
     });
     setConfirmOpen(false);
     unlockStage(3);
@@ -316,56 +317,19 @@ function PlanClusterScreen() {
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </HubCard>
 
-            <div className="overflow-hidden rounded-2xl border border-border bg-card">
-              <button
-                type="button"
-                onClick={() => setQ3Open((o) => !o)}
-                className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
-              >
-                <HubIcon bg="bg-violet-50">
-                  <Bolt className="h-4 w-4 text-violet-700" />
-                </HubIcon>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">
-                    What actions will you take to engage with this cluster?
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">Camps, contractors, retailers, stakeholders</p>
-                </div>
-                {q3Open ? (
-                  <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                )}
-              </button>
-              {q3Open && (
-                <div className="divide-y divide-border border-t border-border bg-muted/30">
-                  <SubHubRow
-                    dot="bg-blue-600"
-                    label="Select the camps & events you are planning to conduct"
-                    badge={badge(selectedCamps.length)}
-                    onClick={() => goTo("camps")}
-                  />
-                  <SubHubRow
-                    dot="bg-green-700"
-                    label="List down the contractors you are going to convert"
-                    badge={badge(validContractors.length)}
-                    onClick={() => goTo("contractors")}
-                  />
-                  <SubHubRow
-                    dot="bg-amber-700"
-                    label={`List down the retailers who can connect you to ${cluster.name.toLowerCase()}`}
-                    badge={badge(validRetailers.length)}
-                    onClick={() => goTo("retailers")}
-                  />
-                  <SubHubRow
-                    dot="bg-red-800"
-                    label={`List down the stakeholders of ${cluster.name.toLowerCase()} you will meet directly`}
-                    badge={badge(validStakeholders.length)}
-                    onClick={() => goTo("stakeholders")}
-                  />
-                </div>
-              )}
-            </div>
+            <HubCard onClick={() => goTo("actions")}>
+              <HubIcon bg="bg-violet-50">
+                <Bolt className="h-4 w-4 text-violet-700" />
+              </HubIcon>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">
+                  What actions will you take to engage with this cluster?
+                </p>
+                <p className="text-[11px] text-muted-foreground">Camps, contractors, retailers, stakeholders</p>
+              </div>
+              {badge(selectedCamps.length + validContractors.length + validRetailers.length + validStakeholders.length)}
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </HubCard>
 
             <HubCard onClick={() => goTo("actionplan")}>
               <HubIcon bg="bg-purple-50">
@@ -389,95 +353,65 @@ function PlanClusterScreen() {
 
         {/* ── GROUPS ── */}
         {page === "groups" && (
-          <SubPage
-            title="Which customer groups you want to target?"
-            subtitle={`Select the customer groups within ${cluster.name} you plan to engage this quarter.`}
+          <GroupsPage
+            clusterName={cluster.name}
+            clusterId={clusterId}
+            groups={groups}
+            selected={customerGroups}
+            onToggle={handleGroupToggle}
+            groupPlaceNames={groupPlaceNames}
+            groupPlacesLoading={groupPlacesLoading}
             onBack={goHub}
-          >
-            <div className="space-y-3">
-              {groups.map((g) => {
-                const selected = customerGroups.includes(g.id);
-                const places = groupPlaceNames[g.id] ?? [];
-                const isLoading = groupPlacesLoading[g.id] ?? false;
-                return (
-                  <button
-                    key={g.id}
-                    type="button"
-                    onClick={() => handleGroupToggle(g.id)}
-                    className={cn(
-                      "w-full rounded-2xl border px-4 py-3 text-left transition-colors",
-                      selected ? "border-critical bg-critical/5" : "border-border bg-card",
-                    )}
-                  >
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <span className="font-serif text-sm text-foreground">{g.label}</span>
-                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground">
-                        {g.pct}%
-                      </span>
-                    </div>
-
-                    {isLoading && (
-                      <div className="flex items-center gap-2">
-                        <div className="h-5 w-20 animate-pulse rounded-full bg-muted" />
-                        <div className="h-5 w-24 animate-pulse rounded-full bg-muted" />
-                        <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
-                      </div>
-                    )}
-
-                    {!isLoading && places.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {places.slice(0, 3).map((name) => (
-                          <span
-                            key={name}
-                            className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground"
-                          >
-                            <MapPin className="h-2.5 w-2.5 shrink-0" />
-                            {name}
-                          </span>
-                        ))}
-                        {places.length > 3 && (
-                          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground">
-                            +{places.length - 3} more
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {!isLoading && places.length === 0 && groupPlaceNames[g.id] !== undefined && (
-                      <p className="text-[10px] text-muted-foreground">No results found nearby</p>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </SubPage>
+          />
         )}
 
         {/* ── VALUE PROPS ── */}
         {page === "valueprops" && (
+          <ValuePropsPage
+            clusterName={cluster.name}
+            valueProps={valueProps}
+            onSave={(props) => setCustomValueProps(clusterId, props)}
+            onBack={goHub}
+          />
+        )}
+
+        {/* ── ACTIONS HUB (camps/contractors/retailers/stakeholders) ── */}
+        {page === "actions" && (
           <SubPage
-            title="Your value propositions"
-            subtitle="One tailored proposition for each group you selected."
+            title="What actions will you take?"
+            subtitle="Tick the engagement levers you'll pull this quarter. Tap one to fill in details."
             onBack={goHub}
           >
-            {selectedGroupObjs.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Go back and select customer groups first.</p>
-            ) : (
-              <div className="space-y-3">
-                {selectedGroupObjs.map((g) => {
-                  const prop = (groupValueProps[g.id] ?? [])[0] ?? getValuePropsForGroup(clusterId, g.id)[0] ?? "";
-                  return (
-                    <div key={g.id} className="rounded-2xl border border-border bg-card px-4 py-3">
-                      <div className="mb-2 flex items-center gap-2">
-                        <div className="h-2 w-2 shrink-0 rounded-full bg-critical" />
-                        <p className="font-serif text-sm text-foreground">{g.label}</p>
-                      </div>
-                      <p className="pl-4 text-sm leading-relaxed text-muted-foreground">{prop}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <div className="space-y-2.5">
+              <ActionToggleRow
+                icon={<CalendarIcon />}
+                iconBg="bg-blue-50"
+                label="Camps & events you are planning to conduct"
+                count={selectedCamps.length}
+                onOpen={() => goTo("camps")}
+              />
+              <ActionToggleRow
+                icon={<HardHat className="h-4 w-4 text-green-700" />}
+                iconBg="bg-green-50"
+                label="Contractors you are going to convert"
+                count={validContractors.length}
+                onOpen={() => goTo("contractors")}
+              />
+              <ActionToggleRow
+                icon={<Building2 className="h-4 w-4 text-amber-700" />}
+                iconBg="bg-amber-50"
+                label={`Retailers who can connect you to ${cluster.name.toLowerCase()}`}
+                count={validRetailers.length}
+                onOpen={() => goTo("retailers")}
+              />
+              <ActionToggleRow
+                icon={<UserCheck className="h-4 w-4 text-red-800" />}
+                iconBg="bg-red-50"
+                label={`Stakeholders of ${cluster.name.toLowerCase()} you will meet directly`}
+                count={validStakeholders.length}
+                onOpen={() => goTo("stakeholders")}
+              />
+            </div>
           </SubPage>
         )}
 
@@ -567,7 +501,7 @@ function PlanClusterScreen() {
         {page === "actionplan" && (
           <SubPage
             title="Your action plan"
-            subtitle="Star items or groups to prioritize for this quarter."
+            subtitle="Star priorities. Open enablers to prep. Review once a starred item is done."
             onBack={goHub}
             footer={
               <Button
@@ -578,8 +512,7 @@ function PlanClusterScreen() {
               </Button>
             }
           >
-            {selectedGroupObjs.length === 0 &&
-            selectedCampObjs.length === 0 &&
+            {selectedCampObjs.length === 0 &&
             validContractors.length === 0 &&
             validRetailers.length === 0 &&
             validStakeholders.length === 0 ? (
@@ -587,97 +520,52 @@ function PlanClusterScreen() {
                 Make selections in the other sections to see your action plan here.
               </p>
             ) : (
-              <div className="space-y-6">
-                {selectedGroupObjs.length > 0 && (
-                  <div>
-                    <SectionLabel>Customer groups selected</SectionLabel>
-                    <div className="space-y-2">
-                      {selectedGroupObjs.map((g) => (
-                        <div key={g.id} className="rounded-2xl border border-border bg-card px-4 py-3">
-                          <p className="font-serif text-sm text-foreground">{g.label}</p>
-                          <p className="mt-0.5 text-sm text-muted-foreground">
-                            {(groupValueProps[g.id] ?? [])[0] ?? getValuePropsForGroup(clusterId, g.id)[0] ?? ""}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedCampObjs.length > 0 && (
-                  <div>
-                    <SectionLabel>Camps / events — star each to prioritize</SectionLabel>
-                    <div className="space-y-2">
-                      {selectedCampObjs.map((c) => (
-                        <div
-                          key={c.id}
-                          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3"
-                        >
-                          <div className="flex-1">
-                            <p className="font-serif text-sm text-foreground">{c.label}</p>
-                            <p className="text-[11px] text-muted-foreground">{c.description}</p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => toggleStarred(clusterId, `camp:${c.id}`)}
-                            className="shrink-0 rounded-lg p-1.5 hover:bg-muted/40"
-                            aria-label="Prioritize"
-                          >
-                            <Star
-                              className={cn(
-                                "h-4 w-4",
-                                isStarred(`camp:${c.id}`) ? "fill-amber-400 text-amber-400" : "text-muted-foreground",
-                              )}
-                            />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <GroupStarBlock
-                  heading="Contractors — star group to prioritize"
-                  icon={<HardHat className="h-4 w-4 text-green-700" />}
-                  iconBg="bg-green-50"
-                  label="Contractors to convert"
-                  count={validContractors.length}
-                  emptyText="No contractors added yet."
-                  items={validContractors.map((c) =>
-                    [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · "),
-                  )}
-                  starred={isStarred("group:contractors")}
-                  onToggleStar={() => toggleStarred(clusterId, "group:contractors")}
-                />
-
-                <GroupStarBlock
-                  heading="Retailers — star group to prioritize"
-                  icon={<Building2 className="h-4 w-4 text-amber-700" />}
-                  iconBg="bg-amber-50"
-                  label="Retailers who can connect"
-                  count={validRetailers.length}
-                  emptyText="No retailers added yet."
-                  items={validRetailers.map((c) =>
-                    [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · "),
-                  )}
-                  starred={isStarred("group:retailers")}
-                  onToggleStar={() => toggleStarred(clusterId, "group:retailers")}
-                />
-
-                <GroupStarBlock
-                  heading="Stakeholders — star group to prioritize"
-                  icon={<UserCheck className="h-4 w-4 text-red-800" />}
-                  iconBg="bg-red-50"
-                  label="Stakeholders to meet directly"
-                  count={validStakeholders.length}
-                  emptyText="No stakeholders added yet."
-                  items={validStakeholders.map((c) =>
-                    [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · "),
-                  )}
-                  starred={isStarred("group:stakeholders")}
-                  onToggleStar={() => toggleStarred(clusterId, "group:stakeholders")}
-                />
-              </div>
+              <ActionPlanReport
+                items={[
+                  ...selectedCampObjs.map((c) => ({
+                    key: `camp:${c.id}`,
+                    section: "Events & camps",
+                    title: c.label,
+                    subtitle: c.description,
+                    enablers: EVENT_ENABLERS,
+                    questions: EVENT_QUESTIONS,
+                  })),
+                  ...(validContractors.length > 0
+                    ? [{
+                        key: "group:contractors",
+                        section: "Contractors",
+                        title: `${validContractors.length} contractor${validContractors.length > 1 ? "s" : ""} to convert`,
+                        subtitle: validContractors.map((c) => c.name).join(", "),
+                        enablers: CONTRACTOR_ENABLERS,
+                        questions: CONTRACTOR_QUESTIONS,
+                      }]
+                    : []),
+                  ...(validRetailers.length > 0
+                    ? [{
+                        key: "group:retailers",
+                        section: "Retailers",
+                        title: `${validRetailers.length} retailer${validRetailers.length > 1 ? "s" : ""} to engage`,
+                        subtitle: validRetailers.map((c) => c.name).join(", "),
+                        enablers: RETAILER_ENABLERS,
+                        questions: RETAILER_QUESTIONS,
+                      }]
+                    : []),
+                  ...(validStakeholders.length > 0
+                    ? [{
+                        key: "group:stakeholders",
+                        section: "Stakeholders",
+                        title: `${validStakeholders.length} stakeholder${validStakeholders.length > 1 ? "s" : ""} to meet`,
+                        subtitle: validStakeholders.map((c) => c.name).join(", "),
+                        enablers: STAKEHOLDER_ENABLERS,
+                        questions: STAKEHOLDER_QUESTIONS,
+                      }]
+                    : []),
+                ]}
+                starredKeys={starred}
+                reviews={reviews}
+                onToggleStar={(key) => toggleStarred(clusterId, key)}
+                onReviewChange={(key, fid, v) => setReview(clusterId, key, { [fid]: v })}
+              />
             )}
           </SubPage>
         )}
