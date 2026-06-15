@@ -422,7 +422,7 @@ function PlanClusterScreen() {
                         <div className="h-2 w-2 shrink-0 rounded-full bg-critical" />
                         <p className="font-serif text-sm text-foreground">{g.label}</p>
                       </div>
-                      <p className="pl-4 text-[11px] leading-relaxed text-muted-foreground">{prop}</p>
+                      <p className="pl-4 text-sm leading-relaxed text-muted-foreground">{prop}</p>
                     </div>
                   );
                 })}
