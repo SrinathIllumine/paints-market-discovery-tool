@@ -15,7 +15,25 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { BarChart2, ChevronDown, ChevronUp, FileDown, Plus, Star, Trash2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  BarChart2,
+  Bolt,
+  Building2,
+  CalendarDays,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  FileDown,
+  HardHat,
+  ListChecks,
+  Plus,
+  Star,
+  Trash2,
+  UserCheck,
+  Users,
+  X,
+} from "lucide-react";
 import { generateMonthlyEngagementPlanPdf } from "@/lib/monthlyPlanReport";
 import { getCustomerGroups, getValuePropsForGroup, getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
 
@@ -27,11 +45,59 @@ const CONTRACTOR_BUCKET = "CONTRACTOR" as const;
 const RETAILER_BUCKET = "RETAILER" as const;
 const STAKEHOLDER_BUCKET = "D2C" as const;
 
-// Stable empty references — prevents Zustand infinite re-render (React error #185)
+// Stable empty refs — prevents React #185 infinite re-render
 const EMPTY_ARR: string[] = [];
 const EMPTY_REC: Record<string, string[]> = {};
 const EMPTY_CONTACTS: ContactEntry[] = [];
 const EMPTY_SC: Record<string, Partial<Record<string, ContactEntry[]>>> = {};
+
+type Page = "hub" | "groups" | "valueprops" | "camps" | "contractors" | "retailers" | "stakeholders" | "actionplan";
+
+// Example institutions per cluster + group shown on the customer groups page
+const EXAMPLE_INSTITUTIONS: Record<string, Record<string, string[]>> = {
+  schools: {
+    "large-private": ["DPS Nerul", "Orchids International", "Podar International", "Ryan International"],
+    "small-private": ["Holy Cross School", "St. Anthony's High School", "New English School", "Saraswati Vidyalaya"],
+    international: ["Pathways World School", "Hiranandani Foundation School", "EuroSchool Navi Mumbai"],
+    "pre-schools": ["EuroKids Panvel", "Kidzee", "Podar Jumbo Kids", "Little Millennium"],
+    government: ["Zilla Parishad School No. 1", "Kendriya Vidyalaya Panvel", "Municipal School Panvel"],
+  },
+  hospitals: {
+    "multi-specialty": ["Reliance Hospital", "Apollo Spectra Navi Mumbai", "Fortis Hiranandani"],
+    "small-hospitals": ["Panvel Municipal Hospital", "City Care Hospital", "Life Care Hospital"],
+    "nursing-homes": ["Healing Touch Nursing Home", "Medicare Nursing Home", "Sunrise Nursing Home"],
+    "specialty-clinics": ["Panvel Eye Care", "Orthopedic Speciality Clinic", "Cardiology Clinic Panvel"],
+    "government-hospitals": ["Civil Hospital Panvel", "District Hospital Raigad"],
+  },
+  "mid-apartments": {
+    "premium-society": ["Hiranandani Estate", "Lodha Palava", "Rustomjee Urbania"],
+    "mid-society": ["Arihant Enclave", "Shree Ganesh CHS", "Siddharth Nagar CHS"],
+    "budget-society": ["Ganesh CHS Panvel", "Shivaji Nagar CHS", "Om Sai CHS"],
+    "redev-society": ["Navi Mumbai Redevelopment CHS", "Old Panvel CHS Redevelopment"],
+  },
+  midc: {
+    "large-mfg": ["Reliance Industries Taloja", "BPCL Navi Mumbai", "Hindustan Petroleum"],
+    "mid-mfg": ["Balaji Industries", "Supreme Industries", "Pidilite Taloja"],
+    "small-workshops": ["Panvel Engineering Works", "Sai Industries", "Vinayak Engineering"],
+    "warehouse-units": ["Mahindra Logistics Park", "DHL Warehouse Panvel", "Blue Dart Hub"],
+  },
+  restaurants: {
+    chains: ["McDonald's Panvel", "Subway Panvel", "Domino's Kharghar"],
+    "premium-standalone": ["Mainland China Navi Mumbai", "The Bohri Kitchen", "Spice Garden"],
+    "casual-dining": ["Café Coffee Day Panvel", "Barista Kharghar", "Chaayos"],
+    qsr: ["Biryani By Kilo", "Faasos", "Behrouz Biryani"],
+  },
+  hotels: {
+    "five-star": ["Novotel Navi Mumbai", "Marriott Courtyard Navi Mumbai"],
+    "three-star": ["Hotel Woodlands Panvel", "Hotel Sai Palace", "Hotel Residency"],
+    budget: ["Hotel Saffron Panvel", "Hotel Atithi", "Hotel Swagat"],
+    boutique: ["The Hutment", "Hotel New Comfort", "Nest Boutique Panvel"],
+  },
+};
+
+function getExampleInstitutions(clusterId: string, groupId: string): string[] {
+  return EXAMPLE_INSTITUTIONS[clusterId]?.[groupId] ?? [];
+}
 
 function PlanClusterScreen() {
   const { clusterId } = Route.useParams();
@@ -51,15 +117,10 @@ function PlanClusterScreen() {
   const unlockStage = useAppStore((s) => s.unlockStage);
   const setMonthlyFocus = useAppStore((s) => s.setMonthlyFocus);
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [chartOpen, setChartOpen] = useState(false);
-  const [q1Open, setQ1Open] = useState(false);
-  const [q2Open, setQ2Open] = useState(false);
+  const [page, setPage] = useState<Page>("hub");
   const [q3Open, setQ3Open] = useState(false);
-  const [campsOpen, setCampsOpen] = useState(false);
-  const [contractOpen, setContractOpen] = useState(false);
-  const [retailOpen, setRetailOpen] = useState(false);
-  const [stakeOpen, setStakeOpen] = useState(false);
+  const [chartOpen, setChartOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const cluster = useMemo(() => {
     try {
@@ -91,6 +152,12 @@ function PlanClusterScreen() {
   const retailers = strategyContacts[clusterId]?.[RETAILER_BUCKET] ?? EMPTY_CONTACTS;
   const stakeholders = strategyContacts[clusterId]?.[STAKEHOLDER_BUCKET] ?? EMPTY_CONTACTS;
 
+  const validContractors = contractors.filter((c) => (c.name ?? "").trim());
+  const validRetailers = retailers.filter((c) => (c.name ?? "").trim());
+  const validStakeholders = stakeholders.filter((c) => (c.name ?? "").trim());
+  const selectedCampObjs = camps.filter((c) => selectedCamps.includes(c.id));
+  const selectedGroupObjs = groups.filter((g) => customerGroups.includes(g.id));
+
   const isStarred = (key: string) => starred.includes(key);
 
   if (!cluster) {
@@ -106,296 +173,454 @@ function PlanClusterScreen() {
     );
   }
 
+  // Auto-assign first value prop when toggling a group
+  const handleGroupToggle = (groupId: string) => {
+    const isSelected = customerGroups.includes(groupId);
+    toggleCustomerGroup(clusterId, groupId);
+    const props = getValuePropsForGroup(clusterId, groupId);
+    if (!props[0]) return;
+    const firstProp = props[0];
+    const currentProps = groupValueProps[groupId] ?? [];
+    if (!isSelected && !currentProps.includes(firstProp)) {
+      toggleGroupValueProp(clusterId, groupId, firstProp);
+    } else if (isSelected && currentProps.includes(firstProp)) {
+      toggleGroupValueProp(clusterId, groupId, firstProp);
+    }
+  };
+
   const handleGenerate = () => {
     generateMonthlyEngagementPlanPdf({
       focusClusterId: clusterId,
-      customerGroups: groups
-        .filter((g) => customerGroups.includes(g.id))
-        .map((g) => ({
-          id: g.id,
-          label: g.label,
-          pct: g.pct,
-          valueProps: groupValueProps[g.id] ?? [],
-        })),
-      camps: camps
-        .filter((c) => selectedCamps.includes(c.id))
-        .map((c) => ({ id: c.id, label: c.label, starred: isStarred(`camp:${c.id}`) })),
-      contractors: contractors.map((c) => ({ ...c, starred: isStarred(`contractor:${c.id}`) })),
-      retailers: retailers.map((c) => ({ ...c, starred: isStarred(`retailer:${c.id}`) })),
-      stakeholders: stakeholders.map((c) => ({ ...c, starred: isStarred(`stakeholder:${c.id}`) })),
+      customerGroups: selectedGroupObjs.map((g) => ({
+        id: g.id,
+        label: g.label,
+        pct: g.pct,
+        valueProps: groupValueProps[g.id] ?? [],
+      })),
+      camps: selectedCampObjs.map((c) => ({
+        id: c.id,
+        label: c.label,
+        starred: isStarred(`camp:${c.id}`),
+      })),
+      contractors: contractors.map((c) => ({ ...c, starred: isStarred("group:contractors") })),
+      retailers: retailers.map((c) => ({ ...c, starred: isStarred("group:retailers") })),
+      stakeholders: stakeholders.map((c) => ({ ...c, starred: isStarred("group:stakeholders") })),
     });
     setConfirmOpen(false);
     unlockStage(3);
     setMonthlyFocus(clusterId);
   };
 
-  const selectedCampObjs = camps.filter((c) => selectedCamps.includes(c.id));
-  const selectedGroupObjs = groups.filter((g) => customerGroups.includes(g.id));
-  const validContractors = contractors.filter((c) => (c.name ?? "").trim());
-  const validRetailers = retailers.filter((c) => (c.name ?? "").trim());
-  const validStakeholders = stakeholders.filter((c) => (c.name ?? "").trim());
+  const goTo = (p: Page) => setPage(p);
+  const goHub = () => setPage("hub");
+
+  // Badge helpers
+  const badge = (count: number) =>
+    count > 0 ? (
+      <span className="shrink-0 rounded-full bg-green-50 px-2 py-0.5 text-[9px] font-medium text-green-700">
+        {count} added
+      </span>
+    ) : (
+      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground">
+        None yet
+      </span>
+    );
 
   return (
     <AppShell
       bottom={<BottomNav />}
       header={<StageHeader eyebrow="CLUSTER ENGAGEMENT PLAN" title="Cluster Engagement Plan" backTo="/plan" />}
     >
-      <div className="space-y-4 px-4 py-5 pb-24">
-        {/* Title */}
-        <div>
-          <h2 className="font-serif text-xl leading-tight text-foreground">
-            Cluster: <span className="text-critical">{cluster.name}</span>
-          </h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">Design your quarterly engagement plan on one page</p>
-        </div>
+      <div className="flex min-h-full flex-col px-4 py-5 pb-24">
+        {/* ── HUB ── */}
+        {page === "hub" && (
+          <div className="flex flex-col gap-4">
+            <div>
+              <h2 className="font-serif text-xl leading-tight text-foreground">
+                Cluster: <span className="text-critical">{cluster.name}</span>
+              </h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">Tap any question to fill it in.</p>
+            </div>
 
-        {/* Question 1 */}
-        <Accordion
-          open={q1Open}
-          onToggle={() => setQ1Open((o) => !o)}
-          title={`What is your value proposition for ${cluster.name.toLowerCase()}?`}
-        >
-          {/* Insights */}
-          <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-blue-700">Insights</p>
-                <ul className="space-y-1 text-[11px] leading-relaxed text-blue-900">
-                  <li>• Vacation windows (Apr–Jun, Oct) drive 70%+ of repaint decisions</li>
-                  <li>• Small private schools are the highest-volume segment (35%)</li>
-                  <li>• Committee approval needed — contractor + trustee connect works best</li>
-                </ul>
+            {/* Q1 */}
+            <HubCard onClick={() => goTo("groups")}>
+              <HubIcon bg="bg-red-50">
+                <Users className="h-4 w-4 text-critical" />
+              </HubIcon>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">Who are you targeting?</p>
+                <p className="text-[11px] text-muted-foreground">Select your customer groups</p>
               </div>
+              {badge(customerGroups.length)}
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </HubCard>
+
+            {/* Q2 */}
+            <HubCard onClick={() => goTo("valueprops")}>
+              <HubIcon bg="bg-blue-50">
+                <BarChart2 className="h-4 w-4 text-blue-700" />
+              </HubIcon>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">What is your value proposition?</p>
+                <p className="text-[11px] text-muted-foreground">One proposition per selected group</p>
+              </div>
+              {customerGroups.length > 0 ? (
+                <span className="shrink-0 rounded-full bg-green-50 px-2 py-0.5 text-[9px] font-medium text-green-700">
+                  {customerGroups.length} ready
+                </span>
+              ) : (
+                <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground">
+                  Select groups first
+                </span>
+              )}
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </HubCard>
+
+            {/* Q3 — expandable */}
+            <div className="overflow-hidden rounded-2xl border border-border bg-card">
               <button
                 type="button"
-                onClick={() => setChartOpen(true)}
-                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-blue-300 bg-white px-2.5 py-1.5 text-[10px] font-medium text-blue-700"
+                onClick={() => setQ3Open((o) => !o)}
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
               >
-                <BarChart2 className="h-3 w-3" />
-                Chart
+                <HubIcon bg="bg-violet-50">
+                  <Bolt className="h-4 w-4 text-violet-700" />
+                </HubIcon>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">What actions will you take to engage?</p>
+                  <p className="text-[11px] text-muted-foreground">Camps, contractors, retailers, stakeholders</p>
+                </div>
+                {q3Open ? (
+                  <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                )}
               </button>
+              {q3Open && (
+                <div className="divide-y divide-border border-t border-border bg-muted/30">
+                  <SubHubRow
+                    dot="bg-blue-600"
+                    label="Camps & events you are planning"
+                    badge={badge(selectedCamps.length)}
+                    onClick={() => goTo("camps")}
+                  />
+                  <SubHubRow
+                    dot="bg-green-700"
+                    label="Contractors you are going to convert"
+                    badge={badge(validContractors.length)}
+                    onClick={() => goTo("contractors")}
+                  />
+                  <SubHubRow
+                    dot="bg-amber-700"
+                    label="Retailers who can connect you to {cluster}"
+                    label2={`Retailers who can connect you to ${cluster.name.toLowerCase()}`}
+                    badge={badge(validRetailers.length)}
+                    onClick={() => goTo("retailers")}
+                  />
+                  <SubHubRow
+                    dot="bg-red-800"
+                    label={`Stakeholders of ${cluster.name.toLowerCase()} you will meet directly`}
+                    badge={badge(validStakeholders.length)}
+                    onClick={() => goTo("stakeholders")}
+                  />
+                </div>
+              )}
             </div>
-          </div>
 
-          {/* Customer group cards */}
-          <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Select customer groups — tap a card to choose
-          </p>
-          <div className="space-y-2.5">
-            {groups.map((g) => {
-              const selected = customerGroups.includes(g.id);
-              const props = getValuePropsForGroup(clusterId, g.id);
-              const valueProp = props[0] ?? "";
-              return (
-                <button
-                  key={g.id}
-                  type="button"
-                  onClick={() => {
-                    toggleCustomerGroup(clusterId, g.id);
-                    if (props[0]) toggleGroupValueProp(clusterId, g.id, props[0]);
-                  }}
-                  className={cn(
-                    "w-full rounded-xl border px-3 py-2.5 text-left transition-colors",
-                    selected ? "border-critical bg-critical/5" : "border-border bg-card",
-                  )}
-                >
-                  <div className="mb-1 flex items-center justify-between gap-2">
-                    <span className="font-serif text-sm text-foreground">{g.label}</span>
-                    <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground">
-                      {g.pct}%
-                    </span>
-                  </div>
-                  <p className="text-[11px] leading-relaxed text-muted-foreground">{valueProp}</p>
-                </button>
-              );
-            })}
-          </div>
-        </Accordion>
+            {/* Q4 */}
+            <HubCard onClick={() => goTo("actionplan")}>
+              <HubIcon bg="bg-purple-50">
+                <ListChecks className="h-4 w-4 text-purple-700" />
+              </HubIcon>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">Create your action plan</p>
+                <p className="text-[11px] text-muted-foreground">Star your priorities for this quarter</p>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </HubCard>
 
-        {/* Question 2 */}
-        <Accordion
-          open={q2Open}
-          onToggle={() => setQ2Open((o) => !o)}
-          title="What actions are you doing to engage with this community?"
-        >
-          <div className="space-y-2.5">
-            {/* Camps */}
-            <SubAccordion
-              open={campsOpen}
-              onToggle={() => setCampsOpen((o) => !o)}
-              title="Camps & events with the community"
+            <Button
+              onClick={() => setConfirmOpen(true)}
+              className="h-12 w-full gap-2 bg-navy font-serif text-base text-navy-foreground hover:bg-navy/90"
             >
-              <div className="space-y-2">
-                {camps.map((c) => {
-                  const on = selectedCamps.includes(c.id);
-                  return (
-                    <label
-                      key={c.id}
-                      className={cn(
-                        "flex cursor-pointer items-start gap-2.5 rounded-xl border px-3 py-2.5",
-                        on ? "border-critical bg-critical/5" : "border-border bg-card",
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={on}
-                        onChange={() => toggleSelectedCamp(clusterId, c.id)}
-                        className="mt-0.5 h-4 w-4 shrink-0 accent-critical"
-                      />
-                      <span>
-                        <span className="block text-sm font-medium text-foreground">{c.label}</span>
-                        <span className="mt-0.5 block text-[11px] text-muted-foreground">{c.description}</span>
+              <FileDown className="h-4 w-4" /> Generate quarterly plan
+            </Button>
+          </div>
+        )}
+
+        {/* ── GROUPS ── */}
+        {page === "groups" && (
+          <SubPage
+            title="Who are you targeting?"
+            subtitle={`Select the customer groups within ${cluster.name} you plan to engage this quarter.`}
+            onBack={goHub}
+          >
+            <div className="space-y-3">
+              {groups.map((g) => {
+                const selected = customerGroups.includes(g.id);
+                const examples = getExampleInstitutions(clusterId, g.id);
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => handleGroupToggle(g.id)}
+                    className={cn(
+                      "w-full rounded-2xl border px-4 py-3 text-left transition-colors",
+                      selected ? "border-critical bg-critical/5" : "border-border bg-card",
+                    )}
+                  >
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      <span className="font-serif text-sm text-foreground">{g.label}</span>
+                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground">
+                        {g.pct}%
                       </span>
-                    </label>
+                    </div>
+                    {examples.length > 0 && (
+                      <p className="text-[11px] leading-relaxed text-muted-foreground">{examples.join(", ")}</p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </SubPage>
+        )}
+
+        {/* ── VALUE PROPS ── */}
+        {page === "valueprops" && (
+          <SubPage
+            title="Your value propositions"
+            subtitle="One tailored proposition for each group you selected."
+            onBack={goHub}
+          >
+            {selectedGroupObjs.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Go back and select customer groups first.</p>
+            ) : (
+              <div className="space-y-3">
+                {selectedGroupObjs.map((g) => {
+                  const prop = (groupValueProps[g.id] ?? [])[0] ?? getValuePropsForGroup(clusterId, g.id)[0] ?? "";
+                  return (
+                    <div key={g.id} className="rounded-2xl border border-border bg-card px-4 py-3">
+                      <div className="mb-2 flex items-center gap-2">
+                        <div className="h-2 w-2 shrink-0 rounded-full bg-critical" />
+                        <p className="font-serif text-sm text-foreground">{g.label}</p>
+                      </div>
+                      <p className="pl-4 text-[11px] leading-relaxed text-muted-foreground">{prop}</p>
+                    </div>
                   );
                 })}
               </div>
-            </SubAccordion>
+            )}
+          </SubPage>
+        )}
 
-            {/* Contractors */}
-            <SubAccordion
-              open={contractOpen}
-              onToggle={() => setContractOpen((o) => !o)}
-              title="Contractors to reach out"
-            >
-              <ContactTable
-                emptyHint="Add contractors you plan to engage."
-                contacts={contractors}
-                onChange={(list) => setStrategyContacts(clusterId, CONTRACTOR_BUCKET, list)}
-              />
-            </SubAccordion>
-
-            {/* Retailers */}
-            <SubAccordion
-              open={retailOpen}
-              onToggle={() => setRetailOpen((o) => !o)}
-              title="Retailers who can connect to cluster"
-            >
-              <ContactTable
-                emptyHint="Add retailers who can introduce you to the cluster."
-                contacts={retailers}
-                onChange={(list) => setStrategyContacts(clusterId, RETAILER_BUCKET, list)}
-              />
-            </SubAccordion>
-
-            {/* Stakeholders */}
-            <SubAccordion open={stakeOpen} onToggle={() => setStakeOpen((o) => !o)} title="Direct stakeholder outreach">
-              <ContactTable
-                emptyHint="Add stakeholders / decision-makers you plan to meet directly."
-                contacts={stakeholders}
-                onChange={(list) => setStrategyContacts(clusterId, STAKEHOLDER_BUCKET, list)}
-              />
-            </SubAccordion>
-          </div>
-        </Accordion>
-
-        {/* Action plan */}
-        <Accordion open={q3Open} onToggle={() => setQ3Open((o) => !o)} title="Your action plan">
-          {selectedGroupObjs.length === 0 &&
-          selectedCampObjs.length === 0 &&
-          validContractors.length === 0 &&
-          validRetailers.length === 0 &&
-          validStakeholders.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Make selections above to see your action plan here.</p>
-          ) : (
-            <div className="space-y-5">
-              {/* Customer groups — read only */}
-              {selectedGroupObjs.length > 0 && (
-                <div>
-                  <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    Customer groups selected
-                  </p>
-                  <div className="space-y-1.5">
-                    {selectedGroupObjs.map((g) => (
-                      <div key={g.id} className="rounded-xl border border-border bg-card px-3 py-2">
-                        <p className="font-serif text-sm text-foreground">{g.label}</p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {(groupValueProps[g.id] ?? [])[0] ?? "No value proposition selected"}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Camps — starrable */}
-              {selectedCampObjs.length > 0 && (
-                <StarSection heading="Camps / events — star to prioritize">
-                  {selectedCampObjs.map((c) => (
-                    <StarRow
-                      key={c.id}
-                      title={c.label}
-                      subtitle={c.description}
-                      starred={isStarred(`camp:${c.id}`)}
-                      onToggle={() => toggleStarred(clusterId, `camp:${c.id}`)}
+        {/* ── CAMPS ── */}
+        {page === "camps" && (
+          <SubPage
+            title="Camps & events you are planning"
+            subtitle={`Select the camps or events you're conducting with ${cluster.name.toLowerCase()} this quarter.`}
+            onBack={goHub}
+          >
+            <div className="space-y-2.5">
+              {camps.map((c) => {
+                const on = selectedCamps.includes(c.id);
+                return (
+                  <label
+                    key={c.id}
+                    className={cn(
+                      "flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3",
+                      on ? "border-critical bg-critical/5" : "border-border bg-card",
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={() => toggleSelectedCamp(clusterId, c.id)}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-critical"
                     />
-                  ))}
-                </StarSection>
-              )}
-
-              {/* Contractors — starrable */}
-              <StarSection heading="Contractors — star to prioritize">
-                {validContractors.length === 0 ? (
-                  <p className="text-[11px] text-muted-foreground">No contractors added yet.</p>
-                ) : (
-                  validContractors.map((c) => (
-                    <StarRow
-                      key={c.id}
-                      title={c.name}
-                      subtitle={[c.phone, c.area, c.brandPreference].filter(Boolean).join(" · ")}
-                      starred={isStarred(`contractor:${c.id}`)}
-                      onToggle={() => toggleStarred(clusterId, `contractor:${c.id}`)}
-                    />
-                  ))
-                )}
-              </StarSection>
-
-              {/* Retailers — starrable */}
-              <StarSection heading="Retailers — star to prioritize">
-                {validRetailers.length === 0 ? (
-                  <p className="text-[11px] text-muted-foreground">No retailers added yet.</p>
-                ) : (
-                  validRetailers.map((c) => (
-                    <StarRow
-                      key={c.id}
-                      title={c.name}
-                      subtitle={[c.phone, c.area, c.brandPreference].filter(Boolean).join(" · ")}
-                      starred={isStarred(`retailer:${c.id}`)}
-                      onToggle={() => toggleStarred(clusterId, `retailer:${c.id}`)}
-                    />
-                  ))
-                )}
-              </StarSection>
-
-              {/* Stakeholders — starrable */}
-              <StarSection heading="Stakeholders — star to prioritize">
-                {validStakeholders.length === 0 ? (
-                  <p className="text-[11px] text-muted-foreground">No stakeholders added yet.</p>
-                ) : (
-                  validStakeholders.map((c) => (
-                    <StarRow
-                      key={c.id}
-                      title={c.name}
-                      subtitle={[c.phone, c.area, c.brandPreference].filter(Boolean).join(" · ")}
-                      starred={isStarred(`stakeholder:${c.id}`)}
-                      onToggle={() => toggleStarred(clusterId, `stakeholder:${c.id}`)}
-                    />
-                  ))
-                )}
-              </StarSection>
+                    <span>
+                      <span className="block text-sm font-medium text-foreground">{c.label}</span>
+                      <span className="mt-0.5 block text-[11px] leading-relaxed text-muted-foreground">
+                        {c.description}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
             </div>
-          )}
-        </Accordion>
+          </SubPage>
+        )}
 
-        <Button
-          onClick={() => setConfirmOpen(true)}
-          className="h-12 w-full gap-2 bg-navy font-serif text-base text-navy-foreground hover:bg-navy/90"
-        >
-          <FileDown className="h-4 w-4" /> Generate quarterly cluster engagement plan
-        </Button>
+        {/* ── CONTRACTORS ── */}
+        {page === "contractors" && (
+          <SubPage
+            title="Contractors you are going to convert"
+            subtitle={`List the contractors you'll reach out to for ${cluster.name.toLowerCase()}.`}
+            onBack={goHub}
+          >
+            <ContactTable
+              emptyHint="Add contractors you plan to engage."
+              contacts={contractors}
+              onChange={(list) => setStrategyContacts(clusterId, CONTRACTOR_BUCKET, list)}
+            />
+          </SubPage>
+        )}
+
+        {/* ── RETAILERS ── */}
+        {page === "retailers" && (
+          <SubPage
+            title={`Retailers who can connect you to ${cluster.name.toLowerCase()}`}
+            subtitle="List the retailers who can introduce you to decision-makers in this cluster."
+            onBack={goHub}
+          >
+            <ContactTable
+              emptyHint="Add retailers who can introduce you to the cluster."
+              contacts={retailers}
+              onChange={(list) => setStrategyContacts(clusterId, RETAILER_BUCKET, list)}
+            />
+          </SubPage>
+        )}
+
+        {/* ── STAKEHOLDERS ── */}
+        {page === "stakeholders" && (
+          <SubPage
+            title={`Stakeholders of ${cluster.name.toLowerCase()} you will meet directly`}
+            subtitle="List the decision-makers you plan to meet directly."
+            onBack={goHub}
+          >
+            <ContactTable
+              emptyHint="Add stakeholders / decision-makers you plan to meet."
+              contacts={stakeholders}
+              onChange={(list) => setStrategyContacts(clusterId, STAKEHOLDER_BUCKET, list)}
+            />
+          </SubPage>
+        )}
+
+        {/* ── ACTION PLAN ── */}
+        {page === "actionplan" && (
+          <SubPage
+            title="Your action plan"
+            subtitle="Star items or groups to prioritize for this quarter."
+            onBack={goHub}
+            footer={
+              <Button
+                onClick={() => setConfirmOpen(true)}
+                className="h-12 w-full gap-2 bg-navy font-serif text-base text-navy-foreground hover:bg-navy/90"
+              >
+                <FileDown className="h-4 w-4" /> Generate quarterly plan
+              </Button>
+            }
+          >
+            {selectedGroupObjs.length === 0 &&
+            selectedCampObjs.length === 0 &&
+            validContractors.length === 0 &&
+            validRetailers.length === 0 &&
+            validStakeholders.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Make selections in the other sections to see your action plan here.
+              </p>
+            ) : (
+              <div className="space-y-6">
+                {/* Customer groups — read only */}
+                {selectedGroupObjs.length > 0 && (
+                  <div>
+                    <SectionLabel>Customer groups selected</SectionLabel>
+                    <div className="space-y-2">
+                      {selectedGroupObjs.map((g) => (
+                        <div key={g.id} className="rounded-2xl border border-border bg-card px-4 py-3">
+                          <p className="font-serif text-sm text-foreground">{g.label}</p>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            {(groupValueProps[g.id] ?? [])[0] ?? getValuePropsForGroup(clusterId, g.id)[0] ?? ""}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Camps — individual stars */}
+                {selectedCampObjs.length > 0 && (
+                  <div>
+                    <SectionLabel>Camps / events — star each to prioritize</SectionLabel>
+                    <div className="space-y-2">
+                      {selectedCampObjs.map((c) => (
+                        <div
+                          key={c.id}
+                          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3"
+                        >
+                          <div className="flex-1">
+                            <p className="font-serif text-sm text-foreground">{c.label}</p>
+                            <p className="text-[11px] text-muted-foreground">{c.description}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleStarred(clusterId, `camp:${c.id}`)}
+                            className="shrink-0 rounded-lg p-1.5 hover:bg-muted/40"
+                            aria-label="Prioritize"
+                          >
+                            <Star
+                              className={cn(
+                                "h-4 w-4",
+                                isStarred(`camp:${c.id}`) ? "fill-amber-400 text-amber-400" : "text-muted-foreground",
+                              )}
+                            />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Contractors — group star */}
+                <GroupStarBlock
+                  heading="Contractors — star group to prioritize"
+                  icon={<HardHat className="h-4 w-4 text-green-700" />}
+                  iconBg="bg-green-50"
+                  label="Contractors to convert"
+                  count={validContractors.length}
+                  emptyText="No contractors added yet."
+                  items={validContractors.map((c) =>
+                    [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · "),
+                  )}
+                  starred={isStarred("group:contractors")}
+                  onToggleStar={() => toggleStarred(clusterId, "group:contractors")}
+                />
+
+                {/* Retailers — group star */}
+                <GroupStarBlock
+                  heading="Retailers — star group to prioritize"
+                  icon={<Building2 className="h-4 w-4 text-amber-700" />}
+                  iconBg="bg-amber-50"
+                  label="Retailers who can connect"
+                  count={validRetailers.length}
+                  emptyText="No retailers added yet."
+                  items={validRetailers.map((c) =>
+                    [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · "),
+                  )}
+                  starred={isStarred("group:retailers")}
+                  onToggleStar={() => toggleStarred(clusterId, "group:retailers")}
+                />
+
+                {/* Stakeholders — group star */}
+                <GroupStarBlock
+                  heading="Stakeholders — star group to prioritize"
+                  icon={<UserCheck className="h-4 w-4 text-red-800" />}
+                  iconBg="bg-red-50"
+                  label="Stakeholders to meet directly"
+                  count={validStakeholders.length}
+                  emptyText="No stakeholders added yet."
+                  items={validStakeholders.map((c) =>
+                    [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" · "),
+                  )}
+                  starred={isStarred("group:stakeholders")}
+                  onToggleStar={() => toggleStarred(clusterId, "group:stakeholders")}
+                />
+              </div>
+            )}
+          </SubPage>
+        )}
       </div>
 
-      {/* Chart popup */}
+      {/* Chart modal */}
       {chartOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
@@ -423,13 +648,13 @@ function PlanClusterScreen() {
         </div>
       )}
 
-      {/* Generate confirm dialog */}
+      {/* Generate dialog */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Ready to generate?</DialogTitle>
             <DialogDescription>
-              The PDF will capture your selected customer groups, value propositions, camps / events and contacts for{" "}
+              The PDF will capture your selected groups, value propositions, camps and contacts for{" "}
               <b>{cluster.name}</b>.
             </DialogDescription>
           </DialogHeader>
@@ -447,108 +672,157 @@ function PlanClusterScreen() {
   );
 }
 
-/* ── Accordion ── */
-function Accordion({
-  open,
-  onToggle,
-  title,
-  children,
-}: {
-  open: boolean;
-  onToggle: () => void;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-start justify-between gap-3 px-4 py-3.5 text-left"
-      >
-        <span className="font-serif text-sm leading-snug text-foreground">{title}</span>
-        {open ? (
-          <ChevronUp className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-        ) : (
-          <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-        )}
-      </button>
-      {open && <div className="border-t border-border px-4 py-4">{children}</div>}
-    </div>
-  );
-}
-
-/* ── SubAccordion ── */
-function SubAccordion({
-  open,
-  onToggle,
-  title,
-  children,
-}: {
-  open: boolean;
-  onToggle: () => void;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="overflow-hidden rounded-xl border border-border bg-background">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
-      >
-        <span className="text-sm font-medium text-foreground">{title}</span>
-        {open ? (
-          <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
-        ) : (
-          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-        )}
-      </button>
-      {open && <div className="border-t border-border px-3 py-3">{children}</div>}
-    </div>
-  );
-}
-
-/* ── StarSection + StarRow ── */
-function StarSection({ heading, children }: { heading: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">{heading}</p>
-      <div className="space-y-2">{children}</div>
-    </div>
-  );
-}
-
-function StarRow({
+/* ─────────────────────────────────────────────────────────────
+   Shared layout primitives
+───────────────────────────────────────────────────────────── */
+function SubPage({
   title,
   subtitle,
-  starred,
-  onToggle,
+  onBack,
+  children,
+  footer,
 }: {
   title: string;
-  subtitle?: string;
-  starred: boolean;
-  onToggle: () => void;
+  subtitle: string;
+  onBack: () => void;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5">
-      <div className="flex-1">
-        <p className="font-serif text-sm text-foreground">{title}</p>
-        {subtitle && <p className="text-[11px] text-muted-foreground">{subtitle}</p>}
+    <div className="flex flex-col gap-4">
+      <div>
+        <button
+          type="button"
+          onClick={onBack}
+          className="mb-2 flex items-center gap-1.5 text-[11px] text-muted-foreground"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
+        </button>
+        <h3 className="font-serif text-lg leading-snug text-foreground">{title}</h3>
+        <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
       </div>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="shrink-0 rounded-lg p-1.5 hover:bg-muted/40"
-        aria-label="Prioritize"
-      >
-        <Star className={cn("h-4 w-4", starred ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
-      </button>
+      <div className="flex-1">{children}</div>
+      {footer && <div className="mt-4">{footer}</div>}
+      {!footer && (
+        <Button
+          onClick={onBack}
+          className="h-11 w-full gap-2 bg-navy font-serif text-sm text-navy-foreground hover:bg-navy/90"
+        >
+          Done
+        </Button>
+      )}
     </div>
   );
 }
 
-/* ── ContactTable ── */
+function HubCard({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-left hover:bg-muted/30"
+    >
+      {children}
+    </button>
+  );
+}
+
+function HubIcon({ bg, children }: { bg: string; children: React.ReactNode }) {
+  return <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", bg)}>{children}</div>;
+}
+
+function SubHubRow({
+  dot,
+  label,
+  label2,
+  badge,
+  onClick,
+}: {
+  dot: string;
+  label: string;
+  label2?: string;
+  badge: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-muted/20"
+    >
+      <div className={cn("h-2 w-2 shrink-0 rounded-full", dot)} />
+      <p className="flex-1 text-[12px] font-medium text-foreground">{label2 ?? label}</p>
+      {badge}
+      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+    </button>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">{children}</p>;
+}
+
+function GroupStarBlock({
+  heading,
+  icon,
+  iconBg,
+  label,
+  count,
+  emptyText,
+  items,
+  starred,
+  onToggleStar,
+}: {
+  heading: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  label: string;
+  count: number;
+  emptyText: string;
+  items: string[];
+  starred: boolean;
+  onToggleStar: () => void;
+}) {
+  return (
+    <div>
+      <SectionLabel>{heading}</SectionLabel>
+      {count === 0 ? (
+        <p className="text-[11px] text-muted-foreground">{emptyText}</p>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+            <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", iconBg)}>{icon}</div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">{label}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {count} {count === 1 ? "entry" : "entries"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onToggleStar}
+              className="shrink-0 rounded-lg p-1.5 hover:bg-muted/40"
+              aria-label="Prioritize group"
+            >
+              <Star className={cn("h-5 w-5", starred ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
+            </button>
+          </div>
+          <div className="divide-y divide-border px-4">
+            {items.map((item, i) => (
+              <p key={i} className="py-2.5 text-[11px] text-muted-foreground">
+                {item}
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Contact table
+───────────────────────────────────────────────────────────── */
 function ContactTable({
   contacts,
   onChange,
@@ -574,12 +848,12 @@ function ContactTable({
   const remove = (i: number) => onChange(contacts.filter((_, idx) => idx !== i));
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {contacts.length === 0 && emptyHint && <p className="text-[11px] text-muted-foreground">{emptyHint}</p>}
       {contacts.map((c, i) => (
         <div
           key={c.id}
-          className="grid grid-cols-2 gap-1.5 rounded-xl border border-border bg-background p-2 sm:grid-cols-4"
+          className="grid grid-cols-2 gap-1.5 rounded-2xl border border-border bg-card p-2.5 sm:grid-cols-4"
         >
           <FieldInput value={c.name} placeholder="Name" onChange={(v) => update(i, { name: v })} />
           <FieldInput value={c.phone ?? ""} placeholder="Phone" onChange={(v) => update(i, { phone: v })} />
@@ -593,7 +867,7 @@ function ContactTable({
             <button
               type="button"
               onClick={() => remove(i)}
-              className="rounded p-1 text-muted-foreground hover:bg-muted/40"
+              className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-muted/40"
               aria-label="Remove"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -601,8 +875,8 @@ function ContactTable({
           </div>
         </div>
       ))}
-      <Button size="sm" variant="outline" onClick={add} className="h-7 gap-1 text-xs">
-        <Plus className="h-3 w-3" /> Add
+      <Button size="sm" variant="outline" onClick={add} className="h-8 gap-1.5 rounded-xl text-xs">
+        <Plus className="h-3.5 w-3.5" /> Add
       </Button>
     </div>
   );
@@ -622,7 +896,7 @@ function FieldInput({
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-lg border border-border bg-background px-2 py-1 text-xs"
+      className="w-full rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs"
     />
   );
 }
