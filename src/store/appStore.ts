@@ -110,6 +110,11 @@ type State = {
     // past-roadmap feedback per cluster + event id
     pastEventFeedbackByCluster: Record<string, Record<string, PastEventFeedback>>;
     roadmapCompletion: RoadmapCompletion;
+    // single-page engagement plan (per-cluster)
+    customerGroupsByCluster: Record<string, string[]>;
+    groupValuePropsByCluster: Record<string, Record<string, string[]>>;
+    selectedCampsByCluster: Record<string, string[]>;
+    starredByCluster: Record<string, string[]>;
   };
   assessments: Record<string, ClusterAssessment>;
   unlockedStage: 1 | 2 | 3;
@@ -159,6 +164,11 @@ type Actions = {
   addProspectOutcome: (prospectId: string, outcome: string) => void;
   markProspectNotInterested: (clusterId: string, prospectId: string) => void;
   unlockStage: (n: 1 | 2 | 3) => void;
+
+  toggleCustomerGroup: (clusterId: string, groupId: string) => void;
+  toggleGroupValueProp: (clusterId: string, groupId: string, prop: string) => void;
+  toggleSelectedCamp: (clusterId: string, campId: string) => void;
+  toggleStarred: (clusterId: string, key: string) => void;
 };
 
 const emptyCluster = (): ClusterState => ({ jkShare: null, prospects: [], visited: false });
@@ -205,6 +215,10 @@ export const useAppStore = create<State & Actions>()(
         eventEstimatesByCluster: {},
         pastEventFeedbackByCluster: {},
         roadmapCompletion: emptyRoadmap(),
+        customerGroupsByCluster: {},
+        groupValuePropsByCluster: {},
+        selectedCampsByCluster: {},
+        starredByCluster: {},
       },
       sales: { prospectStages: {}, prospectActivity: {}, seededClusters: {} },
 
@@ -539,8 +553,61 @@ export const useAppStore = create<State & Actions>()(
         }),
 
       unlockStage: (n) => set({ unlockedStage: n }),
+
+      toggleCustomerGroup: (clusterId, groupId) =>
+        set((state) => {
+          const prev = state.plan.customerGroupsByCluster[clusterId] ?? [];
+          const next = prev.includes(groupId) ? prev.filter((g) => g !== groupId) : [...prev, groupId];
+          return {
+            plan: {
+              ...state.plan,
+              customerGroupsByCluster: { ...state.plan.customerGroupsByCluster, [clusterId]: next },
+            },
+          };
+        }),
+
+      toggleGroupValueProp: (clusterId, groupId, prop) =>
+        set((state) => {
+          const byGroup = state.plan.groupValuePropsByCluster[clusterId] ?? {};
+          const prev = byGroup[groupId] ?? [];
+          const next = prev.includes(prop) ? prev.filter((p) => p !== prop) : [...prev, prop];
+          const updated = { ...byGroup, [groupId]: next };
+          // Maintain legacy summary string so home page count stays correct
+          const allProps = Object.values(updated).flat().filter(Boolean);
+          return {
+            plan: {
+              ...state.plan,
+              groupValuePropsByCluster: { ...state.plan.groupValuePropsByCluster, [clusterId]: updated },
+              valuePropositionByCluster: {
+                ...state.plan.valuePropositionByCluster,
+                [clusterId]: allProps.join(" • "),
+              },
+            },
+          };
+        }),
+
+      toggleSelectedCamp: (clusterId, campId) =>
+        set((state) => {
+          const prev = state.plan.selectedCampsByCluster[clusterId] ?? [];
+          const next = prev.includes(campId) ? prev.filter((c) => c !== campId) : [...prev, campId];
+          return {
+            plan: {
+              ...state.plan,
+              selectedCampsByCluster: { ...state.plan.selectedCampsByCluster, [clusterId]: next },
+            },
+          };
+        }),
+
+      toggleStarred: (clusterId, key) =>
+        set((state) => {
+          const prev = state.plan.starredByCluster[clusterId] ?? [];
+          const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+          return {
+            plan: { ...state.plan, starredByCluster: { ...state.plan.starredByCluster, [clusterId]: next } },
+          };
+        }),
     }),
-    { name: "sed.v11" },
+    { name: "sed.v12" },
   ),
 );
 
