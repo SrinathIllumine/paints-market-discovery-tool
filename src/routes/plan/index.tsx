@@ -51,9 +51,8 @@ function PlanScreen() {
 
   // Only navigates — setMonthlyFocus is called on the Generate button inside the detail page
   const handlePlan = (clusterId: string) => {
-    navigate({ to: "/plan/$clusterId", params: { clusterId } });
+    navigate({ to: "/plan/$clusterId/review", params: { clusterId } });
   };
-
 
   return (
     <AppShell
