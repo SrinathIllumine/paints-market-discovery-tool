@@ -34,7 +34,7 @@ function normalisePdfText(text: string): string {
     .replace(/…/g, "...");
 }
 
-export function generateMonthlyEngagementPlanPdf({
+export async function generateMonthlyEngagementPlanPdf({
   focusClusterId,
   valueProps,
   customerGroups,
@@ -44,6 +44,7 @@ export function generateMonthlyEngagementPlanPdf({
   stakeholders,
   groupReview,
 }: Args) {
+  const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 40;
