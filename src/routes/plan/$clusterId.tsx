@@ -51,17 +51,18 @@ const EMPTY_SC: Record<string, Partial<Record<string, ContactEntry[]>>> = {};
 
 type Page = "hub" | "groups" | "valueprops" | "camps" | "contractors" | "retailers" | "stakeholders" | "actionplan";
 
-// ✅ AFTER: Derives query from cluster.placesQuery — no hardcoding
+declare global {
+  interface Window {
+    google: typeof google;
+  }
+}
+
 function buildGroupQuery(groupLabel: string, clusterPlacesQuery: string): string {
-  // e.g. groupLabel="Large private schools", placesQuery="schools Panvel"
-  // Extract location: last word(s) that aren't the cluster type keyword
   const words = clusterPlacesQuery.trim().split(/\s+/);
-  // Take the last word as area (e.g. "Panvel", "Kharghar")
   const area = words.at(-1) ?? "";
   return `${groupLabel} ${area}`.trim();
 }
 
-// ✅ AFTER: Live hook — fetches real place names from Google Places per group
 function useGroupPlaces(groups: { id: string; label: string }[], clusterPlacesQuery: string, active: boolean) {
   const [names, setNames] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
@@ -70,31 +71,34 @@ function useGroupPlaces(groups: { id: string; label: string }[], clusterPlacesQu
   useEffect(() => {
     if (!active || groups.length === 0) return;
 
-    groups.forEach(async (g) => {
-      if (fetched.current.has(g.id)) return;
-      fetched.current.add(g.id);
+    const run = () => {
+      if (!window.google?.maps?.places) return;
 
-      setLoading((prev) => ({ ...prev, [g.id]: true }));
+      const service = new window.google.maps.places.PlacesService(document.createElement("div"));
 
-      try {
-        const query = buildGroupQuery(g.label, clusterPlacesQuery);
-        const encoded = encodeURIComponent(query);
-        const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
+      groups.forEach((g) => {
+        if (fetched.current.has(g.id)) return;
+        fetched.current.add(g.id);
+        setLoading((prev) => ({ ...prev, [g.id]: true }));
 
-        const res = await fetch(
-          `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encoded}&key=${key}`,
-        );
-        const json = await res.json();
+        service.textSearch({ query: buildGroupQuery(g.label, clusterPlacesQuery) }, (results, status) => {
+          const placeNames =
+            status === window.google.maps.places.PlacesServiceStatus.OK
+              ? (results ?? []).slice(0, 5).map((r) => r.name ?? "")
+              : [];
+          setNames((prev) => ({ ...prev, [g.id]: placeNames }));
+          setLoading((prev) => ({ ...prev, [g.id]: false }));
+        });
+      });
+    };
 
-        const placeNames: string[] = (json.results ?? []).slice(0, 5).map((r: { name: string }) => r.name);
-
-        setNames((prev) => ({ ...prev, [g.id]: placeNames }));
-      } catch {
-        setNames((prev) => ({ ...prev, [g.id]: [] }));
-      } finally {
-        setLoading((prev) => ({ ...prev, [g.id]: false }));
-      }
-    });
+    if (window.google?.maps?.places) {
+      run();
+    } else {
+      const script = document.querySelector('script[src*="maps.googleapis.com"]');
+      script?.addEventListener("load", run);
+      return () => script?.removeEventListener("load", run);
+    }
   }, [active, groups, clusterPlacesQuery]);
 
   return { names, loading };
@@ -122,6 +126,18 @@ function PlanClusterScreen() {
   const [q3Open, setQ3Open] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
+  // Inject Google Maps SDK once when this screen mounts
+  useEffect(() => {
+    if (window.google?.maps?.places) return;
+    const existing = document.querySelector('script[src*="maps.googleapis.com"]');
+    if (existing) return;
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  }, []);
+
   const cluster = useMemo(() => {
     try {
       return getCluster(clusterId) ?? null;
@@ -148,7 +164,6 @@ function PlanClusterScreen() {
     }
   }, [clusterId, cluster]);
 
-  // ✅ AFTER: fetch real place names — only when groups page is active
   const { names: groupPlaceNames, loading: groupPlacesLoading } = useGroupPlaces(
     groups,
     cluster?.placesQuery ?? "",
@@ -200,7 +215,11 @@ function PlanClusterScreen() {
         pct: g.pct,
         valueProps: groupValueProps[g.id] ?? [],
       })),
-      camps: selectedCampObjs.map((c) => ({ id: c.id, label: c.label, starred: isStarred(`camp:${c.id}`) })),
+      camps: selectedCampObjs.map((c) => ({
+        id: c.id,
+        label: c.label,
+        starred: isStarred(`camp:${c.id}`),
+      })),
       contractors: contractors.map((c) => ({ ...c, starred: isStarred("group:contractors") })),
       retailers: retailers.map((c) => ({ ...c, starred: isStarred("group:retailers") })),
       stakeholders: stakeholders.map((c) => ({ ...c, starred: isStarred("group:stakeholders") })),
@@ -230,6 +249,7 @@ function PlanClusterScreen() {
       header={<StageHeader eyebrow="CLUSTER ENGAGEMENT PLAN" title="Cluster Engagement Plan" backTo="/plan" />}
     >
       <div className="flex min-h-full flex-col px-4 py-5 pb-24">
+        {/* ── HUB ── */}
         {page === "hub" && (
           <div className="flex flex-col gap-4">
             <div>
@@ -238,6 +258,7 @@ function PlanClusterScreen() {
               </h2>
               <p className="mt-0.5 text-xs text-muted-foreground">Tap any question to fill it in.</p>
             </div>
+
             <HubCard onClick={() => goTo("groups")}>
               <HubIcon bg="bg-red-50">
                 <Users className="h-4 w-4 text-critical" />
@@ -249,6 +270,7 @@ function PlanClusterScreen() {
               {badge(customerGroups.length)}
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </HubCard>
+
             <HubCard onClick={() => goTo("valueprops")}>
               <HubIcon bg="bg-blue-50">
                 <BarChart2 className="h-4 w-4 text-blue-700" />
@@ -268,6 +290,7 @@ function PlanClusterScreen() {
               )}
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </HubCard>
+
             <div className="overflow-hidden rounded-2xl border border-border bg-card">
               <button
                 type="button"
@@ -316,6 +339,7 @@ function PlanClusterScreen() {
                 </div>
               )}
             </div>
+
             <HubCard onClick={() => goTo("actionplan")}>
               <HubIcon bg="bg-purple-50">
                 <ListChecks className="h-4 w-4 text-purple-700" />
@@ -326,6 +350,7 @@ function PlanClusterScreen() {
               </div>
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </HubCard>
+
             <Button
               onClick={() => setConfirmOpen(true)}
               className="h-12 w-full gap-2 bg-navy font-serif text-base text-navy-foreground hover:bg-navy/90"
@@ -335,7 +360,7 @@ function PlanClusterScreen() {
           </div>
         )}
 
-        {/* ✅ AFTER: Groups page — shows live Places results as chips */}
+        {/* ── GROUPS ── */}
         {page === "groups" && (
           <SubPage
             title="Who are you targeting?"
@@ -364,7 +389,6 @@ function PlanClusterScreen() {
                       </span>
                     </div>
 
-                    {/* ✅ Loading skeleton */}
                     {isLoading && (
                       <div className="flex items-center gap-2">
                         <div className="h-5 w-20 animate-pulse rounded-full bg-muted" />
@@ -373,7 +397,6 @@ function PlanClusterScreen() {
                       </div>
                     )}
 
-                    {/* ✅ Real place name chips from Google Places */}
                     {!isLoading && places.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {places.slice(0, 3).map((name) => (
@@ -393,7 +416,6 @@ function PlanClusterScreen() {
                       </div>
                     )}
 
-                    {/* No results fallback */}
                     {!isLoading && places.length === 0 && groupPlaceNames[g.id] !== undefined && (
                       <p className="text-[10px] text-muted-foreground">No results found nearby</p>
                     )}
@@ -404,6 +426,7 @@ function PlanClusterScreen() {
           </SubPage>
         )}
 
+        {/* ── VALUE PROPS ── */}
         {page === "valueprops" && (
           <SubPage
             title="Your value propositions"
@@ -431,6 +454,7 @@ function PlanClusterScreen() {
           </SubPage>
         )}
 
+        {/* ── CAMPS ── */}
         {page === "camps" && (
           <SubPage
             title="Camps & events you are planning"
@@ -467,6 +491,7 @@ function PlanClusterScreen() {
           </SubPage>
         )}
 
+        {/* ── CONTRACTORS ── */}
         {page === "contractors" && (
           <SubPage
             title="Contractors you are going to convert"
@@ -481,6 +506,7 @@ function PlanClusterScreen() {
           </SubPage>
         )}
 
+        {/* ── RETAILERS ── */}
         {page === "retailers" && (
           <SubPage
             title={`Retailers who can connect you to ${cluster.name.toLowerCase()}`}
@@ -495,6 +521,7 @@ function PlanClusterScreen() {
           </SubPage>
         )}
 
+        {/* ── STAKEHOLDERS ── */}
         {page === "stakeholders" && (
           <SubPage
             title={`Stakeholders of ${cluster.name.toLowerCase()} you will meet directly`}
@@ -509,6 +536,7 @@ function PlanClusterScreen() {
           </SubPage>
         )}
 
+        {/* ── ACTION PLAN ── */}
         {page === "actionplan" && (
           <SubPage
             title="Your action plan"
@@ -548,6 +576,7 @@ function PlanClusterScreen() {
                     </div>
                   </div>
                 )}
+
                 {selectedCampObjs.length > 0 && (
                   <div>
                     <SectionLabel>Camps / events — star each to prioritize</SectionLabel>
@@ -579,6 +608,7 @@ function PlanClusterScreen() {
                     </div>
                   </div>
                 )}
+
                 <GroupStarBlock
                   heading="Contractors — star group to prioritize"
                   icon={<HardHat className="h-4 w-4 text-green-700" />}
@@ -592,6 +622,7 @@ function PlanClusterScreen() {
                   starred={isStarred("group:contractors")}
                   onToggleStar={() => toggleStarred(clusterId, "group:contractors")}
                 />
+
                 <GroupStarBlock
                   heading="Retailers — star group to prioritize"
                   icon={<Building2 className="h-4 w-4 text-amber-700" />}
@@ -605,6 +636,7 @@ function PlanClusterScreen() {
                   starred={isStarred("group:retailers")}
                   onToggleStar={() => toggleStarred(clusterId, "group:retailers")}
                 />
+
                 <GroupStarBlock
                   heading="Stakeholders — star group to prioritize"
                   icon={<UserCheck className="h-4 w-4 text-red-800" />}
@@ -647,6 +679,8 @@ function PlanClusterScreen() {
   );
 }
 
+/* ── Shared primitives ── */
+
 function SubPage({
   title,
   subtitle,
@@ -687,6 +721,7 @@ function SubPage({
     </div>
   );
 }
+
 function HubCard({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
     <button
@@ -698,9 +733,11 @@ function HubCard({ onClick, children }: { onClick: () => void; children: React.R
     </button>
   );
 }
+
 function HubIcon({ bg, children }: { bg: string; children: React.ReactNode }) {
   return <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", bg)}>{children}</div>;
 }
+
 function SubHubRow({
   dot,
   label,
@@ -725,9 +762,11 @@ function SubHubRow({
     </button>
   );
 }
+
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">{children}</p>;
 }
+
 function GroupStarBlock({
   heading,
   icon,
@@ -785,6 +824,7 @@ function GroupStarBlock({
     </div>
   );
 }
+
 function ContactTable({
   contacts,
   onChange,
@@ -808,6 +848,7 @@ function ContactTable({
       },
     ]);
   const remove = (i: number) => onChange(contacts.filter((_, idx) => idx !== i));
+
   return (
     <div className="space-y-2.5">
       {contacts.length === 0 && emptyHint && <p className="text-[11px] text-muted-foreground">{emptyHint}</p>}
@@ -842,6 +883,7 @@ function ContactTable({
     </div>
   );
 }
+
 function FieldInput({
   value,
   placeholder,
