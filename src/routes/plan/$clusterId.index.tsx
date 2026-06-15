@@ -940,7 +940,6 @@ function ValuePropGroupCard({
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-critical" />
           <p className="font-serif text-sm text-foreground">{groupLabel}</p>
         </div>
         {!editing ? (
