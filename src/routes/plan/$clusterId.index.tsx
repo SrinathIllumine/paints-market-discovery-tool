@@ -36,7 +36,7 @@ import {
 import { generateMonthlyEngagementPlanPdf } from "@/lib/monthlyPlanReport";
 import { getCustomerGroups, getValuePropsForGroup, getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
 
-export const Route = createFileRoute("/plan/$clusterId")({
+export const Route = createFileRoute("/plan/$clusterId/")({
   component: PlanClusterScreen,
 });
 
