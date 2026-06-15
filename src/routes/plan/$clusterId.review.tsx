@@ -6,7 +6,7 @@ import { BottomNav } from "@/components/app/BottomNav";
 import { getCluster } from "@/data/clusters";
 import { useAppStore, type ReviewEntry } from "@/store/appStore";
 import { getCampIdeas, type ContactEntry } from "@/lib/strategyContent";
-import { Lightbulb, ClipboardCheck, ArrowLeft, CalendarDays, HardHat, Building2, UserCheck } from "lucide-react";
+import { Lightbulb, ClipboardCheck, ArrowLeft, CalendarDays, HardHat, Building2, UserCheck, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/plan/$clusterId/review")({
@@ -32,12 +32,7 @@ const EVENT_QUESTIONS: Question[] = [
   { id: "attended", label: "How many participants attended?", type: "number", placeholder: "e.g. 42" },
   { id: "leads", label: "How many qualified leads did you generate?", type: "number", placeholder: "e.g. 8" },
   { id: "rating", label: "How well did the engagement land (1-10)?", type: "number", placeholder: "e.g. 7" },
-  {
-    id: "takeaways",
-    label: "What worked, what didn't, and what's the next step?",
-    type: "textarea",
-    placeholder: "Key takeaways and follow-ups",
-  },
+  { id: "takeaways", label: "What worked, what didn't, and what's the next step?", type: "textarea", placeholder: "Key takeaways and follow-ups" },
 ];
 
 const CONTRACTOR_ENABLERS = [
@@ -46,10 +41,10 @@ const CONTRACTOR_ENABLERS = [
   "Be ready with a starter scheme (sample / loyalty / fast credit) they can act on in this meeting.",
 ];
 const CONTRACTOR_QUESTIONS: Question[] = [
-  { id: "met", label: "How many contractors did you meet?", type: "number" },
-  { id: "interested", label: "How many showed real interest in switching / trying J K?", type: "number" },
-  { id: "trials", label: "How many committed to a trial or first order?", type: "number" },
-  { id: "blockers", label: "What objections or blockers came up?", type: "textarea" },
+  { id: "outcome", label: "How did the meeting go?", type: "text", placeholder: "e.g. interested / needs follow-up / not a fit" },
+  { id: "trial", label: "Did they commit to a trial or first order?", type: "text", placeholder: "Yes / No / Quantity" },
+  { id: "blockers", label: "Objections or blockers raised", type: "textarea" },
+  { id: "nextStep", label: "Next step & owner", type: "textarea" },
 ];
 
 const RETAILER_ENABLERS = [
@@ -58,9 +53,9 @@ const RETAILER_ENABLERS = [
   "Offer a clear next step: intro to a specific contractor, a joint site visit, or a sampling activity.",
 ];
 const RETAILER_QUESTIONS: Question[] = [
-  { id: "met", label: "How many retailers did you engage?", type: "number" },
-  { id: "intros", label: "How many introductions / referrals did they commit to?", type: "number" },
-  { id: "newLeads", label: "How many new contractor / project leads did you collect?", type: "number" },
+  { id: "outcome", label: "How did the meeting go?", type: "text" },
+  { id: "intros", label: "Introductions / referrals committed", type: "number" },
+  { id: "newLeads", label: "New contractor / project leads collected", type: "number" },
   { id: "feedback", label: "Feedback on pricing, scheme and product fit", type: "textarea" },
 ];
 
@@ -70,10 +65,10 @@ const STAKEHOLDER_ENABLERS = [
   "Close with a concrete ask: site visit, spec inclusion, pilot, or a written next step.",
 ];
 const STAKEHOLDER_QUESTIONS: Question[] = [
-  { id: "met", label: "How many stakeholders did you meet directly?", type: "number" },
-  { id: "decisions", label: "How many decisions / specs did you influence?", type: "number" },
-  { id: "nextSteps", label: "What next steps did they commit to?", type: "textarea" },
-  { id: "risks", label: "Any risks or competing brands in play?", type: "textarea" },
+  { id: "outcome", label: "How did the meeting go?", type: "text" },
+  { id: "decision", label: "Decision / spec influenced", type: "textarea" },
+  { id: "nextSteps", label: "Next steps they committed to", type: "textarea" },
+  { id: "risks", label: "Risks or competing brands in play", type: "textarea" },
 ];
 
 function ReviewScreen() {
@@ -81,25 +76,18 @@ function ReviewScreen() {
   const navigate = useNavigate();
 
   const cluster = useMemo(() => {
-    try {
-      return getCluster(clusterId) ?? null;
-    } catch {
-      return null;
-    }
+    try { return getCluster(clusterId) ?? null; } catch { return null; }
   }, [clusterId]);
 
   const selectedCamps = useAppStore((s) => s.plan.selectedCampsByCluster[clusterId] ?? EMPTY_ARR);
   const strategyContacts = useAppStore((s) => s.plan.strategyContactsByCluster[clusterId]);
+  const starred = useAppStore((s) => s.plan.starredByCluster[clusterId] ?? EMPTY_ARR);
   const reviews = useAppStore((s) => s.plan.reviewsByCluster[clusterId] ?? EMPTY_REVIEWS);
   const setReview = useAppStore((s) => s.setReview);
 
   const camps = useMemo(() => {
     if (!cluster) return [];
-    try {
-      return getCampIdeas(clusterId);
-    } catch {
-      return [];
-    }
+    try { return getCampIdeas(clusterId); } catch { return []; }
   }, [clusterId, cluster]);
 
   const contractors = strategyContacts?.[CONTRACTOR_BUCKET] ?? EMPTY_CONTACTS;
@@ -111,20 +99,40 @@ function ReviewScreen() {
   const validStakeholders = stakeholders.filter((c) => (c.name ?? "").trim());
   const selectedCampObjs = camps.filter((c) => selectedCamps.includes(c.id));
 
+  const isStarred = (key: string) => starred.includes(key);
+
+  // Prioritized (starred-first) ordering
+  const prioritize = <T,>(items: T[], keyFn: (item: T) => string): T[] =>
+    [...items].sort((a, b) => Number(isStarred(keyFn(b))) - Number(isStarred(keyFn(a))));
+
+  const orderedCamps = prioritize(selectedCampObjs, (c) => `camp:${c.id}`);
+  const orderedContractors = prioritize(validContractors, (c) => `contractor:${c.id}`);
+  const orderedRetailers = prioritize(validRetailers, (c) => `retailer:${c.id}`);
+  const orderedStakeholders = prioritize(validStakeholders, (c) => `stakeholder:${c.id}`);
+
   if (!cluster) {
     return (
       <AppShell bottom={<BottomNav />}>
         <div className="p-6 text-center text-muted-foreground">
           Cluster not found.{" "}
-          <button className="text-navy underline" onClick={() => navigate({ to: "/plan" })}>
-            Go back
-          </button>
+          <button className="text-navy underline" onClick={() => navigate({ to: "/plan" })}>Go back</button>
         </div>
       </AppShell>
     );
   }
 
   const update = (key: string, fieldId: string, value: string) => setReview(clusterId, key, { [fieldId]: value });
+
+  const nothingPlanned =
+    orderedCamps.length === 0 &&
+    orderedContractors.length === 0 &&
+    orderedRetailers.length === 0 &&
+    orderedStakeholders.length === 0;
+
+  const contactSubtitle = (c: ContactEntry) => {
+    const bits = [c.role, c.area, c.phone, c.brandPreference ? `Currently: ${c.brandPreference}` : ""].filter(Boolean);
+    return bits.join(" · ") || undefined;
+  };
 
   return (
     <AppShell
@@ -144,34 +152,27 @@ function ReviewScreen() {
             Cluster: <span className="text-critical">{cluster.name}</span>
           </h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Prep before each engagement and capture outcomes after.
+            Prioritized engagements for this cluster. Prep before each meeting and capture outcomes after.
           </p>
         </div>
 
-        {selectedCampObjs.length === 0 &&
-        validContractors.length === 0 &&
-        validRetailers.length === 0 &&
-        validStakeholders.length === 0 ? (
+        {nothingPlanned && (
           <p className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
             Nothing planned yet for this cluster. Add events, contractors, retailers or stakeholders first.
           </p>
-        ) : null}
+        )}
 
-        {/* EVENTS */}
-        {selectedCampObjs.length > 0 && (
-          <Section
-            icon={<CalendarDays className="h-4 w-4 text-blue-700" />}
-            iconBg="bg-blue-50"
-            title="Events & camps"
-          >
+        {orderedCamps.length > 0 && (
+          <Section icon={<CalendarDays className="h-4 w-4 text-blue-700" />} iconBg="bg-blue-50" title="Events & camps">
             <div className="space-y-3">
-              {selectedCampObjs.map((c) => {
+              {orderedCamps.map((c) => {
                 const key = `camp:${c.id}`;
                 return (
                   <ReviewCard
                     key={key}
                     title={c.label}
                     subtitle={c.description}
+                    starred={isStarred(key)}
                     enablers={EVENT_ENABLERS}
                     questions={EVENT_QUESTIONS}
                     values={reviews[key] ?? {}}
@@ -183,45 +184,69 @@ function ReviewScreen() {
           </Section>
         )}
 
-        {/* CONTRACTORS */}
-        {validContractors.length > 0 && (
+        {orderedContractors.length > 0 && (
           <Section icon={<HardHat className="h-4 w-4 text-green-700" />} iconBg="bg-green-50" title="Contractors">
-            <ReviewCard
-              title="Contractors you planned to convert"
-              subtitle={`${validContractors.length} contact${validContractors.length === 1 ? "" : "s"} in the plan`}
-              enablers={CONTRACTOR_ENABLERS}
-              questions={CONTRACTOR_QUESTIONS}
-              values={reviews["group:contractors"] ?? {}}
-              onChange={(fid, v) => update("group:contractors", fid, v)}
-            />
+            <div className="space-y-3">
+              {orderedContractors.map((c) => {
+                const key = `contractor:${c.id}`;
+                return (
+                  <ReviewCard
+                    key={key}
+                    title={c.name}
+                    subtitle={contactSubtitle(c)}
+                    starred={isStarred(key) || isStarred("group:contractors")}
+                    enablers={CONTRACTOR_ENABLERS}
+                    questions={CONTRACTOR_QUESTIONS}
+                    values={reviews[key] ?? {}}
+                    onChange={(fid, v) => update(key, fid, v)}
+                  />
+                );
+              })}
+            </div>
           </Section>
         )}
 
-        {/* RETAILERS */}
-        {validRetailers.length > 0 && (
+        {orderedRetailers.length > 0 && (
           <Section icon={<Building2 className="h-4 w-4 text-amber-700" />} iconBg="bg-amber-50" title="Retailers">
-            <ReviewCard
-              title="Retailers who can connect you"
-              subtitle={`${validRetailers.length} contact${validRetailers.length === 1 ? "" : "s"} in the plan`}
-              enablers={RETAILER_ENABLERS}
-              questions={RETAILER_QUESTIONS}
-              values={reviews["group:retailers"] ?? {}}
-              onChange={(fid, v) => update("group:retailers", fid, v)}
-            />
+            <div className="space-y-3">
+              {orderedRetailers.map((c) => {
+                const key = `retailer:${c.id}`;
+                return (
+                  <ReviewCard
+                    key={key}
+                    title={c.name}
+                    subtitle={contactSubtitle(c)}
+                    starred={isStarred(key) || isStarred("group:retailers")}
+                    enablers={RETAILER_ENABLERS}
+                    questions={RETAILER_QUESTIONS}
+                    values={reviews[key] ?? {}}
+                    onChange={(fid, v) => update(key, fid, v)}
+                  />
+                );
+              })}
+            </div>
           </Section>
         )}
 
-        {/* STAKEHOLDERS */}
-        {validStakeholders.length > 0 && (
+        {orderedStakeholders.length > 0 && (
           <Section icon={<UserCheck className="h-4 w-4 text-red-800" />} iconBg="bg-red-50" title="Stakeholders">
-            <ReviewCard
-              title="Stakeholders you planned to meet"
-              subtitle={`${validStakeholders.length} contact${validStakeholders.length === 1 ? "" : "s"} in the plan`}
-              enablers={STAKEHOLDER_ENABLERS}
-              questions={STAKEHOLDER_QUESTIONS}
-              values={reviews["group:stakeholders"] ?? {}}
-              onChange={(fid, v) => update("group:stakeholders", fid, v)}
-            />
+            <div className="space-y-3">
+              {orderedStakeholders.map((c) => {
+                const key = `stakeholder:${c.id}`;
+                return (
+                  <ReviewCard
+                    key={key}
+                    title={c.name}
+                    subtitle={contactSubtitle(c)}
+                    starred={isStarred(key) || isStarred("group:stakeholders")}
+                    enablers={STAKEHOLDER_ENABLERS}
+                    questions={STAKEHOLDER_QUESTIONS}
+                    values={reviews[key] ?? {}}
+                    onChange={(fid, v) => update(key, fid, v)}
+                  />
+                );
+              })}
+            </div>
           </Section>
         )}
       </div>
@@ -229,17 +254,7 @@ function ReviewScreen() {
   );
 }
 
-function Section({
-  icon,
-  iconBg,
-  title,
-  children,
-}: {
-  icon: React.ReactNode;
-  iconBg: string;
-  title: string;
-  children: React.ReactNode;
-}) {
+function Section({ icon, iconBg, title, children }: { icon: React.ReactNode; iconBg: string; title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-2.5">
       <div className="flex items-center gap-2">
@@ -252,25 +267,28 @@ function Section({
 }
 
 function ReviewCard({
-  title,
-  subtitle,
-  enablers,
-  questions,
-  values,
-  onChange,
+  title, subtitle, starred, enablers, questions, values, onChange,
 }: {
   title: string;
   subtitle?: string;
+  starred?: boolean;
   enablers: string[];
   questions: Question[];
   values: ReviewEntry;
   onChange: (fieldId: string, value: string) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
-      <div className="border-b border-border bg-muted/30 px-4 py-3">
-        <p className="font-serif text-sm text-foreground">{title}</p>
-        {subtitle && <p className="mt-0.5 text-[11px] text-muted-foreground">{subtitle}</p>}
+    <div className={cn("overflow-hidden rounded-2xl border bg-card", starred ? "border-amber-400" : "border-border")}>
+      <div className="flex items-start justify-between gap-3 border-b border-border bg-muted/30 px-4 py-3">
+        <div className="min-w-0">
+          <p className="font-serif text-sm text-foreground">{title}</p>
+          {subtitle && <p className="mt-0.5 text-[11px] text-muted-foreground">{subtitle}</p>}
+        </div>
+        {starred && (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+            <Star className="h-3 w-3 fill-amber-500 text-amber-500" /> Priority
+          </span>
+        )}
       </div>
 
       <div className="space-y-4 px-4 py-3">
