@@ -498,7 +498,7 @@ function PlanClusterScreen() {
               </HubIcon>
               <div className="flex-1">
                 <p className="text-sm font-medium text-foreground">What is your value proposition?</p>
-                <p className="text-[11px] text-muted-foreground">One proposition per selected group</p>
+                <p className="text-[11px] text-muted-foreground">View proposition for each selected group</p>
               </div>
               {customerGroups.length > 0 ? (
                 <span className="shrink-0 rounded-full bg-green-50 px-2 py-0.5 text-[9px] font-medium text-green-700">
@@ -601,11 +601,7 @@ function PlanClusterScreen() {
 
         {/* ── VALUE PROPS per group ── */}
         {page === "valueprops" && (
-          <SubPage
-            title="Your value propositions"
-            subtitle="Tailored per customer group. Edit or add per card."
-            onBack={goHub}
-          >
+          <SubPage title="Your value propositions" subtitle="Tailored per customer group. Edit card." onBack={goHub}>
             {selectedGroupObjs.length === 0 ? (
               <p className="text-sm text-muted-foreground">Go back and select customer groups first.</p>
             ) : (
