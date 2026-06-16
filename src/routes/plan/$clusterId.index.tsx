@@ -47,7 +47,8 @@ import { getClusterValueProps } from "@/lib/engagementContent";
 export const Route = createFileRoute("/plan/$clusterId/")({
   component: PlanClusterScreen,
 });
-
+const ASM_NAME = "Sunil Kumar";
+const ASM_AREA = "Panvel";
 const CONTRACTOR_BUCKET = "CONTRACTOR" as const;
 const RETAILER_BUCKET = "RETAILER" as const;
 const STAKEHOLDER_BUCKET = "D2C" as const;
@@ -770,8 +771,16 @@ function PlanClusterScreen() {
             ) : (
               <div className="space-y-5">
                 <div className="rounded-2xl bg-white p-4">
-                  <p className="font-serif text-base text-black">Quarterly cluster engagement plan</p>
-                  <p className="text-xs text-black">{cluster.name} cluster</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-serif text-base text-black">Quarterly cluster engagement plan</p>
+                      <p className="text-xs text-black">{cluster.name} cluster</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-black">Name: {ASM_NAME}</p>
+                      <p className="text-xs text-black">Area: {ASM_AREA}</p>
+                    </div>
+                  </div>
 
                   {selectedGroupObjs.length > 0 && (
                     <div className="mt-4">
