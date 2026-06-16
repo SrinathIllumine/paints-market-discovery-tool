@@ -812,11 +812,9 @@ function PlanClusterScreen() {
                   )}
                 </div>
 
-                <div>
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    Action plans
-                  </p>
-                  <div className="overflow-hidden rounded-2xl border border-border">
+                <div className="rounded-2xl bg-white p-4">
+                  <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.1em] text-gray-400">Action plans</p>
+                  <div className="overflow-hidden rounded-xl border border-gray-200">
                     <div className="grid grid-cols-[28px_1fr_140px] bg-navy">
                       <div />
                       <div className="py-2 text-[11px] font-medium text-navy-foreground">Action</div>
