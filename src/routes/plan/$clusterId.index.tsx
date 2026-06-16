@@ -786,7 +786,7 @@ function PlanClusterScreen() {
               </p>
             ) : (
               <div className="space-y-5">
-                <div className="rounded-2xl bg-white p-8">
+                <div className="rounded-2xl bg-white p-6">
                   <p className="mt-1.5 font-serif text-lg font-medium text-black">Quarterly engagement plan</p>
                   <p className="mt-0.5 text-[13px] text-gray-500">{cluster.name} cluster</p>
 
@@ -828,7 +828,7 @@ function PlanClusterScreen() {
                   )}
                 </div>
 
-                <div className="rounded-2xl bg-white p-4">
+                <div className="rounded-2xl bg-white p-2">
                   <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.1em] text-gray-400">Action plans</p>
                   <div className="overflow-hidden rounded-xl border border-gray-200">
                     <div className="grid grid-cols-[28px_1fr_140px] bg-navy">
