@@ -87,7 +87,7 @@ export async function generateMonthlyEngagementPlanPdf({
   };
 
   const heading = (text: string) => {
-    ensureSpace(28);
+    ensureSpace(40);
     y += 6;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
