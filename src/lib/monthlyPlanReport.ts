@@ -65,7 +65,7 @@ export async function generateMonthlyEngagementPlanPdf({
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 40;
   let y = margin;
-
+  const cluster = getCluster(focusClusterId);
   doc.setFillColor(15, 23, 42);
   doc.rect(0, 0, pageWidth, 84, "F");
   doc.setTextColor(255, 255, 255);
