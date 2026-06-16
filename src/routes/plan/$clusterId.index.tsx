@@ -583,12 +583,21 @@ function PlanClusterScreen() {
               </div>
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </HubCard>
-            <Button
-              onClick={() => setConfirmOpen(true)}
-              className="h-12 w-full gap-2 bg-navy font-serif text-base text-navy-foreground hover:bg-navy/90"
-            >
-              <FileDown className="h-4 w-4" /> Generate quarterly plan
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                onClick={() => setConfirmOpen(true)}
+                className="h-12 flex-1 gap-2 bg-navy font-serif text-base text-navy-foreground hover:bg-navy/90"
+              >
+                <FileDown className="h-4 w-4" /> Generate quarterly plan
+              </Button>
+              <Button
+                onClick={handleShareWithAsm}
+                variant="outline"
+                className="h-12 flex-1 gap-2 border-navy font-serif text-base text-navy hover:bg-navy/5"
+              >
+                <Users className="h-4 w-4" /> Share report with your ASM
+              </Button>
+            </div>
           </div>
         )}
 
