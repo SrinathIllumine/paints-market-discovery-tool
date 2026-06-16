@@ -77,7 +77,7 @@ export async function generateMonthlyEngagementPlanPdf({
   doc.setFont("helvetica", "normal");
   doc.text("Area: Panvel", pageWidth - margin, 46, { align: "right" });
   doc.setTextColor(15, 23, 42);
-  y = 90;
+  y = 80;
 
   const ensureSpace = (h: number) => {
     if (y + h > 780) {
@@ -88,7 +88,7 @@ export async function generateMonthlyEngagementPlanPdf({
 
   const heading = (text: string) => {
     ensureSpace(40);
-    y += 2;
+    //y += 2;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.text(text, margin, y);
