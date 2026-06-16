@@ -350,7 +350,7 @@ function PlanClusterScreen() {
   const [page, setPage] = useState<Page>("hub");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [detailGroup, setDetailGroup] = useState<{ id: string; label: string; pct: number } | null>(null);
-  const [activeEnablers, setActiveEnablers] = useState<{ title: string; items: Enabler[] } | null>(null);
+ 
 
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
@@ -711,12 +711,11 @@ function PlanClusterScreen() {
             </div>
           </SubPage>
         )}
-
-        {/* ── ACTION PLAN ── */}
+    {/* ── ACTION PLAN ── */}
         {page === "actionplan" && (
           <SubPage
             title="Your action plan"
-            subtitle="Star to prioritize. Tap enablers to prep. Review unlocks once starred."
+            subtitle="Star to prioritize your quarter."
             onBack={goHub}
             footer={
               <Button
@@ -735,97 +734,128 @@ function PlanClusterScreen() {
                 Make selections in the other sections to see your action plan here.
               </p>
             ) : (
-              <div className="overflow-hidden rounded-2xl border border-border bg-card">
-                <div className="grid grid-cols-[1fr_64px_64px] border-b border-border bg-muted/40 px-3 py-2 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  <span>Item</span>
-                  <span className="text-center">Enablers</span>
-                  <span className="text-center">Review</span>
+              <div className="space-y-5">
+                <div>
+                  <p className="font-serif text-base text-foreground">Quarterly cluster engagement plan</p>
+                  <p className="text-xs text-muted-foreground">{cluster.name} cluster</p>
                 </div>
 
-                {selectedCampObjs.length > 0 && (
-                  <>
-                    <div className="border-b border-border bg-muted/20 px-3 py-1.5 text-[10.5px] font-semibold text-foreground">
-                      Events & camps
-                    </div>
-                    {selectedCampObjs.map((c) => {
-                      const key = `camp:${c.id}`;
+                {selectedGroupObjs.length > 0 && (
+                  <div>
+                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                      Customer groups targeted
+                    </p>
+                    {selectedGroupObjs.map((g) => (
+                      <p key={g.id} className="text-[13px] text-foreground">– {g.label}</p>
+                    ))}
+                  </div>
+                )}
+
+                {selectedGroupObjs.length > 0 && (
+                  <div>
+                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                      Value propositions
+                    </p>
+                    {selectedGroupObjs.map((g) => {
+                      const props = groupValueProps[g.id]?.length
+                        ? groupValueProps[g.id]
+                        : getValuePropsForGroup(clusterId, g.id);
                       return (
-                        <ApRow
-                          key={c.id}
-                          title={c.label}
-                          sub={c.description}
-                          starred={isStarred(key)}
-                          onToggleStar={() => toggleStarred(clusterId, key)}
-                          enablers={getCampEnablers(c.id)}
-                          onViewEnablers={() => setActiveEnablers({ title: c.label, items: getCampEnablers(c.id) })}
-                          onReview={() => navigate({ to: "/plan/$clusterId/review", params: { clusterId } })}
-                        />
+                        <div key={g.id} className="mb-2">
+                          <p className="text-[13px] font-medium text-foreground">{g.label}</p>
+                          {props.slice(0, 2).map((p, i) => (
+                            <p key={i} className="text-[12px] text-muted-foreground">– {p}</p>
+                          ))}
+                        </div>
                       );
                     })}
-                  </>
+                  </div>
                 )}
 
-                {validContractors.length > 0 && (
-                  <>
-                    <div className="border-b border-border bg-muted/20 px-3 py-1.5 text-[10.5px] font-semibold text-foreground">
-                      Contractors
+                <div>
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    Action plans
+                  </p>
+                  <div className="overflow-hidden rounded-2xl border border-border">
+                    <div className="grid grid-cols-[28px_1fr_140px] bg-navy">
+                      <div />
+                      <div className="py-2 text-[11px] font-medium text-navy-foreground">Action</div>
+                      <div className="border-l border-white/20 px-3 py-2 text-[11px] font-medium text-navy-foreground">
+                        Enablers
+                      </div>
                     </div>
-                    <ApGroupRow
-                      title="Contractors to convert"
-                      contacts={validContractors}
-                      starred={isStarred("group:contractors")}
-                      onToggleStar={() => toggleStarred(clusterId, "group:contractors")}
-                      enablers={CONTRACTOR_GROUP_ENABLERS}
-                      onViewEnablers={() =>
-                        setActiveEnablers({ title: "Contractors to convert", items: CONTRACTOR_GROUP_ENABLERS })
-                      }
-                      onReview={() => navigate({ to: "/plan/$clusterId/review", params: { clusterId } })}
-                    />
-                  </>
-                )}
 
-                {validRetailers.length > 0 && (
-                  <>
-                    <div className="border-b border-border bg-muted/20 px-3 py-1.5 text-[10.5px] font-semibold text-foreground">
-                      Retailers
-                    </div>
-                    <ApGroupRow
-                      title="Retailers who can connect"
-                      contacts={validRetailers}
-                      starred={isStarred("group:retailers")}
-                      onToggleStar={() => toggleStarred(clusterId, "group:retailers")}
-                      enablers={RETAILER_GROUP_ENABLERS}
-                      onViewEnablers={() =>
-                        setActiveEnablers({ title: "Retailers who can connect", items: RETAILER_GROUP_ENABLERS })
-                      }
-                      onReview={() => navigate({ to: "/plan/$clusterId/review", params: { clusterId } })}
-                    />
-                  </>
-                )}
+                    {selectedCampObjs.length > 0 && (
+                      <>
+                        <div className="border-t border-border bg-muted/30 px-3 py-1.5 text-[10.5px] font-semibold text-foreground">
+                          Events & camps
+                        </div>
+                        {selectedCampObjs.map((c) => {
+                          const key = `camp:${c.id}`;
+                          return (
+                            <ApRow
+                              key={c.id}
+                              title={c.label}
+                              sub={c.description}
+                              starred={isStarred(key)}
+                              onToggleStar={() => toggleStarred(clusterId, key)}
+                              enablers={getCampEnablers(c.id)}
+                            />
+                          );
+                        })}
+                      </>
+                    )}
 
-                {validStakeholders.length > 0 && (
-                  <>
-                    <div className="border-b border-border bg-muted/20 px-3 py-1.5 text-[10.5px] font-semibold text-foreground">
-                      Stakeholders
-                    </div>
-                    <ApGroupRow
-                      title="Stakeholders to meet directly"
-                      contacts={validStakeholders}
-                      starred={isStarred("group:stakeholders")}
-                      onToggleStar={() => toggleStarred(clusterId, "group:stakeholders")}
-                      enablers={STAKEHOLDER_GROUP_ENABLERS}
-                      onViewEnablers={() =>
-                        setActiveEnablers({ title: "Stakeholders to meet directly", items: STAKEHOLDER_GROUP_ENABLERS })
-                      }
-                      onReview={() => navigate({ to: "/plan/$clusterId/review", params: { clusterId } })}
-                    />
-                  </>
-                )}
+                    {validContractors.length > 0 && (
+                      <>
+                        <div className="border-t border-border bg-muted/30 px-3 py-1.5 text-[10.5px] font-semibold text-foreground">
+                          Contractors
+                        </div>
+                        <ApGroupRow
+                          title="Contractors to convert"
+                          contacts={validContractors}
+                          starred={isStarred("group:contractors")}
+                          onToggleStar={() => toggleStarred(clusterId, "group:contractors")}
+                          enablers={CONTRACTOR_GROUP_ENABLERS}
+                        />
+                      </>
+                    )}
+
+                    {validRetailers.length > 0 && (
+                      <>
+                        <div className="border-t border-border bg-muted/30 px-3 py-1.5 text-[10.5px] font-semibold text-foreground">
+                          Retailers
+                        </div>
+                        <ApGroupRow
+                          title="Retailers who can connect"
+                          contacts={validRetailers}
+                          starred={isStarred("group:retailers")}
+                          onToggleStar={() => toggleStarred(clusterId, "group:retailers")}
+                          enablers={RETAILER_GROUP_ENABLERS}
+                        />
+                      </>
+                    )}
+
+                    {validStakeholders.length > 0 && (
+                      <>
+                        <div className="border-t border-border bg-muted/30 px-3 py-1.5 text-[10.5px] font-semibold text-foreground">
+                          Stakeholders
+                        </div>
+                        <ApGroupRow
+                          title="Stakeholders to meet directly"
+                          contacts={validStakeholders}
+                          starred={isStarred("group:stakeholders")}
+                          onToggleStar={() => toggleStarred(clusterId, "group:stakeholders")}
+                          enablers={STAKEHOLDER_GROUP_ENABLERS}
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </SubPage>
         )}
-      </div>
       {/* ── Group detail popup ── */}
       {detailGroup &&
         (() => {
@@ -858,47 +888,7 @@ function PlanClusterScreen() {
           );
         })()}
 
-      {/* ── Enabler file modal ── */}
-      {activeEnablers && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 px-4 pb-4"
-          onClick={() => setActiveEnablers(null)}
-        >
-          <div
-            className="w-full max-w-md overflow-hidden rounded-2xl bg-background"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <p className="font-serif text-base text-foreground">{activeEnablers.title}</p>
-              <button type="button" onClick={() => setActiveEnablers(null)} className="text-muted-foreground">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="divide-y divide-border">
-              {activeEnablers.items.map((e, i) => (
-                <div key={i} className="flex items-center justify-between gap-3 px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 shrink-0 text-amber-700" />
-                    <div>
-                      <p className="text-[12px] font-medium text-foreground">{e.label}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {e.file.name} · {e.file.size}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => alert(`Demo: ${e.file.name}`)}
-                    className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-[11px] text-foreground hover:bg-muted"
-                  >
-                    <Download className="h-3 w-3" /> Download Enabler
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+     
 
       {/* ── Generate dialog ── */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
@@ -1036,111 +1026,52 @@ function ValuePropGroupCard({
 
 /* ════════════════════════════════════════════════════════════
    Action plan row components
-════════════════════════════════════════════════════════════ */
-function ApRow({
-  title,
-  sub,
-  starred,
-  onToggleStar,
-  enablers,
-  onViewEnablers,
-  onReview,
-}: {
-  title: string;
-  sub?: string;
-  starred: boolean;
-  onToggleStar: () => void;
-  enablers: Enabler[];
-  onViewEnablers: () => void;
-  onReview: () => void;
+════════════════════════════════════════════════════════════ */function ApRow({ title, sub, starred, onToggleStar, enablers }: {
+  title: string; sub?: string; starred: boolean;
+  onToggleStar: () => void; enablers: Enabler[];
 }) {
   return (
-    <div className="flex items-center gap-3 border-b border-border px-3 py-3 last:border-b-0">
-      <button type="button" onClick={onToggleStar} className="shrink-0" aria-label="Star">
+    <div className="grid grid-cols-[28px_1fr_140px] border-t border-border">
+      <button type="button" onClick={onToggleStar} className="flex items-center justify-center" aria-label="Star">
         <Star className={cn("h-4 w-4", starred ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
       </button>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[12.5px] font-medium text-foreground">{title}</p>
-        {sub && <p className="truncate text-[10.5px] text-muted-foreground">{sub}</p>}
+      <div className="min-w-0 py-2.5">
+        <p className="text-[13px] text-foreground">{title}</p>
+        {sub && <p className="mt-0.5 text-[11px] text-muted-foreground">{sub}</p>}
       </div>
-      <button
-        type="button"
-        onClick={onViewEnablers}
-        className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800 hover:bg-amber-100"
-      >
-        <Lightbulb className="h-3 w-3" /> View
+      <div className="border-l border-border px-3 py-2.5">
+        {enablers.map((e, i) => (
+          <p key={i} className="text-[11px] leading-snug text-muted-foreground">{e.label}</p>
+        ))}
+      </div>
+    </div>
+  );
+}
+function ApGroupRow({ title, contacts, starred, onToggleStar, enablers }: {
+  title: string; contacts: ContactEntry[]; starred: boolean;
+  onToggleStar: () => void; enablers: Enabler[];
+}) {
+  return (
+    <div className="grid grid-cols-[28px_1fr_140px] border-t border-border">
+      <button type="button" onClick={onToggleStar} className="flex items-center justify-center" aria-label="Star">
+        <Star className={cn("h-4 w-4", starred ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
       </button>
-      <button
-        type="button"
-        onClick={starred ? onReview : undefined}
-        className={cn(
-          "inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium",
-          starred
-            ? "border-border bg-background text-foreground hover:bg-muted"
-            : "cursor-not-allowed border-dashed border-border text-muted-foreground/40",
-        )}
-      >
-        <ClipboardCheck className="h-3 w-3" /> Review Visit
-      </button>
+      <div className="min-w-0 py-2.5">
+        <p className="text-[13px] text-foreground">{title}</p>
+        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+          {contacts.slice(0, 3).map((c) => c.name).filter(Boolean).join(" · ")}
+          {contacts.length > 3 ? ` +${contacts.length - 3} more` : ""}
+        </p>
+      </div>
+      <div className="border-l border-border px-3 py-2.5">
+        {enablers.map((e, i) => (
+          <p key={i} className="text-[11px] leading-snug text-muted-foreground">{e.label}</p>
+        ))}
+      </div>
     </div>
   );
 }
 
-function ApGroupRow({
-  title,
-  contacts,
-  starred,
-  onToggleStar,
-  enablers,
-  onViewEnablers,
-  onReview,
-}: {
-  title: string;
-  contacts: ContactEntry[];
-  starred: boolean;
-  onToggleStar: () => void;
-  enablers: Enabler[];
-  onViewEnablers: () => void;
-  onReview: () => void;
-}) {
-  return (
-    <div className="flex items-center gap-3 border-b border-border px-3 py-3 last:border-b-0">
-      <button type="button" onClick={onToggleStar} className="shrink-0" aria-label="Star">
-        <Star className={cn("h-4 w-4", starred ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
-      </button>
-      <div className="min-w-0 flex-1">
-        <p className="text-[12.5px] font-medium text-foreground">{title}</p>
-        <p className="truncate text-[10.5px] text-muted-foreground">
-          {contacts
-            .slice(0, 3)
-            .map((c) => c.name)
-            .filter(Boolean)
-            .join(" · ")}
-          {contacts.length > 3 ? ` +${contacts.length - 3} more` : ""}
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={onViewEnablers}
-        className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800 hover:bg-amber-100"
-      >
-        <Lightbulb className="h-3 w-3" /> View
-      </button>
-      <button
-        type="button"
-        onClick={starred ? onReview : undefined}
-        className={cn(
-          "inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium",
-          starred
-            ? "border-border bg-background text-foreground hover:bg-muted"
-            : "cursor-not-allowed border-dashed border-border text-muted-foreground/40",
-        )}
-      >
-        <ClipboardCheck className="h-3 w-3" /> Review Visit
-      </button>
-    </div>
-  );
-}
 
 /* ════════════════════════════════════════════════════════════
    Shared primitives
