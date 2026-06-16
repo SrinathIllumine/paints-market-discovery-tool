@@ -769,33 +769,33 @@ function PlanClusterScreen() {
               </p>
             ) : (
               <div className="space-y-5">
-                <div>
-                  <p className="font-serif text-base text-foreground">Quarterly cluster engagement plan</p>
-                  <p className="text-xs text-muted-foreground">{cluster.name} cluster</p>
-                </div>
+                <div className="rounded-2xl bg-white p-4">
+                  <p className="font-serif text-base text-black">Quarterly cluster engagement plan</p>
+                  <p className="text-xs text-black">{cluster.name} cluster</p>
 
-                {selectedGroupObjs.length > 0 && (
-                  <div>
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                      Customer groups and their value propositions
-                    </p>
-                    {selectedGroupObjs.map((g) => {
-                      const props = groupValueProps[g.id]?.length
-                        ? groupValueProps[g.id]
-                        : getValuePropsForGroup(clusterId, g.id);
-                      return (
-                        <div key={g.id} className="mb-2">
-                          <p className="text-[13px] font-medium text-foreground">{g.label}</p>
-                          {props.slice(0, 2).map((p, i) => (
-                            <p key={i} className="text-[12px] text-muted-foreground">
-                              – {p}
-                            </p>
-                          ))}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                  {selectedGroupObjs.length > 0 && (
+                    <div className="mt-4">
+                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-black">
+                        Customer groups and their value propositions
+                      </p>
+                      {selectedGroupObjs.map((g) => {
+                        const props = groupValueProps[g.id]?.length
+                          ? groupValueProps[g.id]
+                          : getValuePropsForGroup(clusterId, g.id);
+                        return (
+                          <div key={g.id} className="mb-2">
+                            <p className="text-[13px] font-medium text-black">{g.label}</p>
+                            {props.slice(0, 2).map((p, i) => (
+                              <p key={i} className="text-[12px] text-black">
+                                – {p}
+                              </p>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
 
                 <div>
                   <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
