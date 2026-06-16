@@ -771,8 +771,7 @@ function PlanClusterScreen() {
             ) : (
               <div className="space-y-5">
                 <div className="rounded-2xl bg-white p-8">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-navy">Quarterly report</p>
-                  <p className="mt-1.5 font-serif text-lg font-medium text-black">Cluster engagement plan</p>
+                  <p className="mt-1.5 font-serif text-lg font-medium text-black">Quarterly engagement plan</p>
                   <p className="mt-0.5 text-[13px] text-gray-500">{cluster.name} cluster</p>
 
                   <div className="mt-4 flex gap-7 border-t border-gray-200 pt-4">
