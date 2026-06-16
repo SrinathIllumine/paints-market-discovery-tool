@@ -986,20 +986,27 @@ function ValuePropGroupCard({
   const [editing, setEditing] = useState(false);
   const defaultProps = getValuePropsForGroup(clusterId, groupId);
   const displayProps = savedProps.length > 0 ? savedProps : defaultProps;
+  const masterList = Array.from(new Set([...defaultProps, ...savedProps]));
   const [draft, setDraft] = useState<string[]>(displayProps);
+
+  const syncProps = (next: string[]) => {
+    displayProps.forEach((p) => {
+      if (savedProps.includes(p)) onToggleProp(p);
+    });
+    next.forEach((p) => onToggleProp(p));
+  };
 
   const startEdit = () => {
     setDraft(displayProps);
     setEditing(true);
   };
   const save = () => {
-    const next = draft.map((d) => d.trim()).filter(Boolean);
-    // sync to store: remove old, add new
-    displayProps.forEach((p) => {
-      if (savedProps.includes(p)) onToggleProp(p);
-    });
-    next.forEach((p) => onToggleProp(p));
+    syncProps(draft.map((d) => d.trim()).filter(Boolean));
     setEditing(false);
+  };
+  const handleCheckToggle = (p: string) => {
+    const next = displayProps.includes(p) ? displayProps.filter((x) => x !== p) : [...displayProps, p];
+    syncProps(next);
   };
 
   return (
@@ -1034,9 +1041,14 @@ function ValuePropGroupCard({
 
       {!editing ? (
         <ul className="divide-y divide-border">
-          {displayProps.map((p, i) => (
+          {masterList.map((p, i) => (
             <li key={i} className="flex items-start gap-2.5 px-4 py-2.5">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-critical" />
+              <input
+                type="checkbox"
+                checked={displayProps.includes(p)}
+                onChange={() => handleCheckToggle(p)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-critical"
+              />
               <p className="text-[12px] leading-relaxed text-foreground">{p}</p>
             </li>
           ))}
