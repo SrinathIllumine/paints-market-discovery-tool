@@ -771,7 +771,7 @@ function PlanClusterScreen() {
         )}
         {/* ── ACTION PLAN ── */}
         {page === "actionplan" && (
-          <SubPage
+        {/*<SubPage
             title=""
             subtitle=""
             onBack={goHub}
@@ -792,7 +792,7 @@ function PlanClusterScreen() {
                 </Button>
               </div>
             }
-          >
+          >*/}
             {selectedCampObjs.length === 0 &&
             validContractors.length === 0 &&
             validRetailers.length === 0 &&
