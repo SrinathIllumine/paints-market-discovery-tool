@@ -492,9 +492,7 @@ function PlanClusterScreen() {
   };
 
   const handleShareWithAsm = () => {
-    alert(
-      `Quarterly plan for ${cluster?.name ?? clusterId} shared with your ASM (${ASM_NAME}, ${ASM_AREA}).\n(Demo — no email is actually sent.)`,
-    );
+    alert(`Quarterly plan for ${cluster?.name ?? clusterId} shared with your ASM.`);
   };
 
   const goTo = (p: Page) => setPage(p);
@@ -583,15 +581,26 @@ function PlanClusterScreen() {
               </div>
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </HubCard>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button onClick={() => setConfirmOpen(true)} className="h-12 sm:flex-1">
-                <FileDown className="mr-2 h-4 w-4" />
-                Generate quarterly plan
+            <div className="flex w-full gap-2">
+              <Button
+                onClick={() => setConfirmOpen(true)}
+                className="flex-1 min-w-0 h-auto min-h-[56px] px-3 py-2 bg-navy font-serif text-navy-foreground hover:bg-navy/90"
+              >
+                <div className="flex items-center gap-2 text-center">
+                  <FileDown className="h-4 w-4 shrink-0" />
+                  <span className="whitespace-normal break-words leading-tight">Generate quarterly plan</span>
+                </div>
               </Button>
 
-              <Button onClick={handleShareWithAsm} variant="outline" className="h-12 sm:flex-1">
-                <Users className="mr-2 h-4 w-4" />
-                Share report with your ASM
+              <Button
+                onClick={handleShareWithAsm}
+                variant="outline"
+                className="flex-1 min-w-0 h-auto min-h-[56px] px-3 py-2 border-navy font-serif text-navy hover:bg-navy/5"
+              >
+                <div className="flex items-center gap-2 text-center">
+                  <Users className="h-4 w-4 shrink-0" />
+                  <span className="whitespace-normal break-words leading-tight">Share report with your ASM</span>
+                </div>
               </Button>
             </div>
           </div>
