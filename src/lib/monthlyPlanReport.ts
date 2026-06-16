@@ -67,25 +67,25 @@ export async function generateMonthlyEngagementPlanPdf({
   let y = margin;
 
   doc.setFillColor(15, 23, 42);
-  doc.rect(0, 0, pageWidth, 70, "F");
+  doc.rect(0, 0, pageWidth, 84, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("Quarterly Cluster Engagement Plan", margin, 35);
+  doc.text(`Quarterly engagement plan for ${cluster?.name ?? focusClusterId} cluster`, margin, 30);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
     `Generated ${new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}`,
     margin,
-    54,
+    52,
   );
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("DG: Sunil Kumar", pageWidth - margin, 30, { align: "right" });
+  doc.text("DG: Sunil Kumar", pageWidth - margin, 52, { align: "right" });
   doc.setFont("helvetica", "normal");
-  doc.text("Area: Panvel", pageWidth - margin, 46, { align: "right" });
+  doc.text("Area: Panvel", pageWidth - margin, 68, { align: "right" });
   doc.setTextColor(15, 23, 42);
-  y = 110;
+  y = 124;
 
   const ensureSpace = (h: number) => {
     if (y + h > 780) {
