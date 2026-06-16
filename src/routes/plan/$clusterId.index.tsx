@@ -891,7 +891,7 @@ function PlanClusterScreen() {
                     onClick={() => alert(`Demo: ${e.file.name}`)}
                     className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-[11px] text-foreground hover:bg-muted"
                   >
-                    <Download className="h-3 w-3" /> Review Visit
+                    <Download className="h-3 w-3" /> Download Enabler
                   </button>
                 </div>
               ))}
