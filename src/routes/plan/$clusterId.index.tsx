@@ -910,6 +910,7 @@ function PlanClusterScreen() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </AppShell>
   );
 }
