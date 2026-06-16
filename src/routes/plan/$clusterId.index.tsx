@@ -748,8 +748,8 @@ function PlanClusterScreen() {
         {/* ── ACTION PLAN ── */}
         {page === "actionplan" && (
           <SubPage
-            title="Your action plan"
-            subtitle="Star to prioritize your quarter."
+            title=""
+            subtitle=""
             onBack={goHub}
             footer={
               <Button
@@ -777,20 +777,7 @@ function PlanClusterScreen() {
                 {selectedGroupObjs.length > 0 && (
                   <div>
                     <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                      Customer groups targeted
-                    </p>
-                    {selectedGroupObjs.map((g) => (
-                      <p key={g.id} className="text-[13px] text-foreground">
-                        – {g.label}
-                      </p>
-                    ))}
-                  </div>
-                )}
-
-                {selectedGroupObjs.length > 0 && (
-                  <div>
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                      Value propositions
+                      Customer groups and their value propositions
                     </p>
                     {selectedGroupObjs.map((g) => {
                       const props = groupValueProps[g.id]?.length
