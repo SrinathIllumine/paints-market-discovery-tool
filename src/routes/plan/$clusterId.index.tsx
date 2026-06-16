@@ -601,7 +601,11 @@ function PlanClusterScreen() {
 
         {/* ── VALUE PROPS per group ── */}
         {page === "valueprops" && (
-          <SubPage title="Your value propositions" subtitle="Tailored per customer group. Edit card." onBack={goHub}>
+          <SubPage
+            title="Your value propositions"
+            subtitle="Tailored to each customer group. Add or Edit card."
+            onBack={goHub}
+          >
             {selectedGroupObjs.length === 0 ? (
               <p className="text-sm text-muted-foreground">Go back and select customer groups first.</p>
             ) : (
