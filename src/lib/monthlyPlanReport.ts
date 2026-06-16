@@ -2,9 +2,9 @@
 // SSR bundle (it touches `window`/`self` at module load and crashes on
 // Cloudflare Workers).
 import { getCluster } from "@/data/clusters";
-import type { ContactEntry } from "@/lib/strategyContent";
+import { getValuePropsForGroup, type ContactEntry } from "@/lib/strategyContent";
 
-type CustomerGroupOut = { id: string; label: string; pct: number };
+type CustomerGroupOut = { id: string; label: string; pct: number; valueProps: string[] };
 type CampOut = { id: string; label: string; starred: boolean; review?: Record<string, string> };
 type ContactOut = ContactEntry & { starred?: boolean };
 
@@ -21,6 +21,10 @@ type Args = {
     retailers?: Record<string, string>;
     stakeholders?: Record<string, string>;
   };
+  campEnablers?: Record<string, string[]>;
+  contractorEnablers?: string[];
+  retailerEnablers?: string[];
+  stakeholderEnablers?: string[];
 };
 
 function normalisePdfText(text: string): string {
@@ -43,6 +47,10 @@ export async function generateMonthlyEngagementPlanPdf({
   retailers,
   stakeholders,
   groupReview,
+  campEnablers,
+  contractorEnablers,
+  retailerEnablers,
+  stakeholderEnablers,
 }: Args) {
   const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -92,6 +100,18 @@ export async function generateMonthlyEngagementPlanPdf({
     doc.setFontSize(10);
   };
 
+  const subheading = (text: string) => {
+    ensureSpace(20);
+    y += 4;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(15, 23, 42);
+    doc.text(normalisePdfText(text), margin, y);
+    y += 14;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+  };
+
   const wrapped = (text: string, indent = 0, bold = false) => {
     doc.setFont("helvetica", bold ? "bold" : "normal");
     const safe = normalisePdfText(text);
@@ -104,25 +124,34 @@ export async function generateMonthlyEngagementPlanPdf({
 
   const cluster = getCluster(focusClusterId);
 
-  heading("Focus cluster");
-  wrapped(cluster?.name ?? focusClusterId, 0, true);
+  // Header block: Prepared by / Area / Focus
+  heading("Quarterly engagement plan");
+  wrapped(`Focus cluster: ${cluster?.name ?? focusClusterId}`, 0, true);
+  wrapped("Prepared by: Sunil Kumar  |  Area: Panvel", 0);
   y += 6;
 
+  // Customer groups + their value propositions (mirrors on-screen action plan)
   if (customerGroups.length > 0) {
-    heading("Customer groups targeted");
-    for (const g of customerGroups) wrapped(`- ${g.label} (${g.pct}%)`, 0);
-    y += 6;
+    heading("Customer groups and their value propositions");
+    for (const g of customerGroups) {
+      subheading(`${g.label}  (${g.pct}%)`);
+      const props = g.valueProps.length > 0 ? g.valueProps : getValuePropsForGroup(focusClusterId, g.id);
+      for (const p of props) wrapped(`- ${p}`, 12);
+      y += 4;
+    }
   }
 
+  // Cluster-level value props (if any extra)
   if (valueProps.length > 0) {
-    heading("Value propositions");
+    heading("Cluster-level value propositions");
     for (const vp of valueProps) wrapped(`- ${vp}`, 0);
-    y += 6;
+    y += 4;
   }
 
+  // Action plan — mirrors the on-screen table: star + action + enablers
   heading("Action plan");
 
-  const starTag = (s: boolean) => (s ? " *" : "");
+  const starTag = (s: boolean) => (s ? " [Priority]" : "");
   const reviewLine = (rev?: Record<string, string>) => {
     if (!rev) return "";
     const entries = Object.entries(rev).filter(([, v]) => (v ?? "").toString().trim());
@@ -130,12 +159,18 @@ export async function generateMonthlyEngagementPlanPdf({
     return entries.map(([k, v]) => `${k}: ${v}`).join("; ");
   };
 
+  const enablerList = (items?: string[]) => {
+    if (!items || items.length === 0) return;
+    wrapped(`Enablers: ${items.join(", ")}`, 24);
+  };
+
   if (camps.length > 0) {
-    wrapped("Camps / events planned:", 0, true);
+    subheading("Events & camps");
     for (const c of camps) {
-      wrapped(`- ${c.label}${starTag(c.starred)}`, 12);
+      wrapped(`- ${c.label}${starTag(c.starred)}`, 12, true);
+      enablerList(campEnablers?.[c.id]);
       const r = reviewLine(c.review);
-      if (r) wrapped(`Review — ${r}`, 24);
+      if (r) wrapped(`Review - ${r}`, 24);
     }
     y += 4;
   }
@@ -143,43 +178,47 @@ export async function generateMonthlyEngagementPlanPdf({
   const validContractors = contractors.filter((c) => (c.name ?? "").trim());
   if (validContractors.length > 0) {
     const grpStar = validContractors.some((c) => c.starred);
-    wrapped(`Contractors to be converted${grpStar ? " *" : ""}:`, 0, true);
+    subheading(`Contractors to be converted${starTag(grpStar)}`);
     for (const c of validContractors) {
       const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" - ");
       wrapped(`- ${line}`, 12);
     }
+    enablerList(contractorEnablers);
     const r = reviewLine(groupReview?.contractors);
-    if (r) wrapped(`Review — ${r}`, 12);
+    if (r) wrapped(`Review - ${r}`, 12);
     y += 4;
   }
 
   const validRetailers = retailers.filter((c) => (c.name ?? "").trim());
   if (validRetailers.length > 0) {
     const grpStar = validRetailers.some((c) => c.starred);
-    wrapped(`Retailers who can connect${grpStar ? " *" : ""}:`, 0, true);
+    subheading(`Retailers who can connect${starTag(grpStar)}`);
     for (const c of validRetailers) {
       const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" - ");
       wrapped(`- ${line}`, 12);
     }
+    enablerList(retailerEnablers);
     const r = reviewLine(groupReview?.retailers);
-    if (r) wrapped(`Review — ${r}`, 12);
+    if (r) wrapped(`Review - ${r}`, 12);
     y += 4;
   }
 
   const validStakeholders = stakeholders.filter((c) => (c.name ?? "").trim());
   if (validStakeholders.length > 0) {
     const grpStar = validStakeholders.some((c) => c.starred);
-    wrapped(`Stakeholders to reach out directly${grpStar ? " *" : ""}:`, 0, true);
+    subheading(`Stakeholders to reach out directly${starTag(grpStar)}`);
     for (const c of validStakeholders) {
       const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" - ");
       wrapped(`- ${line}`, 12);
     }
+    enablerList(stakeholderEnablers);
     const r = reviewLine(groupReview?.stakeholders);
-    if (r) wrapped(`Review — ${r}`, 12);
+    if (r) wrapped(`Review - ${r}`, 12);
     y += 4;
   }
 
-  wrapped("* = prioritized for this quarter", 0);
+  y += 6;
+  wrapped("[Priority] = starred for this quarter", 0);
 
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {

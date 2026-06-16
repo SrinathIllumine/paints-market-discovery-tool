@@ -464,6 +464,10 @@ function PlanClusterScreen() {
   };
 
   const handleGenerate = () => {
+    const campEnablersMap: Record<string, string[]> = {};
+    for (const c of selectedCampObjs) {
+      campEnablersMap[c.id] = getCampEnablers(c.id).map((e) => e.label);
+    }
     generateMonthlyEngagementPlanPdf({
       focusClusterId: clusterId,
       valueProps: getClusterValueProps(clusterId),
@@ -477,10 +481,20 @@ function PlanClusterScreen() {
       contractors: contractors.map((c) => ({ ...c, starred: isStarred("group:contractors") })),
       retailers: retailers.map((c) => ({ ...c, starred: isStarred("group:retailers") })),
       stakeholders: stakeholders.map((c) => ({ ...c, starred: isStarred("group:stakeholders") })),
+      campEnablers: campEnablersMap,
+      contractorEnablers: CONTRACTOR_GROUP_ENABLERS.map((e) => e.label),
+      retailerEnablers: RETAILER_GROUP_ENABLERS.map((e) => e.label),
+      stakeholderEnablers: STAKEHOLDER_GROUP_ENABLERS.map((e) => e.label),
     });
     setConfirmOpen(false);
     unlockStage(3);
     setMonthlyFocus(clusterId);
+  };
+
+  const handleShareWithAsm = () => {
+    alert(
+      `Quarterly plan for ${cluster?.name ?? clusterId} shared with your ASM (${ASM_NAME}, ${ASM_AREA}).\n(Demo — no email is actually sent.)`,
+    );
   };
 
   const goTo = (p: Page) => setPage(p);
@@ -569,12 +583,21 @@ function PlanClusterScreen() {
               </div>
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </HubCard>
-            <Button
-              onClick={() => setConfirmOpen(true)}
-              className="h-12 w-full gap-2 bg-navy font-serif text-base text-navy-foreground hover:bg-navy/90"
-            >
-              <FileDown className="h-4 w-4" /> Generate quarterly plan
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                onClick={() => setConfirmOpen(true)}
+                className="h-12 flex-1 gap-2 bg-navy font-serif text-base text-navy-foreground hover:bg-navy/90"
+              >
+                <FileDown className="h-4 w-4" /> Generate quarterly plan
+              </Button>
+              <Button
+                onClick={handleShareWithAsm}
+                variant="outline"
+                className="h-12 flex-1 gap-2 border-navy font-serif text-base text-navy hover:bg-navy/5"
+              >
+                <Users className="h-4 w-4" /> Share report with your ASM
+              </Button>
+            </div>
           </div>
         )}
 
@@ -753,12 +776,21 @@ function PlanClusterScreen() {
             subtitle=""
             onBack={goHub}
             footer={
-              <Button
-                onClick={() => setConfirmOpen(true)}
-                className="h-12 w-full gap-2 bg-navy font-serif text-base text-navy-foreground hover:bg-navy/90"
-              >
-                <FileDown className="h-4 w-4" /> Generate quarterly plan
-              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  onClick={() => setConfirmOpen(true)}
+                  className="h-12 flex-1 gap-2 bg-navy font-serif text-base text-navy-foreground hover:bg-navy/90"
+                >
+                  <FileDown className="h-4 w-4" /> Generate quarterly plan
+                </Button>
+                <Button
+                  onClick={handleShareWithAsm}
+                  variant="outline"
+                  className="h-12 flex-1 gap-2 border-navy font-serif text-base text-navy hover:bg-navy/5"
+                >
+                  <Users className="h-4 w-4" /> Share report with your ASM
+                </Button>
+              </div>
             }
           >
             {selectedCampObjs.length === 0 &&
