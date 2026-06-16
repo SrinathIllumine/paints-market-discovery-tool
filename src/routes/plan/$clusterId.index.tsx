@@ -770,21 +770,25 @@ function PlanClusterScreen() {
               </p>
             ) : (
               <div className="space-y-5">
-                <div className="rounded-2xl bg-white p-4">
-                  <div className="flex items-start justify-between gap-3">
+                <div className="rounded-2xl bg-white p-8">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-navy">Quarterly report</p>
+                  <p className="mt-1.5 font-serif text-lg font-medium text-black">Cluster engagement plan</p>
+                  <p className="mt-0.5 text-[13px] text-gray-500">{cluster.name} cluster</p>
+
+                  <div className="mt-4 flex gap-7 border-t border-gray-200 pt-4">
                     <div>
-                      <p className="font-serif text-base text-black">Quarterly cluster engagement plan</p>
-                      <p className="text-xs text-black">{cluster.name} cluster</p>
+                      <p className="text-[9px] font-medium uppercase tracking-[0.08em] text-gray-400">Prepared by</p>
+                      <p className="mt-0.5 text-[13px] text-black">{ASM_NAME}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-black">Name: {ASM_NAME}</p>
-                      <p className="text-xs text-black">Area: {ASM_AREA}</p>
+                    <div>
+                      <p className="text-[9px] font-medium uppercase tracking-[0.08em] text-gray-400">Area</p>
+                      <p className="mt-0.5 text-[13px] text-black">{ASM_AREA}</p>
                     </div>
                   </div>
 
                   {selectedGroupObjs.length > 0 && (
-                    <div className="mt-4">
-                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-black">
+                    <div className="mt-5 border-t border-gray-200 pt-5">
+                      <p className="mb-3.5 text-[10px] font-medium uppercase tracking-[0.1em] text-gray-400">
                         Customer groups and their value propositions
                       </p>
                       {selectedGroupObjs.map((g) => {
@@ -792,13 +796,16 @@ function PlanClusterScreen() {
                           ? groupValueProps[g.id]
                           : getValuePropsForGroup(clusterId, g.id);
                         return (
-                          <div key={g.id} className="mb-2">
-                            <p className="text-[13px] font-medium text-black">{g.label}</p>
-                            {props.slice(0, 2).map((p, i) => (
-                              <p key={i} className="text-[12px] text-black">
-                                – {p}
-                              </p>
-                            ))}
+                          <div key={g.id} className="mb-4 flex gap-3 last:mb-0">
+                            <div className="w-0.5 shrink-0 rounded-full bg-navy" />
+                            <div>
+                              <p className="font-serif text-[14px] font-medium text-black">{g.label}</p>
+                              {props.slice(0, 2).map((p, i) => (
+                                <p key={i} className="mt-1.5 text-[12.5px] leading-relaxed text-gray-600">
+                                  {p}
+                                </p>
+                              ))}
+                            </div>
                           </div>
                         );
                       })}
