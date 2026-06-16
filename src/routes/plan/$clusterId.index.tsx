@@ -602,7 +602,7 @@ function PlanClusterScreen() {
         {/* ── VALUE PROPS per group ── */}
         {page === "valueprops" && (
           <SubPage
-            title="Your value propositions"
+            title={`Your value propositions for ${cluster.name}`}
             subtitle="Tailored to each customer group. Add or Edit card."
             onBack={goHub}
           >
