@@ -464,6 +464,10 @@ function PlanClusterScreen() {
   };
 
   const handleGenerate = () => {
+    const campEnablersMap: Record<string, string[]> = {};
+    for (const c of selectedCampObjs) {
+      campEnablersMap[c.id] = getCampEnablers(c.id).map((e) => e.label);
+    }
     generateMonthlyEngagementPlanPdf({
       focusClusterId: clusterId,
       valueProps: getClusterValueProps(clusterId),
@@ -477,10 +481,20 @@ function PlanClusterScreen() {
       contractors: contractors.map((c) => ({ ...c, starred: isStarred("group:contractors") })),
       retailers: retailers.map((c) => ({ ...c, starred: isStarred("group:retailers") })),
       stakeholders: stakeholders.map((c) => ({ ...c, starred: isStarred("group:stakeholders") })),
+      campEnablers: campEnablersMap,
+      contractorEnablers: CONTRACTOR_GROUP_ENABLERS.map((e) => e.label),
+      retailerEnablers: RETAILER_GROUP_ENABLERS.map((e) => e.label),
+      stakeholderEnablers: STAKEHOLDER_GROUP_ENABLERS.map((e) => e.label),
     });
     setConfirmOpen(false);
     unlockStage(3);
     setMonthlyFocus(clusterId);
+  };
+
+  const handleShareWithAsm = () => {
+    alert(
+      `Quarterly plan for ${cluster?.name ?? clusterId} shared with your ASM (${ASM_NAME}, ${ASM_AREA}).\n(Demo — no email is actually sent.)`,
+    );
   };
 
   const goTo = (p: Page) => setPage(p);
