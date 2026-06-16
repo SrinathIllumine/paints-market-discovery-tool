@@ -454,13 +454,7 @@ function PlanClusterScreen() {
   }
 
   const handleGroupToggle = (groupId: string) => {
-    const isSelected = customerGroups.includes(groupId);
     toggleCustomerGroup(clusterId, groupId);
-    const props = getValuePropsForGroup(clusterId, groupId);
-    if (!props[0]) return;
-    const currentProps = groupValueProps[groupId] ?? [];
-    if (!isSelected && !currentProps.includes(props[0])) toggleGroupValueProp(clusterId, groupId, props[0]);
-    else if (isSelected && currentProps.includes(props[0])) toggleGroupValueProp(clusterId, groupId, props[0]);
   };
 
   const handleGenerate = () => {
@@ -985,7 +979,7 @@ function ValuePropGroupCard({
 }) {
   const [editing, setEditing] = useState(false);
   const defaultProps = getValuePropsForGroup(clusterId, groupId);
-  const displayProps = savedProps.length > 0 ? savedProps : defaultProps;
+  const displayProps = savedProps;
   const masterList = Array.from(new Set([...defaultProps, ...savedProps]));
   const [draft, setDraft] = useState<string[]>(displayProps);
 
