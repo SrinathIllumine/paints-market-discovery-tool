@@ -516,7 +516,9 @@ function PlanClusterScreen() {
                 <Bolt className="h-4 w-4 text-violet-700" />
               </HubIcon>
               <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">What actions will you take to engage?</p>
+                <p className="text-sm font-medium text-foreground">
+                  What actions will you take to engage with this cluster?
+                </p>
                 <p className="text-[11px] text-muted-foreground">Camps, contractors, retailers, stakeholders</p>
               </div>
               {badge(actionsBadge)}
@@ -626,7 +628,7 @@ function PlanClusterScreen() {
         {/* ── ACTIONS — inline expand ── */}
         {page === "actions" && (
           <SubPage
-            title="What actions will you take?"
+            title="What actions will you take to engage with this cluster?"
             subtitle="Check an action to plan it. Expands below."
             onBack={goHub}
           >
