@@ -142,10 +142,12 @@ export async function generateMonthlyEngagementPlanPdf({
   }
 
   // Cluster-level value props (if any extra)
-  if (valueProps.length > 0) {
+  {
+    /*if (valueProps.length > 0) {
     heading("Cluster-level value propositions");
     for (const vp of valueProps) wrapped(`- ${vp}`, 0);
     y += 4;
+  }*/
   }
 
   // Action plan — mirrors the on-screen table: star + action + enablers
