@@ -77,7 +77,7 @@ export async function generateMonthlyEngagementPlanPdf({
   doc.setFont("helvetica", "normal");
   doc.text("Area: Panvel", pageWidth - margin, 46, { align: "right" });
   doc.setTextColor(15, 23, 42);
-  y = 110;
+  y = 90;
 
   const ensureSpace = (h: number) => {
     if (y + h > 780) {
@@ -88,7 +88,7 @@ export async function generateMonthlyEngagementPlanPdf({
 
   const heading = (text: string) => {
     ensureSpace(40);
-    y += 6;
+    y += 2;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.text(text, margin, y);
@@ -145,7 +145,7 @@ export async function generateMonthlyEngagementPlanPdf({
   if (valueProps.length > 0) {
     heading("Cluster-level value propositions");
     for (const vp of valueProps) wrapped(`- ${vp}`, 0);
-    y += 4;
+    y += 2;
   }
 
   // Action plan — mirrors the on-screen table: star + action + enablers
