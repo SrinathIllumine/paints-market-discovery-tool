@@ -38,6 +38,14 @@ function normalisePdfText(text: string): string {
     .replace(/…/g, "...");
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export async function generateMonthlyEngagementPlanPdf({
   focusClusterId,
   valueProps,
@@ -188,13 +196,14 @@ export async function generateMonthlyEngagementPlanPdf({
     doc.setFontSize(9.5);
     const titleLines = doc.splitTextToSize(normalisePdfText(title), colAction - cellPad * 2);
     const subLines = sub ? doc.splitTextToSize(normalisePdfText(sub), colAction - cellPad * 2) : [];
-    const enablerLines =
-      enablers && enablers.length > 0
-        ? enablers.flatMap((e) => doc.splitTextToSize(normalisePdfText(e), colEnablers - cellPad * 2))
-        : [];
+    const enablerEntries = (enablers ?? []).map((e) => ({
+      label: e,
+      lines: doc.splitTextToSize(normalisePdfText(e), colEnablers - cellPad * 2),
+    }));
+    const enablerLinesCount = enablerEntries.reduce((sum, en) => sum + en.lines.length, 0);
 
     const actionHeight = titleLines.length * lineH + subLines.length * (lineH - 2) + cellPad * 2;
-    const enablersHeight = enablerLines.length * lineH + cellPad * 2;
+    const enablersHeight = enablerLinesCount * lineH + cellPad * 2;
     const rowHeight = Math.max(actionHeight, enablersHeight, 24);
 
     ensureSpace(rowHeight);
@@ -226,11 +235,27 @@ export async function generateMonthlyEngagementPlanPdf({
       doc.text(subLines, tableX + colStar + cellPad, ty);
     }
 
-    if (enablerLines.length > 0) {
+    if (enablerEntries.length > 0) {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
-      doc.setTextColor(15, 23, 42);
-      doc.text(enablerLines, tableX + colStar + colAction + cellPad, y + cellPad + 8);
+      const ex = tableX + colStar + colAction + cellPad;
+      let ey = y + cellPad + 8;
+      for (const entry of enablerEntries) {
+        doc.setTextColor(24, 95, 165);
+        let lineY = ey;
+        for (const ln of entry.lines) {
+          doc.text(ln, ex, lineY);
+          const lineWidth = doc.getTextWidth(ln);
+          doc.setDrawColor(24, 95, 165);
+          doc.line(ex, lineY + 1.5, ex + lineWidth, lineY + 1.5);
+          lineY += lineH;
+        }
+        const blockHeight = entry.lines.length * lineH;
+        doc.link(ex, ey - 7, colEnablers - cellPad * 2, blockHeight, {
+          url: `https://jkcement.com/enablers/${slugify(entry.label)}.pdf`,
+        });
+        ey += blockHeight;
+      }
     }
 
     doc.setTextColor(15, 23, 42);
