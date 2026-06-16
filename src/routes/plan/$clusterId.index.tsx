@@ -486,7 +486,7 @@ function PlanClusterScreen() {
                 <Users className="h-4 w-4 text-critical" />
               </HubIcon>
               <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Who are you targeting?</p>
+                <p className="text-sm font-medium text-foreground">Which customer groups you want to target?</p>
                 <p className="text-[11px] text-muted-foreground">Select your customer groups</p>
               </div>
               {badge(customerGroups.length)}
@@ -544,7 +544,7 @@ function PlanClusterScreen() {
         {/* ── GROUPS ── */}
         {page === "groups" && (
           <SubPage
-            title="Who are you targeting?"
+            title="Which customer groups you want to target?"
             subtitle={`Select the customer groups within ${cluster.name} you plan to engage.`}
             onBack={goHub}
           >
