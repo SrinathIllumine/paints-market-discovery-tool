@@ -130,8 +130,6 @@ export async function generateMonthlyEngagementPlanPdf({
     doc.setFont("helvetica", "normal");
   };
 
-  const cluster = getCluster(focusClusterId);
-
   // Customer groups + their value propositions (mirrors on-screen action plan)
   if (customerGroups.length > 0) {
     heading("Customer groups and their value propositions");
