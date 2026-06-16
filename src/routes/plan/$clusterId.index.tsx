@@ -210,7 +210,42 @@ const CAMP_ENABLERS: Record<string, Enabler[]> = {
     },
   ],
 };
+function buildSimplePdfBlob(title: string, description: string): Blob {
+  const esc = (s: string) => s.replace(/[()\\]/g, "\\$&");
+  const stream = `BT /F1 14 Tf 50 740 Td (${esc(title)}) Tj 0 -26 Td /F1 10 Tf (${esc(description)}) Tj ET`;
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+  ];
+  let pdf = "%PDF-1.4\n";
+  const offsets: number[] = [];
+  objects.forEach((obj, i) => {
+    offsets.push(pdf.length);
+    pdf += `${i + 1} 0 obj\n${obj}\nendobj\n`;
+  });
+  const xrefStart = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  offsets.forEach((off) => {
+    pdf += `${off.toString().padStart(10, "0")} 00000 n \n`;
+  });
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+  return new Blob([pdf], { type: "application/pdf" });
+}
 
+function downloadEnablerPdf(label: string, fileName: string, description: string) {
+  const blob = buildSimplePdfBlob(label, description);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 function getCampEnablers(campId: string): Enabler[] {
   return (
     CAMP_ENABLERS[campId] ?? [
@@ -350,7 +385,6 @@ function PlanClusterScreen() {
   const [page, setPage] = useState<Page>("hub");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [detailGroup, setDetailGroup] = useState<{ id: string; label: string; pct: number } | null>(null);
- 
 
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
@@ -711,7 +745,7 @@ function PlanClusterScreen() {
             </div>
           </SubPage>
         )}
-    {/* ── ACTION PLAN ── */}
+        {/* ── ACTION PLAN ── */}
         {page === "actionplan" && (
           <SubPage
             title="Your action plan"
@@ -746,7 +780,9 @@ function PlanClusterScreen() {
                       Customer groups targeted
                     </p>
                     {selectedGroupObjs.map((g) => (
-                      <p key={g.id} className="text-[13px] text-foreground">– {g.label}</p>
+                      <p key={g.id} className="text-[13px] text-foreground">
+                        – {g.label}
+                      </p>
                     ))}
                   </div>
                 )}
@@ -764,7 +800,9 @@ function PlanClusterScreen() {
                         <div key={g.id} className="mb-2">
                           <p className="text-[13px] font-medium text-foreground">{g.label}</p>
                           {props.slice(0, 2).map((p, i) => (
-                            <p key={i} className="text-[12px] text-muted-foreground">– {p}</p>
+                            <p key={i} className="text-[12px] text-muted-foreground">
+                              – {p}
+                            </p>
                           ))}
                         </div>
                       );
@@ -856,60 +894,58 @@ function PlanClusterScreen() {
             )}
           </SubPage>
         )}
-      {/* ── Group detail popup ── */}
-      {detailGroup &&
-        (() => {
-          const detail = getGroupDetailPoints(clusterId, detailGroup.id, detailGroup.label, detailGroup.pct);
-          return (
-            <div
-              className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 px-4 pb-4"
-              onClick={() => setDetailGroup(null)}
-            >
+        {/* ── Group detail popup ── */}
+        {detailGroup &&
+          (() => {
+            const detail = getGroupDetailPoints(clusterId, detailGroup.id, detailGroup.label, detailGroup.pct);
+            return (
               <div
-                className="w-full max-w-md overflow-hidden rounded-2xl bg-background"
-                onClick={(e) => e.stopPropagation()}
+                className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 px-4 pb-4"
+                onClick={() => setDetailGroup(null)}
               >
-                <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                  <p className="font-serif text-base text-foreground">{detail.title}</p>
-                  <button type="button" onClick={() => setDetailGroup(null)} className="text-muted-foreground">
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className="divide-y divide-border px-4">
-                  {detail.points.map((pt, i) => (
-                    <div key={i} className="flex gap-3 py-3">
-                      <span className="mt-0.5 text-critical font-semibold text-sm shrink-0">•</span>
-                      <p className="text-[12px] leading-relaxed text-foreground">{pt}</p>
-                    </div>
-                  ))}
+                <div
+                  className="w-full max-w-md overflow-hidden rounded-2xl bg-background"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                    <p className="font-serif text-base text-foreground">{detail.title}</p>
+                    <button type="button" onClick={() => setDetailGroup(null)} className="text-muted-foreground">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="divide-y divide-border px-4">
+                    {detail.points.map((pt, i) => (
+                      <div key={i} className="flex gap-3 py-3">
+                        <span className="mt-0.5 text-critical font-semibold text-sm shrink-0">•</span>
+                        <p className="text-[12px] leading-relaxed text-foreground">{pt}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
 
-     
-
-      {/* ── Generate dialog ── */}
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Ready to generate?</DialogTitle>
-            <DialogDescription>
-              The PDF will capture your selected groups, value propositions, camps and contacts for{" "}
-              <b>{cluster.name}</b>.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
-              Keep editing
-            </Button>
-            <Button onClick={handleGenerate} className="bg-navy text-navy-foreground hover:bg-navy/90">
-              Yes, generate plan
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* ── Generate dialog ── */}
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Ready to generate?</DialogTitle>
+              <DialogDescription>
+                The PDF will capture your selected groups, value propositions, camps and contacts for{" "}
+                <b>{cluster.name}</b>.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+                Keep editing
+              </Button>
+              <Button onClick={handleGenerate} className="bg-navy text-navy-foreground hover:bg-navy/90">
+                Yes, generate plan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppShell>
   );
@@ -1027,9 +1063,18 @@ function ValuePropGroupCard({
 
 /* ════════════════════════════════════════════════════════════
    Action plan row components
-════════════════════════════════════════════════════════════ */function ApRow({ title, sub, starred, onToggleStar, enablers }: {
-  title: string; sub?: string; starred: boolean;
-  onToggleStar: () => void; enablers: Enabler[];
+════════════════════════════════════════════════════════════ */ function ApRow({
+  title,
+  sub,
+  starred,
+  onToggleStar,
+  enablers,
+}: {
+  title: string;
+  sub?: string;
+  starred: boolean;
+  onToggleStar: () => void;
+  enablers: Enabler[];
 }) {
   return (
     <div className="grid grid-cols-[28px_1fr_140px] border-t border-border">
@@ -1042,15 +1087,31 @@ function ValuePropGroupCard({
       </div>
       <div className="border-l border-border px-3 py-2.5">
         {enablers.map((e, i) => (
-          <p key={i} className="text-[11px] leading-snug text-muted-foreground">{e.label}</p>
+          <button
+            key={i}
+            type="button"
+            onClick={() => downloadEnablerPdf(e.label, e.file.name, e.description)}
+            className="block w-full text-left text-[11px] leading-snug text-navy underline hover:text-navy/80"
+          >
+            {e.label}
+          </button>
         ))}
       </div>
     </div>
   );
 }
-function ApGroupRow({ title, contacts, starred, onToggleStar, enablers }: {
-  title: string; contacts: ContactEntry[]; starred: boolean;
-  onToggleStar: () => void; enablers: Enabler[];
+function ApGroupRow({
+  title,
+  contacts,
+  starred,
+  onToggleStar,
+  enablers,
+}: {
+  title: string;
+  contacts: ContactEntry[];
+  starred: boolean;
+  onToggleStar: () => void;
+  enablers: Enabler[];
 }) {
   return (
     <div className="grid grid-cols-[28px_1fr_140px] border-t border-border">
@@ -1060,19 +1121,29 @@ function ApGroupRow({ title, contacts, starred, onToggleStar, enablers }: {
       <div className="min-w-0 py-2.5">
         <p className="text-[13px] text-foreground">{title}</p>
         <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-          {contacts.slice(0, 3).map((c) => c.name).filter(Boolean).join(" · ")}
+          {contacts
+            .slice(0, 3)
+            .map((c) => c.name)
+            .filter(Boolean)
+            .join(" · ")}
           {contacts.length > 3 ? ` +${contacts.length - 3} more` : ""}
         </p>
       </div>
       <div className="border-l border-border px-3 py-2.5">
         {enablers.map((e, i) => (
-          <p key={i} className="text-[11px] leading-snug text-muted-foreground">{e.label}</p>
+          <button
+            key={i}
+            type="button"
+            onClick={() => downloadEnablerPdf(e.label, e.file.name, e.description)}
+            className="block w-full text-left text-[11px] leading-snug text-navy underline hover:text-navy/80"
+          >
+            {e.label}
+          </button>
         ))}
       </div>
     </div>
   );
 }
-
 
 /* ════════════════════════════════════════════════════════════
    Shared primitives
