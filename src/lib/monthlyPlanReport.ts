@@ -124,12 +124,6 @@ export async function generateMonthlyEngagementPlanPdf({
 
   const cluster = getCluster(focusClusterId);
 
-  // Header block: Prepared by / Area / Focus
-  heading("Quarterly engagement plan");
-  wrapped(`Focus cluster: ${cluster?.name ?? focusClusterId}`, 0, true);
-  wrapped("Prepared by: Sunil Kumar  |  Area: Panvel", 0);
-  y += 6;
-
   // Customer groups + their value propositions (mirrors on-screen action plan)
   if (customerGroups.length > 0) {
     heading("Customer groups and their value propositions");
@@ -153,70 +147,138 @@ export async function generateMonthlyEngagementPlanPdf({
   // Action plan — mirrors the on-screen table: star + action + enablers
   heading("Action plan");
 
-  const starTag = (s: boolean) => (s ? " [Priority]" : "");
-  const reviewLine = (rev?: Record<string, string>) => {
-    if (!rev) return "";
-    const entries = Object.entries(rev).filter(([, v]) => (v ?? "").toString().trim());
-    if (entries.length === 0) return "";
-    return entries.map(([k, v]) => `${k}: ${v}`).join("; ");
+  const tableX = margin;
+  const tableWidth = pageWidth - margin * 2;
+  const colStar = 30;
+  const colEnablers = 160;
+  const colAction = tableWidth - colStar - colEnablers;
+  const cellPad = 6;
+  const lineH = 11;
+
+  const drawSectionDivider = (label: string) => {
+    ensureSpace(20);
+    doc.setFillColor(241, 245, 249);
+    doc.rect(tableX, y, tableWidth, 16, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(15, 23, 42);
+    doc.text(normalisePdfText(label), tableX + cellPad, y + 11);
+    y += 16;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
   };
 
-  const enablerList = (items?: string[]) => {
-    if (!items || items.length === 0) return;
-    wrapped(`Enablers: ${items.join(", ")}`, 24);
+  const drawTableHeaderRow = () => {
+    ensureSpace(22);
+    doc.setFillColor(15, 23, 42);
+    doc.rect(tableX, y, tableWidth, 18, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text("Action", tableX + colStar + cellPad, y + 12);
+    doc.text("Enablers", tableX + colStar + colAction + cellPad, y + 12);
+    y += 18;
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
   };
+
+  const drawTableRow = (title: string, sub: string | undefined, starred: boolean, enablers?: string[]) => {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    const titleLines = doc.splitTextToSize(normalisePdfText(title), colAction - cellPad * 2);
+    const subLines = sub ? doc.splitTextToSize(normalisePdfText(sub), colAction - cellPad * 2) : [];
+    const enablerLines =
+      enablers && enablers.length > 0
+        ? enablers.flatMap((e) => doc.splitTextToSize(normalisePdfText(e), colEnablers - cellPad * 2))
+        : [];
+
+    const actionHeight = titleLines.length * lineH + subLines.length * (lineH - 2) + cellPad * 2;
+    const enablersHeight = enablerLines.length * lineH + cellPad * 2;
+    const rowHeight = Math.max(actionHeight, enablersHeight, 24);
+
+    ensureSpace(rowHeight);
+    doc.setDrawColor(230);
+    doc.rect(tableX, y, tableWidth, rowHeight);
+    doc.line(tableX + colStar, y, tableX + colStar, y + rowHeight);
+    doc.line(tableX + colStar + colAction, y, tableX + colStar + colAction, y + rowHeight);
+
+    const starCx = tableX + colStar / 2;
+    const starCy = y + rowHeight / 2;
+    if (starred) {
+      doc.setFillColor(245, 158, 11);
+      doc.circle(starCx, starCy, 3, "F");
+    } else {
+      doc.setDrawColor(180);
+      doc.circle(starCx, starCy, 3, "S");
+    }
+
+    let ty = y + cellPad + 8;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text(titleLines, tableX + colStar + cellPad, ty);
+    ty += titleLines.length * lineH;
+    if (subLines.length > 0) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(100, 110, 120);
+      doc.text(subLines, tableX + colStar + cellPad, ty);
+    }
+
+    if (enablerLines.length > 0) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(15, 23, 42);
+      doc.text(enablerLines, tableX + colStar + colAction + cellPad, y + cellPad + 8);
+    }
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    y += rowHeight;
+  };
+
+  drawTableHeaderRow();
 
   if (camps.length > 0) {
-    subheading("Events & camps");
+    drawSectionDivider("Events & camps");
     for (const c of camps) {
-      wrapped(`- ${c.label}${starTag(c.starred)}`, 12, true);
-      enablerList(campEnablers?.[c.id]);
-      const r = reviewLine(c.review);
-      if (r) wrapped(`Review - ${r}`, 24);
+      drawTableRow(c.label, undefined, c.starred, campEnablers?.[c.id]);
     }
-    y += 4;
   }
 
   const validContractors = contractors.filter((c) => (c.name ?? "").trim());
   if (validContractors.length > 0) {
+    drawSectionDivider("Contractors");
     const grpStar = validContractors.some((c) => c.starred);
-    subheading(`Contractors to be converted${starTag(grpStar)}`);
-    for (const c of validContractors) {
-      const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" - ");
-      wrapped(`- ${line}`, 12);
-    }
-    enablerList(contractorEnablers);
-    const r = reviewLine(groupReview?.contractors);
-    if (r) wrapped(`Review - ${r}`, 12);
-    y += 4;
+    const sub = validContractors
+      .map((c) => c.name)
+      .filter(Boolean)
+      .join(", ");
+    drawTableRow("Contractors to convert", sub, grpStar, contractorEnablers);
   }
 
   const validRetailers = retailers.filter((c) => (c.name ?? "").trim());
   if (validRetailers.length > 0) {
+    drawSectionDivider("Retailers");
     const grpStar = validRetailers.some((c) => c.starred);
-    subheading(`Retailers who can connect${starTag(grpStar)}`);
-    for (const c of validRetailers) {
-      const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" - ");
-      wrapped(`- ${line}`, 12);
-    }
-    enablerList(retailerEnablers);
-    const r = reviewLine(groupReview?.retailers);
-    if (r) wrapped(`Review - ${r}`, 12);
-    y += 4;
+    const sub = validRetailers
+      .map((c) => c.name)
+      .filter(Boolean)
+      .join(", ");
+    drawTableRow("Retailers who can connect", sub, grpStar, retailerEnablers);
   }
 
   const validStakeholders = stakeholders.filter((c) => (c.name ?? "").trim());
   if (validStakeholders.length > 0) {
+    drawSectionDivider("Stakeholders");
     const grpStar = validStakeholders.some((c) => c.starred);
-    subheading(`Stakeholders to reach out directly${starTag(grpStar)}`);
-    for (const c of validStakeholders) {
-      const line = [c.name, c.phone, c.area, c.brandPreference].filter(Boolean).join(" - ");
-      wrapped(`- ${line}`, 12);
-    }
-    enablerList(stakeholderEnablers);
-    const r = reviewLine(groupReview?.stakeholders);
-    if (r) wrapped(`Review - ${r}`, 12);
-    y += 4;
+    const sub = validStakeholders
+      .map((c) => c.name)
+      .filter(Boolean)
+      .join(", ");
+    drawTableRow("Stakeholders to meet directly", sub, grpStar, stakeholderEnablers);
   }
 
   y += 6;
