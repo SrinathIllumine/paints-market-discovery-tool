@@ -785,7 +785,7 @@ function PlanClusterScreen() {
                 Make selections in the other sections to see your action plan here.
               </p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <div className="rounded-2xl bg-white p-2">
                   <p className="mt-1.5 font-serif text-lg font-medium text-black">Quarterly engagement plan</p>
                   <p className="mt-0.5 text-[13px] text-gray-500">{cluster.name} cluster</p>
