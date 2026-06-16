@@ -903,7 +903,7 @@ function PlanClusterScreen() {
                 </div>
               </div>
             )}
-          </SubPage>
+          </>
         )}
         {/* ── Group detail popup ── */}
         {detailGroup &&
