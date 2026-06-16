@@ -775,7 +775,7 @@ function PlanClusterScreen() {
             title=""
             subtitle=""
             onBack={goHub}
-            footer={
+            {/*footer={
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button
                   onClick={() => setConfirmOpen(true)}
@@ -791,7 +791,7 @@ function PlanClusterScreen() {
                   <Users className="h-4 w-4" /> Share report with your ASM
                 </Button>
               </div>
-            }
+            }*/}
           >
             {selectedCampObjs.length === 0 &&
             validContractors.length === 0 &&
