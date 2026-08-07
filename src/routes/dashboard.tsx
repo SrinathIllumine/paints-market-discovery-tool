@@ -238,7 +238,7 @@ function DashboardPage() {
             </p>
             <h1 className="mt-1 font-display text-2xl leading-tight">My Dashboard</h1>
           </div>
-          <Link to="/" aria-label="Home" className="rounded-full p-1.5 text-navy-foreground/80 hover:bg-white/10">
+          <Link to="/app" aria-label="Home" className="rounded-full p-1.5 text-navy-foreground/80 hover:bg-white/10">
             <Home className="h-5 w-5" />
           </Link>
         </div>

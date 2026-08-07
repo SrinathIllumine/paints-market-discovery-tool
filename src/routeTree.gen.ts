@@ -12,7 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SalesEnablementRouteImport } from './routes/sales-enablement'
 import { Route as NetworkRouteImport } from './routes/network'
 import { Route as MarketPotentialRouteImport } from './routes/market-potential'
+import { Route as LeadershipRouteImport } from './routes/leadership'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SalesEnablementIndexRouteImport } from './routes/sales-enablement.index'
 import { Route as PlanIndexRouteImport } from './routes/plan/index'
@@ -40,9 +43,24 @@ const MarketPotentialRoute = MarketPotentialRouteImport.update({
   path: '/market-potential',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LeadershipRoute = LeadershipRouteImport.update({
+  id: '/leadership',
+  path: '/leadership',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -105,7 +123,10 @@ const PlanClusterIdReviewRoute = PlanClusterIdReviewRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
+  '/app': typeof AppRoute
   '/dashboard': typeof DashboardRoute
+  '/leadership': typeof LeadershipRoute
   '/market-potential': typeof MarketPotentialRoute
   '/network': typeof NetworkRoute
   '/sales-enablement': typeof SalesEnablementRouteWithChildren
@@ -122,7 +143,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
+  '/app': typeof AppRoute
   '/dashboard': typeof DashboardRoute
+  '/leadership': typeof LeadershipRoute
   '/market-potential': typeof MarketPotentialRoute
   '/network': typeof NetworkRoute
   '/map/$clusterId': typeof MapClusterIdRoute
@@ -138,7 +162,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
+  '/app': typeof AppRoute
   '/dashboard': typeof DashboardRoute
+  '/leadership': typeof LeadershipRoute
   '/market-potential': typeof MarketPotentialRoute
   '/network': typeof NetworkRoute
   '/sales-enablement': typeof SalesEnablementRouteWithChildren
@@ -157,7 +184,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/analytics'
+    | '/app'
     | '/dashboard'
+    | '/leadership'
     | '/market-potential'
     | '/network'
     | '/sales-enablement'
@@ -174,7 +204,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/analytics'
+    | '/app'
     | '/dashboard'
+    | '/leadership'
     | '/market-potential'
     | '/network'
     | '/map/$clusterId'
@@ -189,7 +222,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/analytics'
+    | '/app'
     | '/dashboard'
+    | '/leadership'
     | '/market-potential'
     | '/network'
     | '/sales-enablement'
@@ -207,7 +243,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalyticsRoute: typeof AnalyticsRoute
+  AppRoute: typeof AppRoute
   DashboardRoute: typeof DashboardRoute
+  LeadershipRoute: typeof LeadershipRoute
   MarketPotentialRoute: typeof MarketPotentialRoute
   NetworkRoute: typeof NetworkRoute
   SalesEnablementRoute: typeof SalesEnablementRouteWithChildren
@@ -241,11 +280,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketPotentialRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/leadership': {
+      id: '/leadership'
+      path: '/leadership'
+      fullPath: '/leadership'
+      preLoaderRoute: typeof LeadershipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -361,7 +421,10 @@ const PlanClusterIdRouteWithChildren = PlanClusterIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalyticsRoute: AnalyticsRoute,
+  AppRoute: AppRoute,
   DashboardRoute: DashboardRoute,
+  LeadershipRoute: LeadershipRoute,
   MarketPotentialRoute: MarketPotentialRoute,
   NetworkRoute: NetworkRoute,
   SalesEnablementRoute: SalesEnablementRouteWithChildren,
