@@ -48,7 +48,7 @@ export function StageHeader({
           {right}
           {showHome && (
             <Link
-              to="/app"
+              to="/"
               aria-label="Home"
               className="rounded-full p-1.5 text-navy-foreground/80 hover:bg-white/10"
             >
@@ -63,7 +63,7 @@ export function StageHeader({
 
 export function HomeLink({ label }: { label: string }) {
   return (
-    <Link to="/app" className="text-xs text-white/70 underline-offset-2 hover:underline">
+    <Link to="/" className="text-xs text-white/70 underline-offset-2 hover:underline">
       {label}
     </Link>
   );

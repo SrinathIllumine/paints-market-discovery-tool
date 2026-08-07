@@ -35,14 +35,7 @@
   --color-navy-foreground: var(--navy-foreground);
   --color-critical: var(--critical);
   --color-critical-foreground: var(--critical-foreground);
-
-  /* Status + chart palette (derived from the existing navy/red base) */
-  --color-good: var(--chart-good);
-  --color-info: var(--chart-info);
-  --color-warn: var(--chart-warn);
-  --color-bad: var(--chart-critical);
 }
-
 
 :root {
   --radius: 1rem;
@@ -81,11 +74,6 @@
   --border: oklch(0.92 0.006 240);
   --input: oklch(0.92 0.006 240);
   --ring: oklch(0.58 0.21 27);
-
-  --chart-good: oklch(0.58 0.13 165);
-  --chart-info: oklch(0.55 0.13 250);
-  --chart-warn: oklch(0.75 0.14 75);
-  --chart-critical: oklch(0.58 0.21 27);
 }
 
 .dark {
@@ -112,11 +100,6 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.7 0.18 27);
-
-  --chart-good: oklch(0.68 0.13 165);
-  --chart-info: oklch(0.68 0.13 250);
-  --chart-warn: oklch(0.8 0.14 75);
-  --chart-critical: oklch(0.66 0.2 27);
 }
 
 @layer base {
