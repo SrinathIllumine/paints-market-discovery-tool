@@ -527,6 +527,7 @@ function MixSection() {
                   innerRadius={55}
                   outerRadius={95}
                   paddingAngle={2}
+                  isAnimationActive={false}
                   onClick={(d: any) => d?.payload?.quadrant && setQ(d.payload.quadrant)}
                 >
                   {ENGAGEMENT_MIX.map((m) => (
@@ -718,6 +719,7 @@ function PenetrationSection() {
                 stroke="var(--navy)"
                 strokeWidth={2.5}
                 dot={{ r: 3 }}
+                isAnimationActive={false}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -755,9 +757,9 @@ function FunnelSection() {
                 <XAxis dataKey="cluster" tick={false} stroke="var(--muted-foreground)" />
                 <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
                 <Tooltip />
-                <Bar dataKey="prospects" name="Total prospects" fill="var(--navy)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="engaged" name="Engaged" fill={CHART.opportunity} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="customers" name="JK customers" fill={CHART.priority} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="prospects" name="Total prospects" fill="var(--navy)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                <Bar dataKey="engaged" name="Engaged" fill={CHART.opportunity} radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                <Bar dataKey="customers" name="JK customers" fill={CHART.priority} radius={[4, 4, 0, 0]} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>
