@@ -139,6 +139,7 @@ function LeadershipPage() {
                     outerRadius={78}
                     paddingAngle={3}
                     stroke="none"
+                    isAnimationActive={false}
                   >
                     {execData.map((d) => (
                       <Cell key={d.name} fill={d.fill} />
@@ -185,6 +186,7 @@ function LeadershipPage() {
                   stroke="var(--navy)"
                   strokeWidth={2.5}
                   fill="url(#pen)"
+                  isAnimationActive={false}
                 />
               </AreaChart>
             </ResponsiveContainer>
