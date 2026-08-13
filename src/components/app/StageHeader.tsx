@@ -9,6 +9,7 @@ export function StageHeader({
   backTo,
   right,
   showHome = true,
+  homeTo = "/market-discovery",
 }: {
   eyebrow?: string;
   title: string;
@@ -16,6 +17,7 @@ export function StageHeader({
   backTo?: string;
   right?: ReactNode;
   showHome?: boolean;
+  homeTo?: string;
 }) {
   const router = useRouter();
   return (
@@ -48,7 +50,7 @@ export function StageHeader({
           {right}
           {showHome && (
             <Link
-              to="/"
+              to={homeTo as never}
               aria-label="Home"
               className="rounded-full p-1.5 text-navy-foreground/80 hover:bg-white/10"
             >
@@ -63,7 +65,7 @@ export function StageHeader({
 
 export function HomeLink({ label }: { label: string }) {
   return (
-    <Link to="/" className="text-xs text-white/70 underline-offset-2 hover:underline">
+    <Link to="/market-discovery" className="text-xs text-white/70 underline-offset-2 hover:underline">
       {label}
     </Link>
   );

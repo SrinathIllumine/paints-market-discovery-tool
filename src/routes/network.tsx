@@ -142,7 +142,7 @@ function NetworkPage() {
   return (
     <AppShell
       bottom={<BottomNav />}
-      header={<StageHeader eyebrow="Directory" title="My Network" backTo="/dashboard" />}
+      header={<StageHeader eyebrow="Directory" title="My Network" backTo="/dashboard" homeTo="/" />}
     >
       <div className="space-y-3 px-5 py-5">
         <p className="text-xs text-muted-foreground">

@@ -12,8 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SalesEnablementRouteImport } from './routes/sales-enablement'
 import { Route as NetworkRouteImport } from './routes/network'
 import { Route as MarketPotentialRouteImport } from './routes/market-potential'
+import { Route as MarketDiscoveryRouteImport } from './routes/market-discovery'
+import { Route as LeadershipRouteImport } from './routes/leadership'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LeadershipPenetrationRouteImport } from './routes/leadership.penetration'
+import { Route as LeadershipExecutionRouteImport } from './routes/leadership.execution'
+import { Route as LeadershipEngagementRouteImport } from './routes/leadership.engagement'
 import { Route as SalesEnablementIndexRouteImport } from './routes/sales-enablement.index'
 import { Route as PlanIndexRouteImport } from './routes/plan/index'
 import { Route as MapIndexRouteImport } from './routes/map/index'
@@ -40,6 +45,16 @@ const MarketPotentialRoute = MarketPotentialRouteImport.update({
   path: '/market-potential',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketDiscoveryRoute = MarketDiscoveryRouteImport.update({
+  id: '/market-discovery',
+  path: '/market-discovery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadershipRoute = LeadershipRouteImport.update({
+  id: '/leadership',
+  path: '/leadership',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -49,6 +64,21 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const LeadershipPenetrationRoute = LeadershipPenetrationRouteImport.update({
+  id: '/penetration',
+  path: '/penetration',
+  getParentRoute: () => LeadershipRoute,
+} as any)
+const LeadershipExecutionRoute = LeadershipExecutionRouteImport.update({
+  id: '/execution',
+  path: '/execution',
+  getParentRoute: () => LeadershipRoute,
+} as any)
+const LeadershipEngagementRoute = LeadershipEngagementRouteImport.update({
+  id: '/engagement',
+  path: '/engagement',
+  getParentRoute: () => LeadershipRoute,
 } as any)
 const SalesEnablementIndexRoute = SalesEnablementIndexRouteImport.update({
   id: '/',
@@ -105,10 +135,15 @@ const PlanClusterIdReviewRoute = PlanClusterIdReviewRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/leadership': typeof LeadershipRouteWithChildren
+  '/market-discovery': typeof MarketDiscoveryRoute
   '/dashboard': typeof DashboardRoute
   '/market-potential': typeof MarketPotentialRoute
   '/network': typeof NetworkRoute
   '/sales-enablement': typeof SalesEnablementRouteWithChildren
+  '/leadership/engagement': typeof LeadershipEngagementRoute
+  '/leadership/execution': typeof LeadershipExecutionRoute
+  '/leadership/penetration': typeof LeadershipPenetrationRoute
   '/map/$clusterId': typeof MapClusterIdRoute
   '/plan/$clusterId': typeof PlanClusterIdRouteWithChildren
   '/plan/past-roadmap': typeof PlanPastRoadmapRoute
@@ -122,9 +157,14 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/leadership': typeof LeadershipRouteWithChildren
+  '/market-discovery': typeof MarketDiscoveryRoute
   '/dashboard': typeof DashboardRoute
   '/market-potential': typeof MarketPotentialRoute
   '/network': typeof NetworkRoute
+  '/leadership/engagement': typeof LeadershipEngagementRoute
+  '/leadership/execution': typeof LeadershipExecutionRoute
+  '/leadership/penetration': typeof LeadershipPenetrationRoute
   '/map/$clusterId': typeof MapClusterIdRoute
   '/plan/past-roadmap': typeof PlanPastRoadmapRoute
   '/map': typeof MapIndexRoute
@@ -138,10 +178,15 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/leadership': typeof LeadershipRouteWithChildren
+  '/market-discovery': typeof MarketDiscoveryRoute
   '/dashboard': typeof DashboardRoute
   '/market-potential': typeof MarketPotentialRoute
   '/network': typeof NetworkRoute
   '/sales-enablement': typeof SalesEnablementRouteWithChildren
+  '/leadership/engagement': typeof LeadershipEngagementRoute
+  '/leadership/execution': typeof LeadershipExecutionRoute
+  '/leadership/penetration': typeof LeadershipPenetrationRoute
   '/map/$clusterId': typeof MapClusterIdRoute
   '/plan/$clusterId': typeof PlanClusterIdRouteWithChildren
   '/plan/past-roadmap': typeof PlanPastRoadmapRoute
@@ -157,10 +202,15 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/leadership'
+    | '/market-discovery'
     | '/dashboard'
     | '/market-potential'
     | '/network'
     | '/sales-enablement'
+    | '/leadership/engagement'
+    | '/leadership/execution'
+    | '/leadership/penetration'
     | '/map/$clusterId'
     | '/plan/$clusterId'
     | '/plan/past-roadmap'
@@ -174,9 +224,14 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/leadership'
+    | '/market-discovery'
     | '/dashboard'
     | '/market-potential'
     | '/network'
+    | '/leadership/engagement'
+    | '/leadership/execution'
+    | '/leadership/penetration'
     | '/map/$clusterId'
     | '/plan/past-roadmap'
     | '/map'
@@ -189,10 +244,15 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/leadership'
+    | '/market-discovery'
     | '/dashboard'
     | '/market-potential'
     | '/network'
     | '/sales-enablement'
+    | '/leadership/engagement'
+    | '/leadership/execution'
+    | '/leadership/penetration'
     | '/map/$clusterId'
     | '/plan/$clusterId'
     | '/plan/past-roadmap'
@@ -207,6 +267,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LeadershipRoute: typeof LeadershipRouteWithChildren
+  MarketDiscoveryRoute: typeof MarketDiscoveryRoute
   DashboardRoute: typeof DashboardRoute
   MarketPotentialRoute: typeof MarketPotentialRoute
   NetworkRoute: typeof NetworkRoute
@@ -240,6 +302,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/market-potential'
       preLoaderRoute: typeof MarketPotentialRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/market-discovery': {
+      id: '/market-discovery'
+      path: '/market-discovery'
+      fullPath: '/market-discovery'
+      preLoaderRoute: typeof MarketDiscoveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leadership': {
+      id: '/leadership'
+      path: '/leadership'
+      fullPath: '/leadership'
+      preLoaderRoute: typeof LeadershipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leadership/penetration': {
+      id: '/leadership/penetration'
+      path: '/penetration'
+      fullPath: '/leadership/penetration'
+      preLoaderRoute: typeof LeadershipPenetrationRouteImport
+      parentRoute: typeof LeadershipRoute
+    }
+    '/leadership/execution': {
+      id: '/leadership/execution'
+      path: '/execution'
+      fullPath: '/leadership/execution'
+      preLoaderRoute: typeof LeadershipExecutionRouteImport
+      parentRoute: typeof LeadershipRoute
+    }
+    '/leadership/engagement': {
+      id: '/leadership/engagement'
+      path: '/engagement'
+      fullPath: '/leadership/engagement'
+      preLoaderRoute: typeof LeadershipEngagementRouteImport
+      parentRoute: typeof LeadershipRoute
     }
     '/dashboard': {
       id: '/dashboard'
@@ -328,6 +425,22 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface LeadershipRouteChildren {
+  LeadershipPenetrationRoute: typeof LeadershipPenetrationRoute
+  LeadershipExecutionRoute: typeof LeadershipExecutionRoute
+  LeadershipEngagementRoute: typeof LeadershipEngagementRoute
+}
+
+const LeadershipRouteChildren: LeadershipRouteChildren = {
+  LeadershipPenetrationRoute: LeadershipPenetrationRoute,
+  LeadershipExecutionRoute: LeadershipExecutionRoute,
+  LeadershipEngagementRoute: LeadershipEngagementRoute,
+}
+
+const LeadershipRouteWithChildren = LeadershipRoute._addFileChildren(
+  LeadershipRouteChildren,
+)
+
 interface SalesEnablementRouteChildren {
   SalesEnablementIndexRoute: typeof SalesEnablementIndexRoute
   SalesEnablementClusterIdProspectIdRoute: typeof SalesEnablementClusterIdProspectIdRoute
@@ -361,6 +474,8 @@ const PlanClusterIdRouteWithChildren = PlanClusterIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LeadershipRoute: LeadershipRouteWithChildren,
+  MarketDiscoveryRoute: MarketDiscoveryRoute,
   DashboardRoute: DashboardRoute,
   MarketPotentialRoute: MarketPotentialRoute,
   NetworkRoute: NetworkRoute,
