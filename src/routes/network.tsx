@@ -11,7 +11,7 @@ import { Phone, MapPin, Users, Hammer, Lightbulb, Store } from "lucide-react";
 
 export const Route = createFileRoute("/network")({
   head: () => ({
-    meta: [{ title: "My Network — Market Discovery Tool" }],
+    meta: [{ title: "My Network — Market Discovery System" }],
   }),
   component: NetworkPage,
 });

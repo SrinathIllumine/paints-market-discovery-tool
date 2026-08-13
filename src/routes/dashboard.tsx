@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "My Dashboard — Market Discovery Tool" },
+      { title: "My Dashboard — Market Discovery System" },
       {
         name: "description",
         content: "Demand Generator dashboard with KPIs, conversion trends and cluster intelligence.",

@@ -1,4 +1,4 @@
-# Paints Market Discovery Tool
+# Paints Market Discovery System
 
 App Name: Systematic Engagement & Discovery Tool
 User Persona: Demand Generator (Retail Sales & Distribution – Paints)

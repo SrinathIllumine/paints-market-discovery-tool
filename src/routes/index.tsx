@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Market Discovery Tool" },
+      { title: "Market Discovery System" },
       {
         name: "description",
         content:
@@ -78,7 +78,7 @@ function IntroScreen() {
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60">
               Paints · Demand Generator
             </p>
-            <h1 className="mt-2 font-display text-3xl leading-tight">Market Discovery Tool</h1>
+            <h1 className="mt-2 font-display text-3xl leading-tight">Market Discovery System</h1>
             <p className="mt-2 text-sm text-white/75">Welcome Sunil Kumar</p>
             <p className="mt-2 text-sm text-white/75">Area: Panvel</p>
           </div>
