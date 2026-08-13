@@ -178,7 +178,7 @@ const VALUE_PROP_LIBRARY: Record<string, ValuePropositionCard[]> = {
       body: "\n",
     },
     {
-      title: "Attractive benefits for the contractor + why JK Maxx improves brand confidence over competitors",
+      title: "Attractive benefits for the contractor + why our premium range improves brand confidence over competitors",
       body: "\n",
     },
   ],
@@ -188,7 +188,7 @@ const VALUE_PROP_LIBRARY: Record<string, ValuePropositionCard[]> = {
       body: "\n",
     },
     {
-      title: "Attractive contractor benefits + why JK Maxx wins confidence over competitors in healthcare",
+      title: "Attractive contractor benefits + why our premium range wins confidence over competitors in healthcare",
       body: "\n",
     },
   ],
@@ -197,28 +197,28 @@ const VALUE_PROP_LIBRARY: Record<string, ValuePropositionCard[]> = {
       title: "How a society repaint becomes an attractive proposition for committee re-election and property value",
       body: "\n",
     },
-    { title: "Attractive contractor benefits + why JK Maxx beats competitors on society jobs", body: "\n" },
+    { title: "Attractive contractor benefits + why our premium range beats competitors on society jobs", body: "\n" },
   ],
   midc: [
     {
       title: "How an industrial coating refresh becomes an attractive proposition for plant uptime and safety audits",
       body: "\n",
     },
-    { title: "Attractive contractor benefits + why JK Maxx improves credibility with plant engineers", body: "\n" },
+    { title: "Attractive contractor benefits + why our premium range improves credibility with plant engineers", body: "\n" },
   ],
   hotels: [
     {
       title: "How a refresh repaint becomes an attractive proposition for guest reviews and brand-standard audits",
       body: "\n",
     },
-    { title: "Attractive contractor benefits + why JK Maxx wins over competitors on hospitality jobs", body: "\n" },
+    { title: "Attractive contractor benefits + why our premium range wins over competitors on hospitality jobs", body: "\n" },
   ],
   restaurants: [
     {
       title: "How a themed repaint becomes an attractive proposition for footfall and Instagrammable interiors",
       body: "\n",
     },
-    { title: "Attractive contractor benefits + why JK Maxx beats competitors on F&B refits", body: "\n" },
+    { title: "Attractive contractor benefits + why our premium range beats competitors on F&B refits", body: "\n" },
   ],
 };
 
@@ -227,7 +227,7 @@ export function getValuePropositionCards(clusterId: string): ValuePropositionCar
   const ctx = clusterId.replace(/-/g, " ");
   return [
     { title: `How a quality repaint becomes an attractive proposition for ${ctx} owners and end-users`, body: "\n" },
-    { title: "Attractive contractor benefits + why JK Maxx improves brand confidence over competitors", body: "\n" },
+    { title: "Attractive contractor benefits + why our premium range improves brand confidence over competitors", body: "\n" },
   ];
 }
 
@@ -330,7 +330,7 @@ function pamphletAsset(clusterId: string): ActionAsset {
     kind: "list",
     items: [
       `Cluster-specific awareness pamphlet for ${clusterId}`,
-      "JK Maxx exteriors brochure (English + Marathi)",
+      "Our premium exteriors range brochure (English + Marathi)",
       "Warranty & finish guide brochure",
     ],
   };

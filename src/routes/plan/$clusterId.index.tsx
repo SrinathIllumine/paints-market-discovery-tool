@@ -85,7 +85,7 @@ function getGroupDetailPoints(clusterId: string, groupId: string, groupLabel: st
         `Contribute ~40% of total painting value in this cluster despite being only ${pct}% by count — high per-site spend.`,
         "Key decision maker is the school trustee or management committee. Facility head influences but rarely decides.",
         "Full repaint every 3–5 years, interiors + exteriors. April–June vacation window is the only viable slot.",
-        "Compare JK vs Asian Paints on brand perception — warranty documentation and site references matter most.",
+        "Compare us vs Asian Paints on brand perception — warranty documentation and site references matter most.",
       ],
     },
     "schools::small-private": {
@@ -146,7 +146,7 @@ const CAMP_ENABLERS: Record<string, Enabler[]> = {
     {
       label: "Low-VOC TDS",
       description: "Technical data sheet for odourless / low-VOC range with application guide.",
-      file: { name: "JK_LowVOC_TDS.pdf", size: "820 KB" },
+      file: { name: "Brand_LowVOC_TDS.pdf", size: "820 KB" },
     },
     {
       label: "Principal deck",
@@ -172,7 +172,7 @@ const CAMP_ENABLERS: Record<string, Enabler[]> = {
     },
     {
       label: "Range flyer",
-      description: "Quick visual of the full JK Maxx range with price-tier guidance.",
+      description: "Quick visual of the full premium range with price-tier guidance.",
       file: { name: "Product_Range_Flyer.pdf", size: "680 KB" },
     },
   ],
@@ -206,7 +206,7 @@ const CAMP_ENABLERS: Record<string, Enabler[]> = {
     },
     {
       label: "Cluster overview",
-      description: "Summary of JK's presence and projects in this cluster.",
+      description: "Summary of our presence and projects in this cluster.",
       file: { name: "Cluster_Overview.pdf", size: "920 KB" },
     },
   ],
@@ -253,12 +253,12 @@ function getCampEnablers(campId: string): Enabler[] {
       {
         label: "Event pamphlet",
         description: "Printable handout to distribute at the venue.",
-        file: { name: "JK_Event_Pamphlet.pdf", size: "820 KB" },
+        file: { name: "Brand_Event_Pamphlet.pdf", size: "820 KB" },
       },
       {
         label: "Pitch deck",
         description: "Short deck to anchor the stage / booth conversation.",
-        file: { name: "JK_Cluster_Pitch.pptx", size: "4.6 MB" },
+        file: { name: "Brand_Cluster_Pitch.pptx", size: "4.6 MB" },
       },
       {
         label: "Lead form",
@@ -278,7 +278,7 @@ const CONTRACTOR_GROUP_ENABLERS: Enabler[] = [
   {
     label: "Comparison deck",
     description: "Side-by-side on coverage, finish and TCO vs Asian Paints / Berger.",
-    file: { name: "JK_vs_Competitors.pptx", size: "3.1 MB" },
+    file: { name: "Brand_vs_Competitors.pptx", size: "3.1 MB" },
   },
   {
     label: "Trial form",
@@ -294,7 +294,7 @@ const RETAILER_GROUP_ENABLERS: Enabler[] = [
   },
   {
     label: "Demand data",
-    description: "Contractors and projects in their area currently asking for JK.",
+    description: "Contractors and projects in their area currently asking for us by name.",
     file: { name: "Catchment_Demand.pdf", size: "720 KB" },
   },
   {
@@ -307,7 +307,7 @@ const STAKEHOLDER_GROUP_ENABLERS: Enabler[] = [
   {
     label: "Credentials deck",
     description: "Institutional deck with credentials, marquee projects and case studies.",
-    file: { name: "JK_Institutional_Deck.pptx", size: "6.2 MB" },
+    file: { name: "Brand_Institutional_Deck.pptx", size: "6.2 MB" },
   },
   {
     label: "Spec / BOQ kit",

@@ -1,7 +1,7 @@
 # Paints Market Discovery Tool
 
 App Name: Systematic Engagement & Discovery Tool
-User Persona: Demand Generator (Retail Sales & Distribution – JK Cement)
+User Persona: Demand Generator (Retail Sales & Distribution – Paints)
 Stage: 1 of 5 - Identify Market Clusters
 
 🎯 Core Intent of This Screen

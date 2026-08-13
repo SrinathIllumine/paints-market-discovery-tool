@@ -46,7 +46,7 @@ export type Insight = {
 };
 
 export type ClusterState = {
-  jkShare: "H" | "M" | "L" | null;
+  ourShare: "H" | "M" | "L" | null;
   prospects: Prospect[];
   visited: boolean;
 };
@@ -179,7 +179,7 @@ type Actions = {
   setCustomValueProps: (clusterId: string, props: string[]) => void;
 };
 
-const emptyCluster = (): ClusterState => ({ jkShare: null, prospects: [], visited: false });
+const emptyCluster = (): ClusterState => ({ ourShare: null, prospects: [], visited: false });
 const emptyReadiness = (): Readiness => ({ retailers: null, stock: null, painters: null });
 const emptyRoadmap = (): RoadmapCompletion => ({ value: false, connect: false, action: false });
 

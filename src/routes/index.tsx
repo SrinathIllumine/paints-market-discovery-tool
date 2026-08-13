@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "A guided intelligence tool for JK Cement Demand Generators to map clusters, build cluster engagement plans, and progress prospects through the sales funnel.",
+          "A guided intelligence tool for Paints Demand Generators to map clusters, build cluster engagement plans, and progress prospects through the sales funnel.",
       },
     ],
   }),
@@ -76,7 +76,7 @@ function IntroScreen() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60">
-              JK Cement · Demand Generator
+              Paints · Demand Generator
             </p>
             <h1 className="mt-2 font-display text-3xl leading-tight">Market Discovery Tool</h1>
             <p className="mt-2 text-sm text-white/75">Welcome Sunil Kumar</p>

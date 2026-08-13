@@ -270,7 +270,7 @@ export function generateClusterReportPdf({
     doc.setFontSize(8);
     doc.setTextColor(150);
     doc.text(
-      clean(`JK Cement - Cluster Report - ${cluster.name} - Page ${i} of ${pageCount}`),
+      clean(`Paints - Cluster Report - ${cluster.name} - Page ${i} of ${pageCount}`),
       pageWidth / 2,
       pageHeight - 20,
       { align: "center" },
@@ -279,5 +279,5 @@ export function generateClusterReportPdf({
 
   const today = new Date().toISOString().slice(0, 10);
   const safeName = cluster.name.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "");
-  doc.save(`JK-Cluster-Report-${safeName}-${today}.pdf`);
+  doc.save(`Cluster-Report-${safeName}-${today}.pdf`);
 }

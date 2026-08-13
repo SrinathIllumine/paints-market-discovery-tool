@@ -630,7 +630,7 @@ function AccessQuestions({
 }) {
   const questions = [
     `Are some of the leading ${pluralLower} in your area already your customers?`,
-    `Do you have access to contractors in this cluster who are also loyal to JK?`,
+    `Do you have access to contractors in this cluster who are also loyal to us?`,
     `Do you have any touchpoints who can connect you to the decision-makers in ${pluralLower}?`,
   ];
   const set = (i: number, v: "Y" | "N") => {

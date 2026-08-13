@@ -119,7 +119,7 @@ function ProspectDetailPage() {
     label: "Pamphlets",
     items: [
       `Cluster-specific awareness pamphlet for ${cluster.name}`,
-      "JK Maxx exteriors brochure (English + Marathi)",
+      "Our premium exteriors range brochure (English + Marathi)",
       "Warranty & finish guide brochure",
     ],
   };

@@ -125,7 +125,7 @@ function buildRow(clusterId: string, stages: Record<string, SalesStage> | undefi
   const stageVals = Object.values(stages ?? {});
   const engaged = stageVals.filter((s) => s !== "prospects").length;
   const conversions = stageVals.filter((s) => s === "ongoing" || s === "closure").length;
-  const penetrationBase = intel.jkPenetrationLabel === "strong" ? 32 : intel.jkPenetrationLabel === "moderate" ? 18 : 8;
+  const penetrationBase = intel.ourPenetrationLabel === "strong" ? 32 : intel.ourPenetrationLabel === "moderate" ? 18 : 8;
   const penetrationPct = Math.min(100, penetrationBase + Math.round((conversions / Math.max(1, total)) * 60));
   const engagedPct = Math.round((engaged / Math.max(1, total)) * 100);
   const matrixKey = `${intel.revenueHML === "H" || intel.competitiveHML === "H" ? "H" : "L"}${intel.accessHML === "H" || intel.easeHML === "H" ? "H" : "L"}`;
@@ -234,7 +234,7 @@ function DashboardPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60">
-              JK Cement · Demand Generator
+              Paints · Demand Generator
             </p>
             <h1 className="mt-1 font-display text-2xl leading-tight">My Dashboard</h1>
           </div>
@@ -254,7 +254,7 @@ function DashboardPage() {
             <div className="min-w-0 flex-1">
               <h3 className="font-display text-lg leading-tight">Sunil Kumar</h3>
               <p className="text-xs text-muted-foreground">Demand Generator · Panvel</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Exp. in JK: 3 years</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Exp. in Paints: 3 years</p>
             </div>
           </div>
         </section>

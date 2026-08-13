@@ -264,7 +264,7 @@ export const CLUSTERS: Cluster[] = SEEDS.map((s) => ({
     "Use dealer / retailer network to collect warm leads.",
   ],
   pitch: {
-    intro: "I'm from JK Cement Paints, working with this segment across Panvel.",
+    intro: "I'm from our Paints team, working with this segment across Panvel.",
     context: `${s.nature} customers value finishes that last and look sharp.`,
     intent: "Can we plan a quick walkthrough to see where our products can add value?",
   },

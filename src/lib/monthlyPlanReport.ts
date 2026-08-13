@@ -250,7 +250,7 @@ export async function generateMonthlyEngagementPlanPdf({
         }
         const blockHeight = entry.lines.length * lineH;
         doc.link(ex, ey - 7, colEnablers - cellPad * 2, blockHeight, {
-          url: `https://jkcement.com/enablers/${slugify(entry.label)}.pdf`,
+          url: `https://enablers.example.com/${slugify(entry.label)}.pdf`,
         });
         ey += blockHeight;
       }
@@ -313,7 +313,7 @@ export async function generateMonthlyEngagementPlanPdf({
     doc.setFontSize(8);
     doc.setTextColor(150);
     doc.text(
-      `JK Cement - Quarterly Cluster Engagement Plan - Page ${i} of ${pageCount}`,
+      `Paints - Quarterly Cluster Engagement Plan - Page ${i} of ${pageCount}`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 20,
       { align: "center" },
@@ -321,5 +321,5 @@ export async function generateMonthlyEngagementPlanPdf({
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  doc.save(`JK-Quarterly-Cluster-Engagement-Plan-${today}.pdf`);
+  doc.save(`Quarterly-Cluster-Engagement-Plan-${today}.pdf`);
 }

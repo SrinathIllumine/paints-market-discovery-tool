@@ -18,7 +18,7 @@ export const EVENT_ENABLERS: Enabler[] = [
     label: "Event pamphlets",
     description: "Printable handouts to distribute at the venue.",
     files: [
-      { name: "JK_Event_Pamphlet_A5.pdf", size: "1.2 MB" },
+      { name: "Brand_Event_Pamphlet_A5.pdf", size: "1.2 MB" },
       { name: "Product_Range_Flyer.pdf", size: "820 KB" },
     ],
   },
@@ -26,7 +26,7 @@ export const EVENT_ENABLERS: Enabler[] = [
     label: "Pitch deck",
     description: "Short deck to anchor the stage / booth conversation.",
     files: [
-      { name: "JK_Cluster_Pitch_v3.pptx", size: "4.6 MB" },
+      { name: "Brand_Cluster_Pitch_v3.pptx", size: "4.6 MB" },
       { name: "Customer_Success_Stories.pdf", size: "2.1 MB" },
     ],
   },
@@ -53,7 +53,7 @@ export const CONTRACTOR_ENABLERS: Enabler[] = [
     label: "Competitor comparison deck",
     description: "Side-by-side on coverage, finish and TCO vs key brands.",
     files: [
-      { name: "JK_vs_Competitors.pptx", size: "3.1 MB" },
+      { name: "Brand_vs_Competitors.pptx", size: "3.1 MB" },
       { name: "Coverage_TCO_Calculator.xlsx", size: "260 KB" },
     ],
   },
@@ -78,7 +78,7 @@ export const RETAILER_ENABLERS: Enabler[] = [
   },
   {
     label: "Catchment demand sheet",
-    description: "Contractors / projects in their area asking for JK.",
+    description: "Contractors / projects in their area asking for us by name.",
     files: [{ name: "Catchment_Demand_Snapshot.pdf", size: "720 KB" }],
   },
   {
@@ -96,7 +96,7 @@ export const STAKEHOLDER_ENABLERS: Enabler[] = [
     label: "Institutional deck",
     description: "Credentials, marquee projects and case studies.",
     files: [
-      { name: "JK_Institutional_Deck.pptx", size: "6.2 MB" },
+      { name: "Brand_Institutional_Deck.pptx", size: "6.2 MB" },
       { name: "Marquee_Projects_Booklet.pdf", size: "3.7 MB" },
     ],
   },
@@ -133,7 +133,7 @@ export const CONTRACTOR_QUESTIONS: Question[] = [
 
 export const RETAILER_QUESTIONS: Question[] = [
   { id: "metVisited", label: "Retailers met / visited", type: "number", placeholder: "e.g. 8" },
-  { id: "newOnboard", label: "New retailers willing to stock JK", type: "number", placeholder: "e.g. 2" },
+  { id: "newOnboard", label: "New retailers willing to stock our brand", type: "number", placeholder: "e.g. 2" },
   { id: "shelfShare", label: "Avg. shelf-share commitment (%)", type: "number", placeholder: "e.g. 25" },
   { id: "orderValue", label: "Indicative order value committed (Rs.)", type: "number", placeholder: "e.g. 75000" },
 ];

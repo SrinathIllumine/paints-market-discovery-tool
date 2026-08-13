@@ -22,8 +22,8 @@ const CONTRACTORS: StakeholderType = {
   whatToTalk: [
     "Introduction & credibility: briefly introduce yourself, your company, and similar projects.",
     "Understand their needs: current projects, size, challenges, material requirements.",
-    "Product / solution pitch: explain how JK products benefit them (quality, durability, cost savings).",
-    "Differentiation: highlight why JK is better than competitors.",
+    "Product / solution pitch: explain how our products benefit them (quality, durability, cost savings).",
+    "Differentiation: highlight why we are better than competitors.",
   ],
 };
 
@@ -37,7 +37,7 @@ const SITE_SUPERVISORS: StakeholderType = {
     "Offer a small on-site product demo to build credibility.",
   ],
   whatToTalk: [
-    "Introduction & credibility: position yourself as a JK partner supporting daily execution.",
+    "Introduction & credibility: position yourself as a trusted partner supporting daily execution.",
     "Understand their needs: surfaces that give trouble, finishes specified, current product preferences.",
     "Product / solution pitch: workability, drying time, coverage and finish quality.",
     "Differentiation: on-site technical support and sample availability.",
@@ -54,7 +54,7 @@ const ARCHITECTS: StakeholderType = {
     "Offer specification support packs and shade libraries.",
   ],
   whatToTalk: [
-    "Introduction & credibility: highlight JK's portfolio on premium and signature projects.",
+    "Introduction & credibility: highlight our portfolio on premium and signature projects.",
     "Understand their needs: upcoming projects, finish aesthetics, sustainability requirements.",
     "Product / solution pitch: premium textures, low-VOC ranges, custom shade matching.",
     "Differentiation: specification support, on-site mock-ups, after-sales colour service.",
@@ -68,10 +68,10 @@ const INTERIOR_DESIGNERS: StakeholderType = {
   howToConnect: [
     "Get referrals from architects, showrooms and high-end retailers.",
     "Visit ongoing fit-outs and meet designers during finishing stages.",
-    "Share curated mood-board samples featuring trending JK finishes.",
+    "Share curated mood-board samples featuring our trending finishes.",
   ],
   whatToTalk: [
-    "Introduction & credibility: designer-focused JK finishes and quick sampling.",
+    "Introduction & credibility: designer-focused finishes and quick sampling.",
     "Understand their needs: client style preferences, timelines, common pain points.",
     "Product / solution pitch: textures, metallics, washable premium finishes.",
     "Differentiation: faster sampling turnaround and dedicated designer support.",
@@ -88,7 +88,7 @@ const DEALERS: StakeholderType = {
     "Run small in-shop demos with samples.",
   ],
   whatToTalk: [
-    "Introduction & credibility: JK's distribution support and margin proposition.",
+    "Introduction & credibility: our distribution support and margin proposition.",
     "Understand their needs: top-selling SKUs, stocking pain-points, painter feedback.",
     "Product / solution pitch: fast-moving SKUs, in-shop collateral, training.",
     "Differentiation: scheme transparency, on-time delivery, painter incentives.",
@@ -105,7 +105,7 @@ const SOCIETY_SECRETARIES: StakeholderType = {
     "Share testimonials from nearby societies you've worked with.",
   ],
   whatToTalk: [
-    "Introduction & credibility: JK's society projects portfolio.",
+    "Introduction & credibility: our society projects portfolio.",
     "Understand their needs: budget cycles, AGM approvals, contractor preferences.",
     "Product / solution pitch: exterior durability, weather resistance, warranty.",
     "Differentiation: structured warranty, applicator network, supervised execution.",
@@ -122,7 +122,7 @@ const FACILITY_HEAD: StakeholderType = {
     "Engage existing AMC contractors for a warm introduction.",
   ],
   whatToTalk: [
-    "Introduction & credibility: JK's experience with similar facilities.",
+    "Introduction & credibility: our experience with similar facilities.",
     "Understand their needs: maintenance windows, downtime constraints, surface conditions.",
     "Product / solution pitch: durable industrial-grade coatings, lower repaint cycles.",
     "Differentiation: technical service, surface-specific recommendations, warranty.",
@@ -139,7 +139,7 @@ const PRINCIPAL: StakeholderType = {
     "Use existing teacher / parent references for warm intros.",
   ],
   whatToTalk: [
-    "Introduction & credibility: JK's experience with educational institutions.",
+    "Introduction & credibility: our experience with educational institutions.",
     "Understand their needs: vacation windows, budget cycles, approval chain.",
     "Product / solution pitch: durable, washable, child-safe finishes.",
     "Differentiation: structured maintenance plan and warranty.",
@@ -153,7 +153,7 @@ const PAINTERS: StakeholderType = {
   howToConnect: [
     "Visit dealer counters early morning when painters collect material.",
     "Run a small painter meet at a friendly dealer's shop.",
-    "Enroll them in the JK painter rewards program.",
+    "Enroll them in our painter rewards program.",
   ],
   whatToTalk: [
     "Introduction: respect their craft; share application tips.",

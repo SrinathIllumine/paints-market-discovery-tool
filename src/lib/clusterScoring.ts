@@ -14,7 +14,6 @@ export const COMPETITIVE_BRANDS = [
   "Asian Paints",
   "Berger Paints",
   "Birla Opus",
-  "JK Maxx",
 ] as const;
 
 export type CompetitiveBrand = (typeof COMPETITIVE_BRANDS)[number];
@@ -457,15 +456,15 @@ export type DominantContractor = { name: string; phone: string; area: string; br
 const COMPETITIVE_INSIGHTS: Partial<Record<string, string[]>> = {
   schools: [
     "Asian Paints is the market leader in this cluster.",
-    "JK stands third in this cluster, behind Berger Paints.",
+    "We stand third in this cluster, behind Berger Paints.",
   ],
   hospitals: [
     "Asian Paints leads the healthcare segment in this cluster.",
-    "JK is among the top three brands, alongside Berger Paints and Dulux.",
+    "We are among the top three brands, alongside Berger Paints and Dulux.",
   ],
   midc: [
     "Asian Paints and Berger Paints dominate industrial coatings in this cluster.",
-    "JK has a growing but moderate presence in industrial accounts here.",
+    "We have a growing but moderate presence in industrial accounts here.",
   ],
 };
 
@@ -475,7 +474,7 @@ export function getCompetitiveInsights(clusterId: string): string[] {
   const intel = getClusterIntel(clusterId, 0);
   return [
     `${intel.leadingCompetitor} is the market leader in this cluster.`,
-    `JK has ${intel.jkPenetrationLabel} presence in this cluster.`,
+    `We have ${intel.ourPenetrationLabel} presence in this cluster.`,
   ];
 }
 
@@ -509,10 +508,10 @@ export type ClusterIntel = {
   accessHML: HML;
   contractorCount: number;
   retailerCount: number;
-  jkPresenceCount: number;
+  ourPresenceCount: number;
   totalProspectsObserved: number;
   leadingCompetitor: string;
-  jkPenetrationLabel: string; // "moderate" | "low" | "strong"
+  ourPenetrationLabel: string; // "moderate" | "low" | "strong"
 };
 
 // Explicit per-cluster HML grid so the snapshot scatter is spread realistically
@@ -527,7 +526,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 9,
     retailerCount: 28,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "moderate",
+    ourPenetrationLabel: "moderate",
   },
   restaurants: {
     revenueHML: "H",
@@ -537,7 +536,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 8,
     retailerCount: 30,
     leadingCompetitor: "Berger Paints",
-    jkPenetrationLabel: "strong",
+    ourPenetrationLabel: "strong",
   },
   "gated-community": {
     revenueHML: "H",
@@ -547,7 +546,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 6,
     retailerCount: 22,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "low",
+    ourPenetrationLabel: "low",
   },
   redevelopment: {
     revenueHML: "H",
@@ -557,7 +556,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 7,
     retailerCount: 18,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "moderate",
+    ourPenetrationLabel: "moderate",
   },
   jewellery: {
     revenueHML: "H",
@@ -567,7 +566,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 4,
     retailerCount: 10,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "moderate",
+    ourPenetrationLabel: "moderate",
   },
   hotels: {
     revenueHML: "H",
@@ -577,7 +576,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 5,
     retailerCount: 12,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "moderate",
+    ourPenetrationLabel: "moderate",
   },
 
   // High Potential · Low Access (1 — schools alone)
@@ -589,7 +588,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 5,
     retailerCount: 20,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "moderate",
+    ourPenetrationLabel: "moderate",
   },
 
   // Low Potential · High Access (6)
@@ -601,7 +600,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 6,
     retailerCount: 18,
     leadingCompetitor: "Berger Paints",
-    jkPenetrationLabel: "strong",
+    ourPenetrationLabel: "strong",
   },
   "bus-stand-market": {
     revenueHML: "L",
@@ -611,7 +610,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 5,
     retailerCount: 16,
     leadingCompetitor: "Berger Paints",
-    jkPenetrationLabel: "strong",
+    ourPenetrationLabel: "strong",
   },
   "textile-garment": {
     revenueHML: "L",
@@ -621,7 +620,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 6,
     retailerCount: 20,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "moderate",
+    ourPenetrationLabel: "moderate",
   },
   "highway-dhabas": {
     revenueHML: "L",
@@ -631,7 +630,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 4,
     retailerCount: 8,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "moderate",
+    ourPenetrationLabel: "moderate",
   },
   "petrol-pumps": {
     revenueHML: "L",
@@ -641,7 +640,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 3,
     retailerCount: 6,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "low",
+    ourPenetrationLabel: "low",
   },
   "clinics-nursing": {
     revenueHML: "L",
@@ -651,7 +650,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 5,
     retailerCount: 14,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "moderate",
+    ourPenetrationLabel: "moderate",
   },
 
   // Low Potential · Low Access (7)
@@ -663,7 +662,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 4,
     retailerCount: 10,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "low",
+    ourPenetrationLabel: "low",
   },
   "marriage-halls": {
     revenueHML: "L",
@@ -673,7 +672,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 3,
     retailerCount: 8,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "low",
+    ourPenetrationLabel: "low",
   },
   "auto-showrooms": {
     revenueHML: "L",
@@ -683,7 +682,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 3,
     retailerCount: 7,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "low",
+    ourPenetrationLabel: "low",
   },
   colleges: {
     revenueHML: "L",
@@ -693,7 +692,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 4,
     retailerCount: 9,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "low",
+    ourPenetrationLabel: "low",
   },
   hospitals: {
     revenueHML: "L",
@@ -703,7 +702,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 4,
     retailerCount: 14,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "moderate",
+    ourPenetrationLabel: "moderate",
   },
   midc: {
     revenueHML: "L",
@@ -713,7 +712,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 7,
     retailerCount: 12,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "low",
+    ourPenetrationLabel: "low",
   },
   warehousing: {
     revenueHML: "L",
@@ -723,7 +722,7 @@ const INTEL_SEED: Partial<Record<string, Partial<ClusterIntel>>> = {
     contractorCount: 5,
     retailerCount: 10,
     leadingCompetitor: "Asian Paints",
-    jkPenetrationLabel: "low",
+    ourPenetrationLabel: "low",
   },
 };
 
@@ -739,10 +738,10 @@ export function getClusterIntel(clusterId: string, fallbackProspectCount: number
     accessHML: scoreToHML(s.access),
     contractorCount,
     retailerCount,
-    jkPresenceCount: seeded.jkPresenceCount ?? Math.max(2, Math.round(fallbackProspectCount * 0.1)),
+    ourPresenceCount: seeded.ourPresenceCount ?? Math.max(2, Math.round(fallbackProspectCount * 0.1)),
     totalProspectsObserved: seeded.totalProspectsObserved ?? fallbackProspectCount,
     leadingCompetitor: seeded.leadingCompetitor ?? "Asian Paints",
-    jkPenetrationLabel: seeded.jkPenetrationLabel ?? "moderate",
+    ourPenetrationLabel: seeded.ourPenetrationLabel ?? "moderate",
   };
 }
 
@@ -758,9 +757,6 @@ const BRAND_PATTERNS = [
   "Akzo Nobel (Dulux)",
   "Dulux",
   "Birla Opus",
-  "JK Maxx",
-  "JK Cement",
-  "JK",
 ];
 
 /** Wrap known brand tokens in <strong>. */
@@ -786,7 +782,7 @@ export function getRevenueSourceNotes(
 ): string[] {
   const cagrInfo = getPaintsCagr(clusterId);
   return [
-    `Average revenue per ${pluralCap.toLowerCase()} (${formatRupees(avgRevenue)}) is derived from national JK sales data across similar clusters, benchmarked against ${cagrInfo.source}.`,
+    `Average revenue per ${pluralCap.toLowerCase()} (${formatRupees(avgRevenue)}) is derived from national sales data across similar clusters, benchmarked against ${cagrInfo.source}.`,
     `Repainting cycle of ${cycleYears} year${cycleYears === 1 ? "" : "s"} is based on industry norms for ${pluralCap.toLowerCase()}, validated through ASM and retailer field inputs in this region.`,
   ];
 }
