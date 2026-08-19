@@ -44,8 +44,8 @@ function EngagementFocusPage() {
     .sort((a, b) => b.pctDGs - a.pctDGs)
     .slice(0, 10);
 
-  const lowPotentialShare = quadrantShare.LH + quadrantShare.LL;
-  const lowPotentialPct = Math.round((lowPotentialShare / totalWeight) * 100);
+  const lowLowPct = Math.round((quadrantShare.LL / totalWeight) * 100);
+  const topRow = topRows[0];
 
   return (
     <LeadershipLayout>
@@ -79,7 +79,7 @@ function EngagementFocusPage() {
           })}
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Insight: More than {lowPotentialPct}% of DGs are targeting low potential clusters.
+          Insight: More than {lowLowPct}% of DGs are targeting low potential, low access clusters.
         </p>
 
         {selectedQuadrant && (
@@ -153,9 +153,12 @@ function EngagementFocusPage() {
             </tbody>
           </table>
         </div>
-        <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-          Insight: {lowPotentialPct}% of DGs are focusing on low access – low potential clusters. Needs re-prioritising.
-        </p>
+        {topRow && (
+          <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
+            Insight: {topRow.pctDGs}% of DGs are focusing on {QUADRANT_TYPE_LABEL[topRow.quadrant].toLowerCase()}{" "}
+            clusters. Needs re-prioritising.
+          </p>
+        )}
       </div>
     </LeadershipLayout>
   );

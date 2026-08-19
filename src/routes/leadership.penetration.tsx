@@ -59,6 +59,11 @@ function PenetrationPage() {
   const totalCustomers = rows.reduce((s, r) => s + r.customers, 0);
   const overallPct = totalProspects > 0 ? Math.round((totalCustomers / totalProspects) * 100) : 0;
 
+  const slippingNames = rows
+    .filter((r) => r.mom < 0)
+    .slice(0, 2)
+    .map((r) => r.name);
+
   return (
     <LeadershipLayout>
       <div className="mb-6">
@@ -124,7 +129,9 @@ function PenetrationPage() {
           </table>
         </div>
         <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-          Insight: High access – high potential clusters are gaining, while low-access clusters are slipping month on month.
+          Insight: High access – high potential clusters are gaining, while{" "}
+          {slippingNames.length > 0 ? slippingNames.join(" and ").toLowerCase() : "some low-access clusters"} are
+          slipping month on month.
         </p>
       </div>
 

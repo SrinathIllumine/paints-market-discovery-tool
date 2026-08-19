@@ -40,13 +40,16 @@ function ExecutionPage() {
     const quadrant = getClusterQuadrant(c.id, c.prospectCountEstimate);
     const targetShare = hashPct(c.id, 8, 22);
     const onTrack = hashPct(c.id, 0, 99) >= 30;
-    return { id: c.id, name: c.name, type: QUADRANT_TYPE_LABEL[quadrant], targetShare, onTrack };
+    return { id: c.id, name: c.name, quadrant, type: QUADRANT_TYPE_LABEL[quadrant], targetShare, onTrack };
   })
     .sort((a, b) => b.targetShare - a.targetShare)
     .slice(0, 10);
 
   const onTrackCount = rows.filter((r) => r.onTrack).length;
   const behindCount = rows.length - onTrackCount;
+  const behindHighPotentialCount = rows.filter(
+    (r) => !r.onTrack && (r.quadrant === "HH" || r.quadrant === "HL"),
+  ).length;
   const avgExecution = Math.round(TEAM_ROWS.reduce((s, r) => s + r.executed, 0) / TEAM_ROWS.length);
 
   return (
@@ -109,7 +112,10 @@ function ExecutionPage() {
           </table>
         </div>
         <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-          Insight: {behindCount} of the {rows.length} most targeted clusters are behind plan.
+          Insight: {behindCount} of the {rows.length} most targeted clusters are behind plan
+          {behindHighPotentialCount > 0 &&
+            `, including ${behindHighPotentialCount} high potential ${behindHighPotentialCount === 1 ? "one" : "ones"}`}
+          .
         </p>
       </div>
 
