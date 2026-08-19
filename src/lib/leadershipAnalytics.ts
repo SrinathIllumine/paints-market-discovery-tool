@@ -32,6 +32,30 @@ export const QUADRANT_COLOR: Record<QuadrantKey, string> = {
   LL: "#94a3b8",
 };
 
+// Short display names for dense contexts (matrix dot labels, quadrant chip lists).
+export const CLUSTER_SHORT_NAME: Record<string, string> = {
+  "mid-apartments": "Mid-Size Apts",
+  redevelopment: "Redevelopment Hsg",
+  "gated-community": "Gated Communities",
+  schools: "Schools",
+  colleges: "Colleges & Universities",
+  hospitals: "Hospitals",
+  restaurants: "Restaurants/Cafés",
+  hotels: "Hotels/Resorts",
+  midc: "MIDC/Industrial",
+  warehousing: "Warehouses",
+  "marriage-halls": "Marriage Halls",
+  "paying-guest": "PG Facilities",
+  religious: "Religious",
+  "auto-showrooms": "Auto Showrooms",
+  "petrol-pumps": "Petrol Pumps",
+  "bus-stand-market": "Bus Stand Mkts",
+  "highway-dhabas": "Highway Hotels",
+  "clinics-nursing": "Local Clinics",
+  jewellery: "Jewellery",
+  "textile-garment": "Textile/Garment",
+};
+
 export function getClusterQuadrant(clusterId: string, prospectCountEstimate: number): QuadrantKey {
   const intel = getClusterIntel(clusterId, prospectCountEstimate);
   const potential = intel.revenueHML === "H" || intel.competitiveHML === "H" ? "H" : "L";
@@ -74,6 +98,13 @@ export function hashSeed(id: string): number {
   let h = 0;
   for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) % 97;
   return h;
+}
+
+// Small deterministic offset so clusters with identical underlying scores
+// don't render as fully overlapping dots/labels on the matrix scatter chart.
+export function jitter(id: string, salt: string, spread = 6): number {
+  const h = hashSeed(id + salt);
+  return (h % (spread * 2 + 1)) - spread;
 }
 
 const ASM_POOL = [
