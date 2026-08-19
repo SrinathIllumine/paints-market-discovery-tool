@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LeadershipLayout } from "@/components/leadership/LeadershipLayout";
 import { CLUSTERS } from "@/data/clusters";
-import { getClusterIntel } from "@/lib/clusterScoring";
+import { QUADRANT_TYPE_LABEL, getClusterQuadrant } from "@/lib/leadershipAnalytics";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/leadership/execution")({
@@ -21,10 +21,10 @@ function hashPct(id: string, min: number, max: number): number {
 }
 
 const TEAM_ROWS = [
-  { dg: "Sunil Kumar", area: "Panvel", targeted: 3, rightStrategy: 3, executed: 64 },
-  { dg: "Priya Nair", area: "Kharghar", targeted: 2, rightStrategy: 2, executed: 44 },
-  { dg: "Anil Deshmukh", area: "Kamothe", targeted: 2, rightStrategy: 1, executed: 50 },
-  { dg: "Meera Kulkarni", area: "Taloja", targeted: 1, rightStrategy: 0, executed: 50 },
+  { dg: "Rajesh Kumar", area: "Panvel", targeted: 3, rightStrategy: 3, executed: 64 },
+  { dg: "Priya Mehta", area: "Khopoli", targeted: 2, rightStrategy: 2, executed: 44 },
+  { dg: "Anand Joshi", area: "Karjat", targeted: 2, rightStrategy: 1, executed: 50 },
+  { dg: "Sonal Patkar", area: "Pen", targeted: 1, rightStrategy: 0, executed: 50 },
 ];
 
 const FUNNEL = [
@@ -37,12 +37,10 @@ const FUNNEL = [
 
 function ExecutionPage() {
   const rows = CLUSTERS.map((c) => {
-    const intel = getClusterIntel(c.id, c.prospectCountEstimate);
-    const potential = intel.revenueHML === "H" || intel.competitiveHML === "H" ? "HP" : "LP";
-    const access = intel.accessHML === "H" || intel.easeHML === "H" ? "HA" : "LA";
+    const quadrant = getClusterQuadrant(c.id, c.prospectCountEstimate);
     const targetShare = hashPct(c.id, 8, 22);
     const onTrack = hashPct(c.id, 0, 99) >= 30;
-    return { id: c.id, name: c.name, type: `${potential} · ${access}`, targetShare, onTrack };
+    return { id: c.id, name: c.name, type: QUADRANT_TYPE_LABEL[quadrant], targetShare, onTrack };
   })
     .sort((a, b) => b.targetShare - a.targetShare)
     .slice(0, 10);
@@ -73,15 +71,17 @@ function ExecutionPage() {
           <table className="w-full text-left text-sm">
             <thead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               <tr>
+                <th className="px-4 py-2">Sl. No</th>
                 <th className="px-4 py-2">Cluster</th>
                 <th className="px-4 py-2">Type</th>
-                <th className="px-4 py-2 text-right">% of DGs targeting</th>
+                <th className="px-4 py-2 text-right">% of DGs Targeting</th>
                 <th className="px-4 py-2 text-right">Status</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {rows.map((r, i) => (
                 <tr key={r.id} className="border-t border-border">
+                  <td className="px-4 py-2 tabular-nums text-muted-foreground">{i + 1}</td>
                   <td className="px-4 py-2">
                     <Link
                       to="/plan/$clusterId"
@@ -125,7 +125,7 @@ function ExecutionPage() {
                 <th className="px-4 py-2">DG</th>
                 <th className="px-4 py-2">Area</th>
                 <th className="px-4 py-2 text-right">Targeted</th>
-                <th className="px-4 py-2 text-right">Right Strategy</th>
+                <th className="px-4 py-2 text-right">Right strategy</th>
                 <th className="px-4 py-2 text-right">Executed</th>
                 <th className="px-4 py-2 text-right">Status</th>
               </tr>

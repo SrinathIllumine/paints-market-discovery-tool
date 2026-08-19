@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as LeadershipPenetrationRouteImport } from './routes/leadership.penetration'
 import { Route as LeadershipExecutionRouteImport } from './routes/leadership.execution'
 import { Route as LeadershipEngagementRouteImport } from './routes/leadership.engagement'
+import { Route as LeadershipClustersRouteImport } from './routes/leadership.clusters'
 import { Route as SalesEnablementIndexRouteImport } from './routes/sales-enablement.index'
 import { Route as LeadershipIndexRouteImport } from './routes/leadership.index'
 import { Route as PlanIndexRouteImport } from './routes/plan/index'
@@ -79,6 +80,11 @@ const LeadershipExecutionRoute = LeadershipExecutionRouteImport.update({
 const LeadershipEngagementRoute = LeadershipEngagementRouteImport.update({
   id: '/engagement',
   path: '/engagement',
+  getParentRoute: () => LeadershipRoute,
+} as any)
+const LeadershipClustersRoute = LeadershipClustersRouteImport.update({
+  id: '/clusters',
+  path: '/clusters',
   getParentRoute: () => LeadershipRoute,
 } as any)
 const SalesEnablementIndexRoute = SalesEnablementIndexRouteImport.update({
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/network': typeof NetworkRoute
   '/sales-enablement': typeof SalesEnablementRouteWithChildren
   '/leadership/engagement': typeof LeadershipEngagementRoute
+  '/leadership/clusters': typeof LeadershipClustersRoute
   '/leadership/execution': typeof LeadershipExecutionRoute
   '/leadership/penetration': typeof LeadershipPenetrationRoute
   '/map/$clusterId': typeof MapClusterIdRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/market-potential': typeof MarketPotentialRoute
   '/network': typeof NetworkRoute
   '/leadership/engagement': typeof LeadershipEngagementRoute
+  '/leadership/clusters': typeof LeadershipClustersRoute
   '/leadership/execution': typeof LeadershipExecutionRoute
   '/leadership/penetration': typeof LeadershipPenetrationRoute
   '/map/$clusterId': typeof MapClusterIdRoute
@@ -192,6 +200,7 @@ export interface FileRoutesById {
   '/network': typeof NetworkRoute
   '/sales-enablement': typeof SalesEnablementRouteWithChildren
   '/leadership/engagement': typeof LeadershipEngagementRoute
+  '/leadership/clusters': typeof LeadershipClustersRoute
   '/leadership/execution': typeof LeadershipExecutionRoute
   '/leadership/penetration': typeof LeadershipPenetrationRoute
   '/leadership/': typeof LeadershipIndexRoute
@@ -217,6 +226,7 @@ export interface FileRouteTypes {
     | '/network'
     | '/sales-enablement'
     | '/leadership/engagement'
+    | '/leadership/clusters'
     | '/leadership/execution'
     | '/leadership/penetration'
     | '/map/$clusterId'
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/market-potential'
     | '/network'
     | '/leadership/engagement'
+    | '/leadership/clusters'
     | '/leadership/execution'
     | '/leadership/penetration'
     | '/map/$clusterId'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/network'
     | '/sales-enablement'
     | '/leadership/engagement'
+    | '/leadership/clusters'
     | '/leadership/execution'
     | '/leadership/penetration'
     | '/map/$clusterId'
@@ -346,6 +358,13 @@ declare module '@tanstack/react-router' {
       path: '/engagement'
       fullPath: '/leadership/engagement'
       preLoaderRoute: typeof LeadershipEngagementRouteImport
+      parentRoute: typeof LeadershipRoute
+    }
+    '/leadership/clusters': {
+      id: '/leadership/clusters'
+      path: '/clusters'
+      fullPath: '/leadership/clusters'
+      preLoaderRoute: typeof LeadershipClustersRouteImport
       parentRoute: typeof LeadershipRoute
     }
     '/dashboard': {
@@ -446,6 +465,7 @@ interface LeadershipRouteChildren {
   LeadershipPenetrationRoute: typeof LeadershipPenetrationRoute
   LeadershipExecutionRoute: typeof LeadershipExecutionRoute
   LeadershipEngagementRoute: typeof LeadershipEngagementRoute
+  LeadershipClustersRoute: typeof LeadershipClustersRoute
   LeadershipIndexRoute: typeof LeadershipIndexRoute
 }
 
@@ -453,6 +473,7 @@ const LeadershipRouteChildren: LeadershipRouteChildren = {
   LeadershipPenetrationRoute: LeadershipPenetrationRoute,
   LeadershipExecutionRoute: LeadershipExecutionRoute,
   LeadershipEngagementRoute: LeadershipEngagementRoute,
+  LeadershipClustersRoute: LeadershipClustersRoute,
   LeadershipIndexRoute: LeadershipIndexRoute,
 }
 

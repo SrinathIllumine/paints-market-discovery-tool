@@ -5,30 +5,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
+const DATA_AS_OF = new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+
 const navItems = [
   {
     icon: Grid3x3,
     label: "Priority Matrix",
-    sub: "Which clusters should DGs focus on first?",
+    sub: "Which are the top market clusters that can improve our market penetration?",
     to: "/leadership" as const,
-  },
-  {
-    icon: TrendingUp,
-    label: "Market Penetration",
-    sub: "How deep is our reach in each cluster?",
-    to: "/leadership/penetration" as const,
   },
   {
     icon: Target,
     label: "Engagement Focus",
-    sub: "Where are DGs actually spending their time?",
+    sub: "Are ASMs & DGs focusing on high potential, high access clusters?",
     to: "/leadership/engagement" as const,
   },
   {
     icon: ListChecks,
     label: "Strategy & Execution",
-    sub: "Is the plan on track across the team?",
+    sub: "Are we engaging enough with the markets and executing our strategies?",
     to: "/leadership/execution" as const,
+  },
+  {
+    icon: TrendingUp,
+    label: "Market Penetration",
+    sub: "Is our market penetration increasing?",
+    to: "/leadership/penetration" as const,
   },
 ];
 
@@ -44,6 +46,9 @@ export function LeadershipLayout({ children, hideFilters = false }: { children: 
           <h1 className="font-display text-lg font-bold">Paints</h1>
           <p className="mt-0.5 text-xs text-white/60">Leadership Analytics</p>
         </div>
+        <p className="px-5 pt-4 text-[10px] font-semibold uppercase tracking-wide text-white/40">
+          Key questions by leadership
+        </p>
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
           {navItems.map((item) => {
             const active = path === item.to;
@@ -68,6 +73,7 @@ export function LeadershipLayout({ children, hideFilters = false }: { children: 
           })}
         </nav>
         <div className="border-t border-white/10 p-3">
+          <p className="px-3 pb-2 text-[11px] text-white/40">Data as of {DATA_AS_OF}</p>
           <Link
             to="/"
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/70 hover:bg-white/10"
