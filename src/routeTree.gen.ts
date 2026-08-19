@@ -20,6 +20,7 @@ import { Route as LeadershipPenetrationRouteImport } from './routes/leadership.p
 import { Route as LeadershipExecutionRouteImport } from './routes/leadership.execution'
 import { Route as LeadershipEngagementRouteImport } from './routes/leadership.engagement'
 import { Route as SalesEnablementIndexRouteImport } from './routes/sales-enablement.index'
+import { Route as LeadershipIndexRouteImport } from './routes/leadership.index'
 import { Route as PlanIndexRouteImport } from './routes/plan/index'
 import { Route as MapIndexRouteImport } from './routes/map/index'
 import { Route as PlanPastRoadmapRouteImport } from './routes/plan/past-roadmap'
@@ -84,6 +85,11 @@ const SalesEnablementIndexRoute = SalesEnablementIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => SalesEnablementRoute,
+} as any)
+const LeadershipIndexRoute = LeadershipIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LeadershipRoute,
 } as any)
 const PlanIndexRoute = PlanIndexRouteImport.update({
   id: '/plan/',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/map/': typeof MapIndexRoute
   '/plan/': typeof PlanIndexRoute
   '/sales-enablement/': typeof SalesEnablementIndexRoute
+  '/leadership/': typeof LeadershipIndexRoute
   '/plan/$clusterId/review': typeof PlanClusterIdReviewRoute
   '/sales-enablement/$clusterId/$prospectId': typeof SalesEnablementClusterIdProspectIdRoute
   '/plan/$clusterId/': typeof PlanClusterIdIndexRoute
@@ -157,7 +164,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/leadership': typeof LeadershipRouteWithChildren
+  '/leadership': typeof LeadershipIndexRoute
   '/market-discovery': typeof MarketDiscoveryRoute
   '/dashboard': typeof DashboardRoute
   '/market-potential': typeof MarketPotentialRoute
@@ -187,6 +194,7 @@ export interface FileRoutesById {
   '/leadership/engagement': typeof LeadershipEngagementRoute
   '/leadership/execution': typeof LeadershipExecutionRoute
   '/leadership/penetration': typeof LeadershipPenetrationRoute
+  '/leadership/': typeof LeadershipIndexRoute
   '/map/$clusterId': typeof MapClusterIdRoute
   '/plan/$clusterId': typeof PlanClusterIdRouteWithChildren
   '/plan/past-roadmap': typeof PlanPastRoadmapRoute
@@ -217,6 +225,7 @@ export interface FileRouteTypes {
     | '/map/'
     | '/plan/'
     | '/sales-enablement/'
+    | '/leadership/'
     | '/plan/$clusterId/review'
     | '/sales-enablement/$clusterId/$prospectId'
     | '/plan/$clusterId/'
@@ -259,6 +268,7 @@ export interface FileRouteTypes {
     | '/map/'
     | '/plan/'
     | '/sales-enablement/'
+    | '/leadership/'
     | '/plan/$clusterId/review'
     | '/sales-enablement/$clusterId/$prospectId'
     | '/plan/$clusterId/'
@@ -359,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SalesEnablementIndexRouteImport
       parentRoute: typeof SalesEnablementRoute
     }
+    '/leadership/': {
+      id: '/leadership/'
+      path: '/'
+      fullPath: '/leadership/'
+      preLoaderRoute: typeof LeadershipIndexRouteImport
+      parentRoute: typeof LeadershipRoute
+    }
     '/plan/': {
       id: '/plan/'
       path: '/plan'
@@ -429,12 +446,14 @@ interface LeadershipRouteChildren {
   LeadershipPenetrationRoute: typeof LeadershipPenetrationRoute
   LeadershipExecutionRoute: typeof LeadershipExecutionRoute
   LeadershipEngagementRoute: typeof LeadershipEngagementRoute
+  LeadershipIndexRoute: typeof LeadershipIndexRoute
 }
 
 const LeadershipRouteChildren: LeadershipRouteChildren = {
   LeadershipPenetrationRoute: LeadershipPenetrationRoute,
   LeadershipExecutionRoute: LeadershipExecutionRoute,
   LeadershipEngagementRoute: LeadershipEngagementRoute,
+  LeadershipIndexRoute: LeadershipIndexRoute,
 }
 
 const LeadershipRouteWithChildren = LeadershipRoute._addFileChildren(
