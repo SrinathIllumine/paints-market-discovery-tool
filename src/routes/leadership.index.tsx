@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import {
   CartesianGrid,
+  LabelList,
+  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Scatter,
@@ -31,6 +33,13 @@ export const Route = createFileRoute("/leadership/")({
   }),
   component: PriorityMatrixPage,
 });
+
+const QUADRANT_AREAS: Record<QuadrantKey, { x1: number; x2: number; y1: number; y2: number }> = {
+  HH: { x1: 50, x2: 100, y1: 50, y2: 100 },
+  HL: { x1: 0, x2: 50, y1: 50, y2: 100 },
+  LH: { x1: 50, x2: 100, y1: 0, y2: 50 },
+  LL: { x1: 0, x2: 50, y1: 0, y2: 50 },
+};
 
 function PriorityMatrixPage() {
   const grouped: Record<QuadrantKey, { id: string; name: string }[]> = { HH: [], HL: [], LH: [], LL: [] };
@@ -62,10 +71,22 @@ function PriorityMatrixPage() {
       <div className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-sm">
         <h2 className="font-display text-base font-bold text-foreground">Potential vs Access</h2>
         <p className="text-xs text-muted-foreground">Each dot is a market cluster.</p>
-        <div className="mt-3 h-80">
+        <div className="mt-3 h-[30rem]">
           <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
+            <ScatterChart margin={{ top: 10, right: 60, bottom: 10, left: 0 }}>
               <CartesianGrid stroke="var(--border)" />
+              {(Object.keys(QUADRANT_AREAS) as QuadrantKey[]).map((key) => (
+                <ReferenceArea
+                  key={key}
+                  x1={QUADRANT_AREAS[key].x1}
+                  x2={QUADRANT_AREAS[key].x2}
+                  y1={QUADRANT_AREAS[key].y1}
+                  y2={QUADRANT_AREAS[key].y2}
+                  fill={QUADRANT_COLOR[key]}
+                  fillOpacity={0.08}
+                  stroke="none"
+                />
+              ))}
               <XAxis
                 type="number"
                 dataKey="access"
@@ -84,7 +105,7 @@ function PriorityMatrixPage() {
                 label={{ value: "Potential →", angle: -90, position: "insideLeft", fontSize: 12 }}
                 tick={{ fontSize: 11 }}
               />
-              <ZAxis range={[80, 80]} />
+              <ZAxis range={[70, 70]} />
               <ReferenceLine x={50} stroke="var(--border)" />
               <ReferenceLine y={50} stroke="var(--border)" />
               <Tooltip
@@ -108,7 +129,13 @@ function PriorityMatrixPage() {
                   name={QUADRANT_TITLE[key]}
                   data={points.filter((p) => p.quadrant === key)}
                   fill={QUADRANT_COLOR[key]}
-                />
+                >
+                  <LabelList
+                    dataKey="name"
+                    position="right"
+                    style={{ fontSize: 10, fill: "var(--foreground)" }}
+                  />
+                </Scatter>
               ))}
             </ScatterChart>
           </ResponsiveContainer>
