@@ -22,6 +22,7 @@ import {
   QUADRANT_DESC,
   QUADRANT_TITLE,
   type QuadrantKey,
+  clampToQuadrantSide,
   getClusterQuadrant,
   jitter,
 } from "@/lib/leadershipAnalytics";
@@ -43,16 +44,24 @@ const QUADRANT_AREAS: Record<QuadrantKey, { x1: number; x2: number; y1: number; 
   LL: { x1: 0, x2: 50, y1: 0, y2: 50 },
 };
 
-// Custom label renderer: short name, clipped away from the right edge, with a
-// faint background so overlapping text stays legible instead of thrashing.
-function DotLabel({ x, y, value }: { x?: number; y?: number; value?: string }) {
+type Point = { id: string; name: string; access: number; potential: number; quadrant: QuadrantKey };
+
+// Custom label renderer: short name in a background pill, offset a few px
+// per point (via `row`) so labels for nearby dots fan out instead of
+// stacking directly on top of one another.
+function renderDotLabel(props: any) {
+  const { x, y, value, index } = props;
   if (x === undefined || y === undefined || !value) return null;
-  const width = Math.min(90, value.length * 5.2 + 6);
+  const row: number = typeof index === "number" ? index : 0;
+  const dy = (row % 3) * 12 - 12; // -12, 0, +12 px fan-out
+  const text = value.length > 18 ? `${value.slice(0, 17)}…` : value;
+  const width = Math.min(110, text.length * 5.4 + 10);
+  const labelY = y + dy;
   return (
     <g>
-      <rect x={x + 6} y={y - 7} width={width} height={13} rx={3} fill="var(--card)" opacity={0.75} />
-      <text x={x + 9} y={y + 3} fontSize={9} fill="var(--foreground)">
-        {value.length > 16 ? `${value.slice(0, 15)}…` : value}
+      <rect x={x + 7} y={labelY - 7} width={width} height={14} rx={3} fill="var(--card)" stroke="var(--border)" strokeWidth={0.5} />
+      <text x={x + 11} y={labelY + 3} fontSize={9} fill="var(--foreground)">
+        {text}
       </text>
     </g>
   );
@@ -60,7 +69,7 @@ function DotLabel({ x, y, value }: { x?: number; y?: number; value?: string }) {
 
 function PriorityMatrixPage() {
   const grouped: Record<QuadrantKey, { id: string; name: string }[]> = { HH: [], HL: [], LH: [], LL: [] };
-  const points: { id: string; name: string; access: number; potential: number; quadrant: QuadrantKey }[] = [];
+  const points: Point[] = [];
 
   for (const c of CLUSTERS) {
     const key = getClusterQuadrant(c.id, c.prospectCountEstimate);
@@ -68,8 +77,13 @@ function PriorityMatrixPage() {
     grouped[key].push({ id: c.id, name: shortName });
 
     const scores = computeClusterScores(c, c.prospectCountEstimate);
-    const access = Math.min(98, Math.max(2, Math.round(scores.accessRollupScore * 10) + jitter(c.id, "a")));
-    const potential = Math.min(98, Math.max(2, Math.round(scores.potentialScore * 10) + jitter(c.id, "p")));
+    const isHighAccess = key === "HH" || key === "LH";
+    const isHighPotential = key === "HH" || key === "HL";
+    const baseAccess = Math.round(scores.accessRollupScore * 10);
+    const basePotential = Math.round(scores.potentialScore * 10);
+    const access = clampToQuadrantSide(baseAccess, jitter(c.id, "a", 14), isHighAccess);
+    const potential = clampToQuadrantSide(basePotential, jitter(c.id, "p", 14), isHighPotential);
+
     points.push({ id: c.id, name: shortName, access, potential, quadrant: key });
   }
 
@@ -85,10 +99,10 @@ function PriorityMatrixPage() {
       <div className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-sm">
         <h2 className="font-display text-base font-bold text-foreground">Potential vs Access</h2>
         <p className="text-xs text-muted-foreground">Each dot is a market cluster.</p>
-        <div className="mt-3 h-[34rem] overflow-x-auto overflow-y-hidden">
-          <div className="h-full min-w-[900px]">
+        <div className="mt-3 h-[44rem] overflow-x-auto overflow-y-hidden">
+          <div className="h-full min-w-[1200px]">
             <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 10, right: 90, bottom: 10, left: 0 }}>
+              <ScatterChart margin={{ top: 10, right: 120, bottom: 10, left: 0 }}>
                 <CartesianGrid stroke="var(--border)" />
                 {(Object.keys(QUADRANT_AREAS) as QuadrantKey[]).map((key) => (
                   <ReferenceArea
@@ -120,14 +134,14 @@ function PriorityMatrixPage() {
                   label={{ value: "Potential →", angle: -90, position: "insideLeft", fontSize: 12 }}
                   tick={{ fontSize: 11 }}
                 />
-                <ZAxis range={[50, 50]} />
+                <ZAxis range={[45, 45]} />
                 <ReferenceLine x={50} stroke="var(--border)" />
                 <ReferenceLine y={50} stroke="var(--border)" />
                 <Tooltip
                   cursor={{ strokeDasharray: "3 3" }}
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null;
-                    const p = payload[0].payload as (typeof points)[number];
+                    const p = payload[0].payload as Point;
                     return (
                       <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
                         <p className="font-semibold text-foreground">{p.name}</p>
@@ -145,7 +159,7 @@ function PriorityMatrixPage() {
                     data={points.filter((p) => p.quadrant === key)}
                     fill={QUADRANT_COLOR[key]}
                   >
-                    <LabelList dataKey="name" content={<DotLabel />} />
+                    <LabelList dataKey="name" content={renderDotLabel} />
                   </Scatter>
                 ))}
               </ScatterChart>

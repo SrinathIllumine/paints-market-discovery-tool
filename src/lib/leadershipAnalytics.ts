@@ -107,6 +107,15 @@ export function jitter(id: string, salt: string, spread = 6): number {
   return (h % (spread * 2 + 1)) - spread;
 }
 
+// Nudge a jittered value by `delta`, but never let it cross the 50-mark that
+// separates quadrants (clusters must stay in the quadrant their HML score put
+// them in).
+export function clampToQuadrantSide(value: number, delta: number, isHigh: boolean): number {
+  const next = value + delta;
+  if (isHigh) return Math.min(97, Math.max(53, next));
+  return Math.min(47, Math.max(3, next));
+}
+
 const ASM_POOL = [
   { name: "Rajesh Patil", area: "Pune" },
   { name: "Prakash Iyer", area: "Nashik" },
