@@ -485,7 +485,7 @@ function ClusterDetailScreen() {
                     data-tour="cluster-next-stage"
                     onClick={() => {
                       unlockStage(2);
-                      navigate({ to: "/" });
+                      navigate({ to: "/market-discovery" });
                     }}
                     size="lg"
                     className="w-full gap-2 bg-critical text-critical-foreground hover:bg-critical/90"

@@ -62,6 +62,9 @@ function ClusterFunnelPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clusterId, prospectIds.length]);
 
+  // Cumulative funnel: a prospect currently at stage index i has also passed
+  // through every earlier stage, so it counts toward — and shows up in — all
+  // stages from "prospects" up to its current one, not just the current one.
   const visibleByStage = useMemo(() => {
     const out: Record<SalesStage, typeof prospects> = {
       prospects: [], contacted: [], decision: [], closure: [], ongoing: [],
@@ -71,10 +74,23 @@ function ClusterFunnelPage() {
       if (activity[p.id]?.notInterested) continue;
       if (q && !(p.name.toLowerCase().includes(q) || (p.locality ?? "").toLowerCase().includes(q))) continue;
       const st = stages[p.id] ?? "prospects";
-      out[st].push(p);
+      const stageIdx = SALES_STAGES.indexOf(st);
+      for (let i = 0; i <= stageIdx; i++) out[SALES_STAGES[i]].push(p);
     }
     return out;
   }, [prospects, stages, activity, funnelSearch]);
+
+  // Distinct prospects matching the funnel search (each prospect counted
+  // once here, unlike visibleByStage which counts a prospect once per stage
+  // it has passed through).
+  const matchedProspectCount = useMemo(() => {
+    const q = funnelSearch.trim().toLowerCase();
+    if (!q) return prospects.length;
+    return prospects.filter((p) => {
+      if (activity[p.id]?.notInterested) return false;
+      return p.name.toLowerCase().includes(q) || (p.locality ?? "").toLowerCase().includes(q);
+    }).length;
+  }, [prospects, activity, funnelSearch]);
 
   if (!cluster) {
     return (
@@ -139,7 +155,7 @@ function ClusterFunnelPage() {
           </div>
           <p className="mt-4 text-center text-xs text-muted-foreground">
             {funnelSearch.trim()
-              ? `${Object.values(visibleByStage).reduce((n, arr) => n + arr.length, 0)} of ${prospects.length} prospects match "${funnelSearch.trim()}"`
+              ? `${matchedProspectCount} of ${prospects.length} prospects match "${funnelSearch.trim()}"`
               : `${prospects.length} total prospects in this cluster`}
           </p>
         </div>
