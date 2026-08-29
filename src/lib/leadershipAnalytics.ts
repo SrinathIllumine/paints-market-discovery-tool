@@ -79,7 +79,9 @@ export function getClustersRankedByRevenue(): RankedCluster[] {
   return CLUSTERS.map((c) => {
     const quadrant = getClusterQuadrant(c.id, c.prospectCountEstimate);
     const intel = getClusterIntel(c.id, c.prospectCountEstimate);
-    const access = intel.accessHML === "H" || intel.easeHML === "H" ? "High" : "Low";
+    const access: RankedCluster["access"] =
+      intel.accessHML === "H" || intel.easeHML === "H" ? "High" : "Low";
+
     return {
       id: c.id,
       name: c.name,

@@ -9,20 +9,26 @@ export const Route = createFileRoute("/systemic/$slug")({
   loader: ({ params }) => {
     const tile = getSystemTile(params.slug);
     if (!tile) throw notFound();
-    return tile;
+    return { slug: tile.slug };
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: loaderData ? `${loaderData.title} — Market Intelligence System` : "Sub-system" },
-      { name: "description", content: loaderData?.desc ?? "" },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const tile = loaderData ? getSystemTile(loaderData.slug) : undefined;
+    return {
+      meta: [
+        { title: tile ? `${tile.title} — Market Intelligence System` : "Sub-system" },
+        { name: "description", content: tile?.desc ?? "" },
+      ],
+    };
+  },
   component: SystemDetailPage,
 });
 
 function SystemDetailPage() {
-  const tile = Route.useLoaderData();
+  const { slug } = Route.useLoaderData();
+  const tile = getSystemTile(slug);
+  if (!tile) throw notFound();
   const [lightbox, setLightbox] = useState<{ src: string; text: string } | null>(null);
+
   const Icon = tile.icon;
 
   return (
