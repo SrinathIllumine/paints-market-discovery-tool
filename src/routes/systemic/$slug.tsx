@@ -34,7 +34,7 @@ function SystemDetailPage() {
   return (
     <div className="min-h-[100dvh] bg-background">
       <header className="bg-navy px-6 pb-6 pt-6 text-navy-foreground">
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-6xl">
           <Link
             to="/"
             className="mb-4 inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white"
@@ -58,13 +58,13 @@ function SystemDetailPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl space-y-6 px-6 py-6">
+      <main className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-6 py-6 lg:grid-cols-2 lg:items-start">
         <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <div className="mb-3 flex items-center gap-2">
             <Package className="h-4 w-4 text-navy" />
             <h2 className="font-display text-base font-bold text-foreground">What it contains</h2>
           </div>
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <div className="flex flex-col gap-3">
             {tile.contains.map((item, i) => (
               <ContentCard
                 key={i}
@@ -83,7 +83,7 @@ function SystemDetailPage() {
             <Gauge className="h-4 w-4 text-critical" />
             <h2 className="font-display text-base font-bold text-foreground">Measures / Outcomes</h2>
           </div>
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <div className="flex flex-col gap-3">
             {tile.outcomes.map((item, i) => (
               <ContentCard
                 key={i}
