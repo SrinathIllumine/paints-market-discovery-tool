@@ -31,6 +31,7 @@ import { Route as SalesEnablementClusterIdIndexRouteImport } from './routes/sale
 import { Route as PlanClusterIdIndexRouteImport } from './routes/plan/$clusterId.index'
 import { Route as SalesEnablementClusterIdProspectIdRouteImport } from './routes/sales-enablement.$clusterId.$prospectId'
 import { Route as PlanClusterIdReviewRouteImport } from './routes/plan/$clusterId.review'
+import { Route as SystemicSlugRouteImport } from './routes/systemic/$slug'
 
 const SalesEnablementRoute = SalesEnablementRouteImport.update({
   id: '/sales-enablement',
@@ -122,6 +123,11 @@ const MapClusterIdRoute = MapClusterIdRouteImport.update({
   path: '/map/$clusterId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SystemicSlugRoute = SystemicSlugRouteImport.update({
+  id: '/systemic/$slug',
+  path: '/systemic/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SalesEnablementClusterIdIndexRoute =
   SalesEnablementClusterIdIndexRouteImport.update({
     id: '/$clusterId/',
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/leadership/execution': typeof LeadershipExecutionRoute
   '/leadership/penetration': typeof LeadershipPenetrationRoute
   '/map/$clusterId': typeof MapClusterIdRoute
+  '/systemic/$slug': typeof SystemicSlugRoute
   '/plan/$clusterId': typeof PlanClusterIdRouteWithChildren
   '/plan/past-roadmap': typeof PlanPastRoadmapRoute
   '/map/': typeof MapIndexRoute
@@ -181,6 +188,7 @@ export interface FileRoutesByTo {
   '/leadership/execution': typeof LeadershipExecutionRoute
   '/leadership/penetration': typeof LeadershipPenetrationRoute
   '/map/$clusterId': typeof MapClusterIdRoute
+  '/systemic/$slug': typeof SystemicSlugRoute
   '/plan/past-roadmap': typeof PlanPastRoadmapRoute
   '/map': typeof MapIndexRoute
   '/plan': typeof PlanIndexRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/leadership/penetration': typeof LeadershipPenetrationRoute
   '/leadership/': typeof LeadershipIndexRoute
   '/map/$clusterId': typeof MapClusterIdRoute
+  '/systemic/$slug': typeof SystemicSlugRoute
   '/plan/$clusterId': typeof PlanClusterIdRouteWithChildren
   '/plan/past-roadmap': typeof PlanPastRoadmapRoute
   '/map/': typeof MapIndexRoute
@@ -230,6 +239,7 @@ export interface FileRouteTypes {
     | '/leadership/execution'
     | '/leadership/penetration'
     | '/map/$clusterId'
+    | '/systemic/$slug'
     | '/plan/$clusterId'
     | '/plan/past-roadmap'
     | '/map/'
@@ -253,6 +263,7 @@ export interface FileRouteTypes {
     | '/leadership/execution'
     | '/leadership/penetration'
     | '/map/$clusterId'
+    | '/systemic/$slug'
     | '/plan/past-roadmap'
     | '/map'
     | '/plan'
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
     | '/leadership/execution'
     | '/leadership/penetration'
     | '/map/$clusterId'
+    | '/systemic/$slug'
     | '/plan/$clusterId'
     | '/plan/past-roadmap'
     | '/map/'
@@ -296,6 +308,7 @@ export interface RootRouteChildren {
   NetworkRoute: typeof NetworkRoute
   SalesEnablementRoute: typeof SalesEnablementRouteWithChildren
   MapClusterIdRoute: typeof MapClusterIdRoute
+  SystemicSlugRoute: typeof SystemicSlugRoute
   PlanClusterIdRoute: typeof PlanClusterIdRouteWithChildren
   PlanPastRoadmapRoute: typeof PlanPastRoadmapRoute
   MapIndexRoute: typeof MapIndexRoute
@@ -430,6 +443,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapClusterIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/systemic/$slug': {
+      id: '/systemic/$slug'
+      path: '/systemic/$slug'
+      fullPath: '/systemic/$slug'
+      preLoaderRoute: typeof SystemicSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sales-enablement/$clusterId/': {
       id: '/sales-enablement/$clusterId/'
       path: '/$clusterId'
@@ -521,6 +541,7 @@ const rootRouteChildren: RootRouteChildren = {
   NetworkRoute: NetworkRoute,
   SalesEnablementRoute: SalesEnablementRouteWithChildren,
   MapClusterIdRoute: MapClusterIdRoute,
+  SystemicSlugRoute: SystemicSlugRoute,
   PlanClusterIdRoute: PlanClusterIdRouteWithChildren,
   PlanPastRoadmapRoute: PlanPastRoadmapRoute,
   MapIndexRoute: MapIndexRoute,
