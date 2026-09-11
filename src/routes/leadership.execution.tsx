@@ -48,16 +48,16 @@ function ExecutionPage() {
           <h2 className="font-display text-base font-bold text-foreground">Cluster execution status</h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full table-fixed text-left text-sm">
             <thead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               <tr>
-                <th className="px-4 py-2">Sl. No</th>
-                <th className="px-4 py-2">Cluster</th>
-                <th className="px-4 py-2">Type</th>
-                <th className="px-4 py-2 text-right">No of Engagement Plan</th>
-                <th className="px-4 py-2 text-right">No of Executed Plans</th>
-                <th className="px-4 py-2 text-right">Percentage Execution</th>
-                <th className="px-4 py-2 text-right">Status</th>
+                <th className="w-[6%] px-4 py-2">Sl. No</th>
+                <th className="w-[24%] px-4 py-2">Cluster</th>
+                <th className="w-[17%] px-4 py-2">Type</th>
+                <th className="w-[14%] px-4 py-2 text-right">No of Engagement Plan</th>
+                <th className="w-[14%] px-4 py-2 text-right">No of Executed Plans</th>
+                <th className="w-[14%] px-4 py-2 text-right">Percentage Execution</th>
+                <th className="w-[11%] px-4 py-2 text-right">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -80,7 +80,7 @@ function ExecutionPage() {
                   <td className="px-4 py-2 text-right">
                     <span
                       className={cn(
-                        "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                        "inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold",
                         r.onTrack ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800",
                       )}
                     >
