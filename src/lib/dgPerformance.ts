@@ -88,17 +88,27 @@ const TREND_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May"];
  * Jan-May trend for a cluster. April (the second-to-last point) is derived
  * directly from `currentPct` and `mom` — the same MoM figure shown as the
  * "(+X% / -X%)" badge next to "Current penetration" — so the line's last
- * segment always visually matches the displayed month-over-month change
- * instead of being generated from an unrelated random seed.
+ * segment always visually matches the displayed month-over-month change.
+ *
+ * Jan-Mar extrapolate the SAME rate of change backward (2x the single-month
+ * MoM, i.e. assuming the trend held for roughly the two months before
+ * April) rather than random noise around April's value — otherwise a
+ * cluster with a meaningful MoM swing still rendered as a flat, storyless
+ * line, since only the last segment was ever anchored to it. A small seeded
+ * wiggle is layered on top so the line isn't a robotic straight
+ * interpolation, without obscuring the overall direction.
  */
 export function buildPenetrationTrend(clusterId: string, geo: GeoRef, currentPct: number, mom: number) {
   const prevMonthPct = Math.max(0, Math.min(100, currentPct - mom));
+  const janBase = Math.max(0, Math.min(100, currentPct - mom * 2));
   return TREND_MONTHS.map((month, i) => {
     if (i === TREND_MONTHS.length - 1) return { month, pct: currentPct };
     if (i === TREND_MONTHS.length - 2) return { month, pct: Math.round(prevMonthPct) };
+    const t = i / (TREND_MONTHS.length - 1); // 0 for Jan .. 0.5 for Mar
+    const linear = janBase + (currentPct - janBase) * t;
     const seed = seededRandom(`${clusterId}|${geo.level}|${geo.id}|trend|${i}`);
-    const factor = 0.7 + seed * 0.35; // Jan-Mar lead gently into April's (fixed) value
-    return { month, pct: Math.max(0, Math.round(prevMonthPct * factor)) };
+    const noise = (seed - 0.5) * 4;
+    return { month, pct: Math.max(0, Math.round(linear + noise)) };
   });
 }
 
