@@ -101,10 +101,10 @@ function PriorityMatrixPage() {
       <div className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-sm">
         <h2 className="font-display text-base font-bold text-foreground">Potential vs Access</h2>
         <p className="text-xs text-muted-foreground">Each dot is a market cluster.</p>
-        <div className="mt-3 h-[44rem] overflow-x-auto overflow-y-hidden">
-          <div className="h-full min-w-[1200px]">
+        <div className="mt-3 h-[26rem]">
+          <div className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 10, right: 120, bottom: 10, left: 0 }}>
+              <ScatterChart margin={{ top: 10, right: 90, bottom: 10, left: 0 }}>
                 <CartesianGrid stroke="var(--border)" />
                 {(Object.keys(QUADRANT_AREAS) as QuadrantKey[]).map((key) => (
                   <ReferenceArea
@@ -136,7 +136,7 @@ function PriorityMatrixPage() {
                   label={{ value: "Potential →", angle: -90, position: "insideLeft", fontSize: 12 }}
                   tick={{ fontSize: 11 }}
                 />
-                <ZAxis range={[45, 45]} />
+                <ZAxis range={[100, 100]} />
                 <ReferenceLine x={50} stroke="var(--border)" />
                 <ReferenceLine y={50} stroke="var(--border)" />
                 <Tooltip

@@ -93,21 +93,20 @@ export function getEaseOfSaleScore(clusterId: string): number {
   return getClusterResearch(clusterId).easeOfSaleScore;
 }
 
-const ACCESS_TIERS = [0, 3.3, 6.7, 10];
-
 /**
- * 0-10 access score, snapped to the same 4 tiers the DG-facing app produces
- * from its 3 Yes/No questions (0 / 3.3 / 6.7 / 10). Deliberately
- * anti-correlated with revenue potential so high-potential clusters tend to
- * be under-accessed — the "neglected opportunity" half of the narrative —
- * blended with geography-seeded noise so it isn't mechanically uniform.
+ * 0-10 access score (an aggregate across many DGs in this geography, so a
+ * continuous value — not snapped to the single-DG 0/3.3/6.7/10 tiers used in
+ * the Market Discovery System's own 3-question form). Deliberately and
+ * strongly anti-correlated with revenue potential: high-potential clusters
+ * are the ones DGs most often lack real access to — that's the "neglected
+ * opportunity" half of the narrative — with modest seeded noise so it isn't
+ * mechanically uniform within a potential band.
  */
 export function getAccessScore(clusterId: string, geo: GeoRef): number {
   const potential = getRevenuePotentialScore(clusterId, geo);
   const seed = seededRandom(`${clusterId}|${geo.level}|${geo.id}|access`);
-  const raw = (10 - potential) * 0.5 + seed * 5;
-  const clamped = Math.max(0, Math.min(10, raw));
-  return ACCESS_TIERS.reduce((closest, t) => (Math.abs(t - clamped) < Math.abs(closest - clamped) ? t : closest), ACCESS_TIERS[0]);
+  const raw = (10 - potential) * 0.7 + (seed - 0.5) * 6;
+  return Math.round(Math.max(0, Math.min(10, raw)) * 10) / 10;
 }
 
 export type HML = "H" | "M" | "L";

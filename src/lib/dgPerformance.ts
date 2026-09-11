@@ -70,13 +70,18 @@ export function getDgExecutionRows(): DgExecutionRow[] {
   });
 }
 
-/** Share of DGs (proxy: attractiveness) targeting a cluster, for a given geography scope. */
+/**
+ * Share of DGs who have this cluster among their targeted clusters, for a
+ * given geography scope. Independent per cluster — a DG can (and typically
+ * does) target several clusters at once, so these figures are not a
+ * partition and don't need to sum to 100% across clusters.
+ */
 export function getClusterTargetingShare(clusterId: string, geo: GeoRef): number {
   const scores = getClusterScoresForGeo(clusterId, geo);
   const attractiveness = scores.ease * 0.5 + scores.access * 0.3 + scores.competitive * 0.2; // 0-10
-  const noise = seededRandom(`${clusterId}|${geo.level}|${geo.id}|targetshare`) * 8;
-  const pct = ((attractiveness * 6 + noise) / 10) * 10;
-  return Math.max(2, Math.min(45, Math.round(pct * 10) / 10));
+  const noise = (seededRandom(`${clusterId}|${geo.level}|${geo.id}|targetshare`) - 0.5) * 24; // ±12
+  const pct = attractiveness * 7 + noise; // roughly spans 3-85
+  return Math.max(3, Math.min(85, Math.round(pct * 10) / 10));
 }
 
 /** Whether a cluster's plan is on track, deliberately weighted so high-potential clusters fall behind more often. */
