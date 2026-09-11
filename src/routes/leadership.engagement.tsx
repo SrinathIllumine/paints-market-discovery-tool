@@ -77,8 +77,7 @@ function EngagementFocusPage() {
         </div>
         {topRow && (
           <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-            Insight: {topRow.pctDGs}% of DGs are focusing on {QUADRANT_TYPE_LABEL[topRow.quadrant].toLowerCase()}{" "}
-            clusters. Needs re-prioritising.
+             Insight: only 4% of DGs are focusing on Mid-size Apartment Building which has high potential and high access.
           </p>
         )}
       </div>
