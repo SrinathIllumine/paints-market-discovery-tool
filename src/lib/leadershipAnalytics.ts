@@ -79,5 +79,3 @@ export function clampToQuadrantSide(value: number, delta: number, isHigh: boolea
   return Math.min(47, Math.max(3, next));
 }
 
-// ASM/quadrant rosters now live in dgPerformance.ts (getAsmsForQuadrant),
-// which is geography-aware — plain hash-based ASM lists are no longer used.
