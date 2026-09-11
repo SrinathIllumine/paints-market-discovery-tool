@@ -1,9 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { LeadershipLayout, LeadershipScopeFilter } from "@/components/leadership/LeadershipLayout";
+import { LeadershipLayout, LeadershipScopeFilter, QuadrantTypeBadge } from "@/components/leadership/LeadershipLayout";
 import { buildOverallPenetrationTrend, buildPenetrationTrend, getPenetrationRows } from "@/lib/dgPerformance";
-import { QUADRANT_TYPE_LABEL } from "@/lib/leadershipAnalytics";
 import { useLeadershipGeo } from "@/store/leadershipStore";
 import { cn } from "@/lib/utils";
 
@@ -20,9 +19,7 @@ export const Route = createFileRoute("/leadership/penetration")({
 function PenetrationPage() {
   const geo = useLeadershipGeo();
 
-  const rows = getPenetrationRows(geo)
-    .map((r) => ({ ...r, type: QUADRANT_TYPE_LABEL[r.quadrant] }))
-    .sort((a, b) => b.prospects - a.prospects);
+  const rows = getPenetrationRows(geo).sort((a, b) => b.prospects - a.prospects);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = selectedId ? rows.find((r) => r.clusterId === selectedId) : undefined;
@@ -141,7 +138,9 @@ function PenetrationPage() {
                   <td className="px-4 py-2 text-right tabular-nums">{r.prospects.toLocaleString("en-IN")}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{r.customers.toLocaleString("en-IN")}</td>
                   <td className="px-4 py-2 text-right font-semibold tabular-nums">{r.pct}%</td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">{r.type}</td>
+                  <td className="px-4 py-2">
+                    <QuadrantTypeBadge quadrant={r.quadrant} />
+                  </td>
                   <td className={cn("px-4 py-2 text-right tabular-nums font-medium", r.mom >= 0 ? "text-emerald-700" : "text-critical")}>
                     {r.mom >= 0 ? "+" : ""}
                     {r.mom}%

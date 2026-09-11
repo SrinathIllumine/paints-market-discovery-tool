@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { LeadershipLayout, LeadershipScopeFilter } from "@/components/leadership/LeadershipLayout";
+import { LeadershipLayout, LeadershipScopeFilter, QuadrantTypeBadge } from "@/components/leadership/LeadershipLayout";
 import { CLUSTERS } from "@/data/clusters";
 import { getAllClusterScoresForGeo } from "@/lib/clusterGenerator";
-import { QUADRANT_TYPE_LABEL } from "@/lib/leadershipAnalytics";
 import { useLeadershipGeo } from "@/store/leadershipStore";
 
 export const Route = createFileRoute("/leadership/engagement")({
@@ -68,7 +67,9 @@ function EngagementFocusPage() {
                       {r.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">{QUADRANT_TYPE_LABEL[r.quadrant]}</td>
+                  <td className="px-4 py-2">
+                    <QuadrantTypeBadge quadrant={r.quadrant} />
+                  </td>
                   <td className="px-4 py-2 text-right font-semibold tabular-nums">{r.pctDGs}%</td>
                 </tr>
               ))}

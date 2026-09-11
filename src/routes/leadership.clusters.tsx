@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { LeadershipLayout, LeadershipScopeFilter } from "@/components/leadership/LeadershipLayout";
+import { LeadershipLayout, LeadershipScopeFilter, QuadrantTypeBadge } from "@/components/leadership/LeadershipLayout";
 import { getAllClusterScoresForGeo } from "@/lib/clusterGenerator";
-import { QUADRANT_TYPE_LABEL, formatCr } from "@/lib/leadershipAnalytics";
+import { formatCr } from "@/lib/leadershipAnalytics";
 import { useLeadershipGeo } from "@/store/leadershipStore";
 import { CLUSTERS } from "@/data/clusters";
 
@@ -62,7 +62,9 @@ function ClustersOverviewPage() {
                 <tr key={r.id} className="border-t border-border">
                   <td className="px-4 py-2 tabular-nums text-muted-foreground">{(pageSafe - 1) * PAGE_SIZE + i + 1}</td>
                   <td className="px-4 py-2 font-medium text-foreground">{r.name}</td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">{QUADRANT_TYPE_LABEL[r.quadrant]}</td>
+                  <td className="px-4 py-2">
+                    <QuadrantTypeBadge quadrant={r.quadrant} />
+                  </td>
                   <td className="px-4 py-2 text-right font-semibold tabular-nums">{formatCr(r.revenuePotential)}</td>
                   <td className="px-4 py-2 text-right text-xs text-muted-foreground">{r.access}</td>
                 </tr>

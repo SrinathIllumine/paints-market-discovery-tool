@@ -5,6 +5,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { NATIONAL_ID, STATES, getAreasForState } from "@/data/geography";
 import { ALL_AREAS_ID, useLeadershipStore } from "@/store/leadershipStore";
+import { QUADRANT_TYPE_LABEL, type QuadrantKey } from "@/lib/leadershipAnalytics";
+
+// Low Access – High Potential is yellow and High Access – Low Potential is
+// blue (swapped from the quadrant scatter-chart colors on purpose, per
+// explicit request) so the two "mismatch" quadrants read distinctly from
+// each other in table badges.
+const QUADRANT_BADGE_CLASSES: Record<QuadrantKey, string> = {
+  HH: "bg-emerald-100 text-emerald-800",
+  HL: "bg-amber-100 text-amber-800", // "Low Access – High Potential"
+  LH: "bg-blue-100 text-blue-800", // "High Access – Low Potential"
+  LL: "bg-slate-100 text-slate-600",
+};
+
+/** Colored pill for a cluster's quadrant type (e.g. "High Access – High Potential"). */
+export function QuadrantTypeBadge({ quadrant, className }: { quadrant: QuadrantKey; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold",
+        QUADRANT_BADGE_CLASSES[quadrant],
+        className,
+      )}
+    >
+      {QUADRANT_TYPE_LABEL[quadrant]}
+    </span>
+  );
+}
 
 /** State + Area scope selectors. Drop this next to any page's main heading/card. */
 export function LeadershipScopeFilter({ className }: { className?: string }) {
