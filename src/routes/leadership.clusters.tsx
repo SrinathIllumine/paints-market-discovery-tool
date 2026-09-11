@@ -2,7 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { LeadershipLayout } from "@/components/leadership/LeadershipLayout";
-import { QUADRANT_TYPE_LABEL, formatCr, getClustersRankedByRevenue } from "@/lib/leadershipAnalytics";
+import { getAllClusterScoresForGeo } from "@/lib/clusterGenerator";
+import { QUADRANT_TYPE_LABEL, formatCr } from "@/lib/leadershipAnalytics";
+import { useLeadershipGeo } from "@/store/leadershipStore";
+import { CLUSTERS } from "@/data/clusters";
 
 export const Route = createFileRoute("/leadership/clusters")({
   head: () => ({
@@ -17,7 +20,14 @@ export const Route = createFileRoute("/leadership/clusters")({
 const PAGE_SIZE = 10;
 
 function ClustersOverviewPage() {
-  const rows = getClustersRankedByRevenue();
+  const geo = useLeadershipGeo();
+  const rows = getAllClusterScoresForGeo(geo)
+    .map((s) => {
+      const cluster = CLUSTERS.find((c) => c.id === s.clusterId)!;
+      const access: "High" | "Low" = s.quadrant[1] === "H" ? "High" : "Low";
+      return { id: s.clusterId, name: cluster.name, quadrant: s.quadrant, revenuePotential: s.revenueAnnual, access };
+    })
+    .sort((a, b) => b.revenuePotential - a.revenuePotential);
   const [page, setPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const pageSafe = Math.min(page, totalPages);

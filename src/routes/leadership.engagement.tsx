@@ -4,15 +4,10 @@ import { X } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { LeadershipLayout } from "@/components/leadership/LeadershipLayout";
 import { CLUSTERS } from "@/data/clusters";
-import { getClusterIntel } from "@/lib/clusterScoring";
-import {
-  QUADRANT_COLOR,
-  QUADRANT_TITLE,
-  QUADRANT_TYPE_LABEL,
-  type QuadrantKey,
-  getAsmsForQuadrant,
-  getClusterQuadrant,
-} from "@/lib/leadershipAnalytics";
+import { getAllClusterScoresForGeo } from "@/lib/clusterGenerator";
+import { getAsmsForQuadrant, getQuadrantWeight } from "@/lib/dgPerformance";
+import { QUADRANT_COLOR, QUADRANT_TITLE, QUADRANT_TYPE_LABEL, type QuadrantKey } from "@/lib/leadershipAnalytics";
+import { useLeadershipGeo } from "@/store/leadershipStore";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/leadership/engagement")({
@@ -26,19 +21,18 @@ export const Route = createFileRoute("/leadership/engagement")({
 });
 
 function EngagementFocusPage() {
+  const geo = useLeadershipGeo();
   const [selectedQuadrant, setSelectedQuadrant] = useState<QuadrantKey | null>(null);
 
+  const allScores = getAllClusterScoresForGeo(geo);
   const rows = CLUSTERS.map((c) => {
-    const intel = getClusterIntel(c.id, c.prospectCountEstimate);
-    const quadrant = getClusterQuadrant(c.id, c.prospectCountEstimate);
-    // Focus weight proxy: how much ground-level activity (contractors + retailers) exists in the cluster.
-    const weight = intel.contractorCount + intel.retailerCount;
-    return { id: c.id, name: c.name, quadrant, weight };
+    const scores = allScores.find((s) => s.clusterId === c.id)!;
+    // Focus weight proxy: how much ground-level activity (unit count) exists in the cluster.
+    return { id: c.id, name: c.name, quadrant: scores.quadrant, weight: scores.unitCount };
   });
 
   const totalWeight = rows.reduce((s, r) => s + r.weight, 0) || 1;
-  const quadrantShare: Record<QuadrantKey, number> = { HH: 0, HL: 0, LH: 0, LL: 0 };
-  for (const r of rows) quadrantShare[r.quadrant] += r.weight;
+  const quadrantShare: Record<QuadrantKey, number> = getQuadrantWeight(geo);
 
   const pieData = (Object.keys(QUADRANT_TITLE) as QuadrantKey[]).map((key) => ({
     key,
@@ -158,7 +152,7 @@ function EngagementFocusPage() {
                 </tr>
               </thead>
               <tbody>
-                {getAsmsForQuadrant(selectedQuadrant).map((asm) => (
+                {getAsmsForQuadrant(selectedQuadrant, geo).map((asm) => (
                   <tr key={asm.name} className="border-t border-border/60">
                     <td className="py-1.5 font-medium text-foreground">{asm.name}</td>
                     <td className="py-1.5 text-xs text-muted-foreground">{asm.area}</td>

@@ -15,15 +15,14 @@ import {
 } from "recharts";
 import { LeadershipLayout } from "@/components/leadership/LeadershipLayout";
 import { CLUSTERS } from "@/data/clusters";
-import { computeClusterScores } from "@/lib/clusterScoring";
+import { getAllClusterScoresForGeo, type QuadrantKey } from "@/lib/clusterGenerator";
+import { useLeadershipGeo } from "@/store/leadershipStore";
 import {
   CLUSTER_SHORT_NAME,
   QUADRANT_COLOR,
   QUADRANT_DESC,
   QUADRANT_TITLE,
-  type QuadrantKey,
   clampToQuadrantSide,
-  getClusterQuadrant,
   jitter,
 } from "@/lib/leadershipAnalytics";
 
@@ -68,15 +67,18 @@ function renderDotLabel(props: any) {
 }
 
 function PriorityMatrixPage() {
+  const geo = useLeadershipGeo();
+  const allScores = getAllClusterScoresForGeo(geo);
+
   const grouped: Record<QuadrantKey, { id: string; name: string }[]> = { HH: [], HL: [], LH: [], LL: [] };
   const points: Point[] = [];
 
   for (const c of CLUSTERS) {
-    const key = getClusterQuadrant(c.id, c.prospectCountEstimate);
+    const scores = allScores.find((s) => s.clusterId === c.id)!;
+    const key = scores.quadrant;
     const shortName = CLUSTER_SHORT_NAME[c.id] ?? c.name;
     grouped[key].push({ id: c.id, name: shortName });
 
-    const scores = computeClusterScores(c, c.prospectCountEstimate);
     const isHighAccess = key === "HH" || key === "LH";
     const isHighPotential = key === "HH" || key === "HL";
     const baseAccess = Math.round(scores.accessRollupScore * 10);

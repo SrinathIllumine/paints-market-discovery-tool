@@ -4,6 +4,8 @@ import { Grid3x3, TrendingUp, Target, ListChecks, LogOut, Calendar as CalendarIc
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { NATIONAL_ID, STATES, getAreasForState } from "@/data/geography";
+import { ALL_AREAS_ID, useLeadershipStore } from "@/store/leadershipStore";
 
 const DATA_AS_OF = new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" });
 
@@ -37,7 +39,11 @@ const navItems = [
 export function LeadershipLayout({ children, hideFilters = false }: { children: ReactNode; hideFilters?: boolean }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [period, setPeriod] = useState<"daily" | "weekly">("weekly");
-  const [scope, setScope] = useState("maharashtra");
+  const stateId = useLeadershipStore((s) => s.stateId);
+  const areaId = useLeadershipStore((s) => s.areaId);
+  const setStateId = useLeadershipStore((s) => s.setState);
+  const setAreaId = useLeadershipStore((s) => s.setArea);
+  const areas = stateId === NATIONAL_ID ? [] : getAreasForState(stateId);
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -88,15 +94,35 @@ export function LeadershipLayout({ children, hideFilters = false }: { children: 
         {!hideFilters && (
           <div className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur-sm">
             <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-6 py-3">
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Scope</span>
-              <Select value={scope} onValueChange={setScope}>
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">State</span>
+              <Select value={stateId} onValueChange={setStateId}>
                 <SelectTrigger className="h-8 w-[180px] text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="national">National</SelectItem>
-                  <SelectItem value="maharashtra">State · Maharashtra</SelectItem>
-                  <SelectItem value="panvel">Area · Panvel</SelectItem>
+                  <SelectItem value={NATIONAL_ID}>All India (National)</SelectItem>
+                  {STATES.map((s) => (
+                    <SelectItem key={s.id} value={s.id} disabled={!s.selectable}>
+                      {s.name}
+                      {!s.selectable ? " (coming soon)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Area</span>
+              <Select value={areaId} onValueChange={setAreaId} disabled={stateId === NATIONAL_ID}>
+                <SelectTrigger className="h-8 w-[180px] text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_AREAS_ID}>All areas</SelectItem>
+                  {areas.map((a) => (
+                    <SelectItem key={a.id} value={a.id} disabled={!a.selectable}>
+                      {a.name}
+                      {!a.selectable ? " (coming soon)" : ""}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 

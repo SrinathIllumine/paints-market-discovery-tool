@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LeadershipLayout } from "@/components/leadership/LeadershipLayout";
 import { CLUSTERS } from "@/data/clusters";
-import { QUADRANT_TYPE_LABEL, getClusterQuadrant } from "@/lib/leadershipAnalytics";
+import { getAllClusterScoresForGeo } from "@/lib/clusterGenerator";
+import { getClusterOnTrack, getClusterTargetingShare, getDgExecutionRows, getFunnel } from "@/lib/dgPerformance";
+import { QUADRANT_TYPE_LABEL } from "@/lib/leadershipAnalytics";
+import { useLeadershipGeo } from "@/store/leadershipStore";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/leadership/execution")({
@@ -14,33 +17,15 @@ export const Route = createFileRoute("/leadership/execution")({
   component: ExecutionPage,
 });
 
-function hashPct(id: string, min: number, max: number): number {
-  let h = 0;
-  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) % 97;
-  return min + (h % (max - min + 1));
-}
-
-const TEAM_ROWS = [
-  { dg: "Rajesh Kumar", area: "Panvel", targeted: 3, rightStrategy: 3, executed: 64 },
-  { dg: "Priya Mehta", area: "Khopoli", targeted: 2, rightStrategy: 2, executed: 44 },
-  { dg: "Anand Joshi", area: "Karjat", targeted: 2, rightStrategy: 1, executed: 50 },
-  { dg: "Sonal Patkar", area: "Pen", targeted: 1, rightStrategy: 0, executed: 50 },
-];
-
-const FUNNEL = [
-  { label: "Prospects Identified", pct: 100 },
-  { label: "Contacted", pct: 62 },
-  { label: "Site Visit / Demo", pct: 34 },
-  { label: "Quotation Shared", pct: 18 },
-  { label: "Converted", pct: 10 },
-];
-
 function ExecutionPage() {
+  const geo = useLeadershipGeo();
+  const allScores = getAllClusterScoresForGeo(geo);
+
   const rows = CLUSTERS.map((c) => {
-    const quadrant = getClusterQuadrant(c.id, c.prospectCountEstimate);
-    const targetShare = hashPct(c.id, 8, 22);
-    const onTrack = hashPct(c.id, 0, 99) >= 30;
-    return { id: c.id, name: c.name, quadrant, type: QUADRANT_TYPE_LABEL[quadrant], targetShare, onTrack };
+    const scores = allScores.find((s) => s.clusterId === c.id)!;
+    const targetShare = getClusterTargetingShare(c.id, geo);
+    const onTrack = getClusterOnTrack(c.id, geo);
+    return { id: c.id, name: c.name, quadrant: scores.quadrant, type: QUADRANT_TYPE_LABEL[scores.quadrant], targetShare, onTrack };
   })
     .sort((a, b) => b.targetShare - a.targetShare)
     .slice(0, 10);
@@ -50,7 +35,10 @@ function ExecutionPage() {
   const behindHighPotentialCount = rows.filter(
     (r) => !r.onTrack && (r.quadrant === "HH" || r.quadrant === "HL"),
   ).length;
-  const avgExecution = Math.round(TEAM_ROWS.reduce((s, r) => s + r.executed, 0) / TEAM_ROWS.length);
+
+  const teamRows = getDgExecutionRows();
+  const avgExecution = Math.round(teamRows.reduce((s, r) => s + r.executed, 0) / (teamRows.length || 1));
+  const funnel = getFunnel(geo);
 
   return (
     <LeadershipLayout>
@@ -122,7 +110,7 @@ function ExecutionPage() {
       <div className="mb-6 rounded-2xl border border-border bg-card shadow-sm">
         <div className="border-b border-border px-4 py-3">
           <h2 className="font-display text-base font-bold text-foreground">DG-wise strategy & execution</h2>
-          <p className="text-xs text-muted-foreground">Panvel market area</p>
+          <p className="text-xs text-muted-foreground">Panvel ASM territory (Raigad)</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -137,7 +125,7 @@ function ExecutionPage() {
               </tr>
             </thead>
             <tbody>
-              {TEAM_ROWS.map((r) => {
+              {teamRows.map((r) => {
                 const wrongStrategy = r.rightStrategy < r.targeted;
                 return (
                   <tr key={r.dg} className="border-t border-border">
@@ -168,7 +156,7 @@ function ExecutionPage() {
         <h2 className="font-display text-base font-bold text-foreground">Sales funnel</h2>
         <p className="text-xs text-muted-foreground">High Potential – High Access clusters</p>
         <div className="mt-3 space-y-2">
-          {FUNNEL.map((f) => (
+          {funnel.map((f) => (
             <div key={f.label} className="flex items-center gap-3">
               <span className="w-40 shrink-0 text-xs text-muted-foreground">{f.label}</span>
               <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
@@ -179,7 +167,7 @@ function ExecutionPage() {
           ))}
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Insight: Only {FUNNEL[FUNNEL.length - 1].pct}% of identified prospects convert — the biggest drop is between
+          Insight: Only {funnel[funnel.length - 1].pct}% of identified prospects convert — the biggest drop is between
           site visit and quotation.
         </p>
       </div>

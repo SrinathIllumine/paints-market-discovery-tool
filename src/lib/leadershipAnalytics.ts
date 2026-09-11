@@ -1,6 +1,3 @@
-import { CLUSTERS, type Cluster } from "@/data/clusters";
-import { getClusterIntel, getRevenueProfile } from "@/lib/clusterScoring";
-
 export type QuadrantKey = "HH" | "HL" | "LH" | "LL";
 
 export const QUADRANT_TITLE: Record<QuadrantKey, string> = {
@@ -56,42 +53,6 @@ export const CLUSTER_SHORT_NAME: Record<string, string> = {
   "textile-garment": "Textile/Garment",
 };
 
-export function getClusterQuadrant(clusterId: string, prospectCountEstimate: number): QuadrantKey {
-  const intel = getClusterIntel(clusterId, prospectCountEstimate);
-  const potential = intel.revenueHML === "H" || intel.competitiveHML === "H" ? "H" : "L";
-  const access = intel.accessHML === "H" || intel.easeHML === "H" ? "H" : "L";
-  return `${potential}${access}` as QuadrantKey;
-}
-
-export function getClusterRevenuePotential(cluster: Cluster): number {
-  return cluster.prospectCountEstimate * getRevenueProfile(cluster.id).avgRevenuePerProspect;
-}
-
-export type RankedCluster = {
-  id: string;
-  name: string;
-  quadrant: QuadrantKey;
-  revenuePotential: number;
-  access: "High" | "Low";
-};
-
-export function getClustersRankedByRevenue(): RankedCluster[] {
-  return CLUSTERS.map((c) => {
-    const quadrant = getClusterQuadrant(c.id, c.prospectCountEstimate);
-    const intel = getClusterIntel(c.id, c.prospectCountEstimate);
-    const access: RankedCluster["access"] =
-      intel.accessHML === "H" || intel.easeHML === "H" ? "High" : "Low";
-
-    return {
-      id: c.id,
-      name: c.name,
-      quadrant,
-      revenuePotential: getClusterRevenuePotential(c),
-      access,
-    };
-  }).sort((a, b) => b.revenuePotential - a.revenuePotential);
-}
-
 export function formatCr(rupees: number): string {
   return `₹${Math.round(rupees / 1_00_00_000).toLocaleString("en-IN")} Cr`;
 }
@@ -118,26 +79,5 @@ export function clampToQuadrantSide(value: number, delta: number, isHigh: boolea
   return Math.min(47, Math.max(3, next));
 }
 
-const ASM_POOL = [
-  { name: "Rajesh Patil", area: "Pune" },
-  { name: "Prakash Iyer", area: "Nashik" },
-  { name: "Suresh Nair", area: "Nagpur" },
-  { name: "Anita Sharma", area: "Thane" },
-  { name: "Amit Joshi", area: "Solapur" },
-  { name: "Kavita Mehta", area: "Nashik Rural" },
-  { name: "Nitin More", area: "Satara" },
-  { name: "Vikram Desai", area: "Navi Mumbai" },
-  { name: "Ravi Deshmukh", area: "Pune Rural" },
-  { name: "Pooja Kulkarni", area: "Ahmednagar" },
-  { name: "Sneha Patil", area: "Raigad" },
-  { name: "Sandeep Nair", area: "Osmanabad" },
-];
-
-export function getAsmsForQuadrant(quadrant: QuadrantKey): { name: string; area: string; dgCount: number }[] {
-  const seed = hashSeed(quadrant);
-  const count = 5 + (seed % 4);
-  return ASM_POOL.slice(0, count).map((asm, i) => ({
-    ...asm,
-    dgCount: Math.max(1, 5 - i - (seed % 2)),
-  }));
-}
+// ASM/quadrant rosters now live in dgPerformance.ts (getAsmsForQuadrant),
+// which is geography-aware — plain hash-based ASM lists are no longer used.
