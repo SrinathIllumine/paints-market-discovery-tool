@@ -71,35 +71,34 @@ function computeLabelOffsets(pts: Omit<Point, "labelDy">[]): number[] {
   return offsets;
 }
 
-// Custom label renderer: short name in a background pill, offset vertically
-// per point via a precomputed `labelDy` (see computeLabelOffsets) so nearby
-// dots' labels fan out instead of stacking on top of one another. Built as a
-// factory closing over the exact array passed to a given Scatter's `data`,
-// so the label's `index` reliably maps back to the right point.
+// Custom label renderer: plain text (no background pill — a white stroke
+// "outline" via paintOrder keeps it readable over dots/quadrant tints
+// instead), offset vertically per point via a precomputed `labelDy` (see
+// computeLabelOffsets) so nearby dots' labels fan out instead of stacking
+// on top of one another. Built as a factory closing over the exact array
+// passed to a given Scatter's `data`, so the label's `index` reliably maps
+// back to the right point.
 function makeDotLabelRenderer(quadrantPoints: Point[]) {
   return function renderDotLabel(props: any) {
     const { x, y, value, index } = props;
     if (x === undefined || y === undefined || !value) return null;
     const dy = quadrantPoints[index]?.labelDy ?? 0;
     const text = value.length > 14 ? `${value.slice(0, 13)}…` : value;
-    const width = Math.min(100, text.length * 5.6 + 12);
     const labelY = y + dy;
     return (
-      <g>
-        <rect
-          x={x + 8}
-          y={labelY - 7}
-          width={width}
-          height={14}
-          rx={3}
-          fill="var(--card)"
-          stroke="var(--border)"
-          strokeWidth={0.6}
-        />
-        <text x={x + 12} y={labelY + 3} fontSize={9.5} fontWeight={500} fill="var(--foreground)">
-          {text}
-        </text>
-      </g>
+      <text
+        x={x + 12}
+        y={labelY + 4}
+        fontSize={10.5}
+        fontWeight={700}
+        fill="var(--foreground)"
+        stroke="var(--card)"
+        strokeWidth={3}
+        strokeLinejoin="round"
+        paintOrder="stroke"
+      >
+        {text}
+      </text>
     );
   };
 }
@@ -157,7 +156,7 @@ function PriorityMatrixPage() {
           ))}
         </div>
 
-        <div className="mt-3 h-[30rem]">
+        <div className="mt-3 h-[34rem]">
           <div className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 28, right: 150, bottom: 10, left: 0 }}>
@@ -189,10 +188,10 @@ function PriorityMatrixPage() {
                   name="Potential"
                   domain={[0, 100]}
                   ticks={[0, 25, 50, 75, 100]}
-                  label={{ value: "Potential →", angle: -90, position: "insideLeft", fontSize: 12 }}
+                  label={{ value: "↑ Potential", position: "insideTopLeft", dx: 0, dy: 40, fontSize: 12 }}
                   tick={{ fontSize: 11 }}
                 />
-                <ZAxis range={[100, 100]} />
+                <ZAxis range={[225, 225]} />
                 <ReferenceLine x={50} stroke="var(--border)" />
                 <ReferenceLine y={50} stroke="var(--border)" />
                 <Tooltip
