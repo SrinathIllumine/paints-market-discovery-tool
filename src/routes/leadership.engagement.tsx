@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { LeadershipLayout } from "@/components/leadership/LeadershipLayout";
+import { LeadershipLayout, LeadershipScopeFilter } from "@/components/leadership/LeadershipLayout";
 import { CLUSTERS } from "@/data/clusters";
 import { getAllClusterScoresForGeo } from "@/lib/clusterGenerator";
 import { getAsmsForQuadrant, getQuadrantWeight } from "@/lib/dgPerformance";
@@ -59,8 +59,13 @@ function EngagementFocusPage() {
       </div>
 
       <div className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <h2 className="font-display text-base font-bold text-foreground">Share of DGs by cluster type</h2>
-        <p className="text-xs text-muted-foreground">Click a segment to see the ASMs behind it.</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-display text-base font-bold text-foreground">Share of DGs by cluster type</h2>
+            <p className="text-xs text-muted-foreground">Click a segment to see the ASMs behind it.</p>
+          </div>
+          <LeadershipScopeFilter />
+        </div>
 
         <div className="mt-3 flex flex-col items-center gap-4 sm:flex-row">
           <div className="h-56 w-56 shrink-0">

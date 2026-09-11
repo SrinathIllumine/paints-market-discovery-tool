@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { LeadershipLayout } from "@/components/leadership/LeadershipLayout";
+import { LeadershipLayout, LeadershipScopeFilter } from "@/components/leadership/LeadershipLayout";
 import { getAllClusterScoresForGeo } from "@/lib/clusterGenerator";
 import { QUADRANT_TYPE_LABEL, formatCr } from "@/lib/leadershipAnalytics";
 import { useLeadershipGeo } from "@/store/leadershipStore";
@@ -35,9 +35,12 @@ function ClustersOverviewPage() {
 
   return (
     <LeadershipLayout>
-      <Link to="/leadership" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-navy hover:underline">
-        <ArrowLeft className="h-4 w-4" /> Back to matrix
-      </Link>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <Link to="/leadership" className="inline-flex items-center gap-1.5 text-sm font-medium text-navy hover:underline">
+          <ArrowLeft className="h-4 w-4" /> Back to matrix
+        </Link>
+        <LeadershipScopeFilter />
+      </div>
 
       <div className="rounded-2xl border border-border bg-card shadow-sm">
         <div className="border-b border-border px-4 py-3">

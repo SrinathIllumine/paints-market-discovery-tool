@@ -13,7 +13,7 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
-import { LeadershipLayout } from "@/components/leadership/LeadershipLayout";
+import { LeadershipLayout, LeadershipScopeFilter } from "@/components/leadership/LeadershipLayout";
 import { CLUSTERS } from "@/data/clusters";
 import { getAllClusterScoresForGeo, type QuadrantKey } from "@/lib/clusterGenerator";
 import { useLeadershipGeo } from "@/store/leadershipStore";
@@ -99,8 +99,13 @@ function PriorityMatrixPage() {
       </div>
 
       <div className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <h2 className="font-display text-base font-bold text-foreground">Potential vs Access</h2>
-        <p className="text-xs text-muted-foreground">Each dot is a market cluster.</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-display text-base font-bold text-foreground">Potential vs Access</h2>
+            <p className="text-xs text-muted-foreground">Each dot is a market cluster.</p>
+          </div>
+          <LeadershipScopeFilter />
+        </div>
         <div className="mt-3 h-[26rem]">
           <div className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">

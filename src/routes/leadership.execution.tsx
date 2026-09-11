@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { LeadershipLayout } from "@/components/leadership/LeadershipLayout";
+import { LeadershipLayout, LeadershipScopeFilter } from "@/components/leadership/LeadershipLayout";
 import { CLUSTERS } from "@/data/clusters";
 import { getAllClusterScoresForGeo } from "@/lib/clusterGenerator";
 import { getClusterOnTrack, getClusterTargetingShare, getDgExecutionRows, getFunnel } from "@/lib/dgPerformance";
@@ -42,9 +42,12 @@ function ExecutionPage() {
 
   return (
     <LeadershipLayout>
-      <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">Strategy & Execution Level</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Tracking whether the team's plan is converting into action.</p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Strategy & Execution Level</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Tracking whether the team's plan is converting into action.</p>
+        </div>
+        <LeadershipScopeFilter />
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-4">

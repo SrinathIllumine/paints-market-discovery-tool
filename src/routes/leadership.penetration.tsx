@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { LeadershipLayout } from "@/components/leadership/LeadershipLayout";
+import { LeadershipLayout, LeadershipScopeFilter } from "@/components/leadership/LeadershipLayout";
 import { buildPenetrationTrend, getPenetrationRows } from "@/lib/dgPerformance";
 import { QUADRANT_TYPE_LABEL } from "@/lib/leadershipAnalytics";
 import { useLeadershipGeo } from "@/store/leadershipStore";
@@ -39,9 +39,12 @@ function PenetrationPage() {
 
   return (
     <LeadershipLayout>
-      <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">Market Penetration by Cluster</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Click any cluster row to see its month-on-month trend.</p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Market Penetration by Cluster</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Click any cluster row to see its month-on-month trend.</p>
+        </div>
+        <LeadershipScopeFilter />
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
