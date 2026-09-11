@@ -1,20 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { X } from "lucide-react";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { LeadershipLayout, LeadershipScopeFilter } from "@/components/leadership/LeadershipLayout";
 import { CLUSTERS } from "@/data/clusters";
 import { getAllClusterScoresForGeo } from "@/lib/clusterGenerator";
-import { getAsmsForQuadrant, getQuadrantWeight } from "@/lib/dgPerformance";
-import { QUADRANT_COLOR, QUADRANT_TITLE, QUADRANT_TYPE_LABEL, type QuadrantKey } from "@/lib/leadershipAnalytics";
+import { QUADRANT_TYPE_LABEL } from "@/lib/leadershipAnalytics";
 import { useLeadershipGeo } from "@/store/leadershipStore";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/leadership/engagement")({
   head: () => ({
     meta: [
       { title: "Engagement Focus — Leadership Analytics" },
-      { name: "description", content: "Types of clusters selected by DGs for market engagement." },
+      { name: "description", content: "Top clusters selected by DGs for market engagement." },
     ],
   }),
   component: EngagementFocusPage,
@@ -22,7 +17,6 @@ export const Route = createFileRoute("/leadership/engagement")({
 
 function EngagementFocusPage() {
   const geo = useLeadershipGeo();
-  const [selectedQuadrant, setSelectedQuadrant] = useState<QuadrantKey | null>(null);
 
   const allScores = getAllClusterScoresForGeo(geo);
   const rows = CLUSTERS.map((c) => {
@@ -32,142 +26,19 @@ function EngagementFocusPage() {
   });
 
   const totalWeight = rows.reduce((s, r) => s + r.weight, 0) || 1;
-  const quadrantShare: Record<QuadrantKey, number> = getQuadrantWeight(geo);
 
-  const pieData = (Object.keys(QUADRANT_TITLE) as QuadrantKey[]).map((key) => ({
-    key,
-    name: QUADRANT_TITLE[key],
-    value: quadrantShare[key],
-    pct: Math.round((quadrantShare[key] / totalWeight) * 100),
-  }));
-
-  const topRows = [...rows]
+  const topRows = rows
     .map((r) => ({ ...r, pctDGs: Math.round((r.weight / totalWeight) * 100) }))
     .sort((a, b) => b.pctDGs - a.pctDGs)
     .slice(0, 10);
 
-  const lowLowPct = Math.round((quadrantShare.LL / totalWeight) * 100);
   const topRow = topRows[0];
-
-  const toggle = (key: QuadrantKey) => setSelectedQuadrant((cur) => (cur === key ? null : key));
 
   return (
     <LeadershipLayout>
-      <div className="mb-6">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <h1 className="font-display text-2xl font-bold text-foreground">Cluster Engagement Focus</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Types of clusters selected by DGs for market engagement.</p>
-      </div>
-
-      <div className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="font-display text-base font-bold text-foreground">Share of DGs by cluster type</h2>
-            <p className="text-xs text-muted-foreground">Click a segment to see the ASMs behind it.</p>
-          </div>
-          <LeadershipScopeFilter />
-        </div>
-
-        <div className="mt-3 flex flex-col items-center gap-4 sm:flex-row">
-          <div className="h-56 w-56 shrink-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={55}
-                  outerRadius={95}
-                  paddingAngle={2}
-                  onClick={(entry: any) => toggle((entry.payload?.key ?? entry.key) as QuadrantKey)}
-                >
-                  {pieData.map((entry) => (
-                    <Cell
-                      key={entry.key}
-                      fill={QUADRANT_COLOR[entry.key]}
-                      opacity={selectedQuadrant && selectedQuadrant !== entry.key ? 0.35 : 1}
-                      stroke="var(--card)"
-                      strokeWidth={2}
-                      cursor="pointer"
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null;
-                    const p = payload[0].payload as (typeof pieData)[number];
-                    return (
-                      <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
-                        <p className="font-semibold text-foreground">{p.name}</p>
-                        <p className="text-muted-foreground">{p.pct}% of DGs</p>
-                      </div>
-                    );
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-2">
-            {pieData.map((entry) => {
-              const active = selectedQuadrant === entry.key;
-              return (
-                <button
-                  key={entry.key}
-                  type="button"
-                  onClick={() => toggle(entry.key)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl border p-3 text-left transition-colors",
-                    active ? "border-navy bg-navy/5" : "border-border hover:bg-muted/40",
-                  )}
-                >
-                  <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: QUADRANT_COLOR[entry.key] }} />
-                  <span className="min-w-0 flex-1 text-xs font-medium text-foreground">{entry.name}</span>
-                  <span className="text-sm font-bold tabular-nums text-foreground">{entry.pct}%</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <p className="mt-3 text-xs text-muted-foreground">
-          Insight: More than {lowLowPct}% of DGs are targeting low potential, low access clusters.
-        </p>
-
-        {selectedQuadrant && (
-          <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="font-display text-sm font-bold text-foreground">
-                ASMs targeting {QUADRANT_TITLE[selectedQuadrant]}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setSelectedQuadrant(null)}
-                aria-label="Close"
-                className="rounded-full p-1 text-muted-foreground hover:bg-muted"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <table className="w-full text-left text-sm">
-              <thead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="py-1.5">ASM Name</th>
-                  <th className="py-1.5">Market Area</th>
-                  <th className="py-1.5 text-right">No. of DGs</th>
-                </tr>
-              </thead>
-              <tbody>
-                {getAsmsForQuadrant(selectedQuadrant, geo).map((asm) => (
-                  <tr key={asm.name} className="border-t border-border/60">
-                    <td className="py-1.5 font-medium text-foreground">{asm.name}</td>
-                    <td className="py-1.5 text-xs text-muted-foreground">{asm.area}</td>
-                    <td className="py-1.5 text-right tabular-nums">{asm.dgCount}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <LeadershipScopeFilter />
       </div>
 
       <div className="rounded-2xl border border-border bg-card shadow-sm">
