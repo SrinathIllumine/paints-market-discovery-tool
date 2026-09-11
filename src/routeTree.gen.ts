@@ -9,53 +9,33 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as LeadershipRouteImport } from './routes/leadership'
-import { Route as MarketDiscoveryRouteImport } from './routes/market-discovery'
-import { Route as MarketPotentialRouteImport } from './routes/market-potential'
-import { Route as NetworkRouteImport } from './routes/network'
 import { Route as SalesEnablementRouteImport } from './routes/sales-enablement'
-import { Route as LeadershipIndexRouteImport } from './routes/leadership.index'
-import { Route as LeadershipClustersRouteImport } from './routes/leadership.clusters'
-import { Route as LeadershipEngagementRouteImport } from './routes/leadership.engagement'
-import { Route as LeadershipExecutionRouteImport } from './routes/leadership.execution'
-import { Route as LeadershipPenetrationRouteImport } from './routes/leadership.penetration'
-import { Route as MapIndexRouteImport } from './routes/map/index'
-import { Route as MapClusterIdRouteImport } from './routes/map/$clusterId'
-import { Route as PlanIndexRouteImport } from './routes/plan/index'
-import { Route as PlanClusterIdRouteImport } from './routes/plan/$clusterId'
-import { Route as PlanPastRoadmapRouteImport } from './routes/plan/past-roadmap'
+import { Route as NetworkRouteImport } from './routes/network'
+import { Route as MarketPotentialRouteImport } from './routes/market-potential'
+import { Route as MarketDiscoveryRouteImport } from './routes/market-discovery'
+import { Route as LeadershipRouteImport } from './routes/leadership'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as SalesEnablementIndexRouteImport } from './routes/sales-enablement.index'
+import { Route as PlanIndexRouteImport } from './routes/plan/index'
+import { Route as MapIndexRouteImport } from './routes/map/index'
+import { Route as LeadershipIndexRouteImport } from './routes/leadership.index'
 import { Route as SystemicSlugRouteImport } from './routes/systemic/$slug'
-import { Route as PlanClusterIdIndexRouteImport } from './routes/plan/$clusterId.index'
-import { Route as PlanClusterIdReviewRouteImport } from './routes/plan/$clusterId.review'
+import { Route as PlanPastRoadmapRouteImport } from './routes/plan/past-roadmap'
+import { Route as PlanClusterIdRouteImport } from './routes/plan/$clusterId'
+import { Route as MapClusterIdRouteImport } from './routes/map/$clusterId'
+import { Route as LeadershipPenetrationRouteImport } from './routes/leadership.penetration'
+import { Route as LeadershipExecutionRouteImport } from './routes/leadership.execution'
+import { Route as LeadershipEngagementRouteImport } from './routes/leadership.engagement'
+import { Route as LeadershipClustersRouteImport } from './routes/leadership.clusters'
 import { Route as SalesEnablementClusterIdIndexRouteImport } from './routes/sales-enablement.$clusterId.index'
+import { Route as PlanClusterIdIndexRouteImport } from './routes/plan/$clusterId.index'
 import { Route as SalesEnablementClusterIdProspectIdRouteImport } from './routes/sales-enablement.$clusterId.$prospectId'
+import { Route as PlanClusterIdReviewRouteImport } from './routes/plan/$clusterId.review'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LeadershipRoute = LeadershipRouteImport.update({
-  id: '/leadership',
-  path: '/leadership',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MarketDiscoveryRoute = MarketDiscoveryRouteImport.update({
-  id: '/market-discovery',
-  path: '/market-discovery',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MarketPotentialRoute = MarketPotentialRouteImport.update({
-  id: '/market-potential',
-  path: '/market-potential',
+const SalesEnablementRoute = SalesEnablementRouteImport.update({
+  id: '/sales-enablement',
+  path: '/sales-enablement',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NetworkRoute = NetworkRouteImport.update({
@@ -63,59 +43,29 @@ const NetworkRoute = NetworkRouteImport.update({
   path: '/network',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SalesEnablementRoute = SalesEnablementRouteImport.update({
-  id: '/sales-enablement',
-  path: '/sales-enablement',
+const MarketPotentialRoute = MarketPotentialRouteImport.update({
+  id: '/market-potential',
+  path: '/market-potential',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LeadershipIndexRoute = LeadershipIndexRouteImport.update({
+const MarketDiscoveryRoute = MarketDiscoveryRouteImport.update({
+  id: '/market-discovery',
+  path: '/market-discovery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadershipRoute = LeadershipRouteImport.update({
+  id: '/leadership',
+  path: '/leadership',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => LeadershipRoute,
-} as any)
-const LeadershipClustersRoute = LeadershipClustersRouteImport.update({
-  id: '/clusters',
-  path: '/clusters',
-  getParentRoute: () => LeadershipRoute,
-} as any)
-const LeadershipEngagementRoute = LeadershipEngagementRouteImport.update({
-  id: '/engagement',
-  path: '/engagement',
-  getParentRoute: () => LeadershipRoute,
-} as any)
-const LeadershipExecutionRoute = LeadershipExecutionRouteImport.update({
-  id: '/execution',
-  path: '/execution',
-  getParentRoute: () => LeadershipRoute,
-} as any)
-const LeadershipPenetrationRoute = LeadershipPenetrationRouteImport.update({
-  id: '/penetration',
-  path: '/penetration',
-  getParentRoute: () => LeadershipRoute,
-} as any)
-const MapIndexRoute = MapIndexRouteImport.update({
-  id: '/map/',
-  path: '/map/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MapClusterIdRoute = MapClusterIdRouteImport.update({
-  id: '/map/$clusterId',
-  path: '/map/$clusterId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlanIndexRoute = PlanIndexRouteImport.update({
-  id: '/plan/',
-  path: '/plan/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlanClusterIdRoute = PlanClusterIdRouteImport.update({
-  id: '/plan/$clusterId',
-  path: '/plan/$clusterId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlanPastRoadmapRoute = PlanPastRoadmapRouteImport.update({
-  id: '/plan/past-roadmap',
-  path: '/plan/past-roadmap',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SalesEnablementIndexRoute = SalesEnablementIndexRouteImport.update({
@@ -123,20 +73,60 @@ const SalesEnablementIndexRoute = SalesEnablementIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SalesEnablementRoute,
 } as any)
+const PlanIndexRoute = PlanIndexRouteImport.update({
+  id: '/plan/',
+  path: '/plan/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapIndexRoute = MapIndexRouteImport.update({
+  id: '/map/',
+  path: '/map/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadershipIndexRoute = LeadershipIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LeadershipRoute,
+} as any)
 const SystemicSlugRoute = SystemicSlugRouteImport.update({
   id: '/systemic/$slug',
   path: '/systemic/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlanClusterIdIndexRoute = PlanClusterIdIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => PlanClusterIdRoute,
+const PlanPastRoadmapRoute = PlanPastRoadmapRouteImport.update({
+  id: '/plan/past-roadmap',
+  path: '/plan/past-roadmap',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const PlanClusterIdReviewRoute = PlanClusterIdReviewRouteImport.update({
-  id: '/review',
-  path: '/review',
-  getParentRoute: () => PlanClusterIdRoute,
+const PlanClusterIdRoute = PlanClusterIdRouteImport.update({
+  id: '/plan/$clusterId',
+  path: '/plan/$clusterId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapClusterIdRoute = MapClusterIdRouteImport.update({
+  id: '/map/$clusterId',
+  path: '/map/$clusterId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadershipPenetrationRoute = LeadershipPenetrationRouteImport.update({
+  id: '/penetration',
+  path: '/penetration',
+  getParentRoute: () => LeadershipRoute,
+} as any)
+const LeadershipExecutionRoute = LeadershipExecutionRouteImport.update({
+  id: '/execution',
+  path: '/execution',
+  getParentRoute: () => LeadershipRoute,
+} as any)
+const LeadershipEngagementRoute = LeadershipEngagementRouteImport.update({
+  id: '/engagement',
+  path: '/engagement',
+  getParentRoute: () => LeadershipRoute,
+} as any)
+const LeadershipClustersRoute = LeadershipClustersRouteImport.update({
+  id: '/clusters',
+  path: '/clusters',
+  getParentRoute: () => LeadershipRoute,
 } as any)
 const SalesEnablementClusterIdIndexRoute =
   SalesEnablementClusterIdIndexRouteImport.update({
@@ -144,12 +134,22 @@ const SalesEnablementClusterIdIndexRoute =
     path: '/$clusterId/',
     getParentRoute: () => SalesEnablementRoute,
   } as any)
+const PlanClusterIdIndexRoute = PlanClusterIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PlanClusterIdRoute,
+} as any)
 const SalesEnablementClusterIdProspectIdRoute =
   SalesEnablementClusterIdProspectIdRouteImport.update({
     id: '/$clusterId/$prospectId',
     path: '/$clusterId/$prospectId',
     getParentRoute: () => SalesEnablementRoute,
   } as any)
+const PlanClusterIdReviewRoute = PlanClusterIdReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => PlanClusterIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -317,39 +317,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/leadership': {
-      id: '/leadership'
-      path: '/leadership'
-      fullPath: '/leadership'
-      preLoaderRoute: typeof LeadershipRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/market-discovery': {
-      id: '/market-discovery'
-      path: '/market-discovery'
-      fullPath: '/market-discovery'
-      preLoaderRoute: typeof MarketDiscoveryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/market-potential': {
-      id: '/market-potential'
-      path: '/market-potential'
-      fullPath: '/market-potential'
-      preLoaderRoute: typeof MarketPotentialRouteImport
+    '/sales-enablement': {
+      id: '/sales-enablement'
+      path: '/sales-enablement'
+      fullPath: '/sales-enablement'
+      preLoaderRoute: typeof SalesEnablementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/network': {
@@ -359,81 +331,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NetworkRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sales-enablement': {
-      id: '/sales-enablement'
-      path: '/sales-enablement'
-      fullPath: '/sales-enablement'
-      preLoaderRoute: typeof SalesEnablementRouteImport
+    '/market-potential': {
+      id: '/market-potential'
+      path: '/market-potential'
+      fullPath: '/market-potential'
+      preLoaderRoute: typeof MarketPotentialRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/leadership/': {
-      id: '/leadership/'
+    '/market-discovery': {
+      id: '/market-discovery'
+      path: '/market-discovery'
+      fullPath: '/market-discovery'
+      preLoaderRoute: typeof MarketDiscoveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leadership': {
+      id: '/leadership'
+      path: '/leadership'
+      fullPath: '/leadership'
+      preLoaderRoute: typeof LeadershipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
       path: '/'
-      fullPath: '/leadership/'
-      preLoaderRoute: typeof LeadershipIndexRouteImport
-      parentRoute: typeof LeadershipRoute
-    }
-    '/leadership/clusters': {
-      id: '/leadership/clusters'
-      path: '/clusters'
-      fullPath: '/leadership/clusters'
-      preLoaderRoute: typeof LeadershipClustersRouteImport
-      parentRoute: typeof LeadershipRoute
-    }
-    '/leadership/engagement': {
-      id: '/leadership/engagement'
-      path: '/engagement'
-      fullPath: '/leadership/engagement'
-      preLoaderRoute: typeof LeadershipEngagementRouteImport
-      parentRoute: typeof LeadershipRoute
-    }
-    '/leadership/execution': {
-      id: '/leadership/execution'
-      path: '/execution'
-      fullPath: '/leadership/execution'
-      preLoaderRoute: typeof LeadershipExecutionRouteImport
-      parentRoute: typeof LeadershipRoute
-    }
-    '/leadership/penetration': {
-      id: '/leadership/penetration'
-      path: '/penetration'
-      fullPath: '/leadership/penetration'
-      preLoaderRoute: typeof LeadershipPenetrationRouteImport
-      parentRoute: typeof LeadershipRoute
-    }
-    '/map/': {
-      id: '/map/'
-      path: '/map'
-      fullPath: '/map/'
-      preLoaderRoute: typeof MapIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/map/$clusterId': {
-      id: '/map/$clusterId'
-      path: '/map/$clusterId'
-      fullPath: '/map/$clusterId'
-      preLoaderRoute: typeof MapClusterIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/plan/': {
-      id: '/plan/'
-      path: '/plan'
-      fullPath: '/plan/'
-      preLoaderRoute: typeof PlanIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/plan/$clusterId': {
-      id: '/plan/$clusterId'
-      path: '/plan/$clusterId'
-      fullPath: '/plan/$clusterId'
-      preLoaderRoute: typeof PlanClusterIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/plan/past-roadmap': {
-      id: '/plan/past-roadmap'
-      path: '/plan/past-roadmap'
-      fullPath: '/plan/past-roadmap'
-      preLoaderRoute: typeof PlanPastRoadmapRouteImport
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sales-enablement/': {
@@ -443,6 +373,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SalesEnablementIndexRouteImport
       parentRoute: typeof SalesEnablementRoute
     }
+    '/plan/': {
+      id: '/plan/'
+      path: '/plan'
+      fullPath: '/plan/'
+      preLoaderRoute: typeof PlanIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/map/': {
+      id: '/map/'
+      path: '/map'
+      fullPath: '/map/'
+      preLoaderRoute: typeof MapIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leadership/': {
+      id: '/leadership/'
+      path: '/'
+      fullPath: '/leadership/'
+      preLoaderRoute: typeof LeadershipIndexRouteImport
+      parentRoute: typeof LeadershipRoute
+    }
     '/systemic/$slug': {
       id: '/systemic/$slug'
       path: '/systemic/$slug'
@@ -450,19 +401,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SystemicSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/plan/$clusterId/': {
-      id: '/plan/$clusterId/'
-      path: '/'
-      fullPath: '/plan/$clusterId/'
-      preLoaderRoute: typeof PlanClusterIdIndexRouteImport
-      parentRoute: typeof PlanClusterIdRoute
+    '/plan/past-roadmap': {
+      id: '/plan/past-roadmap'
+      path: '/plan/past-roadmap'
+      fullPath: '/plan/past-roadmap'
+      preLoaderRoute: typeof PlanPastRoadmapRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/plan/$clusterId/review': {
-      id: '/plan/$clusterId/review'
-      path: '/review'
-      fullPath: '/plan/$clusterId/review'
-      preLoaderRoute: typeof PlanClusterIdReviewRouteImport
-      parentRoute: typeof PlanClusterIdRoute
+    '/plan/$clusterId': {
+      id: '/plan/$clusterId'
+      path: '/plan/$clusterId'
+      fullPath: '/plan/$clusterId'
+      preLoaderRoute: typeof PlanClusterIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/map/$clusterId': {
+      id: '/map/$clusterId'
+      path: '/map/$clusterId'
+      fullPath: '/map/$clusterId'
+      preLoaderRoute: typeof MapClusterIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leadership/penetration': {
+      id: '/leadership/penetration'
+      path: '/penetration'
+      fullPath: '/leadership/penetration'
+      preLoaderRoute: typeof LeadershipPenetrationRouteImport
+      parentRoute: typeof LeadershipRoute
+    }
+    '/leadership/execution': {
+      id: '/leadership/execution'
+      path: '/execution'
+      fullPath: '/leadership/execution'
+      preLoaderRoute: typeof LeadershipExecutionRouteImport
+      parentRoute: typeof LeadershipRoute
+    }
+    '/leadership/engagement': {
+      id: '/leadership/engagement'
+      path: '/engagement'
+      fullPath: '/leadership/engagement'
+      preLoaderRoute: typeof LeadershipEngagementRouteImport
+      parentRoute: typeof LeadershipRoute
+    }
+    '/leadership/clusters': {
+      id: '/leadership/clusters'
+      path: '/clusters'
+      fullPath: '/leadership/clusters'
+      preLoaderRoute: typeof LeadershipClustersRouteImport
+      parentRoute: typeof LeadershipRoute
     }
     '/sales-enablement/$clusterId/': {
       id: '/sales-enablement/$clusterId/'
@@ -471,12 +457,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SalesEnablementClusterIdIndexRouteImport
       parentRoute: typeof SalesEnablementRoute
     }
+    '/plan/$clusterId/': {
+      id: '/plan/$clusterId/'
+      path: '/'
+      fullPath: '/plan/$clusterId/'
+      preLoaderRoute: typeof PlanClusterIdIndexRouteImport
+      parentRoute: typeof PlanClusterIdRoute
+    }
     '/sales-enablement/$clusterId/$prospectId': {
       id: '/sales-enablement/$clusterId/$prospectId'
       path: '/$clusterId/$prospectId'
       fullPath: '/sales-enablement/$clusterId/$prospectId'
       preLoaderRoute: typeof SalesEnablementClusterIdProspectIdRouteImport
       parentRoute: typeof SalesEnablementRoute
+    }
+    '/plan/$clusterId/review': {
+      id: '/plan/$clusterId/review'
+      path: '/review'
+      fullPath: '/plan/$clusterId/review'
+      preLoaderRoute: typeof PlanClusterIdReviewRouteImport
+      parentRoute: typeof PlanClusterIdRoute
     }
   }
 }
