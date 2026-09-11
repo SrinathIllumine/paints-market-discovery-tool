@@ -26,7 +26,7 @@ function PenetrationPage() {
 
   const [selectedId, setSelectedId] = useState(rows[0]?.clusterId ?? "");
   const selected = rows.find((r) => r.clusterId === selectedId) ?? rows[0];
-  const trend = selected ? buildPenetrationTrend(selected.clusterId, geo, selected.pct) : [];
+  const trend = selected ? buildPenetrationTrend(selected.clusterId, geo, selected.pct, selected.mom) : [];
 
   const totalProspects = rows.reduce((s, r) => s + r.prospects, 0);
   const totalCustomers = rows.reduce((s, r) => s + r.customers, 0);

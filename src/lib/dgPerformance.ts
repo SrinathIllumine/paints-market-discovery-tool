@@ -133,12 +133,21 @@ export function getPenetrationRows(geo: GeoRef): PenetrationRow[] {
 
 const TREND_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May"];
 
-export function buildPenetrationTrend(clusterId: string, geo: GeoRef, currentPct: number) {
+/**
+ * Jan-May trend for a cluster. April (the second-to-last point) is derived
+ * directly from `currentPct` and `mom` — the same MoM figure shown as the
+ * "(+X% / -X%)" badge next to "Current penetration" — so the line's last
+ * segment always visually matches the displayed month-over-month change
+ * instead of being generated from an unrelated random seed.
+ */
+export function buildPenetrationTrend(clusterId: string, geo: GeoRef, currentPct: number, mom: number) {
+  const prevMonthPct = Math.max(0, Math.min(100, currentPct - mom));
   return TREND_MONTHS.map((month, i) => {
     if (i === TREND_MONTHS.length - 1) return { month, pct: currentPct };
+    if (i === TREND_MONTHS.length - 2) return { month, pct: Math.round(prevMonthPct) };
     const seed = seededRandom(`${clusterId}|${geo.level}|${geo.id}|trend|${i}`);
-    const factor = 0.55 + seed * 0.4;
-    return { month, pct: Math.max(0, Math.round(currentPct * factor)) };
+    const factor = 0.7 + seed * 0.35; // Jan-Mar lead gently into April's (fixed) value
+    return { month, pct: Math.max(0, Math.round(prevMonthPct * factor)) };
   });
 }
 
