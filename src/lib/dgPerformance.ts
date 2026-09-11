@@ -101,3 +101,22 @@ export function buildPenetrationTrend(clusterId: string, geo: GeoRef, currentPct
     return { month, pct: Math.max(0, Math.round(prevMonthPct * factor)) };
   });
 }
+
+/**
+ * Aggregate Jan-May trend across every cluster, prospect-count weighted, for
+ * the "Overall Penetration" default view. Built by aggregating each
+ * cluster's own (already-consistent) trend rather than generating new
+ * random data, so it can never disagree with the per-cluster trends or the
+ * "Overall Penetration" KPI tile above the table.
+ */
+export function buildOverallPenetrationTrend(geo: GeoRef, rows: PenetrationRow[]) {
+  const perCluster = rows.map((r) => ({
+    weight: r.prospects,
+    trend: buildPenetrationTrend(r.clusterId, geo, r.pct, r.mom),
+  }));
+  const totalWeight = perCluster.reduce((s, c) => s + c.weight, 0) || 1;
+  return TREND_MONTHS.map((month, i) => {
+    const weightedSum = perCluster.reduce((s, c) => s + c.trend[i].pct * c.weight, 0);
+    return { month, pct: Math.round(weightedSum / totalWeight) };
+  });
+}

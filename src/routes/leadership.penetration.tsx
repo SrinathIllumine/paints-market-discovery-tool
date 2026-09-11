@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { LeadershipLayout, LeadershipScopeFilter } from "@/components/leadership/LeadershipLayout";
-import { buildPenetrationTrend, getPenetrationRows } from "@/lib/dgPerformance";
+import { buildOverallPenetrationTrend, buildPenetrationTrend, getPenetrationRows } from "@/lib/dgPerformance";
 import { QUADRANT_TYPE_LABEL } from "@/lib/leadershipAnalytics";
 import { useLeadershipGeo } from "@/store/leadershipStore";
 import { cn } from "@/lib/utils";
@@ -24,18 +24,26 @@ function PenetrationPage() {
     .map((r) => ({ ...r, type: QUADRANT_TYPE_LABEL[r.quadrant] }))
     .sort((a, b) => b.prospects - a.prospects);
 
-  const [selectedId, setSelectedId] = useState(rows[0]?.clusterId ?? "");
-  const selected = rows.find((r) => r.clusterId === selectedId) ?? rows[0];
-  const trend = selected ? buildPenetrationTrend(selected.clusterId, geo, selected.pct, selected.mom) : [];
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = selectedId ? rows.find((r) => r.clusterId === selectedId) : undefined;
 
   const totalProspects = rows.reduce((s, r) => s + r.prospects, 0);
   const totalCustomers = rows.reduce((s, r) => s + r.customers, 0);
   const overallPct = totalProspects > 0 ? Math.round((totalCustomers / totalProspects) * 100) : 0;
 
+  const trend = selected
+    ? buildPenetrationTrend(selected.clusterId, geo, selected.pct, selected.mom)
+    : buildOverallPenetrationTrend(geo, rows);
+  const chartTitle = selected ? selected.name : "Overall Penetration";
+  const chartPct = selected ? selected.pct : overallPct;
+  const chartMom = selected ? selected.mom : trend[trend.length - 1].pct - trend[trend.length - 2].pct;
+
   const slippingNames = rows
     .filter((r) => r.mom < 0)
     .slice(0, 2)
     .map((r) => r.name);
+
+  const toggleRow = (clusterId: string) => setSelectedId((cur) => (cur === clusterId ? null : clusterId));
 
   return (
     <LeadershipLayout>
@@ -53,7 +61,46 @@ function PenetrationPage() {
         <KpiTile label="Overall Penetration" value={`${overallPct}%`} />
       </div>
 
-      <div className="mb-6 rounded-2xl border border-border bg-card shadow-sm">
+      <div className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-base font-bold text-foreground">{chartTitle}</h2>
+          <span className="text-xs text-muted-foreground">Penetration trend, Jan–May 2026</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {selected
+            ? "Showing the selected cluster's trend below."
+            : "Aggregated across all clusters — select a row below to drill into one."}
+        </p>
+        <div className="mt-3 h-56">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={trend} margin={{ top: 8, right: 16, bottom: 0, left: -16 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis
+                tick={{ fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                domain={[0, "dataMax + 15"]}
+                tickFormatter={(v) => `${v}%`}
+              />
+              <Tooltip
+                formatter={(v: number) => [`${v}%`, "Penetration"]}
+                contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid var(--border)" }}
+              />
+              <Line type="monotone" dataKey="pct" stroke="var(--navy)" strokeWidth={2} dot={{ r: 3 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Current penetration <span className="font-semibold text-foreground">{chartPct}%</span>{" "}
+          <span className={cn("font-semibold", chartMom >= 0 ? "text-emerald-700" : "text-critical")}>
+            ({chartMom >= 0 ? "+" : ""}
+            {chartMom}%)
+          </span>
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card shadow-sm">
         <div className="border-b border-border px-4 py-3">
           <h2 className="font-display text-base font-bold text-foreground">Penetration level at each cluster</h2>
         </div>
@@ -74,7 +121,7 @@ function PenetrationPage() {
               {rows.map((r, i) => (
                 <tr
                   key={r.clusterId}
-                  onClick={() => setSelectedId(r.clusterId)}
+                  onClick={() => toggleRow(r.clusterId)}
                   className={cn(
                     "cursor-pointer border-t border-border transition-colors hover:bg-muted/40",
                     selectedId === r.clusterId && "bg-navy/5",
@@ -110,40 +157,6 @@ function PenetrationPage() {
           slipping month on month.
         </p>
       </div>
-
-      {selected && (
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <h2 className="font-display text-base font-bold text-foreground">{selected.name}</h2>
-          <p className="text-xs text-muted-foreground">Penetration trend, Jan–May 2026</p>
-          <div className="mt-3 h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trend} margin={{ top: 8, right: 16, bottom: 0, left: -16 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis
-                  tick={{ fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                  domain={[0, "dataMax + 15"]}
-                  tickFormatter={(v) => `${v}%`}
-                />
-                <Tooltip
-                  formatter={(v: number) => [`${v}%`, "Penetration"]}
-                  contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid var(--border)" }}
-                />
-                <Line type="monotone" dataKey="pct" stroke="var(--navy)" strokeWidth={2} dot={{ r: 3 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Current penetration <span className="font-semibold text-foreground">{selected.pct}%</span>{" "}
-            <span className={cn("font-semibold", selected.mom >= 0 ? "text-emerald-700" : "text-critical")}>
-              ({selected.mom >= 0 ? "+" : ""}
-              {selected.mom}%)
-            </span>
-          </p>
-        </div>
-      )}
     </LeadershipLayout>
   );
 }
