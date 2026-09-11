@@ -135,7 +135,7 @@ function PriorityMatrixPage() {
       <div className="mb-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Priority Matrix</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Revenue potential plotted against DG access for every market cluster.
+          {"\n"}
         </p>
       </div>
 
