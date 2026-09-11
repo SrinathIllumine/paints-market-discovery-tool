@@ -143,7 +143,7 @@ function PriorityMatrixPage() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="font-display text-base font-bold text-foreground">Potential vs Access</h2>
-            <p className="text-xs text-muted-foreground">Each dot is a market cluster.</p>
+            <p className="text-xs text-muted-foreground">{"\n"}</p>
           </div>
           <LeadershipScopeFilter />
         </div>
