@@ -113,3 +113,22 @@
   }
   h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.01em; }
 }
+
+/*
+ * Leadership Analytics dashboard: clean sans-serif throughout (headings
+ * included), instead of the serif font used elsewhere in the app — scoped
+ * to .leadership-ui so the Market Discovery System app is untouched.
+ * Deliberately left OUTSIDE any @layer block: Tailwind v4 auto-generates a
+ * `.font-display` utility from the --font-display theme token, which lives
+ * in the utilities cascade layer and beats anything inside @layer base
+ * regardless of selector specificity. Unlayered rules always win over
+ * layered ones, so this is the reliable way to override it.
+ */
+.leadership-ui h1,
+.leadership-ui h2,
+.leadership-ui h3,
+.leadership-ui .font-display {
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+  font-weight: 700;
+}

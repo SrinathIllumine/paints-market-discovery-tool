@@ -84,7 +84,7 @@ export function LeadershipLayout({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="leadership-ui flex min-h-screen bg-background">
       <aside className="sticky top-0 flex h-screen w-72 shrink-0 flex-col border-r border-border bg-navy text-navy-foreground">
         <div className="border-b border-white/10 p-5">
           <h1 className="font-display text-lg font-bold">Paints</h1>
