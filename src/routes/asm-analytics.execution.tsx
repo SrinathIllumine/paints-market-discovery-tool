@@ -36,7 +36,7 @@ function AsmExecutionPage() {
           <h1 className="font-display text-2xl font-bold text-foreground">Strategy & Execution Level</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Tracking whether my DGs' plans are converting into action. Max {MAX_PLANS_PER_DG_PER_MONTH} active
-            clusters per DG per month.
+            {MAX_PLANS_PER_DG_PER_MONTH === 1 ? " cluster" : " clusters"} per DG per month.
           </p>
         </div>
         <AsmAreaFilter />

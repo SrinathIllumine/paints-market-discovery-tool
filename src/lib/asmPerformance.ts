@@ -8,7 +8,7 @@ import { CLUSTERS } from "@/data/clusters";
 import { type DgInfo, PANVEL_ASM, PANVEL_CLUSTER_DGS, getArea } from "@/data/geography";
 import { type QuadrantKey, getClusterScoresForGeo, seededRandom } from "@/lib/clusterGenerator";
 
-export const MAX_PLANS_PER_DG_PER_MONTH = 2;
+export const MAX_PLANS_PER_DG_PER_MONTH = 1;
 export const ALL_ASM_AREA_IDS = PANVEL_ASM.areaIds;
 
 export type DgClusterPlan = {
@@ -24,9 +24,9 @@ export type DgClusterPlan = {
  * engagement plan for this month, and whether each was executed. Candidate
  * clusters are ranked by the same ease/access/competitive "attractiveness"
  * used throughout the app, so DGs still gravitate to easy wins — but a
- * per-DG "diligence" seed means not every DG uses their full monthly
- * allocation (some plan 1, a few plan none), which is its own small piece
- * of the negative narrative rather than everyone maxing out uniformly.
+ * per-DG "diligence" seed means not every DG uses their monthly allocation
+ * (some plan nothing at all), which is its own small piece of the negative
+ * narrative rather than everyone maxing out uniformly.
  */
 export function getDgMonthlyPlans(dg: DgInfo): DgClusterPlan[] {
   const geo = { level: "area" as const, id: dg.areaId };
@@ -38,7 +38,7 @@ export function getDgMonthlyPlans(dg: DgInfo): DgClusterPlan[] {
   }).sort((a, b) => b.rank - a.rank);
 
   const diligenceSeed = seededRandom(`${dg.id}|diligence`);
-  const capThisMonth = diligenceSeed < 0.15 ? 0 : diligenceSeed < 0.35 ? 1 : MAX_PLANS_PER_DG_PER_MONTH;
+  const capThisMonth = diligenceSeed < 0.15 ? 0 : MAX_PLANS_PER_DG_PER_MONTH;
   const chosen = new Set(scored.slice(0, capThisMonth).map((s) => s.clusterId));
 
   return scored.map((s) => {
