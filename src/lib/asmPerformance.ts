@@ -1,32 +1,31 @@
-// Per-DG rollups for ASM Analytics, built around a hard real-world
-// constraint: a DG can carry an active engagement plan for at most
-// MAX_PLANS_PER_DG_PER_MONTH clusters in a given month. Everything here is
-// a plan/no-plan and executed/not-executed decision per cluster per DG —
-// not an arbitrary large count — so the numbers stay believable at the
-// scale of a real 4-DG team instead of exaggerating.
+// Per-DG rollups for ASM Analytics, built around a real-world constraint: a
+// DG can TARGET at most MAX_CLUSTERS_PER_DG_PER_MONTH cluster in a given
+// month (not more) — but for that one targeted cluster, they can log
+// several engagement plans (2-3) over the month, not just one. So the cap
+// is on cluster count, not on the "No of Engagement Plan" number itself.
 import { CLUSTERS } from "@/data/clusters";
 import { type DgInfo, PANVEL_ASM, PANVEL_CLUSTER_DGS, getArea } from "@/data/geography";
 import { type QuadrantKey, getClusterScoresForGeo, seededRandom } from "@/lib/clusterGenerator";
 
-export const MAX_PLANS_PER_DG_PER_MONTH = 1;
+export const MAX_CLUSTERS_PER_DG_PER_MONTH = 1;
 export const ALL_ASM_AREA_IDS = PANVEL_ASM.areaIds;
 
 export type DgClusterPlan = {
   clusterId: string;
   name: string;
   quadrant: QuadrantKey;
-  planned: boolean;
-  executed: boolean;
+  plans: number; // 0 if this DG isn't targeting the cluster this month; 2-3 if it's their one targeted cluster
+  executed: number;
 };
 
 /**
- * Which clusters (at most MAX_PLANS_PER_DG_PER_MONTH) this DG has an active
- * engagement plan for this month, and whether each was executed. Candidate
- * clusters are ranked by the same ease/access/competitive "attractiveness"
- * used throughout the app, so DGs still gravitate to easy wins — but a
- * per-DG "diligence" seed means not every DG uses their monthly allocation
- * (some plan nothing at all), which is its own small piece of the negative
- * narrative rather than everyone maxing out uniformly.
+ * This DG's one targeted cluster this month (at most
+ * MAX_CLUSTERS_PER_DG_PER_MONTH), with a 2-3 engagement-plan count logged
+ * against it and how many of those were executed. The target is picked by
+ * the same ease/access/competitive "attractiveness" used throughout the
+ * app, so DGs still gravitate to easy wins — and a per-DG "diligence" seed
+ * means some DGs aren't actively targeting anything this month at all,
+ * which is its own small piece of the negative narrative.
  */
 export function getDgMonthlyPlans(dg: DgInfo): DgClusterPlan[] {
   const geo = { level: "area" as const, id: dg.areaId };
@@ -38,20 +37,23 @@ export function getDgMonthlyPlans(dg: DgInfo): DgClusterPlan[] {
   }).sort((a, b) => b.rank - a.rank);
 
   const diligenceSeed = seededRandom(`${dg.id}|diligence`);
-  const capThisMonth = diligenceSeed < 0.15 ? 0 : MAX_PLANS_PER_DG_PER_MONTH;
-  const chosen = new Set(scored.slice(0, capThisMonth).map((s) => s.clusterId));
+  const hasActiveTarget = diligenceSeed >= 0.15; // most DGs are actively targeting a cluster this month
+  const targetClusterId = hasActiveTarget ? scored[0].clusterId : null;
 
   return scored.map((s) => {
-    const planned = chosen.has(s.clusterId);
-    let executed = false;
-    if (planned) {
-      const base = 25 + s.scores.ease * 6 - (s.scores.potentialScore >= 6 ? 20 : 0);
-      const execSeed = seededRandom(`${dg.id}|${s.clusterId}|execrate`);
-      const execRatePct = Math.max(10, Math.min(95, base + (execSeed - 0.5) * 16));
-      const roll = seededRandom(`${dg.id}|${s.clusterId}|roll`) * 100;
-      executed = roll < execRatePct;
+    if (s.clusterId !== targetClusterId) {
+      return { clusterId: s.clusterId, name: s.name, quadrant: s.quadrant, plans: 0, executed: 0 };
     }
-    return { clusterId: s.clusterId, name: s.name, quadrant: s.quadrant, planned, executed };
+
+    const countSeed = seededRandom(`${dg.id}|${s.clusterId}|plancount`);
+    const plans = countSeed < 0.5 ? 2 : 3; // 2-3 engagement plans logged for the one cluster they're targeting
+
+    const base = 25 + s.scores.ease * 6 - (s.scores.potentialScore >= 6 ? 20 : 0);
+    const execSeed = seededRandom(`${dg.id}|${s.clusterId}|execrate`);
+    const execRatePct = Math.max(10, Math.min(95, base + (execSeed - 0.5) * 16));
+    const executed = Math.max(0, Math.min(plans, Math.round((plans * execRatePct) / 100)));
+
+    return { clusterId: s.clusterId, name: s.name, quadrant: s.quadrant, plans, executed };
   });
 }
 
@@ -73,9 +75,9 @@ export type DgSummaryRow = {
 /** DG comparison rows, scoped to the given areas (defaults to the ASM's whole 4-DG territory). */
 export function getDgSummaryRows(areaIds: string[] = ALL_ASM_AREA_IDS): DgSummaryRow[] {
   return dgsForAreaIds(areaIds).map((dg) => {
-    const plans = getDgMonthlyPlans(dg).filter((p) => p.planned);
-    const totalPlans = plans.length;
-    const totalExecuted = plans.filter((p) => p.executed).length;
+    const rows = getDgMonthlyPlans(dg).filter((p) => p.plans > 0);
+    const totalPlans = rows.reduce((s, r) => s + r.plans, 0);
+    const totalExecuted = rows.reduce((s, r) => s + r.executed, 0);
     const avgExecutionPct = totalPlans > 0 ? Math.round((totalExecuted / totalPlans) * 10000) / 100 : 0;
     return {
       dgId: dg.id,
@@ -84,7 +86,7 @@ export function getDgSummaryRows(areaIds: string[] = ALL_ASM_AREA_IDS): DgSummar
       totalPlans,
       totalExecuted,
       avgExecutionPct,
-      topCluster: plans[0]?.name ?? "-",
+      topCluster: rows[0]?.name ?? "-",
       onTrack: totalPlans > 0 && avgExecutionPct >= 40,
     };
   });
@@ -98,24 +100,24 @@ export type TerritoryClusterRow = {
   executed: number;
   pct: number;
   onTrack: boolean;
-  pctDgs: number; // share of the scoped DGs who planned this cluster this month
+  pctDgs: number; // share of the scoped DGs who are targeting this cluster this month
 };
 
 /**
  * Cluster table scoped to the given areas — the literal sum of those DGs'
  * own monthly plans, so it can never disagree with the DG comparison table
- * shown alongside it. Only clusters with at least one plan appear (a
- * cluster nobody planned isn't part of "what are we engaging on").
+ * shown alongside it. Only clusters at least one DG is targeting appear.
  */
 export function getTerritoryClusterRows(areaIds: string[] = ALL_ASM_AREA_IDS): TerritoryClusterRow[] {
   const dgs = dgsForAreaIds(areaIds);
-  const byCluster = new Map<string, { name: string; quadrant: QuadrantKey; plans: number; executed: number }>();
+  const byCluster = new Map<string, { name: string; quadrant: QuadrantKey; plans: number; executed: number; dgCount: number }>();
   for (const dg of dgs) {
     for (const p of getDgMonthlyPlans(dg)) {
-      if (!p.planned) continue;
-      const cur = byCluster.get(p.clusterId) ?? { name: p.name, quadrant: p.quadrant, plans: 0, executed: 0 };
-      cur.plans += 1;
-      if (p.executed) cur.executed += 1;
+      if (p.plans === 0) continue;
+      const cur = byCluster.get(p.clusterId) ?? { name: p.name, quadrant: p.quadrant, plans: 0, executed: 0, dgCount: 0 };
+      cur.plans += p.plans;
+      cur.executed += p.executed;
+      cur.dgCount += 1;
       byCluster.set(p.clusterId, cur);
     }
   }
@@ -131,7 +133,7 @@ export function getTerritoryClusterRows(areaIds: string[] = ALL_ASM_AREA_IDS): T
         executed: v.executed,
         pct,
         onTrack: pct >= 40,
-        pctDgs: Math.round((v.plans / totalDgs) * 100),
+        pctDgs: Math.round((v.dgCount / totalDgs) * 100),
       };
     })
     .sort((a, b) => b.plans - a.plans);

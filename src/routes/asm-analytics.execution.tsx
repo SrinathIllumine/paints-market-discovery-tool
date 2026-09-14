@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AsmAreaFilter, AsmLayout } from "@/components/asm/AsmLayout";
 import { QuadrantTypeBadge } from "@/components/leadership/LeadershipLayout";
-import { MAX_PLANS_PER_DG_PER_MONTH, getDgSummaryRows, getTerritoryClusterRows } from "@/lib/asmPerformance";
+import { MAX_CLUSTERS_PER_DG_PER_MONTH, getDgSummaryRows, getTerritoryClusterRows } from "@/lib/asmPerformance";
 import { useAsmAreaIds } from "@/store/asmStore";
 import { cn } from "@/lib/utils";
 
@@ -35,8 +35,8 @@ function AsmExecutionPage() {
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Strategy & Execution Level</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Tracking whether my DGs' plans are converting into action. Max {MAX_PLANS_PER_DG_PER_MONTH} active
-            {MAX_PLANS_PER_DG_PER_MONTH === 1 ? " cluster" : " clusters"} per DG per month.
+            Tracking whether my DGs' plans are converting into action. Max {MAX_CLUSTERS_PER_DG_PER_MONTH} active
+            {MAX_CLUSTERS_PER_DG_PER_MONTH === 1 ? " cluster" : " clusters"} per DG per month.
           </p>
         </div>
         <AsmAreaFilter />
