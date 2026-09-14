@@ -32,11 +32,17 @@ export type ClusterEngagementRow = {
  *    Analytics. Status is derived directly from the displayed percentage —
  *    never an independent random flag — so the table can't disagree with
  *    its own numbers.
+ *
+ * `totalDgsOverride` lets a caller supply the actual number of DGs (or an
+ * equivalent plan-volume pool) instead of the estimateAsmCount-based guess
+ * — needed for ASM Analytics, where the real DG count (4) is known and much
+ * smaller than the "hundreds of DGs" scale this formula was tuned for, so
+ * without an override every cluster's plan count degenerates to 0 or 1.
  */
-export function getClusterEngagement(clusterId: string, geo: GeoRef): ClusterEngagementRow {
+export function getClusterEngagement(clusterId: string, geo: GeoRef, totalDgsOverride?: number): ClusterEngagementRow {
   const cluster = CLUSTERS.find((c) => c.id === clusterId)!;
   const scores = getClusterScoresForGeo(clusterId, geo);
-  const totalDgs = Math.max(1, estimateAsmCount(geo) * DGS_PER_ASM);
+  const totalDgs = totalDgsOverride ?? Math.max(1, estimateAsmCount(geo) * DGS_PER_ASM);
 
   const potentialWeight = scores.potentialScore / 10; // 0-1
   const planSeed = seededRandom(`${clusterId}|${geo.level}|${geo.id}|plans`);
@@ -55,8 +61,8 @@ export function getClusterEngagement(clusterId: string, geo: GeoRef): ClusterEng
 }
 
 /** All 20 clusters' engagement rows for a geography, ranked by plan volume (most-engaged first). */
-export function getClusterEngagementRows(geo: GeoRef): ClusterEngagementRow[] {
-  return CLUSTERS.map((c) => getClusterEngagement(c.id, geo)).sort((a, b) => b.plans - a.plans);
+export function getClusterEngagementRows(geo: GeoRef, totalDgsOverride?: number): ClusterEngagementRow[] {
+  return CLUSTERS.map((c) => getClusterEngagement(c.id, geo, totalDgsOverride)).sort((a, b) => b.plans - a.plans);
 }
 
 export type PenetrationRow = {

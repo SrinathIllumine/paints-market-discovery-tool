@@ -8,6 +8,7 @@ import {
   type GeoRef,
   NATIONAL_ID,
   getArea,
+  getAsmTerritoryShareOfNational,
   getState,
 } from "@/data/geography";
 import { getClusterResearch } from "@/lib/clusterResearch";
@@ -39,6 +40,8 @@ export function getUnitCount(clusterId: string, geo: GeoRef): number {
     const area = getArea(geo.id);
     const state = getState(area?.stateId ?? "maharashtra");
     scaled *= (state?.shareOfNational ?? 0.094) * (area?.shareOfState ?? 0.02);
+  } else if (geo.level === "asm") {
+    scaled *= getAsmTerritoryShareOfNational(geo.id);
   }
   // geo.level === "national": use the baseline as-is.
 
@@ -77,11 +80,13 @@ export function getCompetitiveStrengthScore(clusterId: string, geo: GeoRef): num
   const homeTurfFactor =
     geo.level === "area" && geo.id === "panvel"
       ? 1.15
-      : geo.level === "state" && geo.id === "maharashtra"
-        ? 1.0
-        : geo.level === "national"
-          ? 0.75
-          : 0.6;
+      : geo.level === "asm"
+        ? 1.1
+        : geo.level === "state" && geo.id === "maharashtra"
+          ? 1.0
+          : geo.level === "national"
+            ? 0.75
+            : 0.6;
 
   const variance = 0.8 + seededRandom(`${clusterId}|${geo.level}|${geo.id}|comp`) * 0.4; // 0.8–1.2
   const share = Math.min(0.6, baseShare * homeTurfFactor * variance);

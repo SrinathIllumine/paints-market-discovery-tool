@@ -1,0 +1,89 @@
+import { ReactNode } from "react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { Grid3x3, TrendingUp, Users, LogOut } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const DATA_AS_OF = new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+
+const navItems = [
+  {
+    icon: Grid3x3,
+    label: "Priority Matrix",
+    sub: "Which clusters in my territory should my DGs be focusing on?",
+    to: "/asm-analytics" as const,
+  },
+  {
+    icon: Users,
+    label: "My DGs",
+    sub: "Are my DGs targeting the right clusters and executing well?",
+    to: "/asm-analytics/dgs" as const,
+  },
+  {
+    icon: TrendingUp,
+    label: "Market Penetration",
+    sub: "Is my territory's market penetration increasing?",
+    to: "/asm-analytics/penetration" as const,
+  },
+];
+
+/**
+ * ASM Analytics shell — Vikram Desai's view of his own 4-DG territory
+ * (Panvel + Khopoli + Karjat + Pen). No state/area scope filter here (unlike
+ * Leadership Analytics): an ASM's territory is fixed, not selectable.
+ */
+export function AsmLayout({ children }: { children: ReactNode }) {
+  const path = useRouterState({ select: (s) => s.location.pathname });
+
+  return (
+    <div className="asm-ui flex min-h-screen bg-background">
+      <aside className="sticky top-0 flex h-screen w-72 shrink-0 flex-col border-r border-border bg-navy text-navy-foreground">
+        <div className="border-b border-white/10 p-5">
+          <h1 className="font-display text-lg font-bold">Paints</h1>
+          <p className="mt-0.5 text-xs text-white/60">ASM Analytics</p>
+          <p className="mt-2 text-sm font-semibold">Vikram Desai</p>
+          <p className="text-xs text-white/50">Raigad ASM Territory · Panvel, Khopoli, Karjat, Pen</p>
+        </div>
+        <p className="px-5 pt-4 text-[10px] font-semibold uppercase tracking-wide text-white/40">
+          Key questions for my territory
+        </p>
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          {navItems.map((item) => {
+            const active = path === item.to;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={cn(
+                  "flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition-colors",
+                  active ? "bg-critical text-critical-foreground" : "text-white/80 hover:bg-white/10",
+                )}
+              >
+                <item.icon className="mt-0.5 h-4 w-4 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-light leading-tight">{item.label}</p>
+                  <p className={cn("mt-0.5 text-sm font-semibold leading-snug", active ? "text-white" : "text-white/55")}>
+                    {item.sub}
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="border-t border-white/10 p-3">
+          <p className="px-3 pb-2 text-[11px] text-white/40">Data as of {DATA_AS_OF}</p>
+          <Link
+            to="/"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/70 hover:bg-white/10"
+          >
+            <LogOut className="h-4 w-4" />
+            Switch App
+          </Link>
+        </div>
+      </aside>
+
+      <main className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-6xl p-6">{children}</div>
+      </main>
+    </div>
+  );
+}

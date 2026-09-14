@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Map as MapIcon, Monitor, LayoutDashboard, ArrowRight } from "lucide-react";
+import { Map as MapIcon, Users, Monitor, LayoutDashboard, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,7 +18,7 @@ type ProductTileDef = {
   icon: typeof MapIcon;
   title: string;
   desc: string;
-  to: "/market-discovery" | "/leadership" | "/dashboard";
+  to: "/market-discovery" | "/asm-analytics" | "/leadership" | "/dashboard";
   cta: string;
 };
 
@@ -29,6 +29,13 @@ const PRODUCT_TILES: ProductTileDef[] = [
     desc: "Map your market clusters by revenue potential, access and competitive strength, build cluster engagement plans, and move prospects through the sales funnel.",
     to: "/market-discovery",
     cta: "Open Market Discovery",
+  },
+  {
+    icon: Users,
+    title: "ASM Analytics",
+    desc: "An Area Sales Manager's view of their own DG team — cluster priorities for the territory, DG-by-DG comparison, and market penetration tracking.",
+    to: "/asm-analytics",
+    cta: "Open ASM Analytics",
   },
   {
     icon: Monitor,
@@ -49,7 +56,7 @@ const PRODUCT_TILES: ProductTileDef[] = [
 function MetaHome() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-background p-6">
-      <div className="w-full max-w-4xl space-y-8">
+      <div className="w-full max-w-6xl space-y-8">
         <div className="space-y-2 text-center">
           <p className="text-lg font-medium tracking-wide text-muted-foreground">Paints</p>
           <h1 className="font-display text-4xl font-bold leading-tight text-foreground">
@@ -58,7 +65,7 @@ function MetaHome() {
           <p className="text-sm text-muted-foreground">Select your interface to continue</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {PRODUCT_TILES.map(({ icon: Icon, title, desc, to, cta }) => (
             <Link
               key={to}

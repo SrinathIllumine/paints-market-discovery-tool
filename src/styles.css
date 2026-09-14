@@ -127,7 +127,11 @@
 .leadership-ui h1,
 .leadership-ui h2,
 .leadership-ui h3,
-.leadership-ui .font-display {
+.leadership-ui .font-display,
+.asm-ui h1,
+.asm-ui h2,
+.asm-ui h3,
+.asm-ui .font-display {
   font-family: var(--font-sans);
   letter-spacing: -0.01em;
   font-weight: 700;

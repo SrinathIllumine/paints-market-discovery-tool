@@ -3,7 +3,7 @@
 // so the filters read like a real national rollout without requiring full
 // research for every state/area yet.
 
-export type GeoLevel = "national" | "state" | "area";
+export type GeoLevel = "national" | "state" | "area" | "asm";
 
 export type GeoRef = { level: GeoLevel; id: string };
 
@@ -97,6 +97,18 @@ export const PANVEL_CLUSTER_DGS: DgInfo[] = [
 
 export function getDgForArea(areaId: string): DgInfo | undefined {
   return PANVEL_CLUSTER_DGS.find((d) => d.areaId === areaId);
+}
+
+/** GeoRef for Panvel's ASM territory (Panvel + Khopoli + Karjat + Pen combined) — used by ASM Analytics. */
+export const ASM_GEO: GeoRef = { level: "asm", id: PANVEL_ASM.id };
+
+/** Combined national-population-share weight of an ASM's whole territory (sum of its areas' shares), for unit-count scaling. */
+export function getAsmTerritoryShareOfNational(asmId: string): number {
+  const asm = asmId === PANVEL_ASM.id ? PANVEL_ASM : undefined;
+  if (!asm) return 0.05;
+  const state = getState("maharashtra");
+  const combinedShareOfState = asm.areaIds.reduce((sum, id) => sum + (getArea(id)?.shareOfState ?? 0), 0);
+  return (state?.shareOfNational ?? 0.094) * combinedShareOfState;
 }
 
 // Approximate ASM/DG density used to scale "how many ASMs" a wider geography
