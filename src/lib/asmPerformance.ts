@@ -101,6 +101,7 @@ export type TerritoryClusterRow = {
   pct: number;
   onTrack: boolean;
   pctDgs: number; // share of the scoped DGs who are targeting this cluster this month
+  dgNames: string[]; // which DG(s) are targeting this cluster this month
 };
 
 /**
@@ -110,14 +111,17 @@ export type TerritoryClusterRow = {
  */
 export function getTerritoryClusterRows(areaIds: string[] = ALL_ASM_AREA_IDS): TerritoryClusterRow[] {
   const dgs = dgsForAreaIds(areaIds);
-  const byCluster = new Map<string, { name: string; quadrant: QuadrantKey; plans: number; executed: number; dgCount: number }>();
+  const byCluster = new Map<
+    string,
+    { name: string; quadrant: QuadrantKey; plans: number; executed: number; dgNames: string[] }
+  >();
   for (const dg of dgs) {
     for (const p of getDgMonthlyPlans(dg)) {
       if (p.plans === 0) continue;
-      const cur = byCluster.get(p.clusterId) ?? { name: p.name, quadrant: p.quadrant, plans: 0, executed: 0, dgCount: 0 };
+      const cur = byCluster.get(p.clusterId) ?? { name: p.name, quadrant: p.quadrant, plans: 0, executed: 0, dgNames: [] };
       cur.plans += p.plans;
       cur.executed += p.executed;
-      cur.dgCount += 1;
+      cur.dgNames.push(dg.name);
       byCluster.set(p.clusterId, cur);
     }
   }
@@ -133,7 +137,8 @@ export function getTerritoryClusterRows(areaIds: string[] = ALL_ASM_AREA_IDS): T
         executed: v.executed,
         pct,
         onTrack: pct >= 40,
-        pctDgs: Math.round((v.dgCount / totalDgs) * 100),
+        pctDgs: Math.round((v.dgNames.length / totalDgs) * 100),
+        dgNames: v.dgNames,
       };
     })
     .sort((a, b) => b.plans - a.plans);

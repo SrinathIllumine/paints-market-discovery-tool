@@ -40,7 +40,7 @@ function AsmEngagementFocusPage() {
                 <th className="px-4 py-2">Sl. No</th>
                 <th className="px-4 py-2">Cluster</th>
                 <th className="px-4 py-2">Type</th>
-                <th className="px-4 py-2 text-right">% DGs</th>
+                <th className="px-4 py-2">DG</th>
               </tr>
             </thead>
             <tbody>
@@ -59,7 +59,7 @@ function AsmEngagementFocusPage() {
                   <td className="px-4 py-2">
                     <QuadrantTypeBadge quadrant={r.quadrant} />
                   </td>
-                  <td className="px-4 py-2 text-right font-semibold tabular-nums">{r.pctDgs}%</td>
+                  <td className="px-4 py-2 font-medium text-foreground">{r.dgNames.join(", ")}</td>
                 </tr>
               ))}
               {rows.length === 0 && (
@@ -74,7 +74,7 @@ function AsmEngagementFocusPage() {
         </div>
         {topRow && (
           <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-            Insight: {topRow.pctDgs}% of my DGs are focusing on {topRow.name}
+            Insight: {topRow.dgNames.join(", ")} {topRow.dgNames.length === 1 ? "is" : "are"} focusing on {topRow.name}
             {" ("}
             {topRow.quadrant === "HH" || topRow.quadrant === "HL" ? "high potential" : "low potential"}
             {")"}.
