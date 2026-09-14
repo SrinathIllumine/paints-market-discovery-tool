@@ -62,7 +62,7 @@ function AsmExecutionPage() {
                 <th className="w-[13%] px-4 py-2 text-right">Plans</th>
                 <th className="w-[13%] px-4 py-2 text-right">Executed</th>
                 <th className="w-[14%] px-4 py-2 text-right">Execution %</th>
-                <th className="w-[17%] px-4 py-2">Top Cluster</th>
+                <th className="w-[17%] px-4 py-2">Target Cluster</th>
                 <th className="w-[11%] px-4 py-2 text-right">Status</th>
               </tr>
             </thead>
@@ -74,7 +74,7 @@ function AsmExecutionPage() {
                   <td className="px-4 py-2 text-right tabular-nums">{d.totalPlans}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{d.totalExecuted}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{d.avgExecutionPct.toFixed(2)}%</td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">{d.topCluster}</td>
+                  <td className="px-4 py-2 text-xs text-muted-foreground">{d.targetCluster}</td>
                   <td className="px-4 py-2 text-right">
                     <span
                       className={cn(

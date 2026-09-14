@@ -68,7 +68,7 @@ export type DgSummaryRow = {
   totalPlans: number;
   totalExecuted: number;
   avgExecutionPct: number;
-  topCluster: string;
+  targetCluster: string;
   onTrack: boolean;
 };
 
@@ -86,7 +86,7 @@ export function getDgSummaryRows(areaIds: string[] = ALL_ASM_AREA_IDS): DgSummar
       totalPlans,
       totalExecuted,
       avgExecutionPct,
-      topCluster: rows[0]?.name ?? "-",
+      targetCluster: rows[0]?.name ?? "-",
       onTrack: totalPlans > 0 && avgExecutionPct >= 40,
     };
   });
