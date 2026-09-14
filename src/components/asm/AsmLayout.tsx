@@ -1,35 +1,73 @@
 import { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Grid3x3, TrendingUp, Users, LogOut } from "lucide-react";
+import { Grid3x3, TrendingUp, Target, ListChecks, LogOut } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { PANVEL_ASM, getAreasForState } from "@/data/geography";
+import { ALL_ASM_AREAS_ID, useAsmStore } from "@/store/asmStore";
 
 const DATA_AS_OF = new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" });
 
+// Same 4 questions as Leadership Analytics — only the 2nd is reworded,
+// since the viewer here already IS the ASM (no need to ask about "ASMs &
+// DGs" collectively, just their own DGs).
 const navItems = [
   {
     icon: Grid3x3,
     label: "Priority Matrix",
-    sub: "Which clusters in my territory should my DGs be focusing on?",
+    sub: "Which are the top market clusters that can improve our market penetration?",
     to: "/asm-analytics" as const,
   },
   {
-    icon: Users,
-    label: "My DGs",
-    sub: "Are my DGs targeting the right clusters and executing well?",
-    to: "/asm-analytics/dgs" as const,
+    icon: Target,
+    label: "Engagement Focus",
+    sub: "Are my DGs focusing on high potential, high access clusters?",
+    to: "/asm-analytics/engagement" as const,
+  },
+  {
+    icon: ListChecks,
+    label: "Strategy & Execution",
+    sub: "Are we engaging enough with the markets and executing our strategies?",
+    to: "/asm-analytics/execution" as const,
   },
   {
     icon: TrendingUp,
     label: "Market Penetration",
-    sub: "Is my territory's market penetration increasing?",
+    sub: "Is our market penetration increasing?",
     to: "/asm-analytics/penetration" as const,
   },
 ];
 
+/** Area selector — my whole territory, or drill into any one of my 4 DGs' areas. Every option is selectable. */
+export function AsmAreaFilter({ className }: { className?: string }) {
+  const areaId = useAsmStore((s) => s.areaId);
+  const setArea = useAsmStore((s) => s.setArea);
+  const areas = getAreasForState("maharashtra").filter((a) => PANVEL_ASM.areaIds.includes(a.id));
+
+  return (
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Area</span>
+      <Select value={areaId} onValueChange={setArea}>
+        <SelectTrigger className="h-8 w-[190px] text-sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL_ASM_AREAS_ID}>All areas (my territory)</SelectItem>
+          {areas.map((a) => (
+            <SelectItem key={a.id} value={a.id}>
+              {a.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 /**
  * ASM Analytics shell — Vikram Desai's view of his own 4-DG territory
- * (Panvel + Khopoli + Karjat + Pen). No state/area scope filter here (unlike
- * Leadership Analytics): an ASM's territory is fixed, not selectable.
+ * (Panvel + Khopoli + Karjat + Pen). Each area maps to exactly one DG, so
+ * the area filter doubles as a "drill into one DG" control.
  */
 export function AsmLayout({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });

@@ -1,16 +1,63 @@
-// Per-DG rollups for ASM Analytics. Reuses getClusterEngagement (each DG's
-// own area is just another GeoRef) rather than duplicating any scoring
-// logic. `PLANS_PER_DG` overrides the totalDgs baseline that formula
-// normally derives from estimateAsmCount — that default is tuned for
-// hundreds-of-DGs Leadership scopes, and would round every cluster's plan
-// count down to 0 or 1 at a single DG's real scale (4 DGs total in this
-// territory), so we supply a realistic "plans one DG logs across a period,
-// spread over 20 clusters" pool instead.
-import { PANVEL_CLUSTER_DGS, getArea } from "@/data/geography";
-import type { QuadrantKey } from "@/lib/clusterGenerator";
-import { type ClusterEngagementRow, getClusterEngagementRows } from "@/lib/dgPerformance";
+// Per-DG rollups for ASM Analytics, built around a hard real-world
+// constraint: a DG can carry an active engagement plan for at most
+// MAX_PLANS_PER_DG_PER_MONTH clusters in a given month. Everything here is
+// a plan/no-plan and executed/not-executed decision per cluster per DG —
+// not an arbitrary large count — so the numbers stay believable at the
+// scale of a real 4-DG team instead of exaggerating.
+import { CLUSTERS } from "@/data/clusters";
+import { type DgInfo, PANVEL_ASM, PANVEL_CLUSTER_DGS, getArea } from "@/data/geography";
+import { type QuadrantKey, getClusterScoresForGeo, seededRandom } from "@/lib/clusterGenerator";
 
-const PLANS_PER_DG = 40;
+export const MAX_PLANS_PER_DG_PER_MONTH = 2;
+export const ALL_ASM_AREA_IDS = PANVEL_ASM.areaIds;
+
+export type DgClusterPlan = {
+  clusterId: string;
+  name: string;
+  quadrant: QuadrantKey;
+  planned: boolean;
+  executed: boolean;
+};
+
+/**
+ * Which clusters (at most MAX_PLANS_PER_DG_PER_MONTH) this DG has an active
+ * engagement plan for this month, and whether each was executed. Candidate
+ * clusters are ranked by the same ease/access/competitive "attractiveness"
+ * used throughout the app, so DGs still gravitate to easy wins — but a
+ * per-DG "diligence" seed means not every DG uses their full monthly
+ * allocation (some plan 1, a few plan none), which is its own small piece
+ * of the negative narrative rather than everyone maxing out uniformly.
+ */
+export function getDgMonthlyPlans(dg: DgInfo): DgClusterPlan[] {
+  const geo = { level: "area" as const, id: dg.areaId };
+  const scored = CLUSTERS.map((c) => {
+    const scores = getClusterScoresForGeo(c.id, geo);
+    const attractiveness = scores.ease * 0.5 + scores.access * 0.3 + scores.competitive * 0.2;
+    const pickSeed = seededRandom(`${dg.id}|${c.id}|pick`);
+    return { clusterId: c.id, name: c.name, quadrant: scores.quadrant, scores, rank: attractiveness + (pickSeed - 0.5) * 3 };
+  }).sort((a, b) => b.rank - a.rank);
+
+  const diligenceSeed = seededRandom(`${dg.id}|diligence`);
+  const capThisMonth = diligenceSeed < 0.15 ? 0 : diligenceSeed < 0.35 ? 1 : MAX_PLANS_PER_DG_PER_MONTH;
+  const chosen = new Set(scored.slice(0, capThisMonth).map((s) => s.clusterId));
+
+  return scored.map((s) => {
+    const planned = chosen.has(s.clusterId);
+    let executed = false;
+    if (planned) {
+      const base = 25 + s.scores.ease * 6 - (s.scores.potentialScore >= 6 ? 20 : 0);
+      const execSeed = seededRandom(`${dg.id}|${s.clusterId}|execrate`);
+      const execRatePct = Math.max(10, Math.min(95, base + (execSeed - 0.5) * 16));
+      const roll = seededRandom(`${dg.id}|${s.clusterId}|roll`) * 100;
+      executed = roll < execRatePct;
+    }
+    return { clusterId: s.clusterId, name: s.name, quadrant: s.quadrant, planned, executed };
+  });
+}
+
+function dgsForAreaIds(areaIds: string[]): DgInfo[] {
+  return PANVEL_CLUSTER_DGS.filter((dg) => areaIds.includes(dg.areaId));
+}
 
 export type DgSummaryRow = {
   dgId: string;
@@ -19,24 +66,17 @@ export type DgSummaryRow = {
   totalPlans: number;
   totalExecuted: number;
   avgExecutionPct: number;
-  onTrackCount: number;
-  behindCount: number;
   topCluster: string;
   onTrack: boolean;
 };
 
-function getDgClusterRows(areaId: string): ClusterEngagementRow[] {
-  return getClusterEngagementRows({ level: "area", id: areaId }, PLANS_PER_DG);
-}
-
-export function getDgSummaryRows(): DgSummaryRow[] {
-  return PANVEL_CLUSTER_DGS.map((dg) => {
-    const rows = getDgClusterRows(dg.areaId);
-    const totalPlans = rows.reduce((s, r) => s + r.plans, 0);
-    const totalExecuted = rows.reduce((s, r) => s + r.executed, 0);
+/** DG comparison rows, scoped to the given areas (defaults to the ASM's whole 4-DG territory). */
+export function getDgSummaryRows(areaIds: string[] = ALL_ASM_AREA_IDS): DgSummaryRow[] {
+  return dgsForAreaIds(areaIds).map((dg) => {
+    const plans = getDgMonthlyPlans(dg).filter((p) => p.planned);
+    const totalPlans = plans.length;
+    const totalExecuted = plans.filter((p) => p.executed).length;
     const avgExecutionPct = totalPlans > 0 ? Math.round((totalExecuted / totalPlans) * 10000) / 100 : 0;
-    const onTrackCount = rows.filter((r) => r.onTrack).length;
-    const behindCount = rows.length - onTrackCount;
     return {
       dgId: dg.id,
       dgName: dg.name,
@@ -44,10 +84,8 @@ export function getDgSummaryRows(): DgSummaryRow[] {
       totalPlans,
       totalExecuted,
       avgExecutionPct,
-      onTrackCount,
-      behindCount,
-      topCluster: rows[0]?.name ?? "-",
-      onTrack: avgExecutionPct >= 40,
+      topCluster: plans[0]?.name ?? "-",
+      onTrack: totalPlans > 0 && avgExecutionPct >= 40,
     };
   });
 }
@@ -60,27 +98,41 @@ export type TerritoryClusterRow = {
   executed: number;
   pct: number;
   onTrack: boolean;
+  pctDgs: number; // share of the scoped DGs who planned this cluster this month
 };
 
 /**
- * Territory-wide cluster table: the literal sum of all 4 DGs' own
- * per-cluster rows, so it can never disagree with the DG comparison table
- * shown above it on the same page.
+ * Cluster table scoped to the given areas — the literal sum of those DGs'
+ * own monthly plans, so it can never disagree with the DG comparison table
+ * shown alongside it. Only clusters with at least one plan appear (a
+ * cluster nobody planned isn't part of "what are we engaging on").
  */
-export function getTerritoryClusterRows(): TerritoryClusterRow[] {
+export function getTerritoryClusterRows(areaIds: string[] = ALL_ASM_AREA_IDS): TerritoryClusterRow[] {
+  const dgs = dgsForAreaIds(areaIds);
   const byCluster = new Map<string, { name: string; quadrant: QuadrantKey; plans: number; executed: number }>();
-  for (const dg of PANVEL_CLUSTER_DGS) {
-    for (const r of getDgClusterRows(dg.areaId)) {
-      const cur = byCluster.get(r.clusterId) ?? { name: r.name, quadrant: r.quadrant, plans: 0, executed: 0 };
-      cur.plans += r.plans;
-      cur.executed += r.executed;
-      byCluster.set(r.clusterId, cur);
+  for (const dg of dgs) {
+    for (const p of getDgMonthlyPlans(dg)) {
+      if (!p.planned) continue;
+      const cur = byCluster.get(p.clusterId) ?? { name: p.name, quadrant: p.quadrant, plans: 0, executed: 0 };
+      cur.plans += 1;
+      if (p.executed) cur.executed += 1;
+      byCluster.set(p.clusterId, cur);
     }
   }
+  const totalDgs = dgs.length || 1;
   return Array.from(byCluster.entries())
     .map(([clusterId, v]) => {
       const pct = v.plans > 0 ? Math.round((v.executed / v.plans) * 10000) / 100 : 0;
-      return { clusterId, name: v.name, quadrant: v.quadrant, plans: v.plans, executed: v.executed, pct, onTrack: pct >= 40 };
+      return {
+        clusterId,
+        name: v.name,
+        quadrant: v.quadrant,
+        plans: v.plans,
+        executed: v.executed,
+        pct,
+        onTrack: pct >= 40,
+        pctDgs: Math.round((v.plans / totalDgs) * 100),
+      };
     })
     .sort((a, b) => b.plans - a.plans);
 }

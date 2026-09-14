@@ -1,26 +1,29 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AsmLayout } from "@/components/asm/AsmLayout";
+import { AsmAreaFilter, AsmLayout } from "@/components/asm/AsmLayout";
 import { QuadrantTypeBadge } from "@/components/leadership/LeadershipLayout";
-import { getDgSummaryRows, getTerritoryClusterRows } from "@/lib/asmPerformance";
+import { MAX_PLANS_PER_DG_PER_MONTH, getDgSummaryRows, getTerritoryClusterRows } from "@/lib/asmPerformance";
+import { useAsmAreaIds } from "@/store/asmStore";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/asm-analytics/dgs")({
+export const Route = createFileRoute("/asm-analytics/execution")({
   head: () => ({
     meta: [
-      { title: "My DGs — ASM Analytics" },
-      { name: "description", content: "Are my DGs targeting the right clusters and executing well?" },
+      { title: "Strategy & Execution — ASM Analytics" },
+      { name: "description", content: "Are we engaging enough with the markets and executing our strategies?" },
     ],
   }),
-  component: MyDgsPage,
+  component: AsmExecutionPage,
 });
 
-function MyDgsPage() {
-  const dgRows = getDgSummaryRows();
-  const clusterRows = getTerritoryClusterRows().slice(0, 10);
+function AsmExecutionPage() {
+  const areaIds = useAsmAreaIds();
+  const dgRows = getDgSummaryRows(areaIds);
+  const clusterRows = getTerritoryClusterRows(areaIds).slice(0, 10);
 
   const onTrackDgs = dgRows.filter((d) => d.onTrack).length;
   const behindDgs = dgRows.length - onTrackDgs;
-  const avgExecution = Math.round(dgRows.reduce((s, d) => s + d.avgExecutionPct, 0) / (dgRows.length || 1));
+  const avgExecution =
+    dgRows.length > 0 ? Math.round(dgRows.reduce((s, d) => s + d.avgExecutionPct, 0) / dgRows.length) : 0;
 
   const behindHighPotentialCount = clusterRows.filter(
     (r) => !r.onTrack && (r.quadrant === "HH" || r.quadrant === "HL"),
@@ -28,11 +31,15 @@ function MyDgsPage() {
 
   return (
     <AsmLayout>
-      <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">My DGs</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Comparing engagement-plan volume and execution across your 4 DGs.
-        </p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Strategy & Execution Level</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Tracking whether my DGs' plans are converting into action. Max {MAX_PLANS_PER_DG_PER_MONTH} active
+            clusters per DG per month.
+          </p>
+        </div>
+        <AsmAreaFilter />
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-4">
@@ -84,13 +91,13 @@ function MyDgsPage() {
           </table>
         </div>
         <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-          Insight: {behindDgs} of your {dgRows.length} DGs are behind plan.
+          Insight: {behindDgs} of my {dgRows.length} DGs are behind plan.
         </p>
       </div>
 
       <div className="rounded-2xl border border-border bg-card shadow-sm">
         <div className="border-b border-border px-4 py-3">
-          <h2 className="font-display text-base font-bold text-foreground">Cluster execution status — whole territory</h2>
+          <h2 className="font-display text-base font-bold text-foreground">Cluster execution status</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full table-fixed text-left text-sm">
@@ -136,16 +143,25 @@ function MyDgsPage() {
                   </td>
                 </tr>
               ))}
+              {clusterRows.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">
+                    No engagement plans logged this month.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
-        <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-          Insight: {clusterRows.filter((r) => !r.onTrack).length} of the {clusterRows.length} most-engaged clusters
-          are behind plan
-          {behindHighPotentialCount > 0 &&
-            `, including ${behindHighPotentialCount} high potential ${behindHighPotentialCount === 1 ? "one" : "ones"}`}
-          .
-        </p>
+        {clusterRows.length > 0 && (
+          <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
+            Insight: {clusterRows.filter((r) => !r.onTrack).length} of the {clusterRows.length} most-engaged clusters
+            are behind plan
+            {behindHighPotentialCount > 0 &&
+              `, including ${behindHighPotentialCount} high potential ${behindHighPotentialCount === 1 ? "one" : "ones"}`}
+            .
+          </p>
+        )}
       </div>
     </AsmLayout>
   );

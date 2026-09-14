@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { AsmLayout } from "@/components/asm/AsmLayout";
+import { AsmAreaFilter, AsmLayout } from "@/components/asm/AsmLayout";
 import { QuadrantTypeBadge } from "@/components/leadership/LeadershipLayout";
-import { ASM_GEO } from "@/data/geography";
 import { buildOverallPenetrationTrend, buildPenetrationTrend, getPenetrationRows } from "@/lib/dgPerformance";
+import { useAsmGeo } from "@/store/asmStore";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/asm-analytics/penetration")({
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/asm-analytics/penetration")({
 });
 
 function AsmPenetrationPage() {
-  const geo = ASM_GEO;
+  const geo = useAsmGeo();
   const rows = getPenetrationRows(geo).sort((a, b) => b.prospects - a.prospects);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -44,9 +44,12 @@ function AsmPenetrationPage() {
 
   return (
     <AsmLayout>
-      <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">Market Penetration by Cluster</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Click any cluster row to see its month-on-month trend.</p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Market Penetration by Cluster</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Click any cluster row to see its month-on-month trend.</p>
+        </div>
+        <AsmAreaFilter />
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
