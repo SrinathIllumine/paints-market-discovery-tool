@@ -10,6 +10,21 @@ import { type QuadrantKey, getClusterScoresForGeo, seededRandom } from "@/lib/cl
 export const MAX_CLUSTERS_PER_DG_PER_MONTH = 1;
 export const ALL_ASM_AREA_IDS = PANVEL_ASM.areaIds;
 
+/**
+ * Scripted plan/execution outcome for each DG's one targeted cluster this
+ * month — a deliberate spread (one fully on track, two stalling mid-way,
+ * one fully behind) for the ASM demo narrative, rather than letting the
+ * seeded execution-rate formula land wherever it happens to. Which cluster
+ * each DG targets is still picked by the real ease/access/competitive
+ * ranking below — only the plan count and how many were executed are fixed.
+ */
+const DG_EXECUTION_OVERRIDE: Record<string, { plans: number; executed: number }> = {
+  "dg-sunil": { plans: 2, executed: 2 }, // top performer — fully on track
+  "dg-priya": { plans: 3, executed: 1 }, // middle — stalling, behind
+  "dg-anand": { plans: 3, executed: 1 }, // middle — stalling, behind
+  "dg-sonal": { plans: 2, executed: 0 }, // bottom — fully behind
+};
+
 export type DgClusterPlan = {
   clusterId: string;
   name: string;
@@ -36,13 +51,17 @@ export function getDgMonthlyPlans(dg: DgInfo): DgClusterPlan[] {
     return { clusterId: c.id, name: c.name, quadrant: scores.quadrant, scores, rank: attractiveness + (pickSeed - 0.5) * 3 };
   }).sort((a, b) => b.rank - a.rank);
 
-  const diligenceSeed = seededRandom(`${dg.id}|diligence`);
-  const hasActiveTarget = diligenceSeed >= 0.15; // most DGs are actively targeting a cluster this month
-  const targetClusterId = hasActiveTarget ? scored[0].clusterId : null;
+  const targetClusterId = scored[0].clusterId; // every DG has one active target this month
+
+  const override = DG_EXECUTION_OVERRIDE[dg.id];
 
   return scored.map((s) => {
     if (s.clusterId !== targetClusterId) {
       return { clusterId: s.clusterId, name: s.name, quadrant: s.quadrant, plans: 0, executed: 0 };
+    }
+
+    if (override) {
+      return { clusterId: s.clusterId, name: s.name, quadrant: s.quadrant, plans: override.plans, executed: override.executed };
     }
 
     const countSeed = seededRandom(`${dg.id}|${s.clusterId}|plancount`);
@@ -142,4 +161,28 @@ export function getTerritoryClusterRows(areaIds: string[] = ALL_ASM_AREA_IDS): T
       };
     })
     .sort((a, b) => b.plans - a.plans);
+}
+
+const OVERALL_TREND_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May"];
+
+/** The territory's "Overall Penetration" figure at the end of the Jan-May window — the KPI tile and the trend chart's last point always agree, since both read this constant. */
+export const ASM_OVERALL_PENETRATION_PCT = 22;
+const ASM_OVERALL_PENETRATION_START_PCT = 10;
+
+/**
+ * Scripted Jan-May climb for the territory's "Overall Penetration" default
+ * view — rising steadily from 10% to 22% so the chart tells a clear
+ * improving-penetration story, with a small seeded wiggle on the interior
+ * months so it isn't a perfectly straight line.
+ */
+export function buildAsmOverallPenetrationTrend() {
+  return OVERALL_TREND_MONTHS.map((month, i) => {
+    if (i === 0) return { month, pct: ASM_OVERALL_PENETRATION_START_PCT };
+    if (i === OVERALL_TREND_MONTHS.length - 1) return { month, pct: ASM_OVERALL_PENETRATION_PCT };
+    const t = i / (OVERALL_TREND_MONTHS.length - 1);
+    const linear = ASM_OVERALL_PENETRATION_START_PCT + (ASM_OVERALL_PENETRATION_PCT - ASM_OVERALL_PENETRATION_START_PCT) * t;
+    const seed = seededRandom(`asm-overall-trend|${i}`);
+    const noise = (seed - 0.5) * 2;
+    return { month, pct: Math.round(linear + noise) };
+  });
 }

@@ -3,7 +3,8 @@ import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AsmAreaFilter, AsmLayout } from "@/components/asm/AsmLayout";
 import { QuadrantTypeBadge } from "@/components/leadership/LeadershipLayout";
-import { buildOverallPenetrationTrend, buildPenetrationTrend, getPenetrationRows } from "@/lib/dgPerformance";
+import { ASM_OVERALL_PENETRATION_PCT, buildAsmOverallPenetrationTrend } from "@/lib/asmPerformance";
+import { buildPenetrationTrend, getPenetrationRows } from "@/lib/dgPerformance";
 import { useAsmGeo } from "@/store/asmStore";
 import { cn } from "@/lib/utils";
 
@@ -26,11 +27,11 @@ function AsmPenetrationPage() {
 
   const totalProspects = rows.reduce((s, r) => s + r.prospects, 0);
   const totalCustomers = rows.reduce((s, r) => s + r.customers, 0);
-  const overallPct = totalProspects > 0 ? Math.round((totalCustomers / totalProspects) * 100) : 0;
+  const overallPct = ASM_OVERALL_PENETRATION_PCT;
 
   const trend = selected
     ? buildPenetrationTrend(selected.clusterId, geo, selected.pct, selected.mom)
-    : buildOverallPenetrationTrend(geo, rows);
+    : buildAsmOverallPenetrationTrend();
   const chartTitle = selected ? selected.name : "Overall Penetration";
   const chartPct = selected ? selected.pct : overallPct;
   const chartMom = selected ? selected.mom : trend[trend.length - 1].pct - trend[trend.length - 2].pct;
