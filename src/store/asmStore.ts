@@ -3,7 +3,7 @@
 // Unlike Leadership Analytics' filter, every option here is selectable —
 // these are all the ASM's own, already-built-out areas, nothing locked.
 import { create } from "zustand";
-import { ASM_GEO, PANVEL_ASM, type GeoRef } from "@/data/geography";
+import { ASM_GEO, PANVEL_ASM, getArea, type GeoRef } from "@/data/geography";
 
 export const ALL_ASM_AREAS_ID = "all";
 
@@ -26,4 +26,11 @@ export function useAsmGeo(): GeoRef {
 export function useAsmAreaIds(): string[] {
   const areaId = useAsmStore((s) => s.areaId);
   return areaId === ALL_ASM_AREAS_ID ? PANVEL_ASM.areaIds : [areaId];
+}
+
+/** Short scope label for page headers — "Raigad territory" for the whole territory, or "{Area} area" once a single area is filtered in. */
+export function useAsmScopeLabel(): string {
+  const areaId = useAsmStore((s) => s.areaId);
+  if (areaId === ALL_ASM_AREAS_ID) return "Raigad territory";
+  return `${getArea(areaId)?.name ?? areaId} area`;
 }

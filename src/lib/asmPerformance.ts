@@ -163,26 +163,5 @@ export function getTerritoryClusterRows(areaIds: string[] = ALL_ASM_AREA_IDS): T
     .sort((a, b) => b.plans - a.plans);
 }
 
-const OVERALL_TREND_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May"];
-
-/** The territory's "Overall Penetration" figure at the end of the Jan-May window — the KPI tile and the trend chart's last point always agree, since both read this constant. */
+/** The territory's "Overall Penetration" figure shown on the KPI tile. */
 export const ASM_OVERALL_PENETRATION_PCT = 22;
-const ASM_OVERALL_PENETRATION_START_PCT = 10;
-
-/**
- * Scripted Jan-May climb for the territory's "Overall Penetration" default
- * view — rising steadily from 10% to 22% so the chart tells a clear
- * improving-penetration story, with a small seeded wiggle on the interior
- * months so it isn't a perfectly straight line.
- */
-export function buildAsmOverallPenetrationTrend() {
-  return OVERALL_TREND_MONTHS.map((month, i) => {
-    if (i === 0) return { month, pct: ASM_OVERALL_PENETRATION_START_PCT };
-    if (i === OVERALL_TREND_MONTHS.length - 1) return { month, pct: ASM_OVERALL_PENETRATION_PCT };
-    const t = i / (OVERALL_TREND_MONTHS.length - 1);
-    const linear = ASM_OVERALL_PENETRATION_START_PCT + (ASM_OVERALL_PENETRATION_PCT - ASM_OVERALL_PENETRATION_START_PCT) * t;
-    const seed = seededRandom(`asm-overall-trend|${i}`);
-    const noise = (seed - 0.5) * 2;
-    return { month, pct: Math.round(linear + noise) };
-  });
-}

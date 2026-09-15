@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { AsmAreaFilter, AsmLayout } from "@/components/asm/AsmLayout";
 import { PotentialAccessMatrix } from "@/components/shared/PotentialAccessMatrix";
-import { useAsmGeo } from "@/store/asmStore";
+import { useAsmGeo, useAsmScopeLabel } from "@/store/asmStore";
 
 export const Route = createFileRoute("/asm-analytics/")({
   head: () => ({
@@ -16,11 +16,12 @@ export const Route = createFileRoute("/asm-analytics/")({
 
 function AsmPriorityMatrixPage() {
   const geo = useAsmGeo();
+  const scopeLabel = useAsmScopeLabel();
 
   return (
     <AsmLayout>
       <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">Priority Matrix</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground">Priority Matrix: {scopeLabel}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Which are the top market clusters that can improve our market penetration?
         </p>
