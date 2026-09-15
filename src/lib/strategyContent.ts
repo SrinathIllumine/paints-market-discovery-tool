@@ -1,6 +1,5 @@
 import { getTopics } from "@/data/eventTopics";
 import { getDominantContractors } from "@/lib/clusterScoring";
-import { seededRandom } from "@/lib/clusterGenerator";
 
 export type ConnectStrategy = "BRAND" | "CONTRACTOR" | "OUTREACH" | "D2C" | "RETAILER" | "INFLUENCER";
 
@@ -486,24 +485,6 @@ export function getCustomerGroups(clusterId: string): CustomerGroup[] {
       { id: "other", label: "Other / niche", pct: 10 },
     ]
   );
-}
-
-/**
- * Which customer group a specific prospect belongs to — deterministic per
- * prospect (stable across reloads) and weighted by each group's real share
- * of the cluster, so a cluster with a 70% "small establishments" segment
- * shows most of its prospects landing there, not an even 1-in-N split.
- */
-export function getProspectCustomerGroup(clusterId: string, prospectId: string): CustomerGroup {
-  const groups = getCustomerGroups(clusterId);
-  const totalPct = groups.reduce((sum, g) => sum + g.pct, 0) || 1;
-  const roll = seededRandom(`${clusterId}|${prospectId}|customer-group`) * totalPct;
-  let cumulative = 0;
-  for (const g of groups) {
-    cumulative += g.pct;
-    if (roll <= cumulative) return g;
-  }
-  return groups[groups.length - 1];
 }
 
 const VALUE_PROPS_BY_GROUP: Record<string, Record<string, string[]>> = {

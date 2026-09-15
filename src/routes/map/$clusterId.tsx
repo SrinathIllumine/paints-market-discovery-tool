@@ -18,7 +18,6 @@ import { searchPlacesForCluster } from "@/lib/places.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { Plus, Loader2, MapPin, Home, FileDown, Info } from "lucide-react";
 import { generateClusterReportPdf } from "@/lib/clusterReport";
-import { getProspectCustomerGroup } from "@/lib/strategyContent";
 import {
   computeClusterScores,
   getResearchedRevenuePotentialScore,
@@ -322,12 +321,7 @@ function ClusterDetailScreen() {
                             {r.prospects.map((p) => (
                               <li key={p.id} className="py-2.5">
                                 <p className="truncate text-sm font-medium">{p.name}</p>
-                                <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                                  {p.locality && <p className="truncate text-xs text-muted-foreground">{p.locality}</p>}
-                                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                                    {getProspectCustomerGroup(clusterId, p.id).label}
-                                  </span>
-                                </div>
+                                {p.locality && <p className="truncate text-xs text-muted-foreground">{p.locality}</p>}
                               </li>
                             ))}
                           </ul>
