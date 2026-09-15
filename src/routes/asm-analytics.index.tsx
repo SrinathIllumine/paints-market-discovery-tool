@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
 import { AsmAreaFilter, AsmLayout } from "@/components/asm/AsmLayout";
 import { PotentialAccessMatrix } from "@/components/shared/PotentialAccessMatrix";
 import { useAsmGeo } from "@/store/asmStore";
@@ -26,6 +27,13 @@ function AsmPriorityMatrixPage() {
       </div>
 
       <PotentialAccessMatrix geo={geo} headerRight={<AsmAreaFilter />} />
+
+      <Link
+        to="/asm-analytics/clusters"
+        className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline"
+      >
+        See cluster-wise market overview <ArrowRight className="h-4 w-4" />
+      </Link>
     </AsmLayout>
   );
 }

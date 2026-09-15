@@ -18,6 +18,7 @@ import { Route as MarketPotentialRouteImport } from './routes/market-potential'
 import { Route as NetworkRouteImport } from './routes/network'
 import { Route as SalesEnablementRouteImport } from './routes/sales-enablement'
 import { Route as AsmAnalyticsIndexRouteImport } from './routes/asm-analytics.index'
+import { Route as AsmAnalyticsClustersRouteImport } from './routes/asm-analytics.clusters'
 import { Route as AsmAnalyticsEngagementRouteImport } from './routes/asm-analytics.engagement'
 import { Route as AsmAnalyticsExecutionRouteImport } from './routes/asm-analytics.execution'
 import { Route as AsmAnalyticsPenetrationRouteImport } from './routes/asm-analytics.penetration'
@@ -81,6 +82,11 @@ const SalesEnablementRoute = SalesEnablementRouteImport.update({
 const AsmAnalyticsIndexRoute = AsmAnalyticsIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AsmAnalyticsRoute,
+} as any)
+const AsmAnalyticsClustersRoute = AsmAnalyticsClustersRouteImport.update({
+  id: '/clusters',
+  path: '/clusters',
   getParentRoute: () => AsmAnalyticsRoute,
 } as any)
 const AsmAnalyticsEngagementRoute = AsmAnalyticsEngagementRouteImport.update({
@@ -190,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/market-potential': typeof MarketPotentialRoute
   '/network': typeof NetworkRoute
   '/sales-enablement': typeof SalesEnablementRouteWithChildren
+  '/asm-analytics/clusters': typeof AsmAnalyticsClustersRoute
   '/asm-analytics/engagement': typeof AsmAnalyticsEngagementRoute
   '/asm-analytics/execution': typeof AsmAnalyticsExecutionRoute
   '/asm-analytics/penetration': typeof AsmAnalyticsPenetrationRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/market-discovery': typeof MarketDiscoveryRoute
   '/market-potential': typeof MarketPotentialRoute
   '/network': typeof NetworkRoute
+  '/asm-analytics/clusters': typeof AsmAnalyticsClustersRoute
   '/asm-analytics/engagement': typeof AsmAnalyticsEngagementRoute
   '/asm-analytics/execution': typeof AsmAnalyticsExecutionRoute
   '/asm-analytics/penetration': typeof AsmAnalyticsPenetrationRoute
@@ -247,6 +255,7 @@ export interface FileRoutesById {
   '/market-potential': typeof MarketPotentialRoute
   '/network': typeof NetworkRoute
   '/sales-enablement': typeof SalesEnablementRouteWithChildren
+  '/asm-analytics/clusters': typeof AsmAnalyticsClustersRoute
   '/asm-analytics/engagement': typeof AsmAnalyticsEngagementRoute
   '/asm-analytics/execution': typeof AsmAnalyticsExecutionRoute
   '/asm-analytics/penetration': typeof AsmAnalyticsPenetrationRoute
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/market-potential'
     | '/network'
     | '/sales-enablement'
+    | '/asm-analytics/clusters'
     | '/asm-analytics/engagement'
     | '/asm-analytics/execution'
     | '/asm-analytics/penetration'
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/market-discovery'
     | '/market-potential'
     | '/network'
+    | '/asm-analytics/clusters'
     | '/asm-analytics/engagement'
     | '/asm-analytics/execution'
     | '/asm-analytics/penetration'
@@ -335,6 +346,7 @@ export interface FileRouteTypes {
     | '/market-potential'
     | '/network'
     | '/sales-enablement'
+    | '/asm-analytics/clusters'
     | '/asm-analytics/engagement'
     | '/asm-analytics/execution'
     | '/asm-analytics/penetration'
@@ -437,6 +449,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/asm-analytics/'
       preLoaderRoute: typeof AsmAnalyticsIndexRouteImport
+      parentRoute: typeof AsmAnalyticsRoute
+    }
+    '/asm-analytics/clusters': {
+      id: '/asm-analytics/clusters'
+      path: '/clusters'
+      fullPath: '/asm-analytics/clusters'
+      preLoaderRoute: typeof AsmAnalyticsClustersRouteImport
       parentRoute: typeof AsmAnalyticsRoute
     }
     '/asm-analytics/engagement': {
@@ -576,6 +595,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AsmAnalyticsRouteChildren {
+  AsmAnalyticsClustersRoute: typeof AsmAnalyticsClustersRoute
   AsmAnalyticsEngagementRoute: typeof AsmAnalyticsEngagementRoute
   AsmAnalyticsExecutionRoute: typeof AsmAnalyticsExecutionRoute
   AsmAnalyticsPenetrationRoute: typeof AsmAnalyticsPenetrationRoute
@@ -583,6 +603,7 @@ interface AsmAnalyticsRouteChildren {
 }
 
 const AsmAnalyticsRouteChildren: AsmAnalyticsRouteChildren = {
+  AsmAnalyticsClustersRoute: AsmAnalyticsClustersRoute,
   AsmAnalyticsEngagementRoute: AsmAnalyticsEngagementRoute,
   AsmAnalyticsExecutionRoute: AsmAnalyticsExecutionRoute,
   AsmAnalyticsPenetrationRoute: AsmAnalyticsPenetrationRoute,
