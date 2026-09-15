@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AsmAreaFilter, AsmLayout } from "@/components/asm/AsmLayout";
 import { MAX_CLUSTERS_PER_DG_PER_MONTH, getDgSummaryRows } from "@/lib/asmPerformance";
 import { useAsmAreaIds, useAsmScopeLabel } from "@/store/asmStore";
@@ -64,7 +64,19 @@ function AsmExecutionPage() {
             <tbody>
               {dgRows.map((d) => (
                 <tr key={d.dgId} className="border-t border-border">
-                  <td className="px-4 py-2 font-medium text-foreground">{d.dgName}</td>
+                  <td className="px-4 py-2 font-medium text-foreground">
+                    {d.targetClusterId ? (
+                      <Link
+                        to="/asm-analytics/plan/$clusterId"
+                        params={{ clusterId: d.targetClusterId }}
+                        className="text-navy hover:underline"
+                      >
+                        {d.dgName}
+                      </Link>
+                    ) : (
+                      d.dgName
+                    )}
+                  </td>
                   <td className="px-4 py-2 text-xs text-muted-foreground">{d.areaName}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{d.totalPlans}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{d.totalExecuted}</td>

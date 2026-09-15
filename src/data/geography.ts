@@ -47,10 +47,11 @@ export type AreaInfo = {
   shareOfState: number;
 };
 
-// 10 Maharashtra sales areas; only Panvel is interactive. Panvel + 3 siblings
-// (Khopoli, Karjat, Pen) form one ASM's territory (see PANVEL_ASM below) so
-// DG-comparison tables have real contrast; the remaining 6 areas exist only
-// to make state-level rollups add up to something realistic.
+// 11 Maharashtra sales areas; only Panvel is interactive. Panvel + 6 siblings
+// (Khopoli, Karjat, Pen, Alibag, Uran, Roha — all real Raigad district
+// talukas) form one ASM's territory (see PANVEL_ASM below) so DG-comparison
+// tables have real contrast; the remaining 4 areas exist only to make
+// state-level rollups add up to something realistic.
 export const MAHARASHTRA_AREAS: AreaInfo[] = [
   { id: "panvel", name: "Panvel", stateId: "maharashtra", selectable: true, shareOfState: 0.018 },
   { id: "khopoli", name: "Khopoli", stateId: "maharashtra", selectable: false, shareOfState: 0.012 },
@@ -58,6 +59,7 @@ export const MAHARASHTRA_AREAS: AreaInfo[] = [
   { id: "pen", name: "Pen", stateId: "maharashtra", selectable: false, shareOfState: 0.009 },
   { id: "alibag", name: "Alibag", stateId: "maharashtra", selectable: false, shareOfState: 0.011 },
   { id: "uran", name: "Uran", stateId: "maharashtra", selectable: false, shareOfState: 0.008 },
+  { id: "roha", name: "Roha", stateId: "maharashtra", selectable: false, shareOfState: 0.007 },
   { id: "kalyan", name: "Kalyan", stateId: "maharashtra", selectable: false, shareOfState: 0.16 },
   { id: "thane-rural", name: "Thane Rural", stateId: "maharashtra", selectable: false, shareOfState: 0.09 },
   { id: "pune-rural", name: "Pune Rural", stateId: "maharashtra", selectable: false, shareOfState: 0.22 },
@@ -80,12 +82,12 @@ export type AsmInfo = { id: string; name: string; areaIds: string[] };
 export type DgInfo = { id: string; name: string; areaId: string; asmId: string };
 
 // The only named ASM/DG roster in the system — Panvel's ASM, covering Panvel
-// plus the 3 sibling areas. Sunil Kumar is Panvel's DG (matches the Market
+// plus 6 sibling areas. Sunil Kumar is Panvel's DG (matches the Market
 // Discovery System persona used elsewhere in the app).
 export const PANVEL_ASM: AsmInfo = {
   id: "asm-raigad",
   name: "Vikram Desai",
-  areaIds: ["panvel", "khopoli", "karjat", "pen"],
+  areaIds: ["panvel", "khopoli", "karjat", "pen", "alibag", "uran", "roha"],
 };
 
 export const PANVEL_CLUSTER_DGS: DgInfo[] = [
@@ -93,13 +95,16 @@ export const PANVEL_CLUSTER_DGS: DgInfo[] = [
   { id: "dg-priya", name: "Priya Mehta", areaId: "khopoli", asmId: "asm-raigad" },
   { id: "dg-anand", name: "Anand Joshi", areaId: "karjat", asmId: "asm-raigad" },
   { id: "dg-sonal", name: "Sonal Patkar", areaId: "pen", asmId: "asm-raigad" },
+  { id: "dg-rahul", name: "Rahul Deshmukh", areaId: "alibag", asmId: "asm-raigad" },
+  { id: "dg-neha", name: "Neha Kulkarni", areaId: "uran", asmId: "asm-raigad" },
+  { id: "dg-amit", name: "Amit Rane", areaId: "roha", asmId: "asm-raigad" },
 ];
 
 export function getDgForArea(areaId: string): DgInfo | undefined {
   return PANVEL_CLUSTER_DGS.find((d) => d.areaId === areaId);
 }
 
-/** GeoRef for Panvel's ASM territory (Panvel + Khopoli + Karjat + Pen combined) — used by ASM Analytics. */
+/** GeoRef for Panvel's ASM territory (all 7 areas combined) — used by ASM Analytics. */
 export const ASM_GEO: GeoRef = { level: "asm", id: PANVEL_ASM.id };
 
 /** Combined national-population-share weight of an ASM's whole territory (sum of its areas' shares), for unit-count scaling. */

@@ -144,6 +144,45 @@ const GEO_DENSITY_PROFILE: Record<string, Partial<Record<ClusterCategory, number
     education: 0.15,
     healthcare: 0.3,
   },
+  // Alibag — beach-tourism and second-home belt for Mumbai weekenders.
+  "area:alibag": {
+    hospitality: 2.6,
+    "residential-urban": 1.7,
+    "local-retail": 1.1,
+    "highway-transit": 0.9,
+    "migrant-hub": 0.6,
+    religious: 0.6,
+    "auto-retail": 0.5,
+    "industrial-logistics": 0.2,
+    education: 0.4,
+    healthcare: 0.4,
+  },
+  // Uran — JNPT port town, even more logistics-dense than Panvel.
+  "area:uran": {
+    "industrial-logistics": 3.2,
+    "migrant-hub": 1.6,
+    "highway-transit": 1.5,
+    "residential-urban": 0.7,
+    hospitality: 0.5,
+    "local-retail": 0.55,
+    "auto-retail": 0.45,
+    religious: 0.4,
+    education: 0.4,
+    healthcare: 0.4,
+  },
+  // Roha — MIDC Roha chemical-industrial belt, otherwise rural/agri.
+  "area:roha": {
+    "industrial-logistics": 2.3,
+    "local-retail": 1.0,
+    religious: 1.1,
+    "highway-transit": 0.8,
+    "migrant-hub": 0.7,
+    "residential-urban": 0.4,
+    hospitality: 0.45,
+    "auto-retail": 0.4,
+    education: 0.4,
+    healthcare: 0.35,
+  },
 };
 
 /** Blended density factor for an "asm" territory — the weighted average of its component areas' profiles, so the ASM's own view can never disagree with what each of its DGs' own area views show. */

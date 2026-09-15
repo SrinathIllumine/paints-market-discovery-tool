@@ -70,7 +70,9 @@ export function AsmLayout({ children }: { children: ReactNode }) {
           <h1 className="font-display text-lg font-bold">Paints</h1>
           <p className="mt-0.5 text-xs text-white/60">ASM Analytics</p>
           <p className="mt-2 text-sm font-semibold">Vikram Desai</p>
-          <p className="text-xs text-white/50">Raigad ASM Territory · Panvel, Khopoli, Karjat, Pen</p>
+          <p className="text-xs text-white/50">
+            Raigad ASM Territory · Panvel, Khopoli, Karjat, Pen, Alibag, Uran, Roha
+          </p>
         </div>
         <p className="px-5 pt-4 text-[10px] font-semibold uppercase tracking-wide text-white/40">
           Key questions for my territory
