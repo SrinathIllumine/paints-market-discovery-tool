@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { LeadershipLayout, LeadershipScopeFilter } from "@/components/leadership/LeadershipLayout";
 import { PotentialAccessMatrix } from "@/components/shared/PotentialAccessMatrix";
-import { useLeadershipGeo } from "@/store/leadershipStore";
+import { useLeadershipGeo, useLeadershipScopeLabel } from "@/store/leadershipStore";
 
 export const Route = createFileRoute("/leadership/")({
   head: () => ({
@@ -16,11 +16,12 @@ export const Route = createFileRoute("/leadership/")({
 
 function PriorityMatrixPage() {
   const geo = useLeadershipGeo();
+  const scopeLabel = useLeadershipScopeLabel();
 
   return (
     <LeadershipLayout>
       <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">Priority Matrix</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground">Priority Matrix: {scopeLabel}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{"\n"}</p>
       </div>
 

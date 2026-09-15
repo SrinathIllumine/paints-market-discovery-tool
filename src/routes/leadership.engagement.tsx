@@ -3,7 +3,7 @@ import { LeadershipLayout, LeadershipScopeFilter } from "@/components/leadership
 import { CLUSTERS } from "@/data/clusters";
 import { getAllClusterScoresForGeo } from "@/lib/clusterGenerator";
 import { formatCr } from "@/lib/leadershipAnalytics";
-import { useLeadershipGeo } from "@/store/leadershipStore";
+import { useLeadershipGeo, useLeadershipScopeLabel } from "@/store/leadershipStore";
 
 export const Route = createFileRoute("/leadership/engagement")({
   head: () => ({
@@ -17,6 +17,7 @@ export const Route = createFileRoute("/leadership/engagement")({
 
 function EngagementFocusPage() {
   const geo = useLeadershipGeo();
+  const scopeLabel = useLeadershipScopeLabel();
 
   const allScores = getAllClusterScoresForGeo(geo);
   const rows = CLUSTERS.map((c) => {
@@ -37,7 +38,7 @@ function EngagementFocusPage() {
   return (
     <LeadershipLayout>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <h1 className="font-display text-2xl font-bold text-foreground">Cluster Engagement Focus</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground">Cluster Engagement Focus: {scopeLabel}</h1>
         <LeadershipScopeFilter />
       </div>
 

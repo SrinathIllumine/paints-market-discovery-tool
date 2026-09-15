@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LeadershipLayout, LeadershipScopeFilter, QuadrantTypeBadge } from "@/components/leadership/LeadershipLayout";
 import { getClusterEngagementRows } from "@/lib/dgPerformance";
-import { useLeadershipGeo } from "@/store/leadershipStore";
+import { useLeadershipGeo, useLeadershipScopeLabel } from "@/store/leadershipStore";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/leadership/execution")({
@@ -16,6 +16,7 @@ export const Route = createFileRoute("/leadership/execution")({
 
 function ExecutionPage() {
   const geo = useLeadershipGeo();
+  const scopeLabel = useLeadershipScopeLabel();
   const rows = getClusterEngagementRows(geo).slice(0, 10);
 
   const onTrackCount = rows.filter((r) => r.onTrack).length;
@@ -29,7 +30,7 @@ function ExecutionPage() {
     <LeadershipLayout>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Strategy & Execution Level</h1>
+          <h1 className="font-display text-2xl font-bold text-foreground">Strategy & Execution Level: {scopeLabel}</h1>
           <p className="mt-1 text-sm text-muted-foreground">Tracking whether the team's plan is converting into action.</p>
         </div>
         <LeadershipScopeFilter />

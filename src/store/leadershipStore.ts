@@ -2,7 +2,7 @@
 // DG-facing appStore (which has its own persisted-migration versioning) so
 // the two apps' state don't get entangled.
 import { create } from "zustand";
-import { NATIONAL_ID, type GeoRef, isAreaSelectable, isStateSelectable } from "@/data/geography";
+import { NATIONAL_ID, type GeoRef, getArea, getState, isAreaSelectable, isStateSelectable } from "@/data/geography";
 
 export const ALL_AREAS_ID = "all";
 
@@ -41,4 +41,13 @@ export function useLeadershipGeo(): GeoRef {
   const stateId = useLeadershipStore((s) => s.stateId);
   const areaId = useLeadershipStore((s) => s.areaId);
   return scopeToGeoRef(stateId, areaId);
+}
+
+/** Short scope label for page headers — "National Level" for the whole country, "{State} State" once a state is filtered in, or "{Area} Area" once an area within it is filtered in too. */
+export function useLeadershipScopeLabel(): string {
+  const stateId = useLeadershipStore((s) => s.stateId);
+  const areaId = useLeadershipStore((s) => s.areaId);
+  if (stateId === NATIONAL_ID) return "National Level";
+  if (areaId === ALL_AREAS_ID) return `${getState(stateId)?.name ?? stateId} State`;
+  return `${getArea(areaId)?.name ?? areaId} Area`;
 }
