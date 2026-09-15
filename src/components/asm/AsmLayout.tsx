@@ -16,20 +16,20 @@ const navItems = [
     to: "/asm-analytics" as const,
   },
   {
-    icon: ListChecks,
-    label: "Strategy & Execution",
-    sub: "Are we engaging enough with the markets and executing our strategies?",
-    to: "/asm-analytics/execution" as const,
-  },
-  {
     icon: TrendingUp,
     label: "Market Penetration",
     sub: "Is our market penetration increasing?",
     to: "/asm-analytics/penetration" as const,
   },
+  {
+    icon: ListChecks,
+    label: "Strategy & Execution",
+    sub: "Are we engaging enough with the markets and executing our strategies?",
+    to: "/asm-analytics/execution" as const,
+  },
 ];
 
-/** Area selector — my whole territory, or drill into any one of my 4 DGs' areas. Every option is selectable. */
+/** Area selector — my whole territory, or drill into any one of my 7 DGs' areas. Every option is selectable. */
 export function AsmAreaFilter({ className }: { className?: string }) {
   const areaId = useAsmStore((s) => s.areaId);
   const setArea = useAsmStore((s) => s.setArea);
