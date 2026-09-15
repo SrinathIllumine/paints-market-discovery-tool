@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { LeadershipLayout, LeadershipScopeFilter, QuadrantTypeBadge } from "@/components/leadership/LeadershipLayout";
@@ -125,16 +125,7 @@ function PenetrationPage() {
                   )}
                 >
                   <td className="px-4 py-2 tabular-nums text-muted-foreground">{i + 1}</td>
-                  <td className="px-4 py-2">
-                    <Link
-                      to="/plan/$clusterId"
-                      params={{ clusterId: r.clusterId }}
-                      onClick={(e) => e.stopPropagation()}
-                      className="font-medium text-navy hover:underline"
-                    >
-                      {r.name}
-                    </Link>
-                  </td>
+                  <td className="px-4 py-2 font-medium text-foreground">{r.name}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{r.prospects.toLocaleString("en-IN")}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{r.customers.toLocaleString("en-IN")}</td>
                   <td className="px-4 py-2 text-right font-semibold tabular-nums">{r.pct}%</td>

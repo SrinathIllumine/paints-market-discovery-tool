@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { LeadershipLayout, LeadershipScopeFilter, QuadrantTypeBadge } from "@/components/leadership/LeadershipLayout";
 import { getClusterEngagementRows } from "@/lib/dgPerformance";
 import { useLeadershipGeo } from "@/store/leadershipStore";
@@ -63,15 +63,7 @@ function ExecutionPage() {
               {rows.map((r, i) => (
                 <tr key={r.clusterId} className="border-t border-border">
                   <td className="px-4 py-2 tabular-nums text-muted-foreground">{i + 1}</td>
-                  <td className="px-4 py-2">
-                    <Link
-                      to="/plan/$clusterId"
-                      params={{ clusterId: r.clusterId }}
-                      className="font-medium text-navy hover:underline"
-                    >
-                      {r.name}
-                    </Link>
-                  </td>
+                  <td className="px-4 py-2 font-medium text-foreground">{r.name}</td>
                   <td className="px-4 py-2">
                     <QuadrantTypeBadge quadrant={r.quadrant} />
                   </td>

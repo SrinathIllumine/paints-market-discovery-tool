@@ -52,9 +52,9 @@ function ClustersOverviewPage() {
               <tr>
                 <th className="px-4 py-2">Sl. No</th>
                 <th className="px-4 py-2">Cluster</th>
-                <th className="px-4 py-2">Type</th>
                 <th className="px-4 py-2 text-right">Revenue Potential</th>
                 <th className="px-4 py-2 text-right">Access</th>
+                <th className="px-4 py-2">Type</th>
               </tr>
             </thead>
             <tbody>
@@ -62,11 +62,11 @@ function ClustersOverviewPage() {
                 <tr key={r.id} className="border-t border-border">
                   <td className="px-4 py-2 tabular-nums text-muted-foreground">{(pageSafe - 1) * PAGE_SIZE + i + 1}</td>
                   <td className="px-4 py-2 font-medium text-foreground">{r.name}</td>
+                  <td className="px-4 py-2 text-right font-semibold tabular-nums">{formatCr(r.revenuePotential)}</td>
+                  <td className="px-4 py-2 text-right text-xs text-muted-foreground">{r.access}</td>
                   <td className="px-4 py-2">
                     <QuadrantTypeBadge quadrant={r.quadrant} />
                   </td>
-                  <td className="px-4 py-2 text-right font-semibold tabular-nums">{formatCr(r.revenuePotential)}</td>
-                  <td className="px-4 py-2 text-right text-xs text-muted-foreground">{r.access}</td>
                 </tr>
               ))}
             </tbody>

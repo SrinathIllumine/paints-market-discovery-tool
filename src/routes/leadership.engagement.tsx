@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { LeadershipLayout, LeadershipScopeFilter, QuadrantTypeBadge } from "@/components/leadership/LeadershipLayout";
+import { createFileRoute } from "@tanstack/react-router";
+import { LeadershipLayout, LeadershipScopeFilter } from "@/components/leadership/LeadershipLayout";
 import { CLUSTERS } from "@/data/clusters";
 import { getAllClusterScoresForGeo } from "@/lib/clusterGenerator";
+import { formatCr } from "@/lib/leadershipAnalytics";
 import { useLeadershipGeo } from "@/store/leadershipStore";
 
 export const Route = createFileRoute("/leadership/engagement")({
@@ -21,7 +22,7 @@ function EngagementFocusPage() {
   const rows = CLUSTERS.map((c) => {
     const scores = allScores.find((s) => s.clusterId === c.id)!;
     // Focus weight proxy: how much ground-level activity (unit count) exists in the cluster.
-    return { id: c.id, name: c.name, quadrant: scores.quadrant, weight: scores.unitCount };
+    return { id: c.id, name: c.name, revenuePotential: scores.revenueAnnual, weight: scores.unitCount };
   });
 
   const totalWeight = rows.reduce((s, r) => s + r.weight, 0) || 1;
@@ -50,7 +51,7 @@ function EngagementFocusPage() {
               <tr>
                 <th className="px-4 py-2">Sl. No</th>
                 <th className="px-4 py-2">Cluster</th>
-                <th className="px-4 py-2">Type</th>
+                <th className="px-4 py-2 text-right">Revenue Potential</th>
                 <th className="px-4 py-2 text-right">% DGs</th>
               </tr>
             </thead>
@@ -58,18 +59,8 @@ function EngagementFocusPage() {
               {topRows.map((r, i) => (
                 <tr key={r.id} className="border-t border-border">
                   <td className="px-4 py-2 tabular-nums text-muted-foreground">{i + 1}</td>
-                  <td className="px-4 py-2">
-                    <Link
-                      to="/plan/$clusterId"
-                      params={{ clusterId: r.id }}
-                      className="font-medium text-navy hover:underline"
-                    >
-                      {r.name}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-2">
-                    <QuadrantTypeBadge quadrant={r.quadrant} />
-                  </td>
+                  <td className="px-4 py-2 font-medium text-foreground">{r.name}</td>
+                  <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">{formatCr(r.revenuePotential)}</td>
                   <td className="px-4 py-2 text-right font-semibold tabular-nums">{r.pctDGs}%</td>
                 </tr>
               ))}
