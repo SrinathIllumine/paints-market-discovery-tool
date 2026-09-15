@@ -36,11 +36,6 @@ function PenetrationPage() {
   const chartPct = selected ? selected.pct : overallPct;
   const chartMom = selected ? selected.mom : trend[trend.length - 1].pct - trend[trend.length - 2].pct;
 
-  const slippingNames = rows
-    .filter((r) => r.mom < 0)
-    .slice(0, 2)
-    .map((r) => r.name);
-
   const toggleRow = (clusterId: string) => setSelectedId((cur) => (cur === clusterId ? null : clusterId));
 
   return (
@@ -138,11 +133,6 @@ function PenetrationPage() {
             </tbody>
           </table>
         </div>
-        <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-          Insight: High access – high potential clusters are gaining, while{" "}
-          {slippingNames.length > 0 ? slippingNames.join(" and ").toLowerCase() : "some low-access clusters"} are
-          slipping month on month.
-        </p>
       </div>
     </LeadershipLayout>
   );

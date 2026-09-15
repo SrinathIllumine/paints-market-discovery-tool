@@ -33,8 +33,6 @@ function EngagementFocusPage() {
     .sort((a, b) => b.pctDGs - a.pctDGs)
     .slice(0, 10);
 
-  const topRow = topRows[0];
-
   return (
     <LeadershipLayout>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
@@ -68,11 +66,6 @@ function EngagementFocusPage() {
             </tbody>
           </table>
         </div>
-        {topRow && (
-          <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-             Insight: only 4% of DGs are focusing on Mid-size Apartment Building which has high potential and high access.
-          </p>
-        )}
       </div>
     </LeadershipLayout>
   );

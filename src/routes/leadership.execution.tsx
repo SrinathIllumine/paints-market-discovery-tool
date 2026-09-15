@@ -21,9 +21,6 @@ function ExecutionPage() {
 
   const onTrackCount = rows.filter((r) => r.onTrack).length;
   const behindCount = rows.length - onTrackCount;
-  const behindHighPotentialCount = rows.filter(
-    (r) => !r.onTrack && (r.quadrant === "HH" || r.quadrant === "HL"),
-  ).length;
   const avgExecution = Math.round(rows.reduce((s, r) => s + r.pct, 0) / (rows.length || 1));
 
   return (
@@ -86,12 +83,6 @@ function ExecutionPage() {
             </tbody>
           </table>
         </div>
-        <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-          Insight: {behindCount} of the {rows.length} most-engaged clusters are behind plan
-          {behindHighPotentialCount > 0 &&
-            `, including ${behindHighPotentialCount} high potential ${behindHighPotentialCount === 1 ? "one" : "ones"}`}
-          .
-        </p>
       </div>
     </LeadershipLayout>
   );

@@ -97,9 +97,6 @@ function AsmExecutionPage() {
             </tbody>
           </table>
         </div>
-        <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-          Insight: {behindDgs} of my {dgRows.length} DGs are behind plan.
-        </p>
       </div>
     </AsmLayout>
   );
