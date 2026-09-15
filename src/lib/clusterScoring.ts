@@ -3,7 +3,7 @@
 // always renders the same H/M/L across pages because nothing in the scoring
 // path depends on user-entered assessment data anymore.
 
-import type { Cluster } from "@/data/clusters";
+import { CLUSTERS, type Cluster } from "@/data/clusters";
 import { getClusterResearch } from "@/lib/clusterResearch";
 
 export type AccessRank = "A" | "B" | "C";
@@ -403,6 +403,28 @@ export type ClusterScores = {
   accessRollupHML: HML; // 3-tier rollup
   aggregateHML: HML; // legacy
 };
+
+/**
+ * Real, research-backed Revenue Potential score (0-10) — percentile rank of
+ * each cluster's structural national annual revenue potential
+ * (nationalUnitBaseline × avgRevenuePerUnit ÷ repaintCycleYears, the same
+ * quantity and formula Leadership/ASM Analytics rank by), rather than the
+ * SCORE_SEED placeholder. Used only for clusters a DG has actually mapped
+ * (completed the assessment for) — see callers in map/$clusterId.tsx and
+ * QuadrantSnapshot.tsx. Un-mapped clusters keep the illustrative SCORE_SEED
+ * value so the demo's 5/5/5/5 quadrant spread isn't disturbed.
+ */
+export function getResearchedRevenuePotentialScore(clusterId: string): number {
+  const revenueAnnual = (id: string) => {
+    const r = getClusterResearch(id);
+    return (r.nationalUnitBaseline * r.avgRevenuePerUnit) / r.repaintCycleYears;
+  };
+  const values = CLUSTERS.map((c) => ({ id: c.id, val: revenueAnnual(c.id) })).sort((a, b) => a.val - b.val);
+  const idx = values.findIndex((v) => v.id === clusterId);
+  if (idx < 0) return 5;
+  const percentile = values.length > 1 ? idx / (values.length - 1) : 0.5;
+  return Math.max(1, Math.round(percentile * 10 * 10) / 10);
+}
 
 export function computeClusterScores(
   cluster: Cluster,

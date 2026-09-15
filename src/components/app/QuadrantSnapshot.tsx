@@ -14,7 +14,7 @@ import {
   Customized,
 } from "recharts";
 import { CLUSTERS } from "@/data/clusters";
-import { computeClusterScores } from "@/lib/clusterScoring";
+import { computeClusterScores, getResearchedRevenuePotentialScore } from "@/lib/clusterScoring";
 import { useAppStore } from "@/store/appStore";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -405,10 +405,14 @@ export function QuadrantSnapshot({ highlightId, mode, isStageComplete = true }: 
     return CLUSTERS.map((c) => {
       const pc = clusterStates[c.id]?.prospects.length ?? c.prospectCountEstimate;
       const assessment = assessments[c.id];
+      const isMapped = Boolean(assessment?.completedAt);
       const userAccessScore = resolveUserAccessScore(assessment?.accessAnswers3);
       const sc = computeClusterScores(c, pc, assessment, userAccessScore);
+      // Mapped clusters (assessment completed) get their real, research-backed
+      // revenue rank; everything else keeps the illustrative SCORE_SEED value.
+      const potentialScore = isMapped ? getResearchedRevenuePotentialScore(c.id) : sc.potentialScore;
       const x = clamp(sc.accessRollupScore * 10 + jitter(c.id + "x", 2.5), 4, 96);
-      const y = clamp(sc.potentialScore * 10 + jitter(c.id + "y", 2.5), 4, 96);
+      const y = clamp(potentialScore * 10 + jitter(c.id + "y", 2.5), 4, 96);
       return { id: c.id, name: c.name, x, y, highlighted: false };
     });
   }, [clusterStates, assessments]);

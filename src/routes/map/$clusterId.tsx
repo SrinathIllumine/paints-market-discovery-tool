@@ -21,6 +21,7 @@ import { generateClusterReportPdf } from "@/lib/clusterReport";
 import { getProspectCustomerGroup } from "@/lib/strategyContent";
 import {
   computeClusterScores,
+  getResearchedRevenuePotentialScore,
   getRevenueProfile,
   formatRupees,
   getClusterIntel,
@@ -194,6 +195,9 @@ function ClusterDetailScreen() {
 
   const userAccessScore = allAnswered ? accessScore : undefined;
   const scores = computeClusterScores(cluster, prospects.length, existingAssessment, userAccessScore);
+  // Once this cluster is fully mapped (all access questions answered), swap
+  // the illustrative SCORE_SEED potential for the real, research-backed one.
+  const mappedPotentialScore = allAnswered ? getResearchedRevenuePotentialScore(clusterId) : scores.potentialScore;
 
   const handleAccessAnswers = (next: ("Y" | "N" | null)[]) => {
     setAccessAnswers(next);
@@ -470,7 +474,7 @@ function ClusterDetailScreen() {
               {allAnswered && (
                 <StrategicInsights
                   clusterName={cluster.name}
-                  potentialScore={scores.potentialScore}
+                  potentialScore={mappedPotentialScore}
                   accessRollupScore={scores.accessRollupScore}
                 />
               )}
@@ -490,7 +494,7 @@ function ClusterDetailScreen() {
                         clusterId,
                         prospects,
                         accessHML: dynamicAccessHML ?? intel.accessHML,
-                        potentialScore: scores.potentialScore,
+                        potentialScore: mappedPotentialScore,
                         accessRollupScore: scores.accessRollupScore,
                       })
                     }
