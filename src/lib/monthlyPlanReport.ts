@@ -25,6 +25,9 @@ type Args = {
   contractorEnablers?: string[];
   retailerEnablers?: string[];
   stakeholderEnablers?: string[];
+  /** Defaults preserve the Market Discovery System's own single-DG assumption. */
+  dgName?: string;
+  dgArea?: string;
 };
 
 function normalisePdfText(text: string): string {
@@ -59,6 +62,8 @@ export async function generateMonthlyEngagementPlanPdf({
   contractorEnablers,
   retailerEnablers,
   stakeholderEnablers,
+  dgName = "Sunil Kumar",
+  dgArea = "Panvel",
 }: Args) {
   const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -81,9 +86,9 @@ export async function generateMonthlyEngagementPlanPdf({
   );
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("DG: Sunil Kumar", pageWidth - margin, 52, { align: "right" });
+  doc.text(`DG: ${dgName}`, pageWidth - margin, 52, { align: "right" });
   doc.setFont("helvetica", "normal");
-  doc.text("Area: Panvel", pageWidth - margin, 68, { align: "right" });
+  doc.text(`Area: ${dgArea}`, pageWidth - margin, 68, { align: "right" });
   doc.setTextColor(15, 23, 42);
   y = 124;
 
@@ -321,5 +326,6 @@ export async function generateMonthlyEngagementPlanPdf({
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  doc.save(`Quarterly-Cluster-Engagement-Plan-${today}.pdf`);
+  const dgSlug = slugify(dgName);
+  doc.save(`Quarterly-Cluster-Engagement-Plan-${dgSlug}-${today}.pdf`);
 }
