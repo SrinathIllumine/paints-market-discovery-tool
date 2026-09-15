@@ -52,11 +52,11 @@ function ExecutionPage() {
               <tr>
                 <th className="w-[6%] px-4 py-2">Sl. No</th>
                 <th className="w-[24%] px-4 py-2">Cluster</th>
-                <th className="w-[17%] px-4 py-2">Type</th>
                 <th className="w-[14%] px-4 py-2 text-right">No of Engagement Plan</th>
                 <th className="w-[14%] px-4 py-2 text-right">No of Executed Plans</th>
                 <th className="w-[14%] px-4 py-2 text-right">Percentage Execution</th>
                 <th className="w-[11%] px-4 py-2 text-right">Status</th>
+                <th className="w-[17%] px-4 py-2">Type</th>
               </tr>
             </thead>
             <tbody>
@@ -64,9 +64,6 @@ function ExecutionPage() {
                 <tr key={r.clusterId} className="border-t border-border">
                   <td className="px-4 py-2 tabular-nums text-muted-foreground">{i + 1}</td>
                   <td className="px-4 py-2 font-medium text-foreground">{r.name}</td>
-                  <td className="px-4 py-2">
-                    <QuadrantTypeBadge quadrant={r.quadrant} />
-                  </td>
                   <td className="px-4 py-2 text-right tabular-nums">{r.plans}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{r.executed}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{r.pct.toFixed(2)}%</td>
@@ -79,6 +76,9 @@ function ExecutionPage() {
                     >
                       {r.onTrack ? "On Track" : "Behind"}
                     </span>
+                  </td>
+                  <td className="px-4 py-2">
+                    <QuadrantTypeBadge quadrant={r.quadrant} />
                   </td>
                 </tr>
               ))}

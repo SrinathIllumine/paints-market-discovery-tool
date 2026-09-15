@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { LeadershipLayout, LeadershipScopeFilter, QuadrantTypeBadge } from "@/components/leadership/LeadershipLayout";
+import { LeadershipLayout, LeadershipScopeFilter } from "@/components/leadership/LeadershipLayout";
 import { buildOverallPenetrationTrend, buildPenetrationTrend, getPenetrationRows } from "@/lib/dgPerformance";
 import { useLeadershipGeo } from "@/store/leadershipStore";
 import { cn } from "@/lib/utils";
@@ -110,7 +110,6 @@ function PenetrationPage() {
                 <th className="px-4 py-2 text-right">Prospects</th>
                 <th className="px-4 py-2 text-right">Our Customers</th>
                 <th className="px-4 py-2 text-right">Penetration</th>
-                <th className="px-4 py-2">Type</th>
                 <th className="px-4 py-2 text-right">MoM</th>
               </tr>
             </thead>
@@ -129,9 +128,6 @@ function PenetrationPage() {
                   <td className="px-4 py-2 text-right tabular-nums">{r.prospects.toLocaleString("en-IN")}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{r.customers.toLocaleString("en-IN")}</td>
                   <td className="px-4 py-2 text-right font-semibold tabular-nums">{r.pct}%</td>
-                  <td className="px-4 py-2">
-                    <QuadrantTypeBadge quadrant={r.quadrant} />
-                  </td>
                   <td className={cn("px-4 py-2 text-right tabular-nums font-medium", r.mom >= 0 ? "text-emerald-700" : "text-critical")}>
                     {r.mom >= 0 ? "+" : ""}
                     {r.mom}%
