@@ -61,7 +61,7 @@ function EngagementFocusPage() {
                 <tr key={r.id} className="border-t border-border">
                   <td className="px-4 py-2 tabular-nums text-muted-foreground">{i + 1}</td>
                   <td className="px-4 py-2 font-medium text-foreground">{r.name}</td>
-                  <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">{formatCr(r.revenuePotential)}</td>
+                  <td className="px-4 py-2 text-right font-semibold tabular-nums text-foreground">{formatCr(r.revenuePotential)}</td>
                   <td className="px-4 py-2 text-right font-semibold tabular-nums">{r.pctDGs}%</td>
                 </tr>
               ))}
