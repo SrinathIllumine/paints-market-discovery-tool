@@ -50,9 +50,12 @@ function formatInr(n: number): string {
 }
 
 const REVENUE_PROFILE: Record<string, RevenueProfile> = {
-  "mid-apartments": { sqftBand: "40k – 1.5L sq.ft", avgRevenuePerProspect: 18_00_000 },
+  // mid-apartments and gated-community price EVERY flat/villa's own interior
+  // alongside the shared common areas/facade, not just the latter — see
+  // research/cluster-revenue-owner-neutral-recalc.md for the derivation.
+  "mid-apartments": { sqftBand: "40k – 1.5L sq.ft", avgRevenuePerProspect: 15_69_792 },
   redevelopment: { sqftBand: "50k – 2L sq.ft", avgRevenuePerProspect: 22_00_000 },
-  "gated-community": { sqftBand: "1L – 5L sq.ft", avgRevenuePerProspect: 45_00_000 },
+  "gated-community": { sqftBand: "1L – 5L sq.ft", avgRevenuePerProspect: 7_08_47_917 },
   schools: { sqftBand: "15k – 2L sq.ft", avgRevenuePerProspect: 8_00_000 },
   colleges: { sqftBand: "50k – 4L sq.ft", avgRevenuePerProspect: 18_00_000 },
   hospitals: { sqftBand: "25k – 1L sq.ft", avgRevenuePerProspect: 12_00_000 },

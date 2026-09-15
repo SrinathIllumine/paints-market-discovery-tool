@@ -3,15 +3,26 @@
 // research pass in `research/cluster-revenue-cycle-research.md` — a blended
 // national average per cluster (weighted across small/mid/large segments),
 // sanity-checked so no single cluster's national revenue potential exceeds
-// ~4-5% of the ~₹80,000 Cr total Indian paints market, and the 20-cluster
-// sum (~₹18,141 Cr) is a believable minority slice of it (residential
-// retail — outside this cluster list — is the largest segment). See that
-// file for the full segment-mix reasoning and confidence flags per cluster.
-// Ease-of-sale and competitive archetype are unchanged from the earlier
-// lighter pass (`research/cluster-research-notes.md`) — this update only
-// re-derives revenue/unit, cycle years, and unit counts. These do NOT change
-// by area/state/national — only unit counts scale by geography, and access/
+// ~4-5% of the ~₹80,000 Cr total Indian paints market. Ease-of-sale and
+// competitive archetype are unchanged from the earlier lighter pass
+// (`research/cluster-research-notes.md`) — this update only re-derives
+// revenue/unit, cycle years, and unit counts. These do NOT change by
+// area/state/national — only unit counts scale by geography, and access/
 // competitive strength vary by geography (see clusterGenerator.ts).
+//
+// Every cluster prices EVERY potential paintable area within it, regardless
+// of who actually pays for the job — a resident's own flat interior counts
+// toward "Mid-Size Apartment Buildings" exactly like the society's shared
+// lobby does, even though one is owner-funded and the other is society-
+// funded. `mid-apartments` and `gated-community` are the two clusters where
+// this matters in practice, since they're the only ones where a single
+// physical cluster contains many separately-owned interior units alongside
+// shared common areas — see `research/cluster-revenue-owner-neutral-recalc.md`
+// for the full recalculation (and why the other 18 clusters, being single-
+// operator premises, needed no change). Because of this, the 20-cluster sum
+// is now a much larger, ~42% slice of the ₹80,000 Cr total market — the
+// remaining majority is individual free-standing homes, which have no
+// cluster of their own and stay genuinely outside this list.
 
 export type CompetitiveArchetype =
   | "structurally-weak" // OEM/PSU lock-in or specialty-coating consolidation — hard for a challenger brand
@@ -22,10 +33,14 @@ export type ClusterResearch = {
   /** Blended national average revenue (INR) per unit over one full repainting cycle. */
   avgRevenuePerUnit: number;
   /**
-   * Typical repainting cycle length, in years. Redevelopment is a special
-   * case: its "unit count" is already an annual flow of newly-completed
-   * projects (not a stock), so its cycle is fixed at 1 — dividing by 1 is a
-   * no-op that leaves the annual figure unchanged.
+   * Typical repainting cycle length, in years. Three clusters fix this at 1
+   * (a no-op divide) because avgRevenuePerUnit is already an annual figure
+   * rather than a one-cycle job value: Redevelopment's "unit count" is
+   * already an annual flow of newly-completed projects, not a stock: while
+   * mid-apartments and gated-community each blend TWO different cycles
+   * (facade/common areas on a long cycle, every individually-owned interior
+   * on a shorter one) into one pre-annualized number, since this type only
+   * has room for a single cycle value.
    */
   repaintCycleYears: number;
   /** 0-10, higher = simpler/faster to close (fewer approval layers). */
@@ -37,8 +52,12 @@ export type ClusterResearch = {
 
 export const CLUSTER_RESEARCH: Record<string, ClusterResearch> = {
   "mid-apartments": {
-    avgRevenuePerUnit: 185_000,
-    repaintCycleYears: 6,
+    // Blended ANNUAL revenue per building (facade/common-area amortized over
+    // its 6-yr cycle PLUS every flat's own interior amortized over its own
+    // 4-yr cycle) — repaintCycleYears is 1 so this annual figure passes
+    // through getRevenueAnnual() unchanged. See recalc doc for derivation.
+    avgRevenuePerUnit: 313_958,
+    repaintCycleYears: 1, // already-annualized blend of two different cycles — see comment above
     easeOfSaleScore: 7,
     nationalUnitBaseline: 250_000,
     archetype: "mixed",
@@ -51,8 +70,11 @@ export const CLUSTER_RESEARCH: Record<string, ClusterResearch> = {
     archetype: "structurally-weak",
   },
   "gated-community": {
-    avgRevenuePerUnit: 3_425_000,
-    repaintCycleYears: 6,
+    // Same owner-neutral blend as mid-apartments: every villa/flat's own
+    // interior, plus the township's shared common areas, annualized into one
+    // per-township figure. See recalc doc for derivation.
+    avgRevenuePerUnit: 14_169_583,
+    repaintCycleYears: 1, // already-annualized blend of two different cycles — see comment above
     easeOfSaleScore: 5,
     nationalUnitBaseline: 6_000,
     archetype: "structurally-weak",
