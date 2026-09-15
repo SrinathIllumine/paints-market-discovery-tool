@@ -15,14 +15,7 @@ import {
 import { CLUSTERS } from "@/data/clusters";
 import type { GeoRef } from "@/data/geography";
 import { getAllClusterScoresForGeo, type QuadrantKey } from "@/lib/clusterGenerator";
-import {
-  CLUSTER_SHORT_NAME,
-  QUADRANT_COLOR,
-  QUADRANT_DESC,
-  QUADRANT_TITLE,
-  clampToQuadrantSide,
-  jitter,
-} from "@/lib/leadershipAnalytics";
+import { CLUSTER_SHORT_NAME, QUADRANT_COLOR, QUADRANT_DESC, QUADRANT_TITLE } from "@/lib/leadershipAnalytics";
 
 const QUADRANT_AREAS: Record<QuadrantKey, { x1: number; x2: number; y1: number; y2: number }> = {
   HH: { x1: 50, x2: 100, y1: 50, y2: 100 },
@@ -38,6 +31,30 @@ type Point = { id: string; name: string; access: number; potential: number; quad
 // staggered vertical label offsets instead of all defaulting to dy=0 and
 // overlapping. Considers ALL 20 points together (not just same-quadrant
 // ones), since labels can collide across the quadrant divider too.
+// Spreads real scores into a quadrant-side's visual band (e.g. [52,98] for
+// "high"), preserving exact rank order and relative spacing — a cluster with
+// a higher real score always sits higher/further right than one with a lower
+// score, and two clusters never land on the same point unless their real
+// scores are genuinely equal. Replaces the previous approach of adding a
+// large random jitter to the real value and hard-clamping the result, which
+// routinely pinned several different-scoring clusters to the same ceiling.
+function spreadInBand(rawById: Map<string, number>, bandLo: number, bandHi: number): Map<string, number> {
+  const entries = Array.from(rawById.entries());
+  const values = entries.map(([, v]) => v);
+  const lo = Math.min(...values);
+  const hi = Math.max(...values);
+  const out = new Map<string, number>();
+  if (hi === lo) {
+    const mid = (bandLo + bandHi) / 2;
+    for (const [id] of entries) out.set(id, mid);
+    return out;
+  }
+  for (const [id, v] of entries) {
+    out.set(id, bandLo + ((v - lo) / (hi - lo)) * (bandHi - bandLo));
+  }
+  return out;
+}
+
 function computeLabelOffsets(pts: Omit<Point, "labelDy">[]): number[] {
   const placed: { x: number; y: number; dy: number }[] = [];
   const order = pts.map((_, i) => i).sort((a, b) => pts[b].potential - pts[a].potential);
@@ -109,7 +126,9 @@ export function PotentialAccessMatrix({
   const allScores = getAllClusterScoresForGeo(geo);
 
   const grouped: Record<QuadrantKey, { id: string; name: string }[]> = { HH: [], HL: [], LH: [], LL: [] };
-  const rawPoints: Omit<Point, "labelDy">[] = [];
+  const meta = new Map<string, { name: string; quadrant: QuadrantKey; isHighAccess: boolean; isHighPotential: boolean }>();
+  const rawAccess = { high: new Map<string, number>(), low: new Map<string, number>() };
+  const rawPotential = { high: new Map<string, number>(), low: new Map<string, number>() };
 
   for (const c of CLUSTERS) {
     const scores = allScores.find((s) => s.clusterId === c.id)!;
@@ -119,13 +138,32 @@ export function PotentialAccessMatrix({
 
     const isHighAccess = key === "HH" || key === "LH";
     const isHighPotential = key === "HH" || key === "HL";
-    const baseAccess = Math.round(scores.accessRollupScore * 10);
-    const basePotential = Math.round(scores.potentialScore * 10);
-    const access = clampToQuadrantSide(baseAccess, jitter(c.id, "a", 14), isHighAccess);
-    const potential = clampToQuadrantSide(basePotential, jitter(c.id, "p", 14), isHighPotential);
-
-    rawPoints.push({ id: c.id, name: shortName, access, potential, quadrant: key });
+    meta.set(c.id, { name: shortName, quadrant: key, isHighAccess, isHighPotential });
+    (isHighAccess ? rawAccess.high : rawAccess.low).set(c.id, scores.accessRollupScore);
+    (isHighPotential ? rawPotential.high : rawPotential.low).set(c.id, scores.potentialScore);
   }
+
+  // Real scores, rank- and magnitude-preserving, spread within each quadrant
+  // side's visual band — see spreadInBand above.
+  const accessById = new Map([
+    ...spreadInBand(rawAccess.high, 52, 98),
+    ...spreadInBand(rawAccess.low, 2, 48),
+  ]);
+  const potentialById = new Map([
+    ...spreadInBand(rawPotential.high, 52, 98),
+    ...spreadInBand(rawPotential.low, 2, 48),
+  ]);
+
+  const rawPoints: Omit<Point, "labelDy">[] = CLUSTERS.map((c) => {
+    const m = meta.get(c.id)!;
+    return {
+      id: c.id,
+      name: m.name,
+      quadrant: m.quadrant,
+      access: accessById.get(c.id)!,
+      potential: potentialById.get(c.id)!,
+    };
+  });
 
   const labelOffsets = computeLabelOffsets(rawPoints);
   const points: Point[] = rawPoints.map((p, i) => ({ ...p, labelDy: labelOffsets[i] }));

@@ -57,25 +57,3 @@ export function formatCr(rupees: number): string {
   return `₹${Math.round(rupees / 1_00_00_000).toLocaleString("en-IN")} Cr`;
 }
 
-export function hashSeed(id: string): number {
-  let h = 0;
-  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) % 97;
-  return h;
-}
-
-// Small deterministic offset so clusters with identical underlying scores
-// don't render as fully overlapping dots/labels on the matrix scatter chart.
-export function jitter(id: string, salt: string, spread = 6): number {
-  const h = hashSeed(id + salt);
-  return (h % (spread * 2 + 1)) - spread;
-}
-
-// Nudge a jittered value by `delta`, but never let it cross the 50-mark that
-// separates quadrants (clusters must stay in the quadrant their HML score put
-// them in).
-export function clampToQuadrantSide(value: number, delta: number, isHigh: boolean): number {
-  const next = value + delta;
-  if (isHigh) return Math.min(97, Math.max(53, next));
-  return Math.min(47, Math.max(3, next));
-}
-
