@@ -62,6 +62,9 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "snapshot", label: "Cluster Snapshot" },
 ];
 
+/** Clusters whose researched repaintCycleYears is a no-op divisor (already-annual figure), not a real cycle length — see clusterResearch.ts. */
+const PRE_ANNUALIZED_CLUSTERS = new Set(["mid-apartments", "gated-community", "redevelopment"]);
+
 function ClusterDetailScreen() {
   const navigate = useNavigate();
   const { clusterId } = Route.useParams();
@@ -368,11 +371,21 @@ function ClusterDetailScreen() {
                       The national avg revenue per {singular} is <b>{formatRupees(profile.avgRevenuePerProspect)}</b>.
                     </Bullet>
                     <Bullet>
-                      Repainting cycle time for {pluralCap.toLowerCase()} is{" "}
-                      <b>
-                        {cycleYears} yr{cycleYears === 1 ? "" : "s"}
-                      </b>
-                      .
+                      {PRE_ANNUALIZED_CLUSTERS.has(clusterId) ? (
+                        <>
+                          This figure is <b>already annualized</b> — it blends every repaint job across a typical
+                          year (shared areas and individual owners' own interiors) rather than one fixed cycle
+                          length.
+                        </>
+                      ) : (
+                        <>
+                          Repainting cycle time for {pluralCap.toLowerCase()} is{" "}
+                          <b>
+                            {cycleYears} yr{cycleYears === 1 ? "" : "s"}
+                          </b>
+                          .
+                        </>
+                      )}
                     </Bullet>
                     <Bullet>
                       Total annual cluster revenue potential is{" "}

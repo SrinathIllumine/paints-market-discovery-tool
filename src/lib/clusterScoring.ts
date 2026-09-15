@@ -4,6 +4,7 @@
 // path depends on user-entered assessment data anymore.
 
 import type { Cluster } from "@/data/clusters";
+import { getClusterResearch } from "@/lib/clusterResearch";
 
 export type AccessRank = "A" | "B" | "C";
 export type YesNo = "Y" | "N";
@@ -49,34 +50,41 @@ function formatInr(n: number): string {
   return String(n);
 }
 
-const REVENUE_PROFILE: Record<string, RevenueProfile> = {
-  // mid-apartments and gated-community price EVERY flat/villa's own interior
-  // alongside the shared common areas/facade, not just the latter — see
-  // research/cluster-revenue-owner-neutral-recalc.md for the derivation.
-  "mid-apartments": { sqftBand: "40k – 1.5L sq.ft", avgRevenuePerProspect: 15_69_792 },
-  redevelopment: { sqftBand: "50k – 2L sq.ft", avgRevenuePerProspect: 22_00_000 },
-  "gated-community": { sqftBand: "1L – 5L sq.ft", avgRevenuePerProspect: 7_08_47_917 },
-  schools: { sqftBand: "15k – 2L sq.ft", avgRevenuePerProspect: 8_00_000 },
-  colleges: { sqftBand: "50k – 4L sq.ft", avgRevenuePerProspect: 18_00_000 },
-  hospitals: { sqftBand: "25k – 1L sq.ft", avgRevenuePerProspect: 12_00_000 },
-  restaurants: { sqftBand: "1k – 5k sq.ft", avgRevenuePerProspect: 1_20_000 },
-  hotels: { sqftBand: "15k – 80k sq.ft", avgRevenuePerProspect: 10_00_000 },
-  midc: { sqftBand: "30k – 5L sq.ft", avgRevenuePerProspect: 40_00_000 },
-  warehousing: { sqftBand: "50k – 4L sq.ft", avgRevenuePerProspect: 28_00_000 },
-  "marriage-halls": { sqftBand: "10k – 40k sq.ft", avgRevenuePerProspect: 4_00_000 },
-  "paying-guest": { sqftBand: "2k – 8k sq.ft", avgRevenuePerProspect: 80_000 },
-  religious: { sqftBand: "5k – 30k sq.ft", avgRevenuePerProspect: 2_50_000 },
-  "auto-showrooms": { sqftBand: "5k – 15k sq.ft", avgRevenuePerProspect: 3_50_000 },
-  "petrol-pumps": { sqftBand: "2k – 6k sq.ft", avgRevenuePerProspect: 90_000 },
-  "bus-stand-market": { sqftBand: "300 – 1.5k sq.ft", avgRevenuePerProspect: 40_000 },
-  "highway-dhabas": { sqftBand: "2k – 6k sq.ft", avgRevenuePerProspect: 70_000 },
-  "clinics-nursing": { sqftBand: "1k – 8k sq.ft", avgRevenuePerProspect: 1_50_000 },
-  jewellery: { sqftBand: "1.5k – 6k sq.ft", avgRevenuePerProspect: 3_00_000 },
-  "textile-garment": { sqftBand: "500 – 3k sq.ft", avgRevenuePerProspect: 70_000 },
+// Display-only sqft bands — cosmetic, not used in any calculation.
+const SQFT_BAND: Record<string, string> = {
+  "mid-apartments": "40k – 1.5L sq.ft",
+  redevelopment: "50k – 2L sq.ft",
+  "gated-community": "1L – 5L sq.ft",
+  schools: "15k – 2L sq.ft",
+  colleges: "50k – 4L sq.ft",
+  hospitals: "25k – 1L sq.ft",
+  restaurants: "1k – 5k sq.ft",
+  hotels: "15k – 80k sq.ft",
+  midc: "30k – 5L sq.ft",
+  warehousing: "50k – 4L sq.ft",
+  "marriage-halls": "10k – 40k sq.ft",
+  "paying-guest": "2k – 8k sq.ft",
+  religious: "5k – 30k sq.ft",
+  "auto-showrooms": "5k – 15k sq.ft",
+  "petrol-pumps": "2k – 6k sq.ft",
+  "bus-stand-market": "300 – 1.5k sq.ft",
+  "highway-dhabas": "2k – 6k sq.ft",
+  "clinics-nursing": "1k – 8k sq.ft",
+  jewellery: "1.5k – 6k sq.ft",
+  "textile-garment": "500 – 3k sq.ft",
 };
 
+/**
+ * Revenue per prospect now comes from the SAME researched, geography-invariant
+ * avgRevenuePerUnit used by Leadership and ASM Analytics (clusterResearch.ts) —
+ * this app previously had its own, independently-hardcoded placeholder figures
+ * that drifted out of sync with the research pass. See
+ * research/cluster-revenue-potential-full-explainer.md for the derivation of
+ * every cluster's figure.
+ */
 export function getRevenueProfile(clusterId: string): RevenueProfile {
-  return REVENUE_PROFILE[clusterId] ?? { sqftBand: "Varies", avgRevenuePerProspect: 2_00_000 };
+  const research = getClusterResearch(clusterId);
+  return { sqftBand: SQFT_BAND[clusterId] ?? "Varies", avgRevenuePerProspect: research.avgRevenuePerUnit };
 }
 
 /* ─────────────────────────── paints CAGR (per cluster end-use segment) */
@@ -261,31 +269,9 @@ const CYCLE: Record<string, Omit<CycleProfile, "months">> = {
 
 /* ─────────────────────────── repainting cycle (years) */
 
-const REPAINTING_CYCLE_YEARS: Record<string, number> = {
-  "mid-apartments": 5,
-  redevelopment: 7,
-  "gated-community": 5,
-  schools: 4,
-  colleges: 5,
-  hospitals: 3,
-  restaurants: 2,
-  hotels: 3,
-  midc: 5,
-  warehousing: 6,
-  "marriage-halls": 3,
-  "paying-guest": 4,
-  religious: 5,
-  "auto-showrooms": 3,
-  "petrol-pumps": 3,
-  "bus-stand-market": 4,
-  "highway-dhabas": 3,
-  "clinics-nursing": 4,
-  jewellery: 4,
-  "textile-garment": 3,
-};
-
+/** Same researched repaintCycleYears used by Leadership/ASM Analytics — see getRevenueProfile above. */
 export function getRepaintingCycleYears(clusterId: string): number {
-  return REPAINTING_CYCLE_YEARS[clusterId] ?? 4;
+  return getClusterResearch(clusterId).repaintCycleYears ?? 4;
 }
 
 export function getCycle(clusterId: string): CycleProfile {
