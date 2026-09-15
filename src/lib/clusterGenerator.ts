@@ -135,8 +135,8 @@ export type GeoClusterScores = {
   competitive: number;
   access: number;
   ease: number;
-  potentialScore: number; // avg(revenue, competitive)
-  accessRollupScore: number; // avg(access, ease)
+  potentialScore: number; // = revenue (Revenue Potential score, 0-10)
+  accessRollupScore: number; // avg(competitive, access, ease)
   quadrant: QuadrantKey;
 };
 
@@ -147,11 +147,11 @@ export function getClusterScoresForGeo(clusterId: string, geo: GeoRef): GeoClust
   const access = getAccessScore(clusterId, geo);
   const ease = getEaseOfSaleScore(clusterId);
 
-  const potentialScore = Number(((revenue + competitive) / 2).toFixed(1));
-  const accessRollupScore = Number(((access + ease) / 2).toFixed(1));
+  const potentialScore = revenue;
+  const accessRollupScore = Number(((competitive + access + ease) / 3).toFixed(1));
 
-  const potentialHigh = scoreToHML(revenue) === "H" || scoreToHML(competitive) === "H";
-  const accessHigh = scoreToHML(access) === "H" || scoreToHML(ease) === "H";
+  const potentialHigh = scoreToHML(revenue) === "H";
+  const accessHigh = scoreToHML(competitive) === "H" || scoreToHML(access) === "H" || scoreToHML(ease) === "H";
   const quadrant: QuadrantKey = `${potentialHigh ? "H" : "L"}${accessHigh ? "H" : "L"}` as QuadrantKey;
 
   return {
