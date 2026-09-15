@@ -235,7 +235,7 @@ export function PotentialAccessMatrix({
                       <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
                         <p className="font-semibold text-foreground">{p.name}</p>
                         <p className="text-muted-foreground">
-                          Potential {p.potential} · Access {p.access}
+                          Potential {Math.round(p.potential)} · Access {Math.round(p.access)}
                         </p>
                       </div>
                     );
