@@ -7,6 +7,7 @@ import { CLUSTERS } from "@/data/clusters";
 import {
   type GeoRef,
   NATIONAL_ID,
+  PANVEL_ASM,
   getArea,
   getAsmTerritoryShareOfNational,
   getState,
@@ -28,6 +29,142 @@ export function seededRandom(seed: string): number {
 
 const ALL_CLUSTER_IDS = CLUSTERS.map((c) => c.id);
 
+/**
+ * Which broad economic activity each cluster belongs to, for the geographic
+ * density story below — several clusters can share a category (e.g. Schools
+ * and Colleges are both "education"), since what varies by place is the
+ * category's local intensity, not each cluster individually.
+ */
+type ClusterCategory =
+  | "education"
+  | "healthcare"
+  | "hospitality"
+  | "religious"
+  | "residential-urban"
+  | "industrial-logistics"
+  | "migrant-hub"
+  | "auto-retail"
+  | "highway-transit"
+  | "local-retail";
+
+const CLUSTER_CATEGORY: Record<string, ClusterCategory> = {
+  schools: "education",
+  colleges: "education",
+  hospitals: "healthcare",
+  "clinics-nursing": "healthcare",
+  restaurants: "hospitality",
+  hotels: "hospitality",
+  "marriage-halls": "hospitality",
+  religious: "religious",
+  "mid-apartments": "residential-urban",
+  "gated-community": "residential-urban",
+  redevelopment: "residential-urban",
+  midc: "industrial-logistics",
+  warehousing: "industrial-logistics",
+  "paying-guest": "migrant-hub",
+  "auto-showrooms": "auto-retail",
+  "petrol-pumps": "highway-transit",
+  "bus-stand-market": "highway-transit",
+  "highway-dhabas": "highway-transit",
+  jewellery: "local-retail",
+  "textile-garment": "local-retail",
+};
+
+/**
+ * How over/under-represented each category is in a given geography, relative
+ * to the national average (1.0 = exactly average). This is what makes
+ * different clusters top the Priority Matrix in different places — without
+ * it, every geography scales all 20 clusters by the same single factor,
+ * which can only shrink/grow the whole matrix, never reshuffle it, so the
+ * quadrant membership barely changes when switching National/State/Area.
+ * Each profile reflects a real, specific fact about that place, not a random
+ * spread: Panvel's profile is a JNPT-port/logistics-and-redevelopment
+ * boomtown; Pen is nationally known for Ganesh-idol-making (a religious/craft
+ * cottage industry); Karjat is a weekend-getaway/second-home town; Khopoli
+ * sits on the Mumbai-Pune highway gateway to the hill stations.
+ */
+const GEO_DENSITY_PROFILE: Record<string, Partial<Record<ClusterCategory, number>>> = {
+  "state:maharashtra": {
+    "industrial-logistics": 1.8,
+    "residential-urban": 1.6,
+    "auto-retail": 1.4,
+    "highway-transit": 1.35,
+    hospitality: 1.25,
+    "migrant-hub": 1.3,
+    "local-retail": 0.75,
+    education: 0.22,
+    healthcare: 0.85,
+    religious: 0.4,
+  },
+  "area:panvel": {
+    "industrial-logistics": 3.0,
+    "residential-urban": 2.2,
+    "highway-transit": 2.0,
+    "migrant-hub": 1.7,
+    "auto-retail": 0.7,
+    hospitality: 0.75,
+    "local-retail": 0.45,
+    healthcare: 0.35,
+    education: 0.1,
+    religious: 0.25,
+  },
+  "area:khopoli": {
+    "industrial-logistics": 2.4,
+    "highway-transit": 2.2,
+    hospitality: 1.8,
+    "residential-urban": 0.75,
+    "migrant-hub": 0.65,
+    "local-retail": 0.45,
+    education: 0.15,
+    healthcare: 0.35,
+    religious: 0.4,
+    "auto-retail": 0.4,
+  },
+  "area:karjat": {
+    religious: 2.2,
+    hospitality: 2.0,
+    "residential-urban": 1.6,
+    "highway-transit": 0.85,
+    "local-retail": 0.55,
+    "migrant-hub": 0.5,
+    "auto-retail": 0.35,
+    "industrial-logistics": 0.25,
+    education: 0.15,
+    healthcare: 0.3,
+  },
+  "area:pen": {
+    religious: 3.3,
+    "local-retail": 1.9,
+    hospitality: 0.7,
+    "highway-transit": 0.55,
+    "migrant-hub": 0.45,
+    "industrial-logistics": 0.3,
+    "residential-urban": 0.3,
+    "auto-retail": 0.35,
+    education: 0.15,
+    healthcare: 0.3,
+  },
+};
+
+/** Blended density factor for an "asm" territory — the weighted average of its component areas' profiles, so the ASM's own view can never disagree with what each of its DGs' own area views show. */
+function getAsmDensityFactor(clusterId: string): number {
+  const category = CLUSTER_CATEGORY[clusterId];
+  if (!category) return 1;
+  const factors = PANVEL_ASM.areaIds.map((areaId) => GEO_DENSITY_PROFILE[`area:${areaId}`]?.[category] ?? 1);
+  return factors.reduce((sum, f) => sum + f, 0) / factors.length;
+}
+
+/** How over/under-represented this cluster's category is in this geography vs. the national average (1.0 = average; national itself is always 1.0, the reference point). */
+function getGeoDensityFactor(clusterId: string, geo: GeoRef): number {
+  const category = CLUSTER_CATEGORY[clusterId];
+  if (!category) return 1;
+  if (geo.level === "state" || geo.level === "area") {
+    return GEO_DENSITY_PROFILE[`${geo.level}:${geo.id}`]?.[category] ?? 1;
+  }
+  if (geo.level === "asm") return getAsmDensityFactor(clusterId);
+  return 1; // national — the reference point everything else is relative to
+}
+
 /** Total units of a cluster type present in the given geography. */
 export function getUnitCount(clusterId: string, geo: GeoRef): number {
   const research = getClusterResearch(clusterId);
@@ -44,6 +181,8 @@ export function getUnitCount(clusterId: string, geo: GeoRef): number {
     scaled *= getAsmTerritoryShareOfNational(geo.id);
   }
   // geo.level === "national": use the baseline as-is.
+
+  scaled *= getGeoDensityFactor(clusterId, geo);
 
   const variance = 0.85 + seededRandom(`${clusterId}|${geo.level}|${geo.id}|units`) * 0.3; // 0.85–1.15
   return Math.max(1, Math.round(scaled * variance));
