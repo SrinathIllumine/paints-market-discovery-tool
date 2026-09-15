@@ -118,7 +118,7 @@ function AsmExecutionPage() {
                   <td className="px-4 py-2 tabular-nums text-muted-foreground">{i + 1}</td>
                   <td className="px-4 py-2">
                     <Link
-                      to="/plan/$clusterId"
+                      to="/asm-analytics/plan/$clusterId"
                       params={{ clusterId: r.clusterId }}
                       className="font-medium text-navy hover:underline"
                     >

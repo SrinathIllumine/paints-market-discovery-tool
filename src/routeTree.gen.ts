@@ -34,6 +34,7 @@ import { Route as PlanClusterIdRouteImport } from './routes/plan/$clusterId'
 import { Route as PlanPastRoadmapRouteImport } from './routes/plan/past-roadmap'
 import { Route as SalesEnablementIndexRouteImport } from './routes/sales-enablement.index'
 import { Route as SystemicSlugRouteImport } from './routes/systemic/$slug'
+import { Route as AsmAnalyticsPlanClusterIdRouteImport } from './routes/asm-analytics.plan.$clusterId'
 import { Route as PlanClusterIdIndexRouteImport } from './routes/plan/$clusterId.index'
 import { Route as PlanClusterIdReviewRouteImport } from './routes/plan/$clusterId.review'
 import { Route as SalesEnablementClusterIdIndexRouteImport } from './routes/sales-enablement.$clusterId.index'
@@ -164,6 +165,12 @@ const SystemicSlugRoute = SystemicSlugRouteImport.update({
   path: '/systemic/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AsmAnalyticsPlanClusterIdRoute =
+  AsmAnalyticsPlanClusterIdRouteImport.update({
+    id: '/plan/$clusterId',
+    path: '/plan/$clusterId',
+    getParentRoute: () => AsmAnalyticsRoute,
+  } as any)
 const PlanClusterIdIndexRoute = PlanClusterIdIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -213,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/map/': typeof MapIndexRoute
   '/plan/': typeof PlanIndexRoute
   '/sales-enablement/': typeof SalesEnablementIndexRoute
+  '/asm-analytics/plan/$clusterId': typeof AsmAnalyticsPlanClusterIdRoute
   '/plan/$clusterId/review': typeof PlanClusterIdReviewRoute
   '/sales-enablement/$clusterId/$prospectId': typeof SalesEnablementClusterIdProspectIdRoute
   '/plan/$clusterId/': typeof PlanClusterIdIndexRoute
@@ -240,6 +248,7 @@ export interface FileRoutesByTo {
   '/map': typeof MapIndexRoute
   '/plan': typeof PlanIndexRoute
   '/sales-enablement': typeof SalesEnablementIndexRoute
+  '/asm-analytics/plan/$clusterId': typeof AsmAnalyticsPlanClusterIdRoute
   '/plan/$clusterId/review': typeof PlanClusterIdReviewRoute
   '/sales-enablement/$clusterId/$prospectId': typeof SalesEnablementClusterIdProspectIdRoute
   '/plan/$clusterId': typeof PlanClusterIdIndexRoute
@@ -272,6 +281,7 @@ export interface FileRoutesById {
   '/map/': typeof MapIndexRoute
   '/plan/': typeof PlanIndexRoute
   '/sales-enablement/': typeof SalesEnablementIndexRoute
+  '/asm-analytics/plan/$clusterId': typeof AsmAnalyticsPlanClusterIdRoute
   '/plan/$clusterId/review': typeof PlanClusterIdReviewRoute
   '/sales-enablement/$clusterId/$prospectId': typeof SalesEnablementClusterIdProspectIdRoute
   '/plan/$clusterId/': typeof PlanClusterIdIndexRoute
@@ -305,6 +315,7 @@ export interface FileRouteTypes {
     | '/map/'
     | '/plan/'
     | '/sales-enablement/'
+    | '/asm-analytics/plan/$clusterId'
     | '/plan/$clusterId/review'
     | '/sales-enablement/$clusterId/$prospectId'
     | '/plan/$clusterId/'
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/map'
     | '/plan'
     | '/sales-enablement'
+    | '/asm-analytics/plan/$clusterId'
     | '/plan/$clusterId/review'
     | '/sales-enablement/$clusterId/$prospectId'
     | '/plan/$clusterId'
@@ -363,6 +375,7 @@ export interface FileRouteTypes {
     | '/map/'
     | '/plan/'
     | '/sales-enablement/'
+    | '/asm-analytics/plan/$clusterId'
     | '/plan/$clusterId/review'
     | '/sales-enablement/$clusterId/$prospectId'
     | '/plan/$clusterId/'
@@ -563,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SystemicSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/asm-analytics/plan/$clusterId': {
+      id: '/asm-analytics/plan/$clusterId'
+      path: '/plan/$clusterId'
+      fullPath: '/asm-analytics/plan/$clusterId'
+      preLoaderRoute: typeof AsmAnalyticsPlanClusterIdRouteImport
+      parentRoute: typeof AsmAnalyticsRoute
+    }
     '/plan/$clusterId/': {
       id: '/plan/$clusterId/'
       path: '/'
@@ -600,6 +620,7 @@ interface AsmAnalyticsRouteChildren {
   AsmAnalyticsExecutionRoute: typeof AsmAnalyticsExecutionRoute
   AsmAnalyticsPenetrationRoute: typeof AsmAnalyticsPenetrationRoute
   AsmAnalyticsIndexRoute: typeof AsmAnalyticsIndexRoute
+  AsmAnalyticsPlanClusterIdRoute: typeof AsmAnalyticsPlanClusterIdRoute
 }
 
 const AsmAnalyticsRouteChildren: AsmAnalyticsRouteChildren = {
@@ -608,6 +629,7 @@ const AsmAnalyticsRouteChildren: AsmAnalyticsRouteChildren = {
   AsmAnalyticsExecutionRoute: AsmAnalyticsExecutionRoute,
   AsmAnalyticsPenetrationRoute: AsmAnalyticsPenetrationRoute,
   AsmAnalyticsIndexRoute: AsmAnalyticsIndexRoute,
+  AsmAnalyticsPlanClusterIdRoute: AsmAnalyticsPlanClusterIdRoute,
 }
 
 const AsmAnalyticsRouteWithChildren = AsmAnalyticsRoute._addFileChildren(
