@@ -406,8 +406,8 @@ export type ClusterScores = {
   access: number;
   competitive: number;
   ease: number;
-  potentialScore: number; // avg(revenue, competitive)
-  accessRollupScore: number; // avg(access, ease)
+  potentialScore: number; // = revenue (Revenue Potential score, 0-10)
+  accessRollupScore: number; // avg(competitive, access, ease)
   aggregate: number;
   revenueHML: HML; // binary
   competitiveHML: HML; // binary
@@ -430,8 +430,8 @@ export function computeClusterScores(
   // Otherwise fall back to the seeded hardcoded value.
   const access = userAccessScore !== undefined ? userAccessScore : t.access;
 
-  const potentialScore = Number(((revenue + competitive) / 2).toFixed(1));
-  const accessRollupScore = Number(((access + ease) / 2).toFixed(1));
+  const potentialScore = revenue;
+  const accessRollupScore = Number(((competitive + access + ease) / 3).toFixed(1));
   const aggregate = Number(((revenue + competitive + access + ease) / 4).toFixed(1));
 
   return {
