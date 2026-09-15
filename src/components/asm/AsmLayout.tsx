@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Grid3x3, TrendingUp, Target, ListChecks, LogOut } from "lucide-react";
+import { Grid3x3, TrendingUp, ListChecks, LogOut } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { PANVEL_ASM, getAreasForState } from "@/data/geography";
@@ -8,21 +8,12 @@ import { ALL_ASM_AREAS_ID, useAsmStore } from "@/store/asmStore";
 
 const DATA_AS_OF = new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" });
 
-// Same 4 questions as Leadership Analytics — only the 2nd is reworded,
-// since the viewer here already IS the ASM (no need to ask about "ASMs &
-// DGs" collectively, just their own DGs).
 const navItems = [
   {
     icon: Grid3x3,
     label: "Priority Matrix",
     sub: "Which are the top market clusters that can improve our market penetration?",
     to: "/asm-analytics" as const,
-  },
-  {
-    icon: Target,
-    label: "Engagement Focus",
-    sub: "Are my DGs focusing on high potential, high access clusters?",
-    to: "/asm-analytics/engagement" as const,
   },
   {
     icon: ListChecks,
